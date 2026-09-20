@@ -1,0 +1,52 @@
+name: Deploy Website (GitHub Pages)
+
+# This is the `gh-pages` copy of the deploy workflow. Its only difference from
+# the copy on the default branch (`vivi-music-de`) is the trigger: a push can
+# only run the workflows that exist at the pushed ref, so THIS copy exists to
+# publish the site the moment the site branch changes.
+#
+# The default-branch copy carries `schedule` and `workflow_dispatch` (GitHub
+# always runs those from the default branch) and deploys the same way: it checks
+# this branch out and publishes it with `actions/deploy-pages`.
+#
+# Keep the two copies in sync whenever the steps change.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ gh-pages ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; a newer run cancels an older one.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Publish the gh-pages branch
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout the site branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
