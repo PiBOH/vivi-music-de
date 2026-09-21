@@ -235,7 +235,7 @@
         <button class="dl-plat helium-dialog-btn select-none group" data-plat="linux">
           <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform text-[#afbeff]">terminal</span>
           <span class="text-base font-bold">Linux</span>
-          <span class="dl-note text-xs text-[#afbeff]/60">deb &middot; AppImage &middot; AUR</span>
+          <span class="dl-note text-xs text-[#afbeff]/60">deb &middot; rpm &middot; AppImage &middot; AUR</span>
         </button>
         <button class="dl-plat helium-dialog-btn select-none group" data-plat="android">
           <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform text-[#afbeff]">smartphone</span>
@@ -349,7 +349,9 @@
     ],
     linux: [
       { re: /\.deb$/i, label: 'Debian / Ubuntu (.deb)' },
+      { re: /\.rpm$/i, label: 'Fedora / RHEL (.rpm)' },
       { re: /\.AppImage$/i, label: 'AppImage' },
+      { re: /AUR\.tar\.gz$/i, label: 'Arch Linux (AUR)' },
       { re: /PKGBUILD/i, label: 'AUR (PKGBUILD)' }
     ],
     android: [
@@ -405,7 +407,7 @@
     if (plat === 'linux') {
       var note = document.createElement('p');
       note.className = 'text-[10px] text-[#afbeff]/60 font-geist text-left px-1';
-      note.textContent = 'AUR helpers can also build from PKGBUILD + SRCINFO directly.';
+      note.textContent = 'The AUR archive holds the PKGBUILD, SRCINFO and the uninstall hook — extract it and run makepkg -si.';
       variant.appendChild(note);
     }
     variant.classList.remove('hidden');
