@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.6.6_DE-1.50.60-alpha] - 2026-09-23
+
+### Fixed
+- [APK] **A scanned pairing code is recognized and joins at once.** The desktop QR already carries both the relay address and the 6-digit code, but the scanner still asked for a confirmation tap afterwards, so a good scan looked exactly like a code that had not been read; the scanner was also locked to portrait, which kept the preview at its rotated, smaller buffer and made decoding harder. A `vivimusic://pair` QR now fills both fields **and starts the pairing** (`joinPairFromScan` persists the relay address and only then builds the client for it, so the join cannot race the URL change) and the scanner follows the device orientation. A plain `ws://` QR still only sets the relay address, and the manual code field keeps working.
+
 ## [6.0.6.3_DE-1.50.60-alpha] - 2026-09-11
 
 ### Fixed
