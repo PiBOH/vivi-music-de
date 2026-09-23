@@ -30,7 +30,7 @@ ViMusic/InnerTune/SimpMusic family.
 | `kizzy` | Kotlin JVM | Discord Rich Presence (WebSocket gateway) |
 | `shazamkit` | Kotlin JVM | Shazam-style song recognition |
 | `jiosaavn` | Kotlin JVM | JioSaavn streaming provider (CDN link decryption) |
-| `lyricsProvider` | Kotlin JVM | Lyrics providers (KuGou, LrcLib, Musixmatch, PaxSenix, …) |
+| `lyricsProvider` | Kotlin JVM | Lyrics providers (KuGou, LrcLib, Musixmatch, PaxSenix, …) + the shared lyric model/parser/romanizer (`com.music.lyrics`, JVM port of the mobile `LyricsUtils`) |
 | `sync` | Kotlin JVM | Cross-device sync: data model + WebSocket client (pairing, push/pull) |
 | `desktop` | Kotlin JVM + Compose Multiplatform | Desktop app (reuses the JVM modules above) |
 | `canvas`, `artistvideo`, `applecanvas`, `vivimusiccanvas` | Android | Animated canvases / visualizers |
@@ -59,9 +59,13 @@ dependencies there, or you break the desktop build.
     build the APK for the DE release. **DE-only** changes are committed and
     pushed **only** here.
   - `vivi-music-de-apk` — mobile/APK counterpart of `vivi-music-de`. **Every
-    mobile/APK change** must be applied and committed on **both**
+    mobile/APK change** must be applied, committed **and pushed** on **both**
     `vivi-music-de` and `vivi-music-de-apk`; the two branches keep equivalent
-    mobile behavior (their commits may have different hashes). `vivi-music-de-apk`
+    mobile behavior (their commits may have different hashes). **This is an
+    obligation, not a best effort: a commit that touches `app/**`, the APK
+    version (`version.txt`, `app/build.gradle.kts`), an APK workflow or the APK
+    part of a doc is only done when it exists on both branches** — finishing one
+    of the two and leaving the other for later means the change is not done. `vivi-music-de-apk`
     also carries the pure-mobile history that used to live on `main` (kept
     reachable via the merge commit `16743769`).
   - `main` — **mirror of the upstream repository
@@ -84,6 +88,102 @@ dependencies there, or you break the desktop build.
     similar docs material) must be applied and pushed on **both**
     `vivi-music-de` and `vivi-music-de-apk`, with equivalent content (their
     hashes may differ). `main` stays excluded (upstream mirror).
+  - **Official repository**: everything lives in **`PiBOH/vivi-music-de`** (the
+    branch names above are unchanged). Every link in code, docs, the installer,
+    the website and the CI points there — never at the old `PiBOH/vivi-music`
+    fork. Example URLs: `https://github.com/PiBOH/vivi-music-de`,
+    `.../blob/vivi-music-de/<file>`, `.../releases`, `.../issues`, and the site
+    at `https://piboh.github.io/vivi-music-de/`.
+  - **Everything is done on the official repository, on the branch that owns
+    the change** — no more work on the `PiBOH/vivi-music` fork, which stays a
+    read-only mirror. Locally `origin` is `PiBOH/vivi-music-de` and the fork is
+    the `fork` remote: never push to `fork`.
+  - **Branch map (mandatory)**:
+    - `vivi-music-de` (default): the desktop edition — program code, docs,
+      `version.txt`, the release workflows and `Auto Release`.
+    - `vivi-music-de-apk`: the Android app (moving the mobile sources here is
+      tracked in `TODO.md`).
+    - `gh-pages`: the website. Its root **is** the site — pages, styles,
+      images, fonts and the generated `releases.json` / `changelog.json` — and a
+      copy of `pages-deploy.yml` lives there so a push publishes it at once.
+      The copy on the default branch is the one that feeds `schedule` and
+      `workflow_dispatch` (GitHub always runs those from the default branch):
+      keep the two copies in sync. `Release Manifest` refreshes the two data
+      files in place, on `gh-pages`, every hour. The **`github-pages`
+      environment lists both branches** in its deployment branch policy
+      (`vivi-music-de` and `gh-pages`): with only the default branch listed, a
+      deploy triggered by a push to `gh-pages` fails with `Branch "gh-pages" is
+      not allowed to deploy to github-pages due to environment protection
+      rules` even though the workflow itself is fine — add the policy before
+      blaming the workflow.
+    - `apk-latest`: the APK binaries only (`.releases/apk/latest`, one commit).
+  - **No scratch/test branches — ever (mandatory)**: never create a branch to
+    try a change out. Do the work on the branch that owns it, per the branch map
+    above, and verify through the normal pipeline: a `v` commit on
+    `vivi-music-de` exercises `Auto Release` (a job that is still settling stays
+    `continue-on-error` until it is green), a push on `gh-pages` deploys the
+    site. If a branch was created anyway, it must be deleted (locally and on
+    `origin`) with its work integrated into the base branch — the official
+    repository keeps **only** the mapped branches.
+  - **Release notes never show the website bookkeeping commit**:
+    `chore(website): refresh the static release manifest` is filtered out of the
+    `Auto Release` notes (commit list and changelog section alike), and since
+    the site moved it is not even a commit of this branch any more.
+  - **Issue references use the official numbering**: the tracker lives in
+    `PiBOH/vivi-music-de`. The fork's numbering is historical and must never be
+    reused — its issues were transferred in order, so `#4` became `#3`, `#5`
+    became `#4`, …, `#85` became `#81` (the fork itself is empty and kept as a
+    read-only mirror, its URLs serving as redirects). Every `#N` in
+    `CHANGELOG.md`, in the docs and in the code comments refers to the official
+    repository, and new references are written with the official number.
+  - **The Telegram bot is a separate repository**: `PiBOH/vivimusicde_bot`
+    (`bot.py`, `.github/workflows/upload-release.yml`). It posts a newly
+    published release to `https://t.me/vivimusicde` within the hour, resolves
+    "latest" by publish date, ignores `*.log` / `*.install`, and reuses the
+    `.releases/apk/latest` links for the optional custom APK (toggle off by
+    default). Update it whenever the release or asset layout changes.
+- **Release assets — the APK is NEVER a release asset (mandatory)**:
+  - `Auto Release (Desktop)` publishes the **desktop installers only**. It must
+    never build, wait for or attach an APK (no `ignore_apk_failure`-style
+    toggles either), and no other workflow may create an APK release.
+  - **Every APK workflow always publishes to `apk-latest`, replacing what is
+    there (mandatory)**: a run that builds an APK and does not put it on
+    `apk-latest` is broken, and a new APK workflow must do the same. The publish
+    step **recreates the branch from scratch** (single commit, everything that
+    was there is replaced) and **force-pushes** it, so the binaries never
+    accumulate in the history and the download URL always serves the last build.
+  - `Build Android APK` is **manual-only** (`workflow_dispatch`). It builds GMS
+    and FOSS in parallel and publishes them, with fixed file names
+    (`vivi-gsm.apk`, `vivi-foss.apk`) plus a `version.json` (version, version
+    code, channel, build time, sizes and URLs), to `.releases/apk/latest` on the
+    dedicated **`apk-latest`** branch. That branch is recreated from scratch and
+    force-pushed on every run: it must always be **one commit**, so the APK
+    binaries never accumulate in the repository history.
+  - `.releases/apk/latest` is the **only** APK download path: the website
+    (the `gh-pages` branch, `APK_BASE`), the desktop Devices screen
+    (`ApkDownloads`) and the mobile updater (`APK_LATEST_VERSION_URL`) all read
+    it, and "latest" is decided by the **version code** (chronology/version
+    code, never a version-string comparison). Use the fixed raw URLs:
+    `https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/<file>`.
+- **`settings.json` — the user-editable options file (mandatory)**:
+  - `~/.vivimusic/settings.json` (`SettingsFile`) mirrors **options only**, keyed
+    with the app's own camelCase field names (`hide_custom_apk_download_button`
+    is the only snake_case key). `device-sync.json` remains the app's store:
+    queue, library, playlists, histories, account/credentials and pairing data.
+  - The app rewrites the file on every change (`DesktopSettings.save` →
+    `SettingsFile.mirror`) and watches it (`SettingsFile.start`), so a hand edit
+    is applied **immediately**: every option read from the store uses
+    `settingsFileRevision()` as its `remember` key. A value edited while the app
+    was closed wins at the next startup.
+  - Every new option must be classified: an *option* (goes in the mirror,
+    `SettingsFile.allowed`) or *data* (belongs in the `excluded` set —
+    credentials, API keys, histories, queue/library/playlists, pairing
+    bookkeeping, window geometry, transient session state). Keys outside that
+    list are ignored when the file is read, so the file can never inject a
+    credential or fake an account.
+  - `hide_custom_apk_download_button` (default `true`) has **no UI switch by
+    design** — it exists only in this file; it hides the Android-APK download
+    buttons on the Devices screen.
 - **Commit style**: Conventional Commits (`feat:`, `fix:`, `ci:`, `refactor:`,
   `docs:`, `chore:`, `perf:`, …) with an optional scope, e.g.
   `feat(sync): …`.
@@ -106,10 +206,11 @@ dependencies there, or you break the desktop build.
   blank line), so the auto-release runs and the result can be verified. The `sync-server/` relay is deployed
   **separately** (Render Blueprint `render.yaml`) and does **not** trigger the
   auto-release. Documentation-only changes (README, AGENTS.md, CHANGELOG.md,
-  TODO.md) do **not** need the `v` prefix. The website (`.websitede/**`) is the
-  same: content-only changes there do **not** need `v` (it has its own
-  `pages-deploy.yml` trigger on `.websitede/**`); only use `v` when the commit
-  also touches program code or build/release workflows.
+  TODO.md) do **not** need the `v` prefix. The website is the same: it lives on
+  its own branch (`gh-pages`, see the branch map above), so a page, style or
+  data edit is committed there and does **not** need `v` (the `pages-deploy.yml`
+  copy on that branch publishes it on push); only use `v` when the commit also
+  touches program code or build/release workflows.
 - **Pre-commit checklist (mandatory)**: every code commit must pass the
   `version.txt` + `CHANGELOG.md` + `TODO.md` checklist defined at the end of
   §5 **before** it is created — no exceptions.
@@ -150,6 +251,43 @@ dependencies there, or you break the desktop build.
   dependencies, one line before fifty. It complements the golden rule in §4 and
   never overrides explicit user requests, the trust-boundary/error-handling
   rules, or the localization rule in §6.
+
+### Installer size and the icon-minimization task
+
+The desktop installers ship a **minimized Material-icons jar**. The extended
+icons artifact is ~36 MB (~10k vectors) while the desktop app references fewer
+than 300: `MinimizeIconsJarTask` in `desktop/build.gradle.kts` keeps the full
+artifact on the **compile** classpath (so every reference still resolves) and
+puts a jar holding only the referenced icon classes on the **runtime**
+classpath — the one consumed by `run`, tests and every jpackage/Inno Setup
+image (~7.8 MB instead of 36 MB).
+
+Consequences to respect when touching icons or the build:
+
+- An icon must be referenced with the **literal** `Icons.<Style>.<Name>` form
+  (`Filled`, `Default`, `Outlined`, `Rounded`, `Sharp`, `TwoTone`,
+  `AutoMirrored[.<Style>]`) inside `desktop/src`. The task collects the names
+  from those sources with a regex; an icon reached another way (a name built at
+  runtime, reflection, a source outside `desktop/src`) is **not** put in the
+  packaged jar, and the app then dies with `NoClassDefFoundError` at the moment
+  that screen renders. The six style directories are handled; `Icons.Default`
+  maps to `filled`.
+- Verify a packaging change with `./gradlew :desktop:createDistributable` and
+  check `desktop/build/compose/binaries/main/app/VIVIMusic/app/`: the icons jar
+  must be `material-icons-extended-desktop-minimized-*.jar` and no full
+  `material-icons-extended-desktop-*.jar` may be present.
+- `installer/windows/VIVIMusic.iss` compresses with `lzma2/max` +
+  `SolidCompression=yes`. There are no optional `[Components]` (only the two
+  shortcut `[Tasks]`), so solid compression cannot make a partial install
+  decompress the whole block.
+- Published formats are fixed: Windows ships **both** `setup.exe` and `.msi`,
+macOS **both** `.dmg` and `.pkg`, Linux keeps `.deb` + `.rpm` (Fedora) +
+`.AppImage` + the AUR archive (`VIVIMusic-<version>-AUR.tar.gz`, holding the
+`PKGBUILD`, `SRCINFO` and the `.install` hook — the three files must travel
+together because makepkg requires the hook next to the PKGBUILD, and a loose
+`*.install` in the asset list is noise). Do not drop a format to save size — the payload is trimmed
+  instead. The JavaFX WebView jars (`javafx-web`, `icudtl.dat`) are required by
+the working sign-in WebView and are **never** trimmed for size.
 
 ### Commit language and co-author rules — MANDATORY (do not violate)
 
@@ -241,8 +379,9 @@ considers obvious):
   `.github/workflows/` release pipeline, or a desktop-only behavior) bumps the
   **DE** version: `version.txt` line 4 (+ line 5 version code by 1).
 - A change that affects **both** editions bumps **both** versions.
-- A change that touches **only** the website (`.websitede/` content — pages,
-  styles, scripts, images) bumps **no** version: no DE bump, no mobile bump,
+- A change that touches **only** the website (`gh-pages` content — pages,
+  styles, scripts, images, and the generated `releases.json`/`changelog.json`)
+  bumps **no** version: no DE bump, no mobile bump,
   and the commit is **not** prefixed with `v` (it's not a release signal).
   Only if the same change also touches app code, build/installer config or
   release workflows does the usual DE/mobile bump apply.
@@ -466,10 +605,10 @@ locale tag):
 ## 7. GitHub Issues workflow — MANDATORY
 
 Every user-reported problem or feature request MUST first become a GitHub
-issue on `PiBOH/vivi-music` **before any code is changed**:
+issue on `PiBOH/vivi-music-de` **before any code is changed**:
 
 1. **Check for duplicates first**:
-   `gh issue list --repo PiBOH/vivi-music --state all --search "<keywords>"`
+   `gh issue list --repo PiBOH/vivi-music-de --state all --search "<keywords>"`
    — only open a new issue when no equivalent open/closed issue exists.
 
 2. **Open the issue first** (via the `gh` CLI; on this machine it is not on
@@ -490,19 +629,35 @@ issue on `PiBOH/vivi-music` **before any code is changed**:
    the commit message (e.g. `Closes #NN` / `Fixes #NN`).
 
 4. **Close the issue** after the fix is committed and pushed:
-   `gh issue close <NN> --repo PiBOH/vivi-music`.
+   `gh issue close <NN> --repo PiBOH/vivi-music-de`.
+
+5. **NEVER close an issue opened by someone else.** Only issues authored by the
+   user (they are created through the user's `gh` auth, so the author is
+   `PiBOH`) are owned by us and get closed after the fix. An issue opened by a
+   **third party** (a contributor, a user, a bot, …) must only be **fixed and
+   referenced** — `Fixes #NN` in the CHANGELOG and in the commit message — and
+   left **open**: the reporter verifies the fix and closes it himself. Never
+   run `gh issue close` on it, never add a closing label/comment asking to
+   close it, and never treat "it is fixed" as a reason to close it.
+   The same applies to any issue whose author is not `PiBOH`.
 
 **NEVER open a GitHub issue for website or workflow changes** — for these
 categories issues must NOT be opened at all (not even "when in doubt").
 This includes:
-- **Website-only changes**: pure `.websitede/` edits (page HTML,
-  `style.css`, site JS — nothing in the desktop/mobile app code,
+- **Website-only changes**: edits to the site branch `gh-pages` (page HTML,
+  `style.css`, site JS, screenshots — nothing in the desktop/mobile app code,
   no version bump, no release) are done directly: no GitHub issue, no
-  CHANGELOG entry. They are committed on `vivi-music-de` with a message
-  that does NOT start with `v`, then the commit is synced to
-  `vivi-music-de-apk`.
+  CHANGELOG entry, and a commit message that does NOT start with `v`. They are
+  committed and pushed on `gh-pages` only: `vivi-music-de` no longer holds the
+  site, and there is nothing to sync to the mobile branch.
 - **Workflow changes**: any edit to `.github/workflows/*` is done directly
   without an issue (and, per the rules above, is always a `patch`).
+- **Packaging / build-size / installer changes** count as workflow changes and
+  are therefore also done directly, with no issue: `installer/**`,
+  `desktop/build.gradle.kts`, jpackage/module/shortcut configuration, release
+  asset format decisions (which installer files are published) and payload
+  trimming (see "Installer size and the icon-minimization task" in §3). Always
+  a `patch`.
 
 **NEVER open a GitHub issue for anything involving secrets** (keystores,
 signing keys, API tokens, passwords, credentials, secret names/values,
@@ -567,3 +722,7 @@ Rules:
 - Only after the user has explicitly confirmed the removal, perform it
   **completely** (code, scripts, translations, docs) rather than gating or
   hiding it, and note it in the CHANGELOG without naming the removed provider.
+- **Authorized provider — Musixmatch:** the user has been explicitly authorised
+  to use and modify the Musixmatch integration. The proprietary "DO NOT MODIFY"
+  header on `lyricsProvider/src/main/kotlin/com/music/musixmatch/**` and its
+  tests does **not** apply to this repository — fixes to that module are allowed.
