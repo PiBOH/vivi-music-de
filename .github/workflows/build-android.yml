@@ -1,5 +1,19 @@
 name: Build Android APK
 
+# Started by hand, or *dispatched* by `Auto Release` on a release push (a
+# commit whose subject starts with "v"). The release only starts it: it never
+# waits for it and never takes its APKs — a desktop release carries the desktop
+# installers only, and a slow or broken Android build must not hold it back.
+#
+# Whatever started it, a run builds the GMS and FOSS release APKs in parallel
+# and publishes them to `.releases/apk/latest` on the dedicated `apk-latest`
+# branch: the branch is recreated from scratch and force-pushed on every run, so
+# it always holds exactly one commit and never grows the repository history.
+# Everything on that branch is replaced except the two human documents,
+# `INSTALL-GUIDE.md` and `README.md`, which are kept when they are there.
+# Those two APKs (plus `version.json`) are what the website, the desktop Devices
+# screen and the mobile updater download.
+
 on:
   workflow_dispatch:
     inputs:
@@ -12,22 +26,27 @@ on:
           - auto
           - release
           - debug
-  push:
-    branches: [ vivi-music-de, main, beta ]
-    tags-ignore: [ '**' ]
+  # Callable as a reusable workflow. The project's own caller does NOT use this
+  # (it dispatches the run instead, see `Auto Release`), but the trigger keeps
+  # the workflow reusable for anyone who prefers an awaited `uses:`.
+  workflow_call:
+    inputs:
+      signing_key:
+        description: "Keystore to sign with (auto = RELEASE_KEYSTORE if set, else DEBUG_KEYSTORE)"
+        required: false
+        type: string
+        default: auto
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
     name: Android APK (${{ matrix.flavor }})
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # Same release signal as the desktop autorelease: manual dispatch, or a
-    # push whose commit message starts with "v". GMS and FOSS build in
-    # parallel; each job produces the fixed-name APK the release expects.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'v'))
+    # GMS and FOSS build in parallel; each job produces one of the two
+    # fixed-name APKs the publish job below uploads.
     strategy:
       fail-fast: false
       matrix:
@@ -63,7 +82,9 @@ jobs:
         id: signing
         shell: bash
         run: |
-          REQUESTED="${{ github.event.inputs.signing_key }}"
+          # `inputs` works for both a manual dispatch and a reusable-workflow
+          # call (the definition is shared by the two triggers).
+          REQUESTED="${{ inputs.signing_key }}"
           if [ -z "$REQUESTED" ]; then REQUESTED="auto"; fi
           HAS_RELEASE="${{ secrets.RELEASE_KEYSTORE != '' }}"
           case "$REQUESTED" in
@@ -161,3 +182,132 @@ jobs:
           name: android-apk-${{ matrix.flavor }}
           path: dist/vivi-${{ matrix.flavor }}.apk
           if-no-files-found: error
+
+  # Makes the two APKs reachable at a fixed URL, which is what every download
+  # link in the project points at:
+  #   https://raw.githubusercontent.com/<owner>/<repo>/apk-latest/.releases/apk/latest/vivi-gsm.apk
+  # (and `vivi-foss.apk` / `version.json`). The branch is recreated from
+  # scratch and force-pushed, so only the latest build is ever there.
+  publish:
+    name: Publish APKs (.releases/apk/latest)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for version.txt + the commit subject)
+        uses: actions/checkout@v4
+
+      - name: Download both APKs
+        uses: actions/download-artifact@v4
+        with:
+          path: apk
+          merge-multiple: true
+
+      - name: Flatten the downloaded APKs
+        shell: bash
+        run: |
+          set -euo pipefail
+          # `upload-artifact` decides the artifact's internal root on its own
+          # (the common ancestor of the uploaded paths), so a single-file
+          # upload is not guaranteed to land at the artifact root: the publish
+          # step assumed `apk/vivi-<flavor>.apk` and aborted with
+          # "apk/vivi-gsm.apk is missing - not publishing a partial build"
+          # even though both APKs had built and been downloaded. Locate them
+          # wherever they landed and normalise the layout the rest of the job
+          # expects, so the step cannot depend on that detail again.
+          mkdir -p apk-flat
+          for flavor in gsm foss; do
+            file="$(find apk -type f -name "vivi-$flavor.apk" -print -quit)"
+            if [ -z "$file" ]; then
+              echo "::error::apk/vivi-$flavor.apk is missing - not publishing a partial build" >&2
+              exit 1
+            fi
+            cp "$file" "apk-flat/vivi-$flavor.apk"
+          done
+          ls -la apk-flat
+
+      # The publish step recreates `apk-latest` from scratch, so whatever is on
+      # it now is replaced: the install guide and the readme are the two files
+      # worth keeping (they are documents, not build output), and they are read
+      # off the branch being replaced here.
+      - name: Keep the branch's documents (INSTALL-GUIDE.md, README.md)
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p keep
+          REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch -q --depth=1 "$REMOTE" apk-latest:refs/remotes/apk-latest-current/apk-latest 2>/dev/null; then
+            for doc in INSTALL-GUIDE.md README.md; do
+              if git show "refs/remotes/apk-latest-current/apk-latest:$doc" > "keep/$doc" 2>/dev/null; then
+                echo "kept $doc from apk-latest"
+              else
+                rm -f "keep/$doc"
+                echo "no $doc on apk-latest"
+              fi
+            done
+          else
+            echo "apk-latest does not exist yet — nothing to keep"
+          fi
+          ls -la keep
+
+      - name: Publish to the apk-latest branch
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # version.txt: line 1 = mobile version, line 2 = mobile version code,
+          # line 3 = mobile channel (drives the About label too).
+          VERSION="$(sed -n '1p' version.txt | tr -d '\r\n' | xargs)"
+          VERSION_CODE="$(sed -n '2p' version.txt | tr -d '\r\n' | xargs)"
+          CHANNEL="$(sed -n '3p' version.txt | tr -d '\r\n' | xargs)"
+          TITLE="$(git log -1 --pretty=%s)"
+          BASE="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/apk-latest/.releases/apk/latest"
+          rm -rf assets && mkdir assets && cd assets
+          git init -q -b apk-latest
+          mkdir -p .releases/apk/latest
+          # The documents read off the branch being replaced (when they are there).
+          cp -f ../keep/INSTALL-GUIDE.md . 2>/dev/null || true
+          cp -f ../keep/README.md . 2>/dev/null || true
+          # Verified (and flattened) by the previous step.
+          cp ../apk-flat/vivi-gsm.apk .releases/apk/latest/vivi-gsm.apk
+          cp ../apk-flat/vivi-foss.apk .releases/apk/latest/vivi-foss.apk
+          # version.json is what the updaters read: version + version code +
+          # when it was built, with the exact URLs and sizes of both files.
+          VERSION="$VERSION" VERSION_CODE="$VERSION_CODE" CHANNEL="$CHANNEL" TITLE="$TITLE" BASE="$BASE" \
+            python3 - <<'PY'
+          import datetime, json, os
+
+          base = os.environ["BASE"]
+          files = [
+              {
+                  "name": name,
+                  "sizeBytes": os.path.getsize(os.path.join(".releases/apk/latest", name)),
+                  "url": f"{base}/{name}",
+              }
+              for name in ("vivi-gsm.apk", "vivi-foss.apk")
+          ]
+          doc = {
+              "version": os.environ["VERSION"],
+              "versionCode": int(os.environ.get("VERSION_CODE") or 0),
+              "channel": os.environ["CHANNEL"],
+              "title": os.environ["TITLE"],
+              "builtAt": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+              "commit": os.environ["GITHUB_SHA"],
+              "files": files,
+          }
+          with open(".releases/apk/latest/version.json", "w", encoding="utf-8") as fh:
+              json.dump(doc, fh, indent=2, ensure_ascii=False)
+              fh.write("\n")
+          PY
+          git add -A
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "build(apk): $VERSION ($CHANNEL)"
+          git push -q --force \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" apk-latest
+          ls -la .releases/apk/latest
+          echo "--- branch root (the documents that were kept) ---"
+          ls -la
+          echo "Published $VERSION to $BASE (apk-latest branch)"

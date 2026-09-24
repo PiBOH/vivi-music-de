@@ -39,22 +39,39 @@ jobs:
     uses: ./.github/workflows/build-desktop-macos.yml
     secrets: inherit
 
-  # The Android APKs are not built here: build-android.yml triggers on the
-  # same release signal (commit starting with "v") and builds the GMS and
-  # FOSS release APKs in parallel. The release job below waits for that run
-  # and downloads both APKs, so every release ships vivi-gsm.apk + vivi-foss.apk.
+  # The Android APKs are not built here and never ship with this release: this
+  # job only *starts* `Build Android APK`, which publishes the GMS/FOSS APKs to
+  # `.releases/apk/latest` on the dedicated `apk-latest` branch — the one
+  # download path the site, the desktop Devices screen and the mobile updater
+  # use.
+  #
+  # A dispatch on purpose, not a `uses:`: a called workflow is awaited by its
+  # caller, so a slow runner or a broken Android build would hold the desktop
+  # release back, and the release must not depend on the APK at all. It also
+  # never reads the APKs back from that run (nothing here downloads its
+  # artifacts): the branch is the only place they live.
+  start-apk-build:
+    name: Start the Android APK build
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'v'))
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Dispatch Build Android APK
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run build-android.yml --repo "$GITHUB_REPOSITORY" --ref "$GITHUB_REF_NAME"
 
   release:
     name: Publish GitHub Release
     needs: [ build-windows, build-linux, build-macos ]
-    # Only the three desktop builds are required. The Android APK is fetched
-    # best-effort from the existing CI, so a missing/failed CI run never blocks
-    # this desktop release.
+    # Desktop releases carry the desktop installers only; the APK is no longer
+    # a release asset of any kind.
     if: ${{ always() && needs.build-windows.result == 'success' && needs.build-linux.result == 'success' && needs.build-macos.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -130,6 +147,9 @@ jobs:
           if [[ -z "$SECTION" ]]; then
             SECTION="*No changelog entry found for version $VERSION.*"
           fi
+          # Never surface the website bookkeeping commits (an older entry may
+          # still carry them in its `### Commits` list).
+          SECTION="$(printf '%s\n' "$SECTION" | grep -v -F -- '- chore(website): refresh the static release manifest' || true)"
           {
             echo "section<<CHANGELOG_EOF"
             echo "$SECTION"
@@ -141,11 +161,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # The hourly website bookkeeping commit is not part of a release and
+          # only made the list longer, so it is never shown in the notes. A
+          # literal (grep -F) match on the subject: no regex escaping, no
+          # anchors, so a trailing CR in the line does not defeat it.
+          IGNORED='- chore(website): refresh the static release manifest'
           PREV_TAG="$(git describe --tags --abbrev=0 2>/dev/null || true)"
           if [[ -n "$PREV_TAG" ]]; then
-            COMMITS="$(git log "$PREV_TAG..HEAD" --pretty=format:'- %s' --no-merges 2>/dev/null || true)"
+            COMMITS="$(git log "$PREV_TAG..HEAD" --pretty=format:'- %s' --no-merges 2>/dev/null | grep -v -F -- "$IGNORED" || true)"
           else
-            COMMITS="$(git log --pretty=format:'- %s' --no-merges 2>/dev/null || true)"
+            COMMITS="$(git log --pretty=format:'- %s' --no-merges 2>/dev/null | grep -v -F -- "$IGNORED" || true)"
           fi
           if [[ -z "$COMMITS" ]]; then
             COMMITS="- Initial release"
@@ -169,56 +194,21 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Wait for Android build and collect the APKs
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -uo pipefail
-          # vivi-gsm.apk + vivi-foss.apk are MANDATORY release assets: they come
-          # from the parallel 'Build Android APK' run for this commit. On a
-          # release push (commit starting with "v") a missing/failed Android
-          # build fails the release. Only a manual dispatch (where the Android
-          # workflow was never triggered) skips them with a warning.
-          RUN_ID="$(gh run list --workflow "Build Android APK" --commit "$GITHUB_SHA" --limit 1 --json databaseId --jq '.[0].databaseId' 2>/dev/null || true)"
-          if [ -z "$RUN_ID" ]; then
-            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-              echo "No Android build run for this commit (manual dispatch) - releasing without the APKs."
-              echo "Dispatch 'Build Android APK' manually to attach vivi-gsm.apk / vivi-foss.apk."
-              exit 0
-            fi
-            echo "ERROR: no 'Build Android APK' run found for commit $GITHUB_SHA - vivi-gsm.apk and vivi-foss.apk are required release assets." >&2
-            exit 1
-          fi
-          echo "Waiting for Android build run $RUN_ID to finish..."
-          if ! gh run watch "$RUN_ID" --exit-status --interval 15; then
-            echo "ERROR: Android build run $RUN_ID failed - vivi-gsm.apk and vivi-foss.apk are required release assets." >&2
-            exit 1
-          fi
-          mkdir -p apk_dist/gms apk_dist/foss artifacts
-          if ! gh run download "$RUN_ID" -n android-apk-gms -D apk_dist/gms; then
-            echo "ERROR: could not download the android-apk-gms artifact." >&2
-            exit 1
-          fi
-          if ! gh run download "$RUN_ID" -n android-apk-foss -D apk_dist/foss; then
-            echo "ERROR: could not download the android-apk-foss artifact." >&2
-            exit 1
-          fi
-          GMS="$(find apk_dist/gms -name '*.apk' -print -quit)"
-          FOSS="$(find apk_dist/foss -name '*.apk' -print -quit)"
-          if [ -z "$GMS" ]; then echo "ERROR: vivi-gsm.apk is missing." >&2; exit 1; fi
-          if [ -z "$FOSS" ]; then echo "ERROR: vivi-foss.apk is missing." >&2; exit 1; fi
-          cp "$GMS" artifacts/vivi-gsm.apk
-          cp "$FOSS" artifacts/vivi-foss.apk
-          echo "APKs added to release assets: vivi-gsm.apk + vivi-foss.apk"
-          ls -la artifacts
-
       - name: Generate AUR packaging assets
         shell: bash
         run: |
-          # PKGBUILD + SRCINFO for Arch users (AUR). Pinned to this exact
-          # commit so the source checksum is stable and matches the release.
-          python3 scripts/generate_aur_pkgbuild.py --out artifacts --sha "${{ github.sha }}"
+          set -euo pipefail
+          # PKGBUILD + SRCINFO + the uninstall hook for Arch users (AUR), pinned
+          # to this exact commit so the source checksum is stable and matches
+          # the release. They ship as ONE archive, not as three loose files: an
+          # `.install` sitting in the asset list is noise (and the bot had to
+          # filter it out), while makepkg needs the hook file next to the
+          # PKGBUILD anyway to honour `install=`, so the three files have to
+          # travel together.
+          AUR_DIR="$(mktemp -d)"
+          python3 scripts/generate_aur_pkgbuild.py --out "$AUR_DIR" --sha "${{ github.sha }}"
+          tar -czf "artifacts/VIVIMusic-${{ steps.version.outputs.version }}-AUR.tar.gz" -C "$AUR_DIR" .
+          rm -rf "$AUR_DIR"
           # The install guide ships with every release.
           cp INSTALL-GUIDE.md artifacts/
           ls -la artifacts
