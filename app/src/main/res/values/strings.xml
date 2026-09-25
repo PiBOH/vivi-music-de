@@ -48,7 +48,10 @@
     <string name="search">Search</string>
     <string name="search_yt_music">Search YouTube Music…</string>
     <string name="search_library">Search library…</string>
+    <string name="search_albums">Search albums…</string>
+    <string name="search_playlists">Search playlists…</string>
     <string name="filter_library">Library</string>
+    <string name="all">All</string>
     <string name="filter_liked">Liked</string>
     <string name="filter_downloaded">Downloaded</string>
     <string name="filter_all">All</string>
@@ -317,6 +320,7 @@
     <string name="audio_quality_high">High</string>
     <string name="audio_quality_low">Low</string>
     <string name="queue">Queue</string>
+    <string name="playing_from">Playing from</string>
     <string name="persistent_queue">Persistent queue</string>
     <string name="persistent_queue_desc">Restore your last queue when the app starts</string>
     <string name="auto_load_more">Auto load more songs</string>
@@ -449,7 +453,17 @@
     <string name="taste_based_release_notifications">Taste-based release alerts</string>
     <string name="taste_based_release_notifications_subtitle">Notify when artists you frequently listen to release new songs or albums</string>
 
-    <!-- Device sync (Android <-> Desktop) -->
+    <!-- Library Toggle -->
+    <string name="switch_to_grid_view">Switch to grid view</string>
+    <string name="switch_to_list_view">Switch to list view</string>
+
+    <!-- Force Library Sync -->
+    <string name="library_force_sync">Sync Library Now</string>
+    <string name="library_syncing">Syncing library…</string>
+    <string name="library_sync_done">Library synced successfully</string>
+    <string name="library_sync_error">Sync failed — tap to retry</string>
+    <string name="listening_summary">Listening summary</string>
+    <string name="setting_listening_summary_desc">View your daily listening trends and historical playback analytics.</string>
     <string name="devices">Devices</string>
     <string name="device_sync">Device sync</string>
     <string name="device_sync_desc">Pair this phone with VIVI Music DE on your computer to sync settings, queue and library.</string>

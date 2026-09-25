@@ -12,6 +12,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -63,6 +64,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.material3.Text
+import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -91,6 +93,10 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavController
@@ -196,185 +202,116 @@ fun CommunityPlaylistCard(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current
     val scope = rememberCoroutineScope()
-    val isDark = isSystemInDarkTheme()
-
-    val containerColor = if (isDark) {
-        MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-    }
-
+    
     val dbPlaylist by database.playlistByBrowseId(item.playlist.id).collectAsState(initial = null)
     val isBookmarked = dbPlaylist?.playlist?.bookmarkedAt != null
 
     Card(
-        modifier = modifier
-            .width(320.dp)
-            .height(420.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor
-        ),
+        modifier = modifier.width(300.dp),
         shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        ),
         onClick = onClick
     ) {
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.padding(20.dp)
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // 2x2 Grid of thumbnails
-                Box(
+            // Big Clear Typography
+            Text(
+                text = item.playlist.title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "By ${item.playlist.author?.name ?: "Unknown"}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Minimalist Song List
+            item.songs.take(3).forEach { song ->
+                Row(
                     modifier = Modifier
-                        .size(100.dp)
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
                         .clip(RoundedCornerShape(12.dp))
+                        .clickable { onSongClick(song) },
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        Row(modifier = Modifier.weight(1f)) {
-                            AsyncImage(
-                                model = item.songs.getOrNull(0)?.thumbnail?.resize(544, 544),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxSize()
-                            )
-                            AsyncImage(
-                                model = item.songs.getOrNull(1)?.thumbnail?.resize(544, 544),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxSize()
-                            )
-                        }
-                        Row(modifier = Modifier.weight(1f)) {
-                            AsyncImage(
-                                model = item.songs.getOrNull(2)?.thumbnail?.resize(544, 544),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxSize()
-                            )
-                            AsyncImage(
-                                model = item.songs.getOrNull(3)?.thumbnail?.resize(544, 544),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxSize()
-                            )
-                        }
-                    }
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = item.playlist.title,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 2,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = item.playlist.author?.name ?: "",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                        maxLines = 1
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
-            ) {
-                item.songs.take(3).forEach { song ->
-                    Row(
+                    AsyncImage(
+                        model = song.thumbnail.resize(100, 100),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .combinedClickable(onClick = { onSongClick(song) }),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        AsyncImage(
-                            model = song.thumbnail.resize(544, 544),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentScale = ContentScale.Crop
+                            .size(48.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = song.title, 
+                            style = MaterialTheme.typography.bodyMedium, 
+                            maxLines = 1, 
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = song.title,
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
-                            Text(
-                                text = song.artists.joinToString(", ") { it.name },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                                maxLines = 1,
-                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                            )
-                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = song.artists.joinToString(", ") { it.name }, 
+                            style = MaterialTheme.typography.labelSmall, 
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, 
+                            maxLines = 1, 
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Wide Action Buttons
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                IconButton(
+                Button(
                     onClick = {
                         item.playlist.playEndpoint?.let {
                             playerConnection?.playQueue(YouTubeQueue(it))
                         }
                     },
                     modifier = Modifier
-                        .size(48.dp)
-                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                        .weight(1f)
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_widget_play),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(painterResource(R.drawable.ic_widget_play), null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Play", fontWeight = FontWeight.Bold)
                 }
 
                 IconButton(
-                    onClick = {
+                    onClick = { 
                         item.playlist.radioEndpoint?.let {
                             playerConnection?.playQueue(YouTubeQueue(it))
                         }
                     },
                     modifier = Modifier
                         .size(48.dp)
-                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.radio),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(24.dp)
-                    )
+                    Icon(painterResource(R.drawable.radio), null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                 }
 
                 IconButton(
@@ -419,13 +356,12 @@ fun CommunityPlaylistCard(
                     },
                     modifier = Modifier
                         .size(48.dp)
-                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
                 ) {
                     Icon(
-                        painter = painterResource(if (isBookmarked) R.drawable.library_add_check else R.drawable.library_add),
+                        painter = painterResource(if (isBookmarked) R.drawable.library_add_check else R.drawable.library_add), 
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(24.dp)
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer
                     )
                 }
             }
@@ -452,7 +388,7 @@ fun DailyDiscoverCard(
     Card(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(16.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = {
@@ -471,14 +407,24 @@ fun DailyDiscoverCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
-        shape = RoundedCornerShape(28.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            var currentThumbnailUrl by remember(dailyDiscover.recommendation.thumbnail) {
+                mutableStateOf(dailyDiscover.recommendation.thumbnail?.resize(1200, 1200))
+            }
+            
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(dailyDiscover.recommendation.thumbnail?.resize(1200, 1200))
+                    .data(currentThumbnailUrl)
                     .crossfade(true)
                     .build(),
+                onError = {
+                    val url = currentThumbnailUrl
+                    if (url != null && url.contains("maxresdefault.jpg")) {
+                        currentThumbnailUrl = url.replace("maxresdefault.jpg", "hqdefault.jpg")
+                    }
+                },
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -848,53 +794,36 @@ fun HomeScreen(
 
         if (explorePage?.moodAndGenres != null) list.add(HomeSection.MoodAndGenres)
 
-        if (randomizeHomeOrder) {
+        val sortedList = if (randomizeHomeOrder) {
             list.sortedByDescending { section ->
-                // Use a stable seed for each section based on the session seed + section ID hash
-                // This ensures the weight for a specific section remains constant during a session (until refresh)
-                // even if other sections appear/disappear, preventing jumping.
                 val sectionRandom = Random(randomSeed + section.id.hashCode())
-
-                // Flatten the base values to allow for more overlap and variation
-                // All "main" sections start closer together
                 val base = when (section) {
+                    HomeSection.QuickPicks -> 700
                     HomeSection.SpeedDial,
-                    HomeSection.QuickPicks,
-                    HomeSection.DailyDiscover -> 500 // Top tier starts equal
-
+                    HomeSection.DailyDiscover -> 500
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
-                    HomeSection.FromTheCommunity -> 300 // Middle tier starts equal
-
-                    else -> 100 // Bottom tier
+                    HomeSection.FromTheCommunity -> 300
+                    else -> 100
                 }
-
                 val modifier = when (section) {
-                    // Top tier: High variance to allow shuffling among themselves
-                    // Range: [500-200, 500+400] = [300, 900]
+                    HomeSection.QuickPicks -> 0
                     HomeSection.SpeedDial,
-                    HomeSection.QuickPicks,
                     HomeSection.CoversAndRemixes,
                     HomeSection.DailyDiscover -> sectionRandom.nextInt(-200, 400)
-
-                    // Middle tier: Can jump up to challenge top tier, or drop lower
-                    // Range: [300-100, 300+400] = [200, 700]
-                    // This allows them to occasionally appear above a "bad roll" top tier item
                     HomeSection.KeepListening,
                     HomeSection.AccountPlaylists,
                     HomeSection.ForgottenFavorites,
                     HomeSection.FromTheCommunity -> sectionRandom.nextInt(-100, 400)
-
-                    // Bottom tier: Standard variance
                     else -> sectionRandom.nextInt(-50, 50)
                 }
                 base + modifier
             }
         } else {
             val defaultOrder = mapOf(
+                HomeSection.QuickPicks to 110,
                 HomeSection.SpeedDial to 100,
-                HomeSection.QuickPicks to 90,
                 HomeSection.CoversAndRemixes to 85,
                 HomeSection.FromTheCommunity to 80,
                 HomeSection.DailyDiscover to 70,
@@ -912,6 +841,26 @@ fun HomeScreen(
                 }
             }
         }
+
+        // If logged in, YouTube provides its own superior "Quick picks" section. 
+        // If logged out as guest, we use our local app-generated Quick Picks.
+        val hasYouTubeQuickPicks = sortedList.any { 
+            it is HomeSection.HomePageSection && homePage?.sections?.getOrNull(it.index)?.title?.equals("Quick picks", ignoreCase = true) == true 
+        }
+
+        val deduplicatedList = if (hasYouTubeQuickPicks) {
+            sortedList.filterNot { it == HomeSection.QuickPicks } // Hide local if remote exists
+        } else {
+            sortedList
+        }
+
+        // Always pin the surviving QuickPicks to the very top regardless of sort order
+        val isQuickPicksSection: (HomeSection) -> Boolean = {
+            it == HomeSection.QuickPicks || (it is HomeSection.HomePageSection && homePage?.sections?.getOrNull(it.index)?.title?.equals("Quick picks", ignoreCase = true) == true)
+        }
+        val qpItems = deduplicatedList.filter(isQuickPicksSection)
+        if (qpItems.isNotEmpty()) qpItems + deduplicatedList.filterNot(isQuickPicksSection)
+        else deduplicatedList
     }
 
     LaunchedEffect(quickPicks) {
@@ -1522,18 +1471,18 @@ fun HomeScreen(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(340.dp)
-                                            .padding(horizontal = 16.dp),
+                                            .height(230.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         val carouselState = rememberCarouselState { discoverList.size }
-                                        HorizontalMultiBrowseCarousel(
+                                        HorizontalUncontainedCarousel(
                                             state = carouselState,
-                                            preferredItemWidth = 320.dp,
-                                            itemSpacing = 16.dp,
+                                            itemWidth = 320.dp,
+                                            itemSpacing = 8.dp,
+                                            contentPadding = PaddingValues(horizontal = 16.dp),
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .height(320.dp)
+                                                .height(210.dp)
                                         ) { i ->
                                             val item = discoverList[i]
                                             DailyDiscoverCard(
@@ -1551,7 +1500,7 @@ fun HomeScreen(
                                                     }
                                                 },
                                                 navController = navController,
-                                                modifier = Modifier.maskClip(MaterialTheme.shapes.extraLarge)
+                                                modifier = Modifier.maskClip(MaterialTheme.shapes.large)
                                             )
                                         }
                                     }

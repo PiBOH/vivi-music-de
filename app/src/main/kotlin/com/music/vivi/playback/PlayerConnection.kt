@@ -24,6 +24,8 @@ import com.music.vivi.extensions.metadata
 import com.music.vivi.extensions.togglePlayPause
 import com.music.vivi.playback.MusicService.MusicBinder
 import com.music.vivi.playback.queues.Queue
+import com.music.vivi.playback.queues.YouTubeQueue
+import com.music.innertube.pages.RadioChip
 import com.music.vivi.utils.reportException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -142,6 +144,7 @@ class PlayerConnection(
             database.format(mediaMetadata?.id)
         }
 
+    val radioChips = service.radioChips
     val queueTitle = MutableStateFlow<String?>(null)
     val queueWindows = MutableStateFlow<List<Timeline.Window>>(emptyList())
     val currentMediaItemIndex = MutableStateFlow(-1)
@@ -228,6 +231,10 @@ class PlayerConnection(
             Timber.tag(TAG).e(e, "Error in playQueue")
             throw e
         }
+    }
+
+    fun selectRadioChip(chip: RadioChip) {
+        service.applyRadioChip(chip)
     }
 
     fun startRadioSeamlessly() {
@@ -407,11 +414,16 @@ class PlayerConnection(
                 castHandler.skipToNext()
                 return
             }
-            player.seekToNext()
-            if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                player.prepare()
+            // Try a crossfaded manual skip first (only engages if the user
+            // enabled "Crossfade on manual skip"); fall back to an instant
+            // seek otherwise.
+            if (!service.manualSkipToNextWithCrossfade()) {
+                player.seekToNext()
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                    player.prepare()
+                }
+                player.playWhenReady = true
             }
-            player.playWhenReady = true
             onSkipNext?.invoke()
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Error in seekToNext")
@@ -444,12 +456,15 @@ class PlayerConnection(
                 player.playWhenReady = true
                 onRestartSong?.invoke()
             } else {
-                // Otherwise go to previous media item
-                player.seekToPreviousMediaItem()
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
-                    player.prepare()
+                // Otherwise go to previous media item — try a crossfaded
+                // manual skip first, falling back to an instant seek.
+                if (!service.manualSkipToPreviousWithCrossfade()) {
+                    player.seekToPreviousMediaItem()
+                    if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
+                        player.prepare()
+                    }
+                    player.playWhenReady = true
                 }
-                player.playWhenReady = true
                 onSkipPrevious?.invoke()
             }
         } catch (e: Exception) {
@@ -477,6 +492,10 @@ class PlayerConnection(
         currentMediaItemIndex.value = player.currentMediaItemIndex
         currentWindowIndex.value = player.getCurrentQueueIndex()
         updateCanSkipPreviousAndNext()
+        // Auto-refresh radio filter chips for every newly active song
+        if (mediaItem != null) {
+            service.refreshChipsForCurrentSong()
+        }
     }
 
     override fun onTimelineChanged(

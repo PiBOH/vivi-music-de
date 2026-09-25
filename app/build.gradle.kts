@@ -25,13 +25,13 @@ android {
         applicationId = "com.vivi.music.desktop"
         minSdk = 26
         targetSdk = 37
-        // 6.0.6.3: companion build — installs as com.vivi.music.desktop and is
-        // named "VIVI for DE" so it can coexist with the upstream app.
-        // Versioning follows the Android scheme (last digit increments per
-        // release: 6.0.6 -> 6.0.6.1 -> 6.0.6.2 -> 6.0.6.3). versionCode stays
-        // monotonic and always increases per release.
-        versionCode = 138
-        versionName = "6.0.6.8"
+        // VIVI for DE companion build: it installs as com.vivi.music.desktop so
+        // it can coexist with the upstream app. The mobile version is the
+        // upstream feature version plus our own patch counter (6.0.8 ->
+        // 6.0.8.1); versionCode is our own counter and only ever increases.
+        versionCode = 139
+        val betaVersionName = project.findProperty("betaVersionName") as String?
+        versionName = betaVersionName ?: "6.0.8.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -46,6 +46,8 @@ android {
         buildConfigField("String", "LASTFM_API_KEY", "\"$lastFmKey\"")
         buildConfigField("String", "LASTFM_SECRET", "\"$lastFmSecret\"")
 
+
+
 //add nightly build label support
         val isNightly = project.hasProperty("nightly") && project.property("nightly") == "true"
         buildConfigField("Boolean", "IS_NIGHTLY", isNightly.toString())
@@ -59,7 +61,6 @@ android {
             ?: if (isNightly) "nightly" else "stable"
         buildConfigField("String", "RELEASE_CHANNEL", "\"$releaseChannel\"")
     }
-    
 
     flavorDimensions += listOf("abi", "variant")
     productFlavors {
@@ -258,6 +259,7 @@ dependencies {
     implementation(libs.material3.adaptive.navigation.suite)
     implementation(libs.palette)
     implementation(libs.materialKolor)
+    implementation(libs.vico.compose.m3)
 
     implementation(libs.appcompat)
 
@@ -304,6 +306,9 @@ dependencies {
     implementation(project(":lyricsProvider"))
     implementation(project(":sync"))
 
+    implementation(libs.innertubex)
+    implementation(libs.expressivelab)
+
 
 
 
@@ -324,7 +329,6 @@ dependencies {
     implementation(libs.smoothCorner)
     implementation(libs.lottie.compose)
     implementation(libs.haze)
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
     implementation(libs.work.runtime.ktx)
     implementation(libs.androidx.core.splashscreen)
 }

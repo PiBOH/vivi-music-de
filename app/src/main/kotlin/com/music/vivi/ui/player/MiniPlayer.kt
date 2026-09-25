@@ -126,6 +126,7 @@ import com.music.vivi.playback.CastConnectionHandler
 import com.music.vivi.playback.PlayerConnection
 import com.music.vivi.ui.screens.settings.DarkMode
 import com.music.vivi.ui.theme.PlayerColorExtractor
+import com.music.vivi.ui.utils.resize
 import com.music.vivi.utils.rememberEnumPreference
 import com.music.vivi.utils.rememberPreference
 import com.music.vivi.vivimusic.AudioDeviceBottomSheet
@@ -134,9 +135,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
 import com.music.vivi.vivimusic.isBluetoothHeadphoneConnected
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.draw.drawBehind
@@ -147,6 +145,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 import com.music.vivi.ui.component.Icon as MIcon
+import timber.log.Timber
 
 /**
  * Stable wrapper for progress state - reads values only during draw phase
@@ -337,9 +336,13 @@ private fun NewMiniPlayer(
 
                                 if (shouldChangeSong) {
                                     if (currentOffset > 0 && canSkipPrevious) {
-                                        playerConnection.player.seekToPreviousMediaItem()
+                                        if (!playerConnection.service.manualSkipToPreviousWithCrossfade()) {
+                                            playerConnection.player.seekToPreviousMediaItem()
+                                        }
                                     } else if (currentOffset <= 0 && canSkipNext) {
-                                        playerConnection.player.seekToNext()
+                                        if (!playerConnection.service.manualSkipToNextWithCrossfade()) {
+                                            playerConnection.player.seekToNext()
+                                        }
                                     }
                                 }
                                 coroutineScope.launch {
@@ -417,7 +420,7 @@ private fun NewMiniPlayer(
                         .clickable { showAudioDeviceBottomSheet = true }
                 ) {
                     Icon(
-                        imageVector = if (isBluetoothConnected) Icons.Default.Headphones else Icons.Default.Speaker,
+                        painter = painterResource(if (isBluetoothConnected) R.drawable.bluetooth else R.drawable.speaker_apple),
                         contentDescription = stringResource(R.string.audio_devices),
                         tint = primaryColor,
                         modifier = Modifier.size(20.dp)
@@ -530,9 +533,15 @@ private fun NewMiniPlayerPlayButton(
         ) {
             mediaMetadata?.let { metadata ->
                 AsyncImage(
-                    model = metadata.thumbnailUrl,
+                    model = metadata.thumbnailUrl?.resize(544, 544),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
+                    onSuccess = {
+                        Timber.d("[Thumbnail] MiniPlayer play-button loaded: ${metadata.thumbnailUrl}")
+                    },
+                    onError = {
+                        Timber.e("[Thumbnail] MiniPlayer play-button FAILED: url=${metadata.thumbnailUrl} | error=${it.result.throwable}")
+                    },
                     modifier = Modifier.fillMaxSize().clip(CircleShape)
                 )
             }
@@ -726,9 +735,13 @@ private fun LegacyMiniPlayer(
 
                                 if (shouldChangeSong) {
                                     if (currentOffset > 0 && canSkipPrevious) {
-                                        playerConnection.player.seekToPreviousMediaItem()
+                                        if (!playerConnection.service.manualSkipToPreviousWithCrossfade()) {
+                                            playerConnection.player.seekToPreviousMediaItem()
+                                        }
                                     } else if (currentOffset <= 0 && canSkipNext) {
-                                        playerConnection.player.seekToNext()
+                                        if (!playerConnection.service.manualSkipToNextWithCrossfade()) {
+                                            playerConnection.player.seekToNext()
+                                        }
                                     }
                                 }
                                 coroutineScope.launch { offsetXAnimatable.animateTo(0f, animationSpec) }
@@ -877,9 +890,15 @@ private fun LegacyMiniMediaInfo(
             )
 
             AsyncImage(
-                model = mediaMetadata.thumbnailUrl,
+                model = mediaMetadata.thumbnailUrl?.resize(544, 544),
                 contentDescription = null,
                 contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                onSuccess = {
+                    Timber.d("[Thumbnail] LegacyMiniPlayer loaded: ${mediaMetadata.thumbnailUrl}")
+                },
+                onError = {
+                    Timber.e("[Thumbnail] LegacyMiniPlayer FAILED: url=${mediaMetadata.thumbnailUrl} | error=${it.result.throwable}")
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(RoundedCornerShape(ThumbnailCornerRadius)),

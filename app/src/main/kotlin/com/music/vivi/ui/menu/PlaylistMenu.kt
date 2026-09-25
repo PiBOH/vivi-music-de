@@ -49,6 +49,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.ui.Alignment
 import com.music.vivi.constants.InnerTubeCookieKey
+import com.music.vivi.constants.PinnedLibraryItemsKey
 import com.music.vivi.utils.rememberPreference
 import com.music.innertube.utils.parseCookieString
 import androidx.core.net.toUri
@@ -104,6 +105,7 @@ fun PlaylistMenu(
     }
 
     val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+
     val isSignedIn = remember(innerTubeCookie) {
         "SAPISID" in parseCookieString(innerTubeCookie)
     }
@@ -515,6 +517,7 @@ fun PlaylistMenu(
                             }
                         )
                     )
+
                     if (downloadPlaylist != true) {
                         add(
                             when (downloadState) {

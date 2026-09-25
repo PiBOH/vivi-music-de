@@ -56,8 +56,13 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
+import com.music.vivi.constants.LastSeenStarPromptVersionKey
+import com.music.vivi.constants.HasStarredRepoKey
+import com.music.vivi.ui.component.ActionPromptDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -195,7 +200,7 @@ import com.music.vivi.ui.component.shimmer.ShimmerTheme
 import com.music.vivi.ui.menu.YouTubeSongMenu
 import com.music.vivi.ui.player.BottomSheetPlayer
 import com.music.vivi.ui.screens.Screens
-import com.music.vivi.ui.screens.SettingDialoge
+import com.music.vivi.ui.screens.SettingsDropdownMenu
 import com.music.vivi.ui.screens.navigationBuilder
 import com.music.vivi.ui.screens.settings.DarkMode
 import com.music.vivi.ui.screens.settings.NavigationTab
@@ -228,7 +233,10 @@ import timber.log.Timber
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.util.Locale
+import com.music.vivi.github.GitHubViewModel
 import javax.inject.Inject
+import androidx.activity.viewModels
+import androidx.compose.material3.LocalContentColor
 
 @Suppress("DEPRECATION", "ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
 @AndroidEntryPoint
@@ -250,6 +258,7 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var listenTogetherManager: com.music.vivi.listentogether.ListenTogetherManager
 
+    private val gitHubViewModel: GitHubViewModel by viewModels()
     @Inject
     lateinit var deviceSyncManager: DeviceSyncManager
 
@@ -494,6 +503,13 @@ class MainActivity : ComponentActivity() {
         }
 
         val darkTheme by rememberEnumPreference(DarkModeKey, defaultValue = DarkMode.AUTO)
+
+        val (lastSeenStarPromptVersion, setLastSeenStarPromptVersion) = rememberPreference(LastSeenStarPromptVersionKey, "")
+        val (hasStarredRepo) = rememberPreference(HasStarredRepoKey, false)
+        val uriHandler = LocalUriHandler.current
+        val currentVersion = BuildConfig.VERSION_NAME
+
+
         val isSystemInDarkTheme = isSystemInDarkTheme()
         val useDarkTheme = remember(darkTheme, isSystemInDarkTheme) {
             if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
@@ -554,11 +570,115 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        val gitHubViewModel: GitHubViewModel = hiltViewModel()
+        val isStarred by gitHubViewModel.isStarred.collectAsState()
+        val showThankYouDialog by gitHubViewModel.showThankYouDialog.collectAsState()
+
+        LaunchedEffect(Unit) {
+            gitHubViewModel.checkStarStatus(this@MainActivity)
+        }
+
         vivimusicTheme(
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
         ) {
+            if (lastSeenStarPromptVersion != currentVersion && !hasStarredRepo && !isStarred) {
+                ActionPromptDialog(
+                    title = "Support ViviMusic \u2B50",
+                    onDismiss = { setLastSeenStarPromptVersion(currentVersion) },
+                    onConfirm = {
+                        setLastSeenStarPromptVersion(currentVersion)
+                        uriHandler.openUri("https://github.com/vivizzz007/vivi-music")
+                    },
+                    onCancel = { setLastSeenStarPromptVersion(currentVersion) },
+                    content = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "If you enjoy using ViviMusic, would you consider starring our repository on GitHub?",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "It takes just a second and helps keep our open-source project alive and growing!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                )
+            }
+
+            if (showThankYouDialog) {
+                ActionPromptDialog(
+                    title = "Thank You!",
+                    onDismiss = { gitHubViewModel.dismissThankYouDialog() },
+                    onConfirm = { gitHubViewModel.dismissThankYouDialog() },
+                    content = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "Thank you so much for your support! \u2764\uFE0F",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center
+                            )
+                            Text(
+                                text = "Starring the repository helps us grow and keep the project alive. Enjoy the music!",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val btnModifier = Modifier.size(44.dp)
+                                val btnColors = androidx.compose.material3.IconButtonDefaults.iconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                )
+                                val iconTint = MaterialTheme.colorScheme.onSurfaceVariant
+                                
+                                IconButton(
+                                    onClick = { uriHandler.openUri("https://ko-fi.com/vivizzz007") },
+                                    modifier = btnModifier,
+                                    colors = btnColors
+                                ) {
+                                    Icon(painter = painterResource(R.drawable.buymeacoffee), contentDescription = "Buy Me A Coffee", tint = iconTint)
+                                }
+                                IconButton(
+                                    onClick = { uriHandler.openUri("https://paypal.me/vivizzz007") },
+                                    modifier = btnModifier,
+                                    colors = btnColors
+                                ) {
+                                    Icon(painter = painterResource(R.drawable.paypal), contentDescription = "PayPal", tint = iconTint)
+                                }
+                                IconButton(
+                                    onClick = { uriHandler.openUri("upi://pay?pa=vivizzz007@upi") },
+                                    modifier = btnModifier,
+                                    colors = btnColors
+                                ) {
+                                    Icon(painter = painterResource(R.drawable.currency_rupee_upi), contentDescription = "UPI", tint = iconTint)
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
@@ -815,36 +935,11 @@ class MainActivity : ComponentActivity() {
                         sharedPrefs.unregisterOnSharedPreferenceChangeListener(updateListener)
                     }
                 }
-                
-                LaunchedEffect(isUpdateAvailable.value) {
-                    if (isUpdateAvailable.value && getUpdateNotificationsSetting(context)) {
-                        delay(200) // Ensure Snackbar collector is ready before emitting
-                        SnackbarManager.show(
-                            messageResource = R.string.new_version_found,
-                            actionLabel = R.string.action_view_update,
-                            duration = SnackbarDuration.Indefinite,
-                            onAction = {
-                                val isFoss = !BuildConfig.CAST_AVAILABLE
-                                if (isFoss) {
-                                    val intent = Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://github.com/vivizzz007/vivi-music/releases/latest")
-                                    )
-                                    context.startActivity(intent)
-                                } else {
-                                    navController.navigate("update")
-                                }
-                            }
-                        )
-                    }
-                }
-
+                // Snackbar is now triggered in checkForUpdate directly
                 val coroutineScope = rememberCoroutineScope()
                 var sharedSong: SongItem? by remember {
                     mutableStateOf(null)
                 }
-                var showSettingDialoge by remember { mutableStateOf(false) }
-                val (enableSettingsPopup) = rememberPreference(EnableSettingsPopupKey, defaultValue = false)
 
                 LaunchedEffect(Unit) {
                     if (pendingIntent != null) {
@@ -927,63 +1022,88 @@ class MainActivity : ComponentActivity() {
                                             )
                                         },
                                         actions = {
-                                            if (showHistoryButton) {
-                                                IconButton(onClick = { navController.navigate("history") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.music_history),
-                                                        contentDescription = stringResource(R.string.history)
-                                                    )
-                                                }
-                                            }
-                                            IconButton(onClick = { navController.navigate("stats") }) {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.stats),
-                                                    contentDescription = stringResource(R.string.stats)
-                                                )
-                                            }
-                                            if (listenTogetherInTopBar) {
-                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.group_outlined),
-                                                        contentDescription = stringResource(R.string.together)
-                                                    )
-                                                }
-                                            }
-                                             IconButton(onClick = {
-                                                  if (enableSettingsPopup) {
-                                                      showSettingDialoge = true
-                                                  } else {
-                                                      navController.navigate("settings")
-                                                  }
-                                              }) {
-                                                BadgedBox(badge = {}) {
-                                                    if (accountImageUrl != null) {
-                                                        AsyncImage(
-                                                            model = accountImageUrl,
-                                                            contentDescription = stringResource(R.string.account),
-                                                            modifier = Modifier
-                                                                .size(24.dp)
-                                                                .clip(CircleShape)
-                                                        )
-                                                    } else {
-                                                        val composition by rememberLottieComposition(
-                                                            LottieCompositionSpec.RawRes(R.raw.setting)
-                                                        )
-                                                        val progress by animateLottieCompositionAsState(
-                                                            composition = composition,
-                                                            isPlaying = true,
-                                                            iterations = 1,
-                                                            speed = 1.5f
-                                                        )
+                                            val (enableSettingsPopup) = rememberPreference(EnableSettingsPopupKey, defaultValue = true)
 
-                                                        LottieAnimation(
-                                                            composition = composition,
-                                                            progress = { progress },
-                                                            modifier = Modifier.size(50.dp),
-                                                            contentScale = ContentScale.Fit
+                                            if (!enableSettingsPopup) {
+                                                if (showHistoryButton) {
+                                                    IconButton(onClick = { navController.navigate("history") }) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.music_history),
+                                                            contentDescription = stringResource(R.string.history)
                                                         )
                                                     }
                                                 }
+                                                IconButton(onClick = { navController.navigate("stats") }) {
+                                                    Icon(
+                                                        painter = painterResource(R.drawable.stats),
+                                                        contentDescription = stringResource(R.string.stats)
+                                                    )
+                                                }
+                                                if (listenTogetherInTopBar) {
+                                                    IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
+                                                        Icon(
+                                                            painter = painterResource(R.drawable.group_outlined),
+                                                            contentDescription = stringResource(R.string.together)
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                            if (enableSettingsPopup && accountImageUrl != null) {
+                                                IconButton(onClick = { navController.navigate("settings/account") }) {
+                                                    AsyncImage(
+                                                        model = accountImageUrl,
+                                                        contentDescription = stringResource(R.string.account),
+                                                        modifier = Modifier
+                                                            .size(24.dp)
+                                                            .clip(CircleShape)
+                                                    )
+                                                }
+                                            }
+                                            
+                                            Box {
+                                                var showSettingsDropdown by remember { mutableStateOf(false) }
+                                                IconButton(onClick = { 
+                                                    if (enableSettingsPopup) {
+                                                        showSettingsDropdown = true 
+                                                    } else {
+                                                        navController.navigate("settings")
+                                                    }
+                                                }) {
+                                                    BadgedBox(badge = {}) {
+                                                        if (!enableSettingsPopup && accountImageUrl != null) {
+                                                            AsyncImage(
+                                                                model = accountImageUrl,
+                                                                contentDescription = stringResource(R.string.account),
+                                                                modifier = Modifier
+                                                                    .size(24.dp)
+                                                                    .clip(CircleShape)
+                                                            )
+                                                        } else {
+                                                            val composition by rememberLottieComposition(
+                                                                LottieCompositionSpec.RawRes(R.raw.setting)
+                                                            )
+                                                            val progress by animateLottieCompositionAsState(
+                                                                composition = composition,
+                                                                isPlaying = true,
+                                                                iterations = 1,
+                                                                speed = 1.5f
+                                                            )
+    
+                                                            LottieAnimation(
+                                                                composition = composition,
+                                                                progress = { progress },
+                                                                modifier = Modifier.size(50.dp),
+                                                                contentScale = ContentScale.Fit
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                SettingsDropdownMenu(
+                                                    expanded = showSettingsDropdown,
+                                                    onDismissRequest = { showSettingsDropdown = false },
+                                                    onNavigate = { route -> navController.navigate(route) },
+                                                    homeViewModel = homeViewModel
+                                                )
                                             }
                                         },
                                         scrollBehavior = topAppBarScrollBehavior,
@@ -1258,7 +1378,8 @@ class MainActivity : ComponentActivity() {
                                         navController = navController,
                                         scrollBehavior = topAppBarScrollBehavior,
                                         activity = this@MainActivity,
-                                        snackbarHostState = snackbarHostState
+                                        snackbarHostState = snackbarHostState,
+                                        homeViewModel = homeViewModel
                                     )
                                 }
                             }
@@ -1302,17 +1423,6 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-
-                    if (showSettingDialoge) {
-                        SettingDialoge(
-                            onDismissRequest = { showSettingDialoge = false },
-                            onNavigate = { route ->
-                                showSettingDialoge = false
-                                navController.navigate(route)
-                            },
-                            homeViewModel = homeViewModel
-                        )
-                    }
                 }
             }
         }
@@ -1333,6 +1443,8 @@ class MainActivity : ComponentActivity() {
             listenTogetherManager.joinRoom(listenCode, username)
             return
         }
+
+
 
         when (val path = uri.pathSegments.firstOrNull()) {
             "playlist" -> uri.getQueryParameter("list")?.let { playlistId ->

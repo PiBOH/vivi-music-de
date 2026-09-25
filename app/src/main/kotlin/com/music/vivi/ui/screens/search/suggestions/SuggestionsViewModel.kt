@@ -30,16 +30,20 @@ import android.content.Context
 import com.music.innertube.models.filterExplicit
 import com.music.vivi.constants.HideExplicitKey
 import com.music.vivi.db.MusicDatabase
+import com.music.vivi.utils.NetworkConnectivityObserver
 import com.music.vivi.utils.dataStore
 import com.music.vivi.utils.get
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.music.vivi.constants.SuggestionRegionKey
 
 @HiltViewModel
 class SuggestionsViewModel @Inject constructor(
     @ApplicationContext val context: Context,
     val database: MusicDatabase,
+    val networkConnectivityObserver: NetworkConnectivityObserver,
 ) : ViewModel() {
     private var currentLoadedRegion: String? = null
     
@@ -66,8 +70,33 @@ class SuggestionsViewModel @Inject constructor(
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
-            val regionCode = context.dataStore.get(SuggestionRegionKey, "system")
-            refresh(countryCode = regionCode, force = false)
+            context.dataStore.data
+                .map { it[SuggestionRegionKey] ?: "system" }
+                .distinctUntilChanged()
+                .collect { regionCode ->
+                    refresh(countryCode = regionCode, force = false)
+                }
+        }
+
+        // Auto-retry load when network connectivity is restored
+        viewModelScope.launch(Dispatchers.IO) {
+            var wasOffline = false
+            networkConnectivityObserver.networkStatus.collect { isConnected ->
+                if (isConnected) {
+                    val hasData = _suggestionTracks.value != null ||
+                            _suggestionAlbums.value != null ||
+                            _suggestionVideos.value != null ||
+                            _youtubeNewReleases.value != null
+
+                    if (wasOffline || !hasData) {
+                        val regionCode = context.dataStore.data.first()[SuggestionRegionKey] ?: "system"
+                        refresh(countryCode = regionCode, force = true)
+                    }
+                    wasOffline = false
+                } else {
+                    wasOffline = true
+                }
+            }
         }
     }
 
@@ -82,10 +111,9 @@ class SuggestionsViewModel @Inject constructor(
         if (!force && currentLoadedRegion == resolvedCode) return
         
         // Abort if a load is currently happening
-        if (_isLoading.value) return
+        if (!_isLoading.compareAndSet(expect = false, update = true)) return
         
         viewModelScope.launch(Dispatchers.IO) {
-            _isLoading.value = true
             if (force) _isManualLoading.value = true
             
             // Clear current data if we are switching regions or forcing a fresh load
@@ -102,7 +130,7 @@ class SuggestionsViewModel @Inject constructor(
                     // Launch each fetch in its own job so they update the UI independently
                     launch {
                         try {
-                            val tracks = AppleMusicScraper.fetchTopSongs(resolvedCode)
+                            val tracks = AppleMusicScraper.fetchTopSongs(context, resolvedCode)
                             if (tracks.isNotEmpty()) {
                                 _suggestionTracks.value = tracks
                                 _suggestionArtists.value = AppleMusicScraper.getTrendingArtists(tracks)
@@ -114,7 +142,7 @@ class SuggestionsViewModel @Inject constructor(
 
                     launch {
                         try {
-                            val albums = AppleMusicScraper.fetchTopAlbums(resolvedCode)
+                            val albums = AppleMusicScraper.fetchTopAlbums(context, resolvedCode)
                             if (albums.isNotEmpty()) {
                                 _suggestionAlbums.value = albums
                             }
@@ -125,7 +153,7 @@ class SuggestionsViewModel @Inject constructor(
 
                     launch {
                         try {
-                            val videos = AppleMusicScraper.fetchTopVideos(resolvedCode)
+                            val videos = AppleMusicScraper.fetchTopVideos(context, resolvedCode)
                             if (videos.isNotEmpty()) {
                                 _suggestionVideos.value = videos
                             }
@@ -170,9 +198,19 @@ class SuggestionsViewModel @Inject constructor(
                     }
                 }
 
-                currentLoadedRegion = resolvedCode
+                val hasData = _suggestionTracks.value != null ||
+                        _suggestionAlbums.value != null ||
+                        _suggestionVideos.value != null ||
+                        _youtubeNewReleases.value != null
+
+                if (hasData) {
+                    currentLoadedRegion = resolvedCode
+                } else {
+                    currentLoadedRegion = null
+                }
             } catch (e: Exception) {
                 Log.e("SuggestionsViewModel", "Failed to fetch suggestions", e)
+                currentLoadedRegion = null
             } finally {
                 _isLoading.value = false
                 _isManualLoading.value = false

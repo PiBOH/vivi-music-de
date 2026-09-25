@@ -174,6 +174,14 @@ class AudioPlayer {
         const val WRITER_PASS_SLOW_MS = 200L
 
         /**
+         * Time of a slow pass that has to be spent OUTSIDE `out.write()` for the
+         * pass to count as a stall (issue #3). See the companion of
+         * [WRITER_PASS_SLOW_MS]: inside the write is device backpressure, outside
+         * it is the thread not being on the CPU.
+         */
+        const val WRITER_PASS_OFFCPU_MS = 150L
+
+        /**
          * Writer passes logged in full, whatever their duration, from the start
          * of every line — plus [WRITER_PASS_LOG_OPENING_MS] of wall time, so the
          * window does not depend on how fast the passes happen to come.
@@ -1397,8 +1405,26 @@ class AudioPlayer {
             var openingPasses = 0L
             /** Passes printed in full (`openingPasses` plus the slow later ones). */
             var passesLogged = 0L
-            /** Passes at or over [WRITER_PASS_SLOW_MS], cumulative for the line. */
+            /**
+             * Passes that were slow for a reason that is OURS — at or over
+             * [WRITER_PASS_SLOW_MS] with at least [WRITER_PASS_OFFCPU_MS] of it
+             * outside `out.write()` (issue #3).
+             *
+             * The split matters because the two slow passes look identical in a
+             * count and mean opposite things: long *inside* the write is the
+             * sound card pacing us — on Windows the granted 1 s ring is refilled
+             * in ~250 ms periods, so every write waits for a period boundary and
+             * four passes a second are "over 200 ms" on a machine that is
+             * behaving perfectly — while long *outside* it is the thread not
+             * being on the CPU. Counting both as "the stall DOES repeat" made
+             * the reporter's own 1.53.25 export read as broken when its worst
+             * figure was `270ms (250ms inside the device write)`.
+             */
             var slowPasses = 0L
+            /** Passes at or over [WRITER_PASS_SLOW_MS] that were the device pacing
+             *  us (the time was inside `out.write()`): reported, never counted as
+             *  a stall. */
+            var pacedPasses = 0L
             var worstBodyMs = 0L
             var worstInWriteMs = 0L
             var worstPassIndex = 0L
@@ -1626,12 +1652,18 @@ class AudioPlayer {
                         } else {
                             "no pass timed yet"
                         }
-                        val repeats = if (slowPasses == 0L) {
-                            "none of them over ${WRITER_PASS_SLOW_MS}ms, so nothing after the " +
-                                "opening pass has been slow"
-                        } else {
-                            "${slowPasses} of them over ${WRITER_PASS_SLOW_MS}ms — the stall DOES " +
-                                "repeat, it is not the opening pass"
+                        val repeats = when {
+                            slowPasses > 0L ->
+                                "${slowPasses} of them over ${WRITER_PASS_SLOW_MS}ms with at " +
+                                    "least ${WRITER_PASS_OFFCPU_MS}ms *outside* the device " +
+                                    "write — the stall DOES repeat, it is not the opening pass"
+                            pacedPasses > 0L ->
+                                "none of them slow outside the device write: all " +
+                                    "$pacedPasses slow ones were the sound card pacing us " +
+                                    "(the ring was full, so the time was inside the write)"
+                            else ->
+                                "none of them over ${WRITER_PASS_SLOW_MS}ms, so nothing after " +
+                                    "the opening pass has been slow"
                         }
                         AppLog.log(
                             "playback",
@@ -1700,7 +1732,9 @@ class AudioPlayer {
                 val opening = passIndex <= WRITER_PASS_LOG_OPENING_PASSES ||
                     sinceStartMs <= WRITER_PASS_LOG_OPENING_MS
                 if (opening) openingPasses++
-                if (bodyMs >= WRITER_PASS_SLOW_MS) slowPasses++
+                if (bodyMs >= WRITER_PASS_SLOW_MS) {
+                    if (outsideMs >= WRITER_PASS_OFFCPU_MS) slowPasses++ else pacedPasses++
+                }
                 if (opening || bodyMs >= WRITER_PASS_SLOW_MS) {
                     passesLogged++
                     AppLog.log(
@@ -2087,7 +2121,8 @@ class AudioPlayer {
                 AppLog.log(
                     "playback",
                     "audio writer passes for this track: ${passIndex} total, " +
-                        "${slowPasses} over ${WRITER_PASS_SLOW_MS}ms, " +
+                        "${slowPasses} slow outside the device write over " +
+                        "${WRITER_PASS_SLOW_MS}ms (${pacedPasses} paced by the device), " +
                         if (worstBodyMs > 0L) {
                             "worst #$worstPassIndex at +${"%.1f".format(java.util.Locale.US, worstSinceStartMs / 1000.0)}s: " +
                                 "${worstBodyMs}ms (${worstInWriteMs}ms inside the device write)"

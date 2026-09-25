@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -57,6 +58,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachReversed
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.padding
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavController
@@ -89,6 +91,7 @@ import com.music.vivi.viewmodels.DateAgo
 import com.music.vivi.viewmodels.FlatHistoryItem
 import com.music.vivi.viewmodels.HistoryViewModel
 import java.time.format.DateTimeFormatter
+import timber.log.Timber
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -149,7 +152,7 @@ fun HistoryScreen(
     val isLoggedIn = remember(innerTubeCookie) {
         "SAPISID" in parseCookieString(innerTubeCookie)
     }
-
+    val keyboardController = LocalSoftwareKeyboardController.current
     fun dateAgoToString(dateAgo: DateAgo): String {
         return when (dateAgo) {
             DateAgo.Today -> context.getString(R.string.today)
@@ -168,6 +171,12 @@ fun HistoryScreen(
         }
     }
 
+    // Bind the player connection to the ViewModel once so it can observe
+    // the SharedFlow for successful remote history registrations.
+    LaunchedEffect(playerConnection) {
+        viewModel.bindPlayerConnection(playerConnection)
+    }
+
     val lazyListState = rememberLazyListState()
 
     Box(Modifier.fillMaxSize()) {
@@ -181,23 +190,6 @@ fun HistoryScreen(
                 )
             )
         ) {
-            item(key = "chips_row") {
-                ChipsRow(
-                    chips = if (isLoggedIn) listOf(
-                        HistorySource.LOCAL to stringResource(R.string.local_history),
-                        HistorySource.REMOTE to stringResource(R.string.remote_history),
-                    ) else {
-                        listOf(HistorySource.LOCAL to stringResource(R.string.local_history))
-                    },
-                    currentValue = historySource,
-                    onValueUpdate = {
-                        viewModel.historySource.value = it
-                        if (it == HistorySource.REMOTE){
-                            viewModel.fetchRemoteHistory()
-                        }
-                    }
-                )
-            }
 
             if (historySource == HistorySource.REMOTE && isLoggedIn) {
                 items(
@@ -430,37 +422,90 @@ fun HistoryScreen(
             }
         )
     }
-
     TopAppBar(
         title = {
             if (inSelectMode) {
                 Text(pluralStringResource(R.plurals.n_selected, selection.size, selection.size))
-            } else if (isSearching) {
+            } else {
                 TextField(
                     value = query,
                     onValueChange = { query = it },
                     placeholder = {
                         Text(
-                            text = stringResource(R.string.search),
-                            style = MaterialTheme.typography.titleLarge
+                            text = stringResource(R.string.search_history),
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.titleLarge,
+                    textStyle = MaterialTheme.typography.bodyLarge,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                        onSearch = { keyboardController?.hide() }
+                    ),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                     colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent,
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(focusRequester)
+                        .padding(end = 12.dp)
+                        .height(52.dp)
+                        .focusRequester(focusRequester),
+                    leadingIcon = {
+                        IconButton(
+                            onClick = {
+                                if (isSearching) {
+                                    isSearching = false
+                                    query = TextFieldValue()
+                                } else {
+                                    navController.navigateUp()
+                                }
+                            },
+                            onLongClick = {
+                                if (!isSearching) {
+                                    navController.backToMain()
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.arrow_back),
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    trailingIcon = {
+                        androidx.compose.foundation.layout.Row(
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                        ) {
+                            if (query.text.isNotEmpty()) {
+                                IconButton(onClick = { query = TextFieldValue("") }) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.close),
+                                        contentDescription = null
+                                    )
+                                }
+                            }
+                            IconButton(onClick = {
+                                val newSource = if (historySource == HistorySource.LOCAL) HistorySource.REMOTE else HistorySource.LOCAL
+                                viewModel.historySource.value = newSource
+                                if (newSource == HistorySource.REMOTE) {
+                                    viewModel.fetchRemoteHistory()
+                                }
+                            }) {
+                                Icon(
+                                    painter = painterResource(
+                                        if (historySource == HistorySource.LOCAL) R.drawable.cloud_off_listentogether else R.drawable.globe_search
+                                    ),
+                                    contentDescription = null
+                                )
+                            }
+                        }
+                    }
                 )
-            } else {
-                Text(stringResource(R.string.history))
             }
         },
         navigationIcon = {
@@ -469,27 +514,6 @@ fun HistoryScreen(
                     Icon(
                         painter = painterResource(R.drawable.close),
                         contentDescription = null,
-                    )
-                }
-            } else {
-                IconButton(
-                    onClick = {
-                        if (isSearching) {
-                            isSearching = false
-                            query = TextFieldValue()
-                        } else {
-                            navController.navigateUp()
-                        }
-                    },
-                    onLongClick = {
-                        if (!isSearching) {
-                            navController.backToMain()
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.arrow_back),
-                        contentDescription = null
                     )
                 }
             }
@@ -524,15 +548,6 @@ fun HistoryScreen(
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.more_vert),
-                        contentDescription = null
-                    )
-                }
-            } else if (!isSearching) {
-                IconButton(
-                    onClick = { isSearching = true }
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.search),
                         contentDescription = null
                     )
                 }

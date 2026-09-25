@@ -808,6 +808,19 @@ wrong path once:
 - **A slow opening pass is not evidence of a frozen thread.** It is excluded
   from the stall count on purpose; what matters is a pass that is slow
   *during* steady playback.
+- **A slow pass that was slow *inside* `out.write()` is the device pacing us,
+  not a stall.** On Windows the granted ring is 1000 ms and is refilled in
+  ~250 ms periods, so four passes a second are legitimately at or over 200 ms on
+  a machine that is behaving — which is why a 1.53.25 export printed
+  `79 of them over 200ms` while its worst figure was
+  `270ms (250ms inside the device write, 20ms outside)`. From **1.53.27** a pass
+  counts as a stall only with at least `WRITER_PASS_OFFCPU_MS` (150 ms) spent
+  *outside* the write; the others are reported as `paced by the device` and
+  never as a stall, and the per-track line reads
+  `N slow outside the device write over 200ms (M paced by the device)`. **Only
+  the off-CPU count is signal:** when it stops growing the writer is clean and
+  the cushion can come down; when it keeps growing the thread is being taken off
+  the CPU and the answer is `AudioThreadBoost`, not a bigger ring.
 
 ### What the 1.53.20 export (macOS 15.7.9, 24 Sep 2026) measures
 
