@@ -479,6 +479,19 @@ to the top of `CHANGELOG.md`. Omit sections that have no entries.
 distinguishable in the changelog. Desktop releases use the combined
 `<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
 
+### `AGENTS.md` changes never go in the CHANGELOG — MANDATORY (do not violate)
+
+A change to this file (`AGENTS.md`) is **never** written into `CHANGELOG.md`.
+Editing the instructions for agents is not a change to the program, so it must
+not create a `## [x.y.z_DE-…]` section, must not be listed under
+`Added`/`Changed`/`Fixed` and must not appear in a release note. Documenting a
+fix is not the fix: the CHANGELOG says what the app does differently,
+`AGENTS.md` says how to work on it.
+
+An `AGENTS.md`-only change therefore bumps nothing either — no `version.txt`,
+no `CHANGELOG.md`, no `TODO.md` — and is committed with a `docs:` title (see the
+checklist below).
+
 ### Mandatory pre-commit checklist — `version.txt` + `CHANGELOG.md` + `TODO.md`
 
 Before creating **any** commit that touches program code, build files,
@@ -750,3 +763,84 @@ Rules:
   to use and modify the Musixmatch integration. The proprietary "DO NOT MODIFY"
   header on `lyricsProvider/src/main/kotlin/com/music/musixmatch/**` and its
   tests does **not** apply to this repository — fixes to that module are allowed.
+
+## 10. Playback diagnostics — how to read a support export (issue #3)
+
+`Settings → System → Export logs` writes one directory per app start under
+`logs/`, plus `system-info.txt` (app version, OS, Java, heap) and
+`settings-summary.txt`. Start from `system-info.txt`: an export can contain
+session directories left over from an **older build** (the logs folder is copied
+whole), and a marker that no longer exists in the code can only come from those.
+
+`playback.log` is the file that answers playback questions. Its markers, in the
+order they appear for one track:
+
+| marker | meaning |
+|---|---|
+| `resolving '<title>' [id] (attempt n/3, cached=…)` | the player request. `cached=true/false` is the *stream URL*, not the audio: it only says whether the URL cache was hit. `attempt 2/3` or `3/3` means the previous attempt failed |
+| `stream ready for '<title>' (network\|cache)` | a stream URL is in hand |
+| `pre-buffered Xs of source before starting the output (wanted 8s)` | the download-frontier wait before the line is opened. Logged only when the wait actually ran |
+| `audio output: 44100Hz 16bit 2ch, device buffer Nms (asked Nms), pcm queue Ns, writes of Nms, volume N% (device gain)` | the line was opened and the backend **granted** N ms of ring — Windows caps it at 1000 ms, macOS grants 4000 ms |
+| `audio output primed: device started with Nms already queued … — <reason>` | the device was started with N ms in the ring. **Read the reason at the end**: `reached the Nms target` is the good one; anything else means it started with less than the configured cushion |
+| `audio device check: played Nms of Mms wall (P%), cushion Nms, handed over Nms` | the sound card really played N ms of audio in M ms of wall time. ~100 % is healthy |
+| `audio device stall: … (P%)` | a window below ~100 %, at most 20 per track |
+| `audio cushion low: only Nms of audio left in the device buffer` | the ring is nearly empty — the one state that can be audible |
+| `audio output starved: queue empty waiting for decode (line headroom Nms, unplayed Nms)` | the writer is waiting for the decoder; the `— the device ran dry here` suffix makes it audible |
+| `audio writer: the pass that opened the device took Nms` | pre-start work only (first write, device open, JIT of the path), and it runs **before** `out.start()`, so it cannot drain the ring. Not a stall |
+| `audio writer pass #N (+Ns after the start): Nms total, Nms inside the device write, Nms outside` | one writer pass; "outside" is time the thread was not on the CPU |
+| `audio writer stalled: Nms for one pass with only Nms of it inside the device write` | the severe case: long **and** mostly outside the write |
+| `audio integrity: N sample-table overlaps, N device stalls, N frames scanned in N fragments` | one line per finished track |
+
+Traps — each of these has already sent an analysis of this issue down the
+wrong path once:
+
+- **A window that spans a pause is not a stall.** While paused the line is
+  stopped and plays nothing, so a check reported after a resume reads
+  `played 7445ms of 581733ms (1%)` and a probe reads
+  `50ms sleep returned 393772ms late`. Both are handled now (`pausedWindow`
+  restarts the device window, the watchdog discards the first sample after a
+  resume), but exports from before **1.52.8** still contain them. Check the
+  version in `system-info.txt` before believing one.
+- **`sample table discontinuity … (delta 1824 bytes)` was a false positive and
+  no longer exists.** The 1824 bytes are the next fragment's `moof` box — a gap
+  in *bytes*, not in audio. The check is now
+  `audio integrity: N sample-table overlaps`.
+- **A slow opening pass is not evidence of a frozen thread.** It is excluded
+  from the stall count on purpose; what matters is a pass that is slow
+  *during* steady playback.
+
+### What the 1.53.20 export (macOS 15.7.9, 24 Sep 2026) measures
+
+The zip holds 20 session directories. Four (20 Sep) are leftovers from an older
+build — they carry the removed `sample table discontinuity` message and ten
+files per session instead of thirteen — and they are the **only** place a
+`audio device stall` appears, every one of them spanning a pause. In the sixteen
+1.53.20 sessions:
+
+- **No defect in the audio path.** 0 `sample-table overlaps`, 0 `device stalls`,
+  0 `cushion low`, 0 `starved`, device check 99-100 % on a 4000 ms ring. The
+  only stall lines are the *pre-start* pass of three track starts, each logged
+  0-2 ms after its own `audio output primed`.
+- **What it does measure is start latency**, and it is not in the writer:
+
+  | from → to | cached track | over the network |
+  |---|---|---|
+  | `resolving` → `stream ready` | 0-1 ms | 1608-2718 ms |
+  | `stream ready` → `pre-buffered` | (no wait ran) | 114-1067 ms |
+  | `audio output` → `primed` | 38-516 ms | 126-472 ms |
+  | **press play → first sound** | **0.4-1.2 s** | **2.2-4.1 s** |
+
+- **The device was never primed to its target**: on all 30 track starts the
+  cushion was `139ms`, `278ms` or `417ms` against a 1000 ms target — the
+  `reached the 1000ms target` exit never fired once, and the wall-clock plateau
+  did. That is what 1.53.26 replaced with a measurement (a short write is a full
+  ring) instead of a timer.
+
+To re-run the analysis, the log directory of an export is enough:
+
+```bash
+# every marker that can name a playback problem, with its session
+grep -rn "audio device stall\|cushion low\|starved\|writer stalled\|sample-table overlap" logs/*/playback.log
+# the cushion every start actually got, and whether it was the target
+grep -rho "primed: device started with [0-9]*ms" logs/*/playback.log | sort | uniq -c
+```

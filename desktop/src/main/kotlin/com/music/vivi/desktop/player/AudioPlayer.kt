@@ -248,19 +248,6 @@ class AudioPlayer {
         const val LINE_PRIME_MAX_RING_FRACTION = 0.5
 
         /**
-         * The ring may simply refuse to take more while the line is stopped (a
-         * backend buffers only so much before `write` blocks), so "wait for the
-         * cushion" needs an exit. It is NOT "the PCM queue is momentarily
-         * empty": on a cached track the decoder hands over its first fragments
-         * over-then-under time, and the reporter's log shows the device started
-         * at 278 ms because that check fired on the wrong side of a burst. The
-         * exit is now "the ring has stopped growing for this long while the
-         * producer had something to give", which cannot be decided by a single
-         * unlucky sample (issue #3).
-         */
-        const val LINE_PRIME_GROWTH_WINDOW_MS = 400L
-
-        /**
          * Seconds of audio that must already be on disk before the output line
          * is opened (issue #3). Playback used to start with only the first
          * fragment (~2 s) downloaded, so the PCM queue could never fill and the
@@ -1389,12 +1376,10 @@ class AudioPlayer {
             var lastDeviceCheckMs = 0L
             var lastDeviceCheckPlayedMs = 0L
             var deviceStallLogged = 0
-            /** Priming state (issue #3): how far the ring has been filled and
-             *  when it last grew, so "the backend refuses more while stopped"
-             *  can be told from "the producer happens to be empty right now". */
-            var primeCushionMs = 0.0
-            var primeGrowWallMs = 0L
-            var primeSeenData = false
+            /** Wall time the prime loop started, so the wait for the cushion is
+             *  bounded by the cushion itself (issue #3) instead of by a timer
+             *  with no relation to the ring. */
+            var primeStartedWallMs = 0L
             /** Set on the pass that starts the device: that pass legitimately
              *  carries first-write/JIT work and must not be reported as
              *  "the thread was not scheduled" (issue #3). */
@@ -1478,6 +1463,12 @@ class AudioPlayer {
                     done += n
                 }
                 writeBlockedMs += System.currentTimeMillis() - writeStartMs
+                // "The device ring is full" is the one fact the priming below
+                // has to be able to establish, and this is it: the write was
+                // given [pendingBytes] and kept only [done] of them. Whether the
+                // line is stopped or playing, a short write means the backend
+                // will not take more right now (issue #3).
+                val refused = done < pendingBytes
                 handedOverBytes += done.toLong()
                 pendingBytes = 0
                 lastWriteWallMs = System.currentTimeMillis()
@@ -1493,6 +1484,7 @@ class AudioPlayer {
                 if (!lineStarted) {
                     val primed = cushionMs()
                     val now = System.currentTimeMillis()
+                    if (primeStartedWallMs == 0L) primeStartedWallMs = now
                     // The target is the configured cushion, but never more than
                     // half of what the backend actually granted: on Windows the
                     // ring is 1 s (so 0.5 s of cushion), on macOS 4 s.
@@ -1500,34 +1492,44 @@ class AudioPlayer {
                         LINE_PRIME_SECONDS * 1000.0,
                         lineBufferMs * LINE_PRIME_MAX_RING_FRACTION,
                     )
-                    if (primed > primeCushionMs + 20.0) {
-                        primeCushionMs = primed
-                        primeGrowWallMs = now
-                    } else if (primeGrowWallMs == 0L) {
-                        primeGrowWallMs = now
-                    }
-                    if (!pcmQueue.isEmpty()) primeSeenData = true
                     val enough = primed >= targetMs
-                    // The only other way out: the producer has nothing left at
-                    // all, or the ring has stopped growing for a while even
-                    // though the producer kept handing audio over — which means
-                    // the backend will not accept more while the line is
-                    // stopped. Both are safe: the writer keeps filling the ring
-                    // while the device plays.
-                    val plateau = primeSeenData &&
-                        now - primeGrowWallMs >= LINE_PRIME_GROWTH_WINDOW_MS
-                    if (enough || plateau || producerDone.get()) {
+                    // The ring is full: the backend refused part of the block it
+                    // was just handed, so no amount of waiting can raise the
+                    // cushion — the device starts with what is in there. This is
+                    // the measurement that replaced the wall-clock plateau: the
+                    // plateau inferred "the ring is full" from "the cushion did
+                    // not grow for 400 ms", and in the reporter's 1.53.20 export
+                    // it fired on all 30 track starts, always with the cushion
+                    // below the 1 s that was asked for (139 ms, 278 ms, 417 ms),
+                    // because a `SourceDataLine` that has never been started
+                    // feeds the writer in bursts — a gap in the producer is not a
+                    // full ring. Here, a short write is.
+                    val full = refused && primed > 0.0
+                    // The producer is behind, and that is the one case where
+                    // waiting is right (the alternative is a cushion smaller than
+                    // the hiccups it has to absorb). The wait is bounded by the
+                    // cushion itself and not by an unrelated timer: past the
+                    // target there is nothing left to wait for. The pre-buffer
+                    // has already put seconds of source on disk, so this is the
+                    // decoder's warm-up, not a network wait.
+                    val producerLate = now - primeStartedWallMs >= targetMs
+                    if (enough || full || producerDone.get() || producerLate) {
                         lineStarted = true
                         justPrimed = true
                         runCatching { out.start() }
                         val why = when {
                             enough ->
                                 "reached the ${targetMs.toInt()}ms target"
+                            full ->
+                                "the ring is full: the device write kept ${done} of " +
+                                    "${pendingBytes} bytes handed to it"
                             producerDone.get() ->
                                 "the producer had nothing else to hand over"
                             else ->
-                                "the ring stopped taking more after ${primed.toInt()}ms " +
-                                    "(${LINE_PRIME_GROWTH_WINDOW_MS}ms without growth)"
+                                "the producer did not reach the ${targetMs.toInt()}ms " +
+                                    "target within ${targetMs.toInt()}ms of priming " +
+                                    "(decoder warm-up), so the device starts with " +
+                                    "${primed.toInt()}ms"
                         }
                         AppLog.log(
                             "playback",

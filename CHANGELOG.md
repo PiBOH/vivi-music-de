@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.6.8_DE-1.53.26-alpha] - 2026-09-25
+
+### Fixed
+- [DE] **The device is primed from a measurement now, not from a 400 ms timer (#3).** His 1.53.20 export settles what the priming was doing: on **all 30 track starts** the device was started with `139ms`, `278ms` or `417ms` in a ring that had granted 4 s, although a full second was asked for — the `audio output primed` line never says `reached the 1000ms target` once. The exit that always fired was the wall-clock plateau in `LINE_PRIME_GROWTH_WINDOW_MS`: it inferred *"the ring is full"* from *"the cushion did not grow for 400 ms"*, and the two are not the same thing — a `SourceDataLine` that has never been started feeds the writer in bursts, so a gap in the *producer* was being read as a refusal by the *device*. Now the question is asked to the write itself: `out.write()` was handed the block and kept only part of it → the ring is really full, start the device with what is in there; the write took everything → keep priming toward the cushion, bounded by that same cushion (`producerLate`) and by `producerDone`. Every exit is named in the line it logs (`the ring is full: the device write kept N of M bytes handed to it`, `reached the 1000ms target`, `the producer had nothing else to hand over`, `the producer did not reach the 1000ms target within 1000ms of priming (decoder warm-up)`). **Constraint:** the wall-clock plateau is gone, so the wait when the decoder is still warming up is now bounded by the cushion (1 s) instead of 400 ms — the device can no longer be started *before* the cushion it was configured with, but a producer that stalls for longer than the target now delays the start up to the target instead of starting first and hoping. `LINE_PRIME_GROWTH_WINDOW_MS`, `primeCushionMs`, `primeGrowWallMs` and `primeSeenData` were removed with it.
+
 ## [6.0.6.8_DE-1.53.25-alpha] - 2026-09-25
 
 ### Added
