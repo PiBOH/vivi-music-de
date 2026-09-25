@@ -16,7 +16,9 @@ orientation.
 
 ### Audio (macOS, #3)
 - [ ] **The 1 s cushion is retirable once this is measured, and 1.53.25 is what measures it.** The cushion is a legitimate pre-roll, but its *value* was raised around a writer pass that took 325-556 ms, and a buffer sized around a hiccup hides the hiccup instead of removing it. Every pass is timed from now on (the opening one, the first 30 / first 4 s in full, every pass over 200 ms after that, with `audio writer passes: … none of them over 200ms` in the 10 s device check and per track in `audio integrity`). **The decision rule:** `none of them over 200ms` after a few sessions means the slow pass really was the opening one, so the target can come back down to 0.3 s; a count that keeps growing means the thread is being taken off the CPU and the fix is its priority and allocation behaviour (`AudioThreadBoost`, no allocation on that path) — not another cushion. **Do not raise the cushion again without this line**, or the workaround becomes permanent by accident.
-- [ ] **The reporter still hears it on 1.53.20, and 1.53.22 changes exactly one thing about the start of a track** — the device is primed with a real second instead of 0.3 s (his export: `device started with 278ms already queued` followed by a 325-556 ms writer pass, i.e. the ring could not absorb the pass that followed the start). His next export is what decides: `audio output primed: … — reached the 1000ms target` with no `cushion low`/`device ran dry` line means the start is covered; a `plateau` in the priming line means his backend refuses a deeper cushion while stopped (then the ring size itself is the bound and the next step is an event-driven output, not another cushion change); a genuine `audio writer stalled` line *during* steady playback with the cushion high would be the first real evidence of a frozen thread on macOS, which 24 sessions have not shown yet.
+- [x] **The 1.53.20 export was read session by session (done 25 Sep).** It contains no playback defect: in its sixteen 1.53.20 sessions, 0 `sample-table overlaps`, 0 `device stalls`, 0 `cushion low`, 0 `starved`, and `audio device check` at 99-100 % on a 4000 ms ring. Its four 20 Sep sessions are leftovers from an older build (they still carry the removed `sample table discontinuity` message) and are the only place a `device stall` appears — every one of them spans a pause. The three `audio writer stalled` lines are the *pre-start* pass of a track start, logged 0-2 ms after their own `audio output primed`; that pass runs before `out.start()` and cannot drain the ring. The analysis and the marker table now live in §10 of `AGENTS.md`.
+- [ ] **What the export does prove is start latency, and it is not in the writer.** Press play → first sound is 0.4-1.2 s for a cached track and 2.2-4.1 s over the network, of which `resolving` alone is 1608-2718 ms; the device ring is 99-100 % in every window, so none of it is an underrun. **Next step if the jump is still audible:** a fresh export from a build ≥ 1.53.26 read with the §10 table, and if it is clean again the target moves to the `resolving` stage (one player request per track, no prefetch of the *next* track's stream URL) — not to the output pipeline.
+- [ ] **The cushion is now set by measurement, and the per-pass timing of 1.53.25 is what retires it.** All 30 starts in the 1.53.20 export were primed with 139 ms, 278 ms or 417 ms against a 1000 ms target, because a 400 ms wall-clock plateau (removed in 1.53.26) inferred "the ring is full" from "the producer went quiet" — a `SourceDataLine` that has never been started feeds the writer in bursts. A short write is now the only thing that concludes the ring is full. **The decision rule stands:** `audio writer passes: … none of them over 200ms` after a few sessions means the target can come back down to 0.3 s; a count that keeps growing means the thread is being taken off the CPU and the fix is its priority and allocation behaviour (`AudioThreadBoost`, no allocation on that path) — not another cushion. **Do not raise the cushion again without this line.**
 
 ### Performance (Windows)
 - [ ] **Playing still costs ~0.5 core** on the reporting machine (`AWT-EventQueue-0` ≈ 3.1 s CPU in 6 s, Skiko OpenGL redrawer vs `dwmFlush`). The per-tick recomposition went in 1.50.71; what is left is the renderer itself (candidates: software/ANGLE backend, lower animation rate) (#3).
@@ -40,6 +42,51 @@ orientation.
 - [ ] **Windows media flyout (SMTC):** needs WinRT COM interop (`ISystemMediaTransportControlsInterop::GetForWindow` + hwnd) that cannot be validated without a Windows machine — deferred, do not ship blind.
 - [x] **OBS / screen capture:** window capture works in both chrome modes (verified with BitBlt); waiting for the exact symptom (window missing from the list vs black preview) before documenting the WGC method.
 - [ ] **End-to-end encryption (Phase 7):** per-pair key exchanged at pairing, snapshots encrypted before the relay sees them.
+
+### Mobile (APK) — the 6.0.8.1 update
+
+- [~] **The base is upstream `v6.0.6`, and this was measured, not guessed.**
+  `git diff --shortstat` between our `app/` and the upstream tags gives:
+  `up606` → 92 files / 3346 insertions (that is *our* diff), `up607` → 219
+  files, `up608` → 226 files. So the fork point is the tag `v6.0.6` and our
+  mobile version `6.0.6.8` is PiBOH's own counter on top of it. That is what
+  turns the update into a diff to re-apply instead of a source merge.
+- [ ] **The import, in three commands, with the conflict surface already
+  measured.** The APK is built from **`vivi-music-de` itself** (`Auto Release`
+  dispatches `build-android.yml --ref "$GITHUB_REF_NAME"`), so the mobile code
+  that ships is this branch's `app/`:
+  ```bash
+  # 1. our own diff, as a patch (the base is the tag, see above)
+  git diff up606 HEAD -- app > .ignore/our-app.patch
+  # 2. upstream 6.0.8 onto the mobile code and the modules the app compiles against
+  git checkout up608 -- app innertube jiosaavn lyricsProvider gradle/libs.versions.toml
+  # 3. our features back on top, 3-way
+  git apply -3 --exclude=app/src/main/res/values-az/updater_strings_az.xml .ignore/our-app.patch
+  ```
+  Run for real on 25 Sep, step 3 stops on **one** file 6.0.8 does not have
+  (`app/src/main/res/values-az/updater_strings_az.xml`: `patch does not apply`
+  — it is ours, hence the `--exclude`) and reports conflicts in **eight**:
+  `app/build.gradle.kts`, `MainActivity.kt`, `constants/PreferenceKeys.kt`,
+  `playback/MusicService.kt`, `ui/component/Lyrics_v2.kt`,
+  `ui/screens/settings/UpdateSettings.kt`, `utils/YTPlayerUtils.kt`,
+  `vivimusic/updater/vivimusicupdater.kt`. `git apply` is atomic, so that one
+  failure rolls the whole patch back — which is why the tree was reverted
+  instead of left half-applied. Resolve the eight by keeping both sides, then
+  re-apply our `app/build.gradle.kts` config by hand
+  (`applicationId com.vivi.music.desktop`, `versionName`/`versionCode`, the
+  `-Pchannel` → `RELEASE_CHANNEL` block, the "VIVI for DE" app name and
+  `implementation(project(":sync"))`), because step 1's copy of that file is the
+  tag's. **Constraint:** do not commit before
+  `:app:compileUniversalGmsDebugKotlin` is green — the release dispatches the
+  Android build from this branch, and scratch branches are banned (AGENTS.md).
+- [ ] **Then the version and the mirror:** mobile `version.txt` lines 1-2 →
+  `6.0.8.1` / `139`, the same in `app/build.gradle.kts`, an `[APK]` bullet in
+  the same CHANGELOG entry as the desktop change, and `CHANGELOG.md` /
+  `version.txt` / `TODO.md` / `AGENTS.md` copied wholesale onto
+  `vivi-music-de-apk`.
+- [ ] **Why it is not finished:** the import was measured and then reverted on
+  purpose. What is left is eight conflict resolutions and one Android build —
+  execution, not investigation.
 
 ## Done — one line per release
 
