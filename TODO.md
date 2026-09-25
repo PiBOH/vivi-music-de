@@ -43,6 +43,51 @@ orientation.
 - [x] **OBS / screen capture:** window capture works in both chrome modes (verified with BitBlt); waiting for the exact symptom (window missing from the list vs black preview) before documenting the WGC method.
 - [ ] **End-to-end encryption (Phase 7):** per-pair key exchanged at pairing, snapshots encrypted before the relay sees them.
 
+### Mobile (APK) — the 6.0.8.1 update
+
+- [~] **The base is upstream `v6.0.6`, and this was measured, not guessed.**
+  `git diff --shortstat` between our `app/` and the upstream tags gives:
+  `up606` → 92 files / 3346 insertions (that is *our* diff), `up607` → 219
+  files, `up608` → 226 files. So the fork point is the tag `v6.0.6` and our
+  mobile version `6.0.6.8` is PiBOH's own counter on top of it. That is what
+  turns the update into a diff to re-apply instead of a source merge.
+- [ ] **The import, in three commands, with the conflict surface already
+  measured.** The APK is built from **`vivi-music-de` itself** (`Auto Release`
+  dispatches `build-android.yml --ref "$GITHUB_REF_NAME"`), so the mobile code
+  that ships is this branch's `app/`:
+  ```bash
+  # 1. our own diff, as a patch (the base is the tag, see above)
+  git diff up606 HEAD -- app > .ignore/our-app.patch
+  # 2. upstream 6.0.8 onto the mobile code and the modules the app compiles against
+  git checkout up608 -- app innertube jiosaavn lyricsProvider gradle/libs.versions.toml
+  # 3. our features back on top, 3-way
+  git apply -3 --exclude=app/src/main/res/values-az/updater_strings_az.xml .ignore/our-app.patch
+  ```
+  Run for real on 25 Sep, step 3 stops on **one** file 6.0.8 does not have
+  (`app/src/main/res/values-az/updater_strings_az.xml`: `patch does not apply`
+  — it is ours, hence the `--exclude`) and reports conflicts in **eight**:
+  `app/build.gradle.kts`, `MainActivity.kt`, `constants/PreferenceKeys.kt`,
+  `playback/MusicService.kt`, `ui/component/Lyrics_v2.kt`,
+  `ui/screens/settings/UpdateSettings.kt`, `utils/YTPlayerUtils.kt`,
+  `vivimusic/updater/vivimusicupdater.kt`. `git apply` is atomic, so that one
+  failure rolls the whole patch back — which is why the tree was reverted
+  instead of left half-applied. Resolve the eight by keeping both sides, then
+  re-apply our `app/build.gradle.kts` config by hand
+  (`applicationId com.vivi.music.desktop`, `versionName`/`versionCode`, the
+  `-Pchannel` → `RELEASE_CHANNEL` block, the "VIVI for DE" app name and
+  `implementation(project(":sync"))`), because step 1's copy of that file is the
+  tag's. **Constraint:** do not commit before
+  `:app:compileUniversalGmsDebugKotlin` is green — the release dispatches the
+  Android build from this branch, and scratch branches are banned (AGENTS.md).
+- [ ] **Then the version and the mirror:** mobile `version.txt` lines 1-2 →
+  `6.0.8.1` / `139`, the same in `app/build.gradle.kts`, an `[APK]` bullet in
+  the same CHANGELOG entry as the desktop change, and `CHANGELOG.md` /
+  `version.txt` / `TODO.md` / `AGENTS.md` copied wholesale onto
+  `vivi-music-de-apk`.
+- [ ] **Why it is not finished:** the import was measured and then reverted on
+  purpose. What is left is eight conflict resolutions and one Android build —
+  execution, not investigation.
+
 ## Done — one line per release
 
 - [x] **DE 1.53.25** — every writer pass is timed and reported (the opening pass, the passes in the first 30/4 s, every slow one after that, plus a per-window and per-track verdict), so an export can say whether the writer stall that forced the 1 s cushion repeats or was only the opening pass
