@@ -106,6 +106,19 @@ class DesktopSyncManager {
      *  resolving/ready transition past the echo-suppression window). */
     private var lastPushedResolving: Boolean? = null
 
+    /**
+     * A user seek is still waiting to leave this device.
+     *
+     * Over a paired link the peer keeps ticking a periodic re-sync every few
+     * seconds, and every received tick opens an echo-suppression window. A seek
+     * performed inside that window used to be silently dropped — and since the
+     * periodic tick is treated by the receiver as a forward-only "catch up", a
+     * BACKWARD seek had no way back ("forward works, backward does not"). The
+     * flag keeps re-asserting `userSeek = true` on every push until one really
+     * leaves the device, so the receiver applies it exactly, both directions.
+     */
+    private var userSeekPending = false
+
     init {
         lastLibrary = DesktopSettings.load().library
         // Best-effort: when the desktop window is closed while the LAN relay is
@@ -220,13 +233,19 @@ class DesktopSyncManager {
      * callers that care (the volume poll loops) can retry.
      */
     fun updatePlayback(playback: PlaybackSnapshot?): Boolean {
+        if (playback?.userSeek == true) userSeekPending = true
         lastPlayback = playback?.let { p ->
+            // Re-assert a seek that has not left the device yet on whatever
+            // snapshot we push next (including the periodic re-sync), so a seek
+            // swallowed by the echo-suppression window is delivered on the
+            // following tick instead of being lost.
+            val withSeek = if (userSeekPending) p.copy(userSeek = true) else p
             // Stamp the shared-clock timestamp only when the relay clock offset
             // is known. If we stamp a raw local clock (offset still converging
             // or an older relay without PONG echo), the peer extrapolates by the
             // clock skew and seeks back/forth forever.
-            val stamp = p.positionAtMs == 0L && client?.hasServerOffset == true
-            var snap = if (stamp) p.copy(positionAtMs = serverNowMs()) else p
+            val stamp = withSeek.positionAtMs == 0L && client?.hasServerOffset == true
+            var snap = if (stamp) withSeek.copy(positionAtMs = serverNowMs()) else withSeek
             val fp = queueFingerprint(snap)
             if (fp.isNotEmpty() && fp != lastQueueFingerprint) {
                 // The queue/index changed locally: stamp a fresh LWW timestamp
@@ -239,8 +258,13 @@ class DesktopSyncManager {
         // A resolving transition is new, asymmetric information (this device
         // needs time to buffer while the peer may already be playing). Force it
         // past the echo-suppression window so the peer learns to hold/start.
+        // A user seek is forced the same way: it is a discrete command that must
+        // reach the peer in either direction, never a "best effort" tick.
         val resolving = lastPlayback?.isResolving
-        return pushSnapshot(force = resolving != lastPushedResolving)
+        val force = userSeekPending || resolving != lastPushedResolving
+        val sent = pushSnapshot(force = force)
+        if (sent) userSeekPending = false
+        return sent
     }
 
     /** Last-write-wins timestamp of the local queue (relay frame); 0 = none. */
@@ -330,11 +354,22 @@ class DesktopSyncManager {
         // (a device kept its own list, so only one song ever matched): every
         // push records how many tracks it carries and which one is current.
         lastPlayback?.let { p ->
+            // One line per push that answers, at a glance, the questions a sync
+            // bug report asks: which track (and where in the queue), whether it
+            // is playing, whether the position is a user seek (the peer applies
+            // it exactly, both directions) or a forward-only drift tick, and the
+            // queue's last-write-wins stamp that decides who owns the list.
+            val kind = when {
+                p.userSeek -> "USER SEEK"
+                p.isResolving -> "resolving"
+                else -> "tick/state"
+            }
             AppLog.log(
                 "sync",
-                "send: track='${p.trackTitle ?: p.trackId}' queue=${p.queue.size} index=${p.queueIndex} " +
-                    "playing=${p.isPlaying} resolving=${p.isResolving} pos=${p.positionMs} " +
-                    "seek=${p.userSeek} queueAt=${p.queueUpdatedAt}",
+                "send [$kind]: track='${p.trackTitle ?: p.trackId}' queue=${p.queue.size} " +
+                    "index=${p.queueIndex} playing=${p.isPlaying} resolving=${p.isResolving} " +
+                    "pos=${p.positionMs}ms seek=${p.userSeek} queueAt=${p.queueUpdatedAt}" +
+                    if (force) " (forced past echo suppression)" else "",
             )
         }
         c.pushSnapshot(
@@ -355,9 +390,13 @@ class DesktopSyncManager {
         when (event) {
             is SyncEvent.Connected -> {
                 _status.value = "Connected"
+                AppLog.log("sync", "link connected to the relay")
                 if (DesktopSettings.load().pairId.isNotEmpty()) client?.pullSnapshot()
             }
-            is SyncEvent.Disconnected -> _status.value = "Disconnected"
+            is SyncEvent.Disconnected -> {
+                _status.value = "Disconnected"
+                AppLog.log("sync", "link disconnected from the relay")
+            }
             is SyncEvent.PairCode -> {
                 _pairCode.value = event.code
                 _pairCodeExpiresAt.value = System.currentTimeMillis() + PAIR_CODE_TTL_MS
@@ -371,6 +410,7 @@ class DesktopSyncManager {
                 _peerDeviceId.value = event.peerDeviceId
                 DesktopSettings.update { it.copy(pairId = event.pairId) }
                 _status.value = "Paired with ${event.peerDeviceName}"
+                AppLog.log("sync", "paired with '${event.peerDeviceName}' (${event.peerDeviceId})")
                 pushSnapshot()
             }
             is SyncEvent.NoSnapshot -> {
@@ -378,12 +418,25 @@ class DesktopSyncManager {
                 // still paired (just no mailbox snapshot yet).
                 _paired.value = true
                 _status.value = "Paired"
+                AppLog.log("sync", "reconnected as paired (relay has no mailbox snapshot yet)")
             }
             is SyncEvent.SnapshotReceived -> {
                 _paired.value = true
                 event.snapshot.deviceName.takeIf { it.isNotBlank() }?.let { _peerDeviceName.value = it }
                 suppressPushUntil = System.currentTimeMillis() + ECHO_SUPPRESS_MS
                 _status.value = "Snapshot received"
+                event.snapshot.playback?.let { p ->
+                    AppLog.log(
+                        "sync",
+                        "snapshot received from '${event.snapshot.deviceName}': " +
+                            "track='${p.trackTitle ?: p.trackId}' queue=${p.queue.size} " +
+                            "index=${p.queueIndex} playing=${p.isPlaying} resolving=${p.isResolving} " +
+                            "pos=${p.positionMs}ms seek=${p.userSeek} queueAt=${p.queueUpdatedAt}",
+                    )
+                } ?: AppLog.log(
+                    "sync",
+                    "snapshot received from '${event.snapshot.deviceName}' (no playback)",
+                )
                 if (event.snapshot.settings.isNotEmpty()) {
                     _syncedSettings.value = event.snapshot.settings
                     DesktopSettings.update { it.copy(settings = event.snapshot.settings) }
@@ -404,12 +457,15 @@ class DesktopSyncManager {
                     event.message.contains("not paired", ignoreCase = true)
                 ) {
                     // The peer unpaired us, or the relay no longer knows this pair.
+                    AppLog.log("sync", "peer unpaired us — dropping the local pairing")
                     _paired.value = false
                     _pairCode.value = ""
                     _pairCodeExpiresAt.value = 0L
                     _peerDeviceName.value = ""
                     _peerDeviceId.value = ""
                     DesktopSettings.update { it.copy(pairId = "") }
+                } else {
+                    AppLog.log("sync", "error: ${event.message}")
                 }
             }
         }

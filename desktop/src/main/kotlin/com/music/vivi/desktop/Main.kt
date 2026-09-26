@@ -1901,12 +1901,14 @@ fun WindowScope.App(
             }
             pb.isShuffle?.let { player.setShuffle(it) }
             val currentId = player.state.value.current?.videoId
+            val sameTrack = currentId != null && pb.trackId != null && pb.trackId == currentId
             AppLog.log(
                 "sync",
                 "recv: track='${pb.trackTitle ?: pb.trackId}' queue=${pb.queue.size} index=${pb.queueIndex} " +
                     "playing=${pb.isPlaying} resolving=${pb.isResolving} pos=${pb.positionMs} " +
                     "seek=${pb.userSeek} queueAt=${pb.queueUpdatedAt} " +
-                    "localQueueAt=${syncManager.queueUpdatedAt()}",
+                    "localQueueAt=${syncManager.queueUpdatedAt()} " +
+                    (if (sameTrack) "[same track]" else "[track change] [local='${player.state.value.current?.title ?: "-"}']"),
             )
             if (currentId != null && pb.trackId != null && pb.trackId == currentId) {
                 // The queue travels with the current track too. Both devices
@@ -1982,16 +1984,32 @@ fun WindowScope.App(
                             // Peer is mid-song buffering (position frozen): keep
                             // playing and skip the seek instead of pausing, so a
                             // brief rebuffer on the phone doesn't stop the desktop.
+                            AppLog.log("sync", "held: peer is resolving (position frozen), keeping local playback")
                         }
                         stalePaused -> {
                             // Ignored: stale peer "paused" snapshot (see above).
+                            AppLog.log("sync", "ignored a stale peer 'paused' snapshot (age ${staleAgeMs}ms)")
                         }
                         gracePaused -> {
                             // Ignored: peer pre-action "paused" echo (see above).
                             // The next fresh tick applies the peer's real state.
+                            AppLog.log("sync", "ignored a peer 'paused' echo inside the local play grace window (${localPlayAgo}ms)")
                         }
-                        pb.userSeek -> player.seekRemote(target, pb.isPlaying, toleranceMs = 0L)
-                        else -> player.seekRemoteCatchUp(target, pb.isPlaying, SyncServer.RESYNC_TOLERANCE_MS)
+                        pb.userSeek -> {
+                            AppLog.log(
+                                "sync",
+                                "applying peer USER SEEK: -> ${target}ms (was ${player.state.value.positionMs}ms), " +
+                                    "playing=${pb.isPlaying} (exact, both directions)",
+                            )
+                            player.seekRemote(target, pb.isPlaying, toleranceMs = 0L)
+                        }
+                        else -> {
+                            // Periodic drift tick: forward-only catch-up.
+                            if (pb.isPlaying && target - player.state.value.positionMs > SyncServer.RESYNC_TOLERANCE_MS) {
+                                AppLog.log("sync", "drift catch-up: ${player.state.value.positionMs}ms -> ${target}ms")
+                            }
+                            player.seekRemoteCatchUp(target, pb.isPlaying, SyncServer.RESYNC_TOLERANCE_MS)
+                        }
                     }
                 }
             } else {
@@ -2008,8 +2026,9 @@ fun WindowScope.App(
                     if (tracks.isNotEmpty()) {
                         AppLog.log(
                             "sync",
-                            "queue replaced by the peer's: ${tracks.size} track(s), starting at index " +
-                                "${pb.queueIndex.coerceAtLeast(0)} ('${pb.trackTitle ?: pb.trackId}')",
+                            "track change applied from the peer: '${pb.trackTitle ?: pb.trackId}' " +
+                                "(index ${pb.queueIndex.coerceAtLeast(0)} of ${tracks.size}), " +
+                                "playing=${pb.isPlaying} resolving=${pb.isResolving} at ${syncManager.effectivePosition(pb)}ms",
                         )
                         // Same ordering rule as above: the applied snapshot is
                         // recorded first, so the queue change that follows is not
@@ -2044,6 +2063,11 @@ fun WindowScope.App(
                     currentId != null && pb.trackId == currentId
                 ) {
                     val target = syncManager.effectivePosition(pb)
+                    AppLog.log(
+                        "sync",
+                        "stream ready — re-applying the snapshot received while buffering: " +
+                            "-> ${target}ms playing=${pb.isPlaying} seek=${pb.userSeek}",
+                    )
                     if (pb.userSeek) {
                         player.seekRemote(target, pb.isPlaying, toleranceMs = 0L)
                     } else {

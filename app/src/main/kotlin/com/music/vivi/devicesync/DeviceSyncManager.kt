@@ -123,6 +123,17 @@ class DeviceSyncManager @Inject constructor(
      *  resolving/ready transition past the echo-suppression window). */
     private var lastPushedResolving: Boolean? = null
 
+    /**
+     * A user seek is still waiting to leave this device.
+     *
+     * The peer keeps ticking a periodic re-sync and every received tick opens
+     * an echo-suppression window; a seek made inside it used to be dropped, and
+     * because the periodic tick is applied by the receiver as a forward-only
+     * catch-up a BACKWARD seek then had no way back. The flag re-asserts
+     * `userSeek = true` on every push until one really leaves the device.
+     */
+    private var userSeekPending = false
+
     /** While set, library pushes are suppressed (avoids echoing an applied snapshot). */
     @Volatile
     private var suppressLibraryPushUntil = 0L
@@ -242,15 +253,19 @@ class DeviceSyncManager @Inject constructor(
      * callers that care (the volume poll) can retry.
      */
     fun pushPlayback(playback: PlaybackSnapshot): Boolean {
+        if (playback.userSeek) userSeekPending = true
+        // Re-assert a seek that has not left the device on whatever snapshot we
+        // push next, so it survives the echo-suppression window.
+        val withSeek = if (userSeekPending) playback.copy(userSeek = true) else playback
         // Only stamp the shared-clock timestamp once the relay clock offset is
         // measured. Stamping a raw local clock (before the first PONG / with an
         // older relay) makes the peer extrapolate by the clock skew and causes
         // the two players to keep seeking each other back and forth.
-        val stamp = playback.positionAtMs == 0L && client?.hasServerOffset == true
+        val stamp = withSeek.positionAtMs == 0L && client?.hasServerOffset == true
         var snap = if (stamp) {
-            playback.copy(positionAtMs = serverNowMs())
+            withSeek.copy(positionAtMs = serverNowMs())
         } else {
-            playback
+            withSeek
         }
         val fp = queueFingerprint(snap)
         if (fp.isNotEmpty() && fp != lastQueueFingerprint) {
@@ -260,18 +275,19 @@ class DeviceSyncManager @Inject constructor(
         }
         lastPlayback = snap.copy(queueUpdatedAt = queueUpdatedAt)
         // A resolving transition is new, asymmetric information (this device
-        // needs time to buffer while the peer may already be playing). Force it
-        // past the echo-suppression window so the peer learns to hold/start.
+        // needs time to buffer while the peer may already be playing), and a
+        // user seek is a discrete command that must land in either direction.
+        // Both are forced past the echo-suppression window.
         val resolving = snap.isResolving
-        if (!(resolving != lastPushedResolving) &&
-            System.currentTimeMillis() < suppressPlaybackPushUntil
-        ) {
+        val force = userSeekPending || resolving != lastPushedResolving
+        if (!force && System.currentTimeMillis() < suppressPlaybackPushUntil) {
             return false
         }
         val c = client ?: return false
         if (c.connectionState.value != SyncConnectionState.CONNECTED) return false
         scope.launch { pushCurrentSnapshot() }
         lastPushedResolving = resolving
+        userSeekPending = false
         return true
     }
 
@@ -476,6 +492,7 @@ class DeviceSyncManager @Inject constructor(
         when (event) {
             is SyncEvent.Connected -> {
                 _status.value = "Connected"
+                Timber.d("DeviceSync: link connected to the relay")
                 client?.pullSnapshot()
             }
             is SyncEvent.PairCode -> _status.value = event.code
@@ -487,10 +504,14 @@ class DeviceSyncManager @Inject constructor(
                     it[DeviceSyncEnabledKey] = true
                 }
                 _status.value = "Paired with ${event.peerDeviceName}"
+                Timber.d("DeviceSync: paired with '%s' (%s)", event.peerDeviceName, event.peerDeviceId)
                 pushCurrentSnapshot()
             }
             is SyncEvent.SnapshotReceived -> applySnapshot(event.snapshot)
-            is SyncEvent.Disconnected -> _status.value = "Disconnected"
+            is SyncEvent.Disconnected -> {
+                _status.value = "Disconnected"
+                Timber.d("DeviceSync: link disconnected from the relay")
+            }
             is SyncEvent.NoSnapshot -> Unit
             is SyncEvent.Error -> {
                 _status.value = event.message
@@ -523,9 +544,14 @@ class DeviceSyncManager @Inject constructor(
         try {
             snapshot.settings.forEach { (key, value) -> applySetting(key, value) }
             snapshot.deviceName.takeIf { it.isNotBlank() }?.let { _peerDeviceName.value = it }
-            if (snapshot.playback != null) {
+            snapshot.playback?.let { p ->
                 suppressPlaybackPushUntil = System.currentTimeMillis() + 1500L
-                _pendingPlayback.value = snapshot.playback
+                _pendingPlayback.value = p
+                Timber.d(
+                    "DeviceSync recv: track='%s' queue=%d index=%d playing=%s resolving=%s pos=%dms seek=%s queueAt=%d",
+                    p.trackTitle ?: p.trackId, p.queue.size, p.queueIndex, p.isPlaying,
+                    p.isResolving, p.positionMs, p.userSeek, p.queueUpdatedAt,
+                )
             }
             snapshot.library?.let { lib ->
                 _syncedLibrary.value = lib
@@ -758,6 +784,18 @@ class DeviceSyncManager @Inject constructor(
         val current = client ?: return
         if (current.connectionState.value != SyncConnectionState.CONNECTED) return
 
+        lastPlayback?.let { p ->
+            val kind = when {
+                p.userSeek -> "USER SEEK"
+                p.isResolving -> "resolving"
+                else -> "tick/state"
+            }
+            Timber.d(
+                "DeviceSync send [%s]: track='%s' queue=%d index=%d playing=%s resolving=%s pos=%dms seek=%s",
+                kind, p.trackTitle ?: p.trackId, p.queue.size, p.queueIndex,
+                p.isPlaying, p.isResolving, p.positionMs, p.userSeek,
+            )
+        }
         val prefs = context.dataStore.data.first()
         current.pushSnapshot(
             SyncSnapshot(

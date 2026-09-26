@@ -817,12 +817,21 @@ class PlayerController {
     ) {
         if (tracks.isEmpty()) return
         val idx = index.coerceIn(0, tracks.lastIndex)
-        // Hold while the peer is still resolving its stream (symmetric with the
-        // mobile, which also holds on `isResolving`). `resumeWhenReady` records
-        // the peer's ultimate intent: when it wants to play we only hold until
-        // our own stream is ready, then auto-start instead of emitting a
-        // transient isPlaying=false snapshot that would pause the peer.
-        val startPaused = !isPlaying || isResolving
+        // The peer's ultimate intent is whether it wants to play.
+        //
+        // This used to also hold when the PEER was still resolving its stream
+        // (`startPaused = !isPlaying || isResolving`). On the desktop that is a
+        // deadlock: with `startPaused = true` the audio writer "honours pause
+        // without writing a byte", so no position is ever reported, so the
+        // `resumeWhenReady` path (which waits for the first position report)
+        // never ran — the receiving device adopted the new queue and stayed
+        // silent while the sender played ("the song changes everywhere but only
+        // starts on one device"). The hold now only covers our OWN readiness,
+        // which is what the mobile's `playWhenReady = isPlaying` expresses: we
+        // start as soon as our stream is primed. While we are still resolving we
+        // push `isResolving = true`, which the peer ignores (it never pauses its
+        // own startup on it), so nothing is bounced back.
+        val startPaused = !isPlaying
         playAt(
             tracks,
             idx,
@@ -1027,6 +1036,17 @@ class PlayerController {
                     // we were held only because the peer was still resolving
                     // (resumeWhenReady), resume now so the paired device never
                     // sees a transient isResolving=false/isPlaying=false pause.
+                    if (_state.value.isResolving) {
+                        // The device-sync log wants the one event that proves a
+                        // remote command really landed here: the moment this
+                        // device actually starts outputting audio ("the song
+                        // starts on every device").
+                        AppLog.log(
+                            "sync",
+                            "audio started on this device: '${track.title}' [${track.videoId}] at ${pos}ms" +
+                                if (resumeWhenReady) " (start held for the peer until the stream was ready)" else "",
+                        )
+                    }
                     if (resumeWhenReady && _state.value.isResolving) player.resume()
                     _state.update { s ->
                         if (s.index == index && s.queue.getOrNull(index)?.videoId == track.videoId) {

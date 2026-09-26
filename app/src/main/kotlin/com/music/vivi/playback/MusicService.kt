@@ -1822,9 +1822,14 @@ class MusicService :
             // Explicit user seeks are applied exactly (both directions); periodic
             // drift ticks only catch up forward so the leader never jumps back.
             if (snapshot.userSeek) {
+                Timber.d(
+                    "DeviceSync apply USER SEEK: %dms -> %dms playing=%s (same track)",
+                    local, position, snapshot.isPlaying,
+                )
                 player.seekTo(position)
                 player.playWhenReady = snapshot.isPlaying
             } else if (snapshot.isPlaying && position - local > SyncServer.RESYNC_TOLERANCE_MS) {
+                Timber.d("DeviceSync drift catch-up: %dms -> %dms", local, position)
                 player.seekTo(position)
                 player.playWhenReady = true
             } else {
@@ -1838,6 +1843,11 @@ class MusicService :
         val newerQueue = snapshot.queueUpdatedAt <= 0L ||
             snapshot.queueUpdatedAt >= deviceSyncManager.queueUpdatedAt()
         if (!newerQueue) return
+        Timber.d(
+            "DeviceSync apply track change: '%s' (index %d of %d) playing=%s resolving=%s at %dms",
+            snapshot.trackTitle ?: snapshot.trackId, index, items.size,
+            snapshot.isPlaying, snapshot.isResolving, position,
+        )
         deviceSyncManager.noteQueueApplied(snapshot)
         playQueue(
             ListQueue(
