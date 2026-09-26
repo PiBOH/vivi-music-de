@@ -161,6 +161,7 @@ import com.music.vivi.LocalPlayerConnection
 import com.music.vivi.R
 import com.music.vivi.constants.AudioQuality
 import com.music.vivi.constants.AudioQualityKey
+import com.music.vivi.devicesync.ScreenAwake
 import com.music.vivi.constants.CropAlbumArtKey
 import com.music.vivi.constants.DarkModeKey
 import com.music.vivi.constants.HidePlayerThumbnailKey
@@ -304,7 +305,12 @@ fun BottomSheetPlayer(
     val swipeLyrics by rememberPreference(SwipeLyricsKey, false)
     val enableLyricsThumbnailPlayPause by rememberPreference(EnableLyricsThumbnailPlayPauseKey, false)
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
-    val keepScreenOn = isPlaying && isKeepScreenOn
+    // Paired with the desktop: the screen must stay on no matter what the
+    // player is doing, so the sync socket is not torn down by the display
+    // sleeping. Without this the flag was cleared here as soon as the player
+    // collapsed, immediately undoing MainActivity's paired keep-on.
+    val paired by ScreenAwake.paired.collectAsState()
+    val keepScreenOn = (isPlaying && isKeepScreenOn) || paired
 
     DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn) {
         val window = (context as? android.app.Activity)?.window
@@ -330,7 +336,8 @@ fun BottomSheetPlayer(
             if (window != null) {
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.isAppearanceLightStatusBars = !useDarkTheme
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                // Never clear it while paired: the desktop needs this screen on.
+                if (!keepScreenOn) window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
     }

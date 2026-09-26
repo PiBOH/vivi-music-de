@@ -182,6 +182,7 @@ import com.music.vivi.constants.UseAppleMiniPlayerKey
 import com.music.vivi.db.MusicDatabase
 import com.music.vivi.db.entities.SearchHistory
 import com.music.vivi.devicesync.DeviceSyncManager
+import com.music.vivi.devicesync.ScreenAwake
 import com.music.vivi.extensions.toEnum
 import com.music.vivi.models.toMediaMetadata
 import com.music.vivi.playback.DownloadUtil
@@ -384,9 +385,14 @@ class MainActivity : ComponentActivity() {
 
         // Keep the screen on while paired with the desktop, so the OS sleeping
         // the display (and suspending the network) can't tear down the sync
-        // socket and unpair the two devices.
+        // socket and unpair the two devices. The state is also published through
+        // [ScreenAwake] because the player and the lyrics views clear the window
+        // flag themselves when their own condition stops holding (a collapsed
+        // player, closed lyrics) — that used to turn the paired keep-on off
+        // again within seconds of pairing.
         lifecycleScope.launch {
             deviceSyncManager.paired.collect { paired ->
+                ScreenAwake.setPaired(paired)
                 if (paired) {
                     window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
                 } else {

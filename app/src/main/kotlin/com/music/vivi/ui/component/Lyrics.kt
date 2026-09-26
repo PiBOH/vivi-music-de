@@ -131,6 +131,7 @@ import com.music.vivi.LocalDatabase
 import com.music.vivi.LocalListenTogetherManager
 import com.music.vivi.LocalPlayerConnection
 import com.music.vivi.R
+import com.music.vivi.devicesync.ScreenAwake
 import com.music.vivi.constants.DarkModeKey
 import com.music.vivi.constants.LyricsAnimationStyle
 import com.music.vivi.constants.LyricsAnimationStyleKey
@@ -719,14 +720,18 @@ fun Lyrics(
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // Keep screen on while lyrics are visible
-    DisposableEffect(showLyrics) {
+    // Keep screen on while lyrics are visible. While paired with the desktop the
+    // screen stays on anyway, so closing the lyrics must not clear the flag the
+    // pairing set (that turned the paired keep-on off again).
+    val paired by ScreenAwake.paired.collectAsState()
+    DisposableEffect(showLyrics, paired) {
         val activity = context as? Activity
-        if (showLyrics) {
+        val keepOn = showLyrics || paired
+        if (keepOn) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
         onDispose {
-            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            if (!paired) activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 
