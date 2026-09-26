@@ -230,6 +230,11 @@ fun PlayerScreen(
     }
 
     val bgUrl = CanvasResolver.displayUrl(canvasArt, np?.thumbnail)
+    // Mobile parity ("Use canvas"): the canvas REPLACES the static artwork in
+    // the player, it is not only a background. `canvasArt` is null when the
+    // option is off, so this falls back to the cover by itself; the rotating
+    // artwork wins when it is on, exactly like the mobile condition.
+    val playerArtUrl = if (rotatingThumbnail) null else bgUrl
 
     // Crossfade the whole player (background + artwork + controls) when the
     // track changes, like Apple Music — no more hard "flash" cut between songs.
@@ -312,6 +317,7 @@ fun PlayerScreen(
                     sliderStyle = sliderStyle,
                     tabTranslucent = expressiveTabTranslucent,
                     rotatingThumbnail = rotatingThumbnail,
+                    artworkUrl = playerArtUrl,
                     accent = accent,
                     onBack = onBack,
                     autoPlayNext = autoPlayNext,
@@ -348,6 +354,7 @@ fun PlayerScreen(
                     design = design,
                     background = background,
                     rotatingThumbnail = rotatingThumbnail,
+                    artworkUrl = playerArtUrl,
                     accent = accent,
                     progressiveSeek = progressiveSeek,
                 )
@@ -389,6 +396,8 @@ private fun M3EPlayerContent(
     sliderStyle: ViviSliderStyle = ViviSliderStyle.SLIM,
     tabTranslucent: Boolean = false,
     rotatingThumbnail: Boolean = false,
+    /** Canvas artwork (mobile "Use canvas"): replaces the cover when present. */
+    artworkUrl: String? = null,
     accent: Color = MaterialTheme.colorScheme.primary,
     onBack: (() -> Unit)? = null,
     autoPlayNext: Boolean = true,
@@ -460,7 +469,7 @@ private fun M3EPlayerContent(
                             .offset(x = artworkOffsetX, y = artworkOffsetY)
                             .shadow(20.dp, RoundedCornerShape(12.dp))
                     ) {
-                        PlayerThumbnail(np.thumbnail, artworkSize, 12.dp, rotatingThumbnail)
+                        PlayerThumbnail(artworkUrl ?: np.thumbnail, artworkSize, 12.dp, rotatingThumbnail)
                     }
 
                     Spacer(Modifier.height(14.dp))
@@ -954,6 +963,8 @@ private fun PlayerContent(
     design: PlayerDesign = PlayerDesign.CLASSIC,
     background: PlayerBackgroundStyle = PlayerBackgroundStyle.CANVAS,
     rotatingThumbnail: Boolean = false,
+    /** Canvas artwork (mobile "Use canvas"): replaces the cover when present. */
+    artworkUrl: String? = null,
     accent: Color = MaterialTheme.colorScheme.primary,
     progressiveSeek: Boolean = false,
 ) {
@@ -1010,6 +1021,7 @@ private fun PlayerContent(
                 queueSize = queueSize,
                 metrics = metrics,
                 rotatingThumbnail = rotatingThumbnail,
+                artworkUrl = artworkUrl,
                 language = language,
                 onAddToPlaylist = onAddToPlaylist,
                 onOpenQueue = onOpenQueue,
@@ -1067,6 +1079,7 @@ private fun PlayerContent(
                         queueSize = queueSize,
                         metrics = metrics,
                         rotatingThumbnail = rotatingThumbnail,
+                        artworkUrl = artworkUrl,
                         language = language,
                         onAddToPlaylist = onAddToPlaylist,
                         onOpenQueue = onOpenQueue,
@@ -1138,6 +1151,8 @@ private fun PlayerArtworkBlock(
     queueSize: Int,
     metrics: PlayerDesignMetrics,
     rotatingThumbnail: Boolean,
+    /** Canvas artwork for the current track, or null to use the cover. */
+    artworkUrl: String? = null,
     language: String,
     onAddToPlaylist: (() -> Unit)?,
     onOpenQueue: () -> Unit,
@@ -1158,9 +1173,10 @@ private fun PlayerArtworkBlock(
         // Artwork with Apple-style ambience: a colored glow (blurred artwork)
         // behind it and a soft specular reflection below.
         Box(contentAlignment = Alignment.Center) {
-            if (!np.thumbnail.isNullOrBlank()) {
+            val art = artworkUrl ?: np.thumbnail
+            if (!art.isNullOrBlank()) {
                 CachedBlurBackdrop(
-                    artworkUrl = np.thumbnail,
+                    artworkUrl = art,
                     modifier = Modifier
                         .size(metrics.artSize * 1.18f)
                         .alpha(0.55f)
@@ -1225,7 +1241,7 @@ private fun PlayerArtworkBlock(
                 }
             Box(blockModifier) {
                 Box {
-                    PlayerThumbnail(np.thumbnail, metrics.artSize, metrics.artCorner, rotatingThumbnail)
+                    PlayerThumbnail(art, metrics.artSize, metrics.artCorner, rotatingThumbnail)
                     if (metrics.overlayTitle) {
                         Box(
                             Modifier
