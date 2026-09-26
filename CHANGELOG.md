@@ -11,6 +11,12 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.1_DE-1.53.31-alpha] - 2026-09-26
+
+### Fixed
+- [DE] **The changelog text is selectable (and copyable) like every error message in the app.** The About → Changelog release body was plain, non-selectable text, so a line a user wanted to quote in a report could not be copied. The selected release is now wrapped in a targeted `SelectionContainer` (only that column, never a popup-bearing subtree — see the CMP-2326 note in `Main.kt`), so the version/date, the section headings and every bullet can be selected and copied. **Constraint:** the `#N` issue links are still clickable; the `SelectionContainer` wraps only the release column, so the version list and the surrounding navigation are unaffected.
+- [DE] **The Windows toast no longer fails with `SQLITE_CONSTRAINT_UNIQUE` when two notifications are shown back to back.** `native-notify.log` shows the second `Show` of a burst throwing `SQLITE_CONSTRAINT_UNIQUE` from `ToastNotificationManager`, because every toast was created with the default empty `Tag`/`Group` and the Action Center stores toasts by `(AUMID, Tag, Group)`. Each toast now carries a unique `Tag` (a GUID) and the app's `Group`, so a burst (an update notification right after the startup one) does not silently drop one. **Constraint:** the tag is a GUID, so two notifications of the same kind are distinct entries in the Action Center instead of replacing each other.
+
 ## [6.0.8.1_DE-1.53.30-alpha] - 2026-09-26
 
 ### Fixed
