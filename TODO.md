@@ -32,10 +32,12 @@ orientation.
 - [ ] **Azerbaijani: the desktop is clean, the phone's long paragraphs are not.** Every string the desktop shows is proper Azerbaijani now (the batch 83 pass), but `app/src/main/res/values-az/vivi_strings.xml` still holds ~250 word-by-word ones like "göstər sıxlıq dəyiş will take effekt sonra restarting tətbiq. Do siz want -a yenidən başlat now?" — multi-sentence descriptions that need a native Azerbaijani pass, not a guess from here. They only reach the desktop through the keys it maps to an Android resource, and those were fixed in the extras batch; on the phone they show as-is. The generator's no-op guard already stops such a string from silently *becoming* the desktop wording, so the remaining work is visible instead of hidden.
 
 ### UI parity (mobile → desktop)
-- [ ] Album / artist / playlist context menus (the song menu — like, library, add to playlist, share — is done).
-- [ ] Gradient header on Album / Artist / Playlist (today a plain row).
-- [ ] Swipe / canvas thumbnails (the rotating one is done).
-- [ ] Spotify import, JioSaavn, the notification-permission row.
+- [x] **Album / artist / playlist context menus (done 26 Sep, 1.53.29).** The header now carries the "⋮" the song rows already had: play next, add the whole collection to the queue, go to the artist, like the album/playlist (`YouTube.likePlaylist`) or subscribe to the artist (`YouTube.subscribeChannel`), share and refresh. The like/subscribe label is session-local — the desktop has no album/artist row to read it from — so it is optimistic and resets on restart.
+- [x] **Gradient header on Album / Artist / Playlist (done 26 Sep, 1.53.29).** The plain row became the artwork behind a scrim that fades into the page background, the mobile shape. It is the same `CachedBlurBackdrop` the rest of the app uses, so the decode is cached per URL.
+- [x] **Swipe / canvas thumbnails (done 26 Sep, 1.53.29).** Swipe-to-change-song was already on the full player artwork and the mini players; what was missing was the *canvas* thumbnail: the canvas only ever fed the player background, so the mobile "Use canvas" description ("replaces the static album artwork") was not true. The resolved canvas now replaces the artwork (classic/new and expressive), with the rotating artwork still winning when it is on.
+- [x] **The notification-permission row (done 26 Sep, 1.53.29).** A row on the Notifications screen that asks macOS for the permission (the only desktop platform with one) and posts a notification right after, so the prompt appears and its result is visible.
+- [ ] **Spotify import.** The mobile screen logs in through a WebView that captures the `sp_dc` cookie, then uses the `:spotify` module to list playlists/likes and match every track to YouTube. The desktop has the `:spotify` module and a JavaFX login window for YouTube already, so this is the same shape — WebView cookie capture, `SpotifyAuth.fetchAccessToken`, `SpotifyMapper.matchScore` against `YouTube.search`, then the matched tracks into a local playlist — but it is a whole feature and was **not** started in 1.53.29.
+- [ ] **JioSaavn as a desktop source.** Mobile has the enable/quality screen (`EnableSaavnStreamingKey`, `SaavnAudioQuality`) and a `:jiosaavn` module the desktop already compiles against, but the desktop has no stream path that uses it and no settings at all. Not started in 1.53.29.
 
 ### Infra
 - [ ] **`vivi-music-de-apk` still carries the desktop sources and stale leftovers** (`.websitede/`, `NewUI_desktop.zip`, `Changelog`, `News`, the superseded workflows) next to the Android app; it should hold only the app and the modules it compiles against.
@@ -100,6 +102,7 @@ orientation.
 
 ## Done — one line per release
 
+- [x] **DE 1.53.29** — `super_logs_writer` (the per-pass writer diagnostics are off by default, so `playback.log` is not filled at pass frequency), the Album/Artist/Playlist gradient headers and context menus, the canvas actually replacing the player artwork (mobile "Use canvas"), and the notification-permission row
 - [x] **DE 1.53.27** — the writer verdict no longer counts the sound card's own pacing as a stall (a pass is a stall only when it is slow *outside* `out.write()`; on Windows four passes a second are legitimately over 200 ms), and the mobile base is upstream 6.0.8 with our `applicationId`, channel and updater kept
 - [x] **DE 1.53.26** — the device is primed from a measurement (`out.write()` keeping only part of the block) instead of a 400 ms wall-clock plateau, so all 30 starts of the 1.53.20 export can no longer be primed at 139/278/417 ms against a 1000 ms target
 - [x] **DE 1.53.25** — every writer pass is timed and reported (the opening pass, the passes in the first 30/4 s, every slow one after that, plus a per-window and per-track verdict), so an export can say whether the writer stall that forced the 1 s cushion repeats or was only the opening pass

@@ -208,6 +208,15 @@ dependencies there, or you break the desktop build.
   - `hide_custom_apk_download_button` (default `true`) has **no UI switch by
     design** — it exists only in this file; it hides the Android-APK download
     buttons on the Devices screen.
+  - `super_logs_writer` (default `false`) also has **no UI switch by design**:
+    it turns the audio-writer diagnostics on or off so a shipped `playback.log`
+    is not flooded at pass frequency. **On**, every writer pass is timed and
+    written (`audio writer pass #…`, ~one line every 120 ms through a track's
+    opening window, then every slow pass); **off** only the summary lines are
+    written (the priming exit, the 10 s device check, the per-track
+    `audio integrity` verdict and every stall/`audio writer stalled` warning).
+    Gated in `AudioPlayer.writerDetailLog`. Set it by hand in this file when a
+    writer stall has to be measured again.
 - **Commit style**: Conventional Commits (`feat:`, `fix:`, `ci:`, `refactor:`,
   `docs:`, `chore:`, `perf:`, …) with an optional scope, e.g.
   `feat(sync): …`.
