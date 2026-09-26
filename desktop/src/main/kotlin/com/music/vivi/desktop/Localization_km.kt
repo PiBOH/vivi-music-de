@@ -87,6 +87,7 @@ internal fun strings_km(): Map<String, String> =
         "ai_translation_transcribed" to "ការចម្លង",
         "ai_translation_transcribed_desc" to "បំប្លែងការបញ្ចេញសំឡេងទៅជាអក្សរគោលដៅ",
         "albums" to "អាល់ប៊ុម",
+        "allow_notifications" to "អនុញ្ញាតការជូនដំណឹង",
         "animation_speed" to "ល្បឿនចលនា",
         "animation_speed_fast" to "លឿន",
         "animation_speed_normal" to "ធម្មតា",

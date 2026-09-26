@@ -87,6 +87,7 @@ internal fun strings_fi(): Map<String, String> =
         "ai_translation_transcribed" to "Transkriptio",
         "ai_translation_transcribed_desc" to "Muunna ääntämys kohdekirjoitukseen",
         "albums" to "Albumit",
+        "allow_notifications" to "Salli ilmoitukset",
         "animation_speed" to "Animaation nopeus",
         "animation_speed_fast" to "Nopea",
         "animation_speed_normal" to "Normaali",

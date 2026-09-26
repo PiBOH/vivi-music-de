@@ -87,6 +87,7 @@ internal fun strings_ca(): Map<String, String> =
         "ai_translation_transcribed" to "Transcripció",
         "ai_translation_transcribed_desc" to "Canvia la pronuncia a la llengua objectiu",
         "albums" to "Àlbums",
+        "allow_notifications" to "Permet les notificacions",
         "animation_speed" to "Velocitat de l'animació",
         "animation_speed_fast" to "Ràpid",
         "animation_speed_normal" to "Normal",

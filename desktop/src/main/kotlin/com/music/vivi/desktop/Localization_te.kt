@@ -87,6 +87,7 @@ internal fun strings_te(): Map<String, String> =
         "ai_translation_transcribed" to "ట్రాన్స్క్రిప్షన్",
         "ai_translation_transcribed_desc" to "ఉచ్చారణను టార్గెట్ స్క్రిప్ట్లోకి మార్చండి",
         "albums" to "ఆల్బమ్‌లు",
+        "allow_notifications" to "నోటిఫికేషన్‌లను అనుమతించండి",
         "animation_speed" to "యానిమేషన్ వేగం",
         "animation_speed_fast" to "వేగంగా",
         "animation_speed_normal" to "సాధారణం",

@@ -87,6 +87,7 @@ internal fun strings_fa(): Map<String, String> =
         "ai_translation_transcribed" to "آوانویسی",
         "ai_translation_transcribed_desc" to "تبدیل تلفظ به خط زبان مقصد",
         "albums" to "مجموعه‌ها",
+        "allow_notifications" to "اجازه اعلان‌ها",
         "animation_speed" to "سرعت انیمیشن",
         "animation_speed_fast" to "سریع",
         "animation_speed_normal" to "عادی",

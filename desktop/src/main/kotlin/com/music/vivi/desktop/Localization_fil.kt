@@ -87,6 +87,7 @@ internal fun strings_fil(): Map<String, String> =
         "ai_translation_transcribed" to "Isinalin",
         "ai_translation_transcribed_desc" to "I-convert ang pagbigkas sa target na script",
         "albums" to "Mga album",
+        "allow_notifications" to "Payagan ang mga notification",
         "animation_speed" to "Bilis ng animasyon",
         "animation_speed_fast" to "Mabilis",
         "animation_speed_normal" to "Karaniwan",

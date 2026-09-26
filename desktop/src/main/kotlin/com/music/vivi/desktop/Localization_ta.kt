@@ -87,6 +87,7 @@ internal fun strings_ta(): Map<String, String> =
         "ai_translation_transcribed" to "எழுத்துப் பிரதி",
         "ai_translation_transcribed_desc" to "உச்சரிப்பை இலக்கு எழுத்துக்கு மாற்றவும்",
         "albums" to "ஆல்பம்",
+        "allow_notifications" to "அறிவிப்புகளை அனுமதி",
         "animation_speed" to "அனிமேஷன் வேகம்",
         "animation_speed_fast" to "வேகமாக",
         "animation_speed_normal" to "இயல்பு",

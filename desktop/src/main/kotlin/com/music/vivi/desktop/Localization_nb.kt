@@ -87,6 +87,7 @@ internal fun strings_nb(): Map<String, String> =
         "ai_translation_transcribed" to "Transkripsjon",
         "ai_translation_transcribed_desc" to "Konverter uttale til målets skriftsystem",
         "albums" to "Album",
+        "allow_notifications" to "Tillat varsler",
         "animation_speed" to "Animasjonshastighet",
         "animation_speed_fast" to "Rask",
         "animation_speed_normal" to "Normal",

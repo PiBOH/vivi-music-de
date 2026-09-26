@@ -87,6 +87,7 @@ internal fun strings_ro(): Map<String, String> =
         "ai_translation_transcribed" to "Transcriere",
         "ai_translation_transcribed_desc" to "Convertește punctuația în scriptul țintă",
         "albums" to "Albume",
+        "allow_notifications" to "Permite notificările",
         "animation_speed" to "Viteza animațiilor",
         "animation_speed_fast" to "Rapid",
         "animation_speed_normal" to "Normal",

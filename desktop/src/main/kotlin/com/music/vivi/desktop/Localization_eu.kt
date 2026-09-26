@@ -87,6 +87,7 @@ internal fun strings_eu(): Map<String, String> =
         "ai_translation_transcribed" to "Transkripzioa",
         "ai_translation_transcribed_desc" to "Bihurtu ahoskera helburuko idazkerara",
         "albums" to "Diskoak",
+        "allow_notifications" to "Baimendu jakinarazpenak",
         "animation_speed" to "Animazio-abiadura",
         "animation_speed_fast" to "Azkarra",
         "animation_speed_normal" to "Normala",

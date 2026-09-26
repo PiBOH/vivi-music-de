@@ -87,6 +87,7 @@ internal fun strings_sr(): Map<String, String> =
         "ai_translation_transcribed" to "Transkripcija",
         "ai_translation_transcribed_desc" to "Pretvorite izgovor u ciljno pismo",
         "albums" to "Albumi",
+        "allow_notifications" to "Дозволи обавештења",
         "animation_speed" to "Brzina animacije",
         "animation_speed_fast" to "Brzo",
         "animation_speed_normal" to "Normalno",

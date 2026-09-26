@@ -87,6 +87,7 @@ internal fun strings_vi(): Map<String, String> =
         "ai_translation_transcribed" to "Phiên âm",
         "ai_translation_transcribed_desc" to "Chuyển cách phát âm sang hệ chữ đích",
         "albums" to "Album",
+        "allow_notifications" to "Cho phép thông báo",
         "animation_speed" to "Tốc độ hoạt ảnh",
         "animation_speed_fast" to "Nhanh",
         "animation_speed_normal" to "Bình thường",

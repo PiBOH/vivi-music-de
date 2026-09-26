@@ -87,6 +87,7 @@ internal fun strings_el(): Map<String, String> =
         "ai_translation_transcribed" to "Μεταγραφή",
         "ai_translation_transcribed_desc" to "Μετατροπή προφοράς στο σύστημα γραφής στόχο",
         "albums" to "Άλμπουμ",
+        "allow_notifications" to "Να επιτρέπονται οι ειδοποιήσεις",
         "animation_speed" to "Ταχύτητα κίνησης",
         "animation_speed_fast" to "Γρήγορη",
         "animation_speed_normal" to "Κανονική",

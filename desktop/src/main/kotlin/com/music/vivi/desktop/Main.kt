@@ -3103,6 +3103,18 @@ fun WindowScope.App(
                                 null,
                             )
                         },
+                        onRequestNotificationPermission = {
+                            // macOS grants the notification permission once, on
+                            // the first request; a notification right after is
+                            // both the proof it went through and what makes the
+                            // OS show the prompt on a build that never sent one.
+                            MacMediaSession.requestNotificationPermissionOnce()
+                            DesktopNotifier.notify(
+                                "VIVI Music DE",
+                                Localization.get(language, "notifications"),
+                                null,
+                            )
+                        },
                     )
                     is Screen.SettingsNotificationsHistory -> NotificationHistoryScreen(
                         language = language,

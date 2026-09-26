@@ -87,6 +87,7 @@ internal fun strings_et(): Map<String, String> =
         "ai_translation_transcribed" to "Transkriptsioon",
         "ai_translation_transcribed_desc" to "Teisendage hääldus sihtkirjasüsteemi",
         "albums" to "Albumid",
+        "allow_notifications" to "Luba märguanded",
         "animation_speed" to "Animatsiooni kiirus",
         "animation_speed_fast" to "Kiire",
         "animation_speed_normal" to "Tavaline",

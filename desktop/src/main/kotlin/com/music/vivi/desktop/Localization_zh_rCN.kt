@@ -87,6 +87,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "ai_translation_transcribed" to "转录",
         "ai_translation_transcribed_desc" to "将发音转换为目标文字",
         "albums" to "专辑",
+        "allow_notifications" to "允许通知",
         "animation_speed" to "动画速度",
         "animation_speed_fast" to "快",
         "animation_speed_normal" to "标准",

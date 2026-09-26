@@ -87,6 +87,7 @@ internal fun strings_hi(): Map<String, String> =
         "ai_translation_transcribed" to "प्रतिलेखन",
         "ai_translation_transcribed_desc" to "उच्चारण को लक्ष्य लिपि में बदलें",
         "albums" to "एलबम",
+        "allow_notifications" to "सूचनाओं की अनुमति दें",
         "animation_speed" to "एनिमेशन गति",
         "animation_speed_fast" to "तेज़",
         "animation_speed_normal" to "सामान्य",

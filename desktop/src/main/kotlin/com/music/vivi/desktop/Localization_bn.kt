@@ -87,6 +87,7 @@ internal fun strings_bn(): Map<String, String> =
         "ai_translation_transcribed" to "ট্রান্সক্রিপশন",
         "ai_translation_transcribed_desc" to "উচ্চারণ টার্গেট লিপিতে রূপান্তর করুন",
         "albums" to "অ্যালবাম",
+        "allow_notifications" to "বিজ্ঞপ্তির অনুমতি দিন",
         "animation_speed" to "অ্যানিমেশনের গতি",
         "animation_speed_fast" to "দ্রুত",
         "animation_speed_normal" to "স্বাভাবিক",

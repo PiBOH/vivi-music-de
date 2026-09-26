@@ -87,6 +87,7 @@ internal fun strings_hu(): Map<String, String> =
         "ai_translation_transcribed" to "Átirat",
         "ai_translation_transcribed_desc" to "A kiejtés átírása a cél ábécére",
         "albums" to "Albumok",
+        "allow_notifications" to "Értesítések engedélyezése",
         "animation_speed" to "Animáció sebessége",
         "animation_speed_fast" to "Gyors",
         "animation_speed_normal" to "Normál",

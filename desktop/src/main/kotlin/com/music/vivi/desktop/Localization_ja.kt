@@ -87,6 +87,7 @@ internal fun strings_ja(): Map<String, String> =
         "ai_translation_transcribed" to "文字起こし",
         "ai_translation_transcribed_desc" to "発音を対象の文字体系に変換",
         "albums" to "アルバム",
+        "allow_notifications" to "通知を許可",
         "animation_speed" to "アニメーション速度",
         "animation_speed_fast" to "速い",
         "animation_speed_normal" to "標準",

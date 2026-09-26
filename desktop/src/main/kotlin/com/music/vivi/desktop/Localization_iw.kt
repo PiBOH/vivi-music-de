@@ -87,6 +87,7 @@ internal fun strings_iw(): Map<String, String> =
         "ai_translation_transcribed" to "תעתיק",
         "ai_translation_transcribed_desc" to "המר הגייה לכתב שפת היעד",
         "albums" to "אלבומים",
+        "allow_notifications" to "אפשר התראות",
         "animation_speed" to "מהירות אנימציה",
         "animation_speed_fast" to "מהיר",
         "animation_speed_normal" to "רגיל",

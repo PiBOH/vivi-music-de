@@ -87,6 +87,7 @@ internal fun strings_ko(): Map<String, String> =
         "ai_translation_transcribed" to "전사",
         "ai_translation_transcribed_desc" to "발음을 대상 문자로 변환",
         "albums" to "앨범",
+        "allow_notifications" to "알림 허용",
         "animation_speed" to "애니메이션 속도",
         "animation_speed_fast" to "빠르게",
         "animation_speed_normal" to "보통",

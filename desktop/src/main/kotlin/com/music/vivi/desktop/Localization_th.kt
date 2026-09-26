@@ -87,6 +87,7 @@ internal fun strings_th(): Map<String, String> =
         "ai_translation_transcribed" to "การถอดเสียง",
         "ai_translation_transcribed_desc" to "แปลงเสียงอ่านเป็นอักษรของภาษาปลายทาง",
         "albums" to "อัลบั้ม",
+        "allow_notifications" to "อนุญาตการแจ้งเตือน",
         "animation_speed" to "ความเร็วแอนิเมชัน",
         "animation_speed_fast" to "เร็ว",
         "animation_speed_normal" to "ปกติ",

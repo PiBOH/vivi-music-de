@@ -87,6 +87,7 @@ internal fun strings_bg(): Map<String, String> =
         "ai_translation_transcribed" to "Транскрипция",
         "ai_translation_transcribed_desc" to "Преобразуване на произношението в целевата писменост",
         "albums" to "Албуми",
+        "allow_notifications" to "Разрешаване на известия",
         "animation_speed" to "Скорост на анимациите",
         "animation_speed_fast" to "Бързо",
         "animation_speed_normal" to "Нормална",

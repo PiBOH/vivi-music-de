@@ -87,6 +87,7 @@ internal fun strings_ar(): Map<String, String> =
         "ai_translation_transcribed" to "النص المكتوب",
         "ai_translation_transcribed_desc" to "تحويل النطق إلى النص المستهدف",
         "albums" to "ألبومات",
+        "allow_notifications" to "السماح بالإشعارات",
         "animation_speed" to "سرعة الرسوم المتحركة",
         "animation_speed_fast" to "سريع",
         "animation_speed_normal" to "عادي",

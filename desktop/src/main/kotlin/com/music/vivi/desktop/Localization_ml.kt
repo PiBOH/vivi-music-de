@@ -87,6 +87,7 @@ internal fun strings_ml(): Map<String, String> =
         "ai_translation_transcribed" to "ട്രാൻസ്ക്രിപ്ഷൻ",
         "ai_translation_transcribed_desc" to "ഉച്ചാരണം ടാർഗറ്റ് ലിപിയിലേക്ക് മാറ്റുക",
         "albums" to "ആൽബങ്ങൾ",
+        "allow_notifications" to "അറിയിപ്പുകൾ അനുവദിക്കുക",
         "animation_speed" to "ആനിമേഷൻ വേഗത",
         "animation_speed_fast" to "വേഗം",
         "animation_speed_normal" to "സാധാരണം",

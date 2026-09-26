@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.TouchApp
@@ -2188,6 +2189,8 @@ fun SettingsNotificationsScreen(
     onSaveHistoryChange: (Boolean) -> Unit,
     onOpenHistory: () -> Unit,
     onTestNotification: () -> Unit,
+    /** Asks the OS for the notification permission (macOS only). */
+    onRequestNotificationPermission: () -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
         Text(Localization.get(language, "notifications"), style = MaterialTheme.typography.titleLarge)
@@ -2216,6 +2219,23 @@ fun SettingsNotificationsScreen(
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(Localization.get(language, "test_notification"))
+        }
+
+        // The mobile app's notification-permission row. On the desktop only
+        // macOS has such a permission (UNUserNotificationCenter grants it once,
+        // on the first request), so the row is shown exactly there; Windows and
+        // Linux have no runtime permission to ask for.
+        if (MacMediaSession.isSupported) {
+            Spacer(Modifier.height(12.dp))
+            M3SettingsGroup(
+                items = listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.NotificationsActive,
+                        title = { Text(Localization.get(language, "allow_notifications")) },
+                        onClick = onRequestNotificationPermission,
+                    ),
+                ),
+            )
         }
 
         Spacer(Modifier.height(16.dp))

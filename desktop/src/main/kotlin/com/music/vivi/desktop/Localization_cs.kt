@@ -87,6 +87,7 @@ internal fun strings_cs(): Map<String, String> =
         "ai_translation_transcribed" to "Přepis",
         "ai_translation_transcribed_desc" to "Převést výslovnost do cílového písma",
         "albums" to "Alba",
+        "allow_notifications" to "Povolit oznámení",
         "animation_speed" to "Rychlost animací",
         "animation_speed_fast" to "Rychle",
         "animation_speed_normal" to "Normální",

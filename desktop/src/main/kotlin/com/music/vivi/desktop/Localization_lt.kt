@@ -87,6 +87,7 @@ internal fun strings_lt(): Map<String, String> =
         "ai_translation_transcribed" to "Transkripcija",
         "ai_translation_transcribed_desc" to "Konvertuoti tarimą į tikslinę rašto sistemą",
         "albums" to "Albumai",
+        "allow_notifications" to "Leisti pranešimus",
         "animation_speed" to "Animacijos greitis",
         "animation_speed_fast" to "Greitai",
         "animation_speed_normal" to "Įprastas",

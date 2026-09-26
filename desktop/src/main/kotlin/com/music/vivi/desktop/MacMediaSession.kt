@@ -180,6 +180,15 @@ object MacMediaSession {
         get() = isMac && started.get() && nativeApi != null
 
     /**
+     * True on macOS, where notifications are gated behind an OS permission the
+     * app has to ask for (once). The Notifications settings screen shows the
+     * "Enable notifications" row only where that is true; on Windows and Linux
+     * there is no runtime permission to request.
+     */
+    val isSupported: Boolean
+        get() = isMac
+
+    /**
      * Starts the session and registers the remote commands. The callbacks
      * mirror the [MediaKeys] contract so both share the same player wiring.
      */

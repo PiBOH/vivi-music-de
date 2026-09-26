@@ -87,6 +87,7 @@ internal fun strings_az(): Map<String, String> =
         "ai_translation_transcribed" to "Transkripsiya",
         "ai_translation_transcribed_desc" to "Tələffüzü hədəf əlifbaya çevirin",
         "albums" to "Albomlar",
+        "allow_notifications" to "Bildirişlərə icazə ver",
         "animation_speed" to "Animasiya sürəti",
         "animation_speed_fast" to "Sürətli",
         "animation_speed_normal" to "Normal",

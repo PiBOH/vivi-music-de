@@ -87,6 +87,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "ai_translation_transcribed" to "轉錄",
         "ai_translation_transcribed_desc" to "將發音轉換為目標文字",
         "albums" to "專輯",
+        "allow_notifications" to "允許通知",
         "animation_speed" to "動畫速度",
         "animation_speed_fast" to "快",
         "animation_speed_normal" to "標準",

@@ -87,6 +87,7 @@ internal fun strings_as(): Map<String, String> =
         "ai_translation_transcribed" to "ট্রান্সক্ৰিপশন",
         "ai_translation_transcribed_desc" to "উচ্চাৰণ লক্ষ্য লিপিলৈ ৰূপান্তৰ কৰক",
         "albums" to "এলবাম",
+        "allow_notifications" to "জাননীৰ অনুমতি দিয়ক",
         "animation_speed" to "এনিমেচনৰ গতি",
         "animation_speed_fast" to "দ্ৰুত",
         "animation_speed_normal" to "সাধাৰণ",

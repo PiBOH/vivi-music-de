@@ -87,6 +87,7 @@ internal fun strings_pa(): Map<String, String> =
         "ai_translation_transcribed" to "ਟ੍ਰਾਂਸਕ੍ਰਿਪਸ਼ਨ",
         "ai_translation_transcribed_desc" to "ਉਚਾਰਨ ਨੂੰ ਨਿਸ਼ਾਨਾ ਲਿਪੀ ਵਿੱਚ ਬਦਲੋ",
         "albums" to "ਐਲਬਮ",
+        "allow_notifications" to "ਸੂਚਨਾਵਾਂ ਦੀ ਆਗਿਆ ਦਿਓ",
         "animation_speed" to "ਐਨੀਮੇਸ਼ਨ ਦੀ ਗਤੀ",
         "animation_speed_fast" to "ਤੇਜ਼",
         "animation_speed_normal" to "ਆਮ",

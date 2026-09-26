@@ -87,6 +87,7 @@ internal fun strings_pl(): Map<String, String> =
         "ai_translation_transcribed" to "Transkrypcja",
         "ai_translation_transcribed_desc" to "Przekształć wymowę na docelowy alfabet",
         "albums" to "Albumy",
+        "allow_notifications" to "Zezwól na powiadomienia",
         "animation_speed" to "Prędkość animacji",
         "animation_speed_fast" to "Szybko",
         "animation_speed_normal" to "Normalna",
