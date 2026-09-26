@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -431,13 +432,16 @@ private fun M3EPlayerContent(
                 val artworkOffsetY = 0.dp
 
                 // 2. Song Title
+                // The title was pushed left by a hardcoded -178dp offset, so a
+                // long title looked cut off and left-aligned instead of centered.
+                // It is centered now and scrolls (marquee) when it does not fit.
                 val titleFontSize = 22.sp
-                val titleOffsetX = (-178).dp
+                val titleOffsetX = 0.dp
                 val titleOffsetY = 0.dp
 
                 // 3. Artist Text
                 val artistFontSize = 15.sp
-                val artistOffsetX = (-76).dp
+                val artistOffsetX = 0.dp
                 val artistOffsetY = 0.dp
 
                 // 4. Play Bar (Seekbar & Timestamps)
@@ -488,7 +492,11 @@ private fun M3EPlayerContent(
                             color = MaterialTheme.colorScheme.onSurface,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.offset(x = titleOffsetX, y = titleOffsetY)
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(x = titleOffsetX, y = titleOffsetY)
+                                .basicMarquee()
                         )
                         Spacer(Modifier.height(2.dp))
                         Text(
@@ -499,7 +507,10 @@ private fun M3EPlayerContent(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.offset(x = artistOffsetX, y = artistOffsetY)
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .offset(x = artistOffsetX, y = artistOffsetY)
                         )
                     }
 
@@ -775,7 +786,13 @@ private fun M3EPlayerContent(
                         .padding(16.dp)
                 ) {
                     if (activeTab == M3ETab.LYRICS) {
-                        val lyricsSettings = DesktopSettings.load()
+                        // Read the settings revision here, inside this composable:
+                        // without it the player could be skipped by Compose when
+                        // the lyrics options changed, so a change made in the
+                        // quick menu needed several attempts (or a tab switch) to
+                        // show up in the live lyrics panel.
+                        val lyricsRevision = settingsFileRevision()
+                        val lyricsSettings = remember(lyricsRevision) { DesktopSettings.load() }
                         Box(Modifier.fillMaxSize()) {
                             LyricsScreen(
                                 nowPlaying = np,
@@ -1327,6 +1344,9 @@ private fun PlayerArtworkBlock(
                 textAlign = TextAlign.Center,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .basicMarquee(),
             )
             Spacer(Modifier.height(6.dp))
             Text(

@@ -2221,22 +2221,21 @@ fun SettingsNotificationsScreen(
             Text(Localization.get(language, "test_notification"))
         }
 
-        // The mobile app's notification-permission row. On the desktop only
-        // macOS has such a permission (UNUserNotificationCenter grants it once,
-        // on the first request), so the row is shown exactly there; Windows and
-        // Linux have no runtime permission to ask for.
-        if (MacMediaSession.isSupported) {
-            Spacer(Modifier.height(12.dp))
-            M3SettingsGroup(
-                items = listOf(
-                    M3SettingsItem(
-                        icon = Icons.Filled.NotificationsActive,
-                        title = { Text(Localization.get(language, "allow_notifications")) },
-                        onClick = onRequestNotificationPermission,
-                    ),
+        // The mobile app's notification-permission row. It is shown on every
+        // desktop platform (the options belong in the UI everywhere): on macOS
+        // it asks UNUserNotificationCenter for the permission, on Windows and
+        // Linux — which have no runtime permission — it posts a notification so
+        // the row still verifies that notifications arrive.
+        Spacer(Modifier.height(12.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.NotificationsActive,
+                    title = { Text(Localization.get(language, "allow_notifications")) },
+                    onClick = onRequestNotificationPermission,
                 ),
-            )
-        }
+            ),
+        )
 
         Spacer(Modifier.height(16.dp))
         M3SettingsDropdownItem(
