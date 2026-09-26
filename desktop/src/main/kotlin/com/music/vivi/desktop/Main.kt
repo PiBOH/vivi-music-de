@@ -1443,6 +1443,20 @@ fun WindowScope.App(
         if (!playerState.isShuffle) player.toggleShuffle()
         player.playAll(songs.shuffled().map(::songToNowPlaying))
     }
+    // The Album / Artist / Playlist header menus queue the whole collection:
+    // `insertNext` puts one track right after the current position, so the list
+    // is walked backwards to keep the album's own order. With nothing playing
+    // there is no "next" to insert after, so the collection just starts.
+    val playNextAll: (List<SongItem>) -> Unit = { songs ->
+        when {
+            songs.isEmpty() -> Unit
+            playerState.current == null -> player.playAll(songs.map(::songToNowPlaying))
+            else -> songs.asReversed().forEach { player.insertNext(songToNowPlaying(it)) }
+        }
+    }
+    val addAllToQueue: (List<SongItem>) -> Unit = { songs ->
+        player.addAllToQueue(songs.map(::songToNowPlaying))
+    }
 
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -3104,6 +3118,8 @@ fun WindowScope.App(
                         onAddToPlaylist = addToPlaylist,
                         onPlayAll = playAll,
                         onShuffleAll = shuffleAll,
+                        onPlayNext = playNextAll,
+                        onAddAllToQueue = addAllToQueue,
                     )
                     is Screen.Artist -> ArtistScreen(
                         browseId = screen.browseId,
@@ -3115,6 +3131,10 @@ fun WindowScope.App(
                         onPlaySong = playSong,
                         onAddToQueue = addToQueue,
                         onAddToPlaylist = addToPlaylist,
+                        onPlayAll = playAll,
+                        onShuffleAll = shuffleAll,
+                        onPlayNext = playNextAll,
+                        onAddAllToQueue = addAllToQueue,
                     )
                     is Screen.Playlist -> PlaylistScreen(
                         playlistId = screen.playlistId,
@@ -3126,6 +3146,8 @@ fun WindowScope.App(
                         onAddToPlaylist = addToPlaylist,
                         onPlayAll = playAll,
                         onShuffleAll = shuffleAll,
+                        onPlayNext = playNextAll,
+                        onAddAllToQueue = addAllToQueue,
                     )
                     is Screen.LocalPlaylists -> LocalPlaylistsScreen(
                         language = language,

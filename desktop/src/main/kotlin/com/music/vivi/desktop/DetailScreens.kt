@@ -15,6 +15,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
@@ -31,6 +40,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +56,7 @@ import com.music.innertube.pages.ArtistItemsPage
 import com.music.innertube.pages.ArtistPage
 import com.music.innertube.pages.HistoryPage
 import com.music.innertube.pages.PlaylistPage
+import kotlinx.coroutines.launch
 
 @Composable
 fun AlbumScreen(
@@ -58,11 +69,17 @@ fun AlbumScreen(
     onAddToPlaylist: (SongItem) -> Unit,
     onPlayAll: (List<SongItem>) -> Unit,
     onShuffleAll: (List<SongItem>) -> Unit,
+    /** Header menu: queue the whole album right after the current track. */
+    onPlayNext: (List<SongItem>) -> Unit = {},
+    /** Header menu: append the whole album to the queue. */
+    onAddAllToQueue: (List<SongItem>) -> Unit = {},
 ) {
     var page by remember { mutableStateOf<AlbumPage?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    // Bumped by the header menu's "Refresh": re-runs the load below.
+    var refreshKey by remember { mutableStateOf(0) }
 
-    LaunchedEffect(browseId) {
+    LaunchedEffect(browseId, refreshKey) {
         YouTube.album(browseId).fold(
             onSuccess = { page = it.filteredContent() },
             onFailure = { error = it.message },
@@ -76,29 +93,52 @@ fun AlbumScreen(
             page == null -> LoadingBox(language)
             else -> {
                 val album = page!!.album
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Thumbnail(album.thumbnail, Modifier.size(128.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            album.title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        val artists = album.artists?.joinToString(", ") { it.name }.orEmpty()
-                        if (artists.isNotBlank()) {
-                            Text(
-                                artists,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        album.year?.let { Text(it.toString(), style = MaterialTheme.typography.bodyMedium) }
-                    }
-                }
+                val albumSongs = page!!.songs
+                val scope = rememberCoroutineScope()
+                val albumLiked = DetailActions.isCollectionLiked(album.playlistId)
+                GradientHeader(
+                    title = album.title,
+                    subtitle = album.artists?.joinToString(", ") { it.name }.orEmpty().ifBlank { null },
+                    meta = album.year?.toString(),
+                    thumbnailUrl = album.thumbnail,
+                    language = language,
+                    menuEntries = listOfNotNull(
+                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow) {
+                            onPlayAll(albumSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle) {
+                            onShuffleAll(albumSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                            onPlayNext(albumSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                            onAddAllToQueue(albumSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "add_to_playlist"), Icons.AutoMirrored.Filled.PlaylistAdd) {
+                            albumSongs.firstOrNull()?.let(onAddToPlaylist)
+                        },
+                        album.artists?.firstOrNull { it.id != null }?.let { artist ->
+                            DetailMenuEntry(Localization.get(language, "view_artist"), Icons.Filled.Person) {
+                                artist.id?.let(onOpenArtist)
+                            }
+                        },
+                        DetailMenuEntry(
+                            Localization.get(language, if (albumLiked) "unlike" else "like"),
+                            if (albumLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        ) {
+                            val next = DetailActions.toggleCollectionLiked(album.playlistId)
+                            scope.launch { YouTube.likePlaylist(album.playlistId, next) }
+                        },
+                        DetailMenuEntry(Localization.get(language, "share"), Icons.Filled.Share) {
+                            copyToClipboard(album.shareLink)
+                            DesktopSnackbar.show(Localization.get(language, "copied_to_clipboard"))
+                        },
+                        DetailMenuEntry(Localization.get(language, "refresh"), Icons.Filled.Refresh) {
+                            refreshKey++
+                        },
+                    ),
+                )
                 Spacer(Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(Localization.get(language, "songs"), style = MaterialTheme.typography.titleLarge)
@@ -132,10 +172,19 @@ fun ArtistScreen(
     onPlaySong: (SongItem) -> Unit,
     onAddToQueue: (SongItem) -> Unit,
     onAddToPlaylist: (SongItem) -> Unit,
+    /** Header menu: play / shuffle the artist's songs. */
+    onPlayAll: (List<SongItem>) -> Unit = {},
+    onShuffleAll: (List<SongItem>) -> Unit = {},
+    /** Header menu: queue the artist's songs after the current track. */
+    onPlayNext: (List<SongItem>) -> Unit = {},
+    /** Header menu: append the artist's songs to the queue. */
+    onAddAllToQueue: (List<SongItem>) -> Unit = {},
 ) {
     var page by remember { mutableStateOf<ArtistPage?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var tab by remember { mutableStateOf(0) } // 0 = Songs, 1 = Albums, 2 = Items
+    // Bumped by the header menu's "Refresh": re-runs the load below.
+    var refreshKey by remember { mutableStateOf(0) }
     // Content screen options: both rows are mobile ones (the artist page shows
     // the description and the subscriber count unless they are switched off).
     val showDescription = remember(settingsFileRevision()) { DesktopSettings.load().showArtistDescription }
@@ -143,7 +192,7 @@ fun ArtistScreen(
     var itemsPage by remember { mutableStateOf<ArtistItemsPage?>(null) }
     var itemsEndpoint by remember { mutableStateOf<BrowseEndpoint?>(null) }
 
-    LaunchedEffect(browseId) {
+    LaunchedEffect(browseId, refreshKey) {
         YouTube.artist(browseId).fold(
             onSuccess = { p ->
                 page = p.filteredContent()
@@ -170,29 +219,58 @@ fun ArtistScreen(
             page == null -> LoadingBox(language)
             else -> {
                 val artist = page!!.artist
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Thumbnail(artist.thumbnail, Modifier.size(128.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            artist.title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        if (showSubscribers) {
-                            page!!.subscriberCountText?.let {
-                                Text(
-                                    it,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                val artistSongs = page!!.sections
+                    .flatMap { it.items.filterIsInstance<SongItem>() }
+                    .distinctBy { it.id }
+                val scope = rememberCoroutineScope()
+                val subscribed = DetailActions.isArtistSubscribed(artist.id)
+                GradientHeader(
+                    title = artist.title,
+                    subtitle = if (showSubscribers) page!!.subscriberCountText else null,
+                    thumbnailUrl = artist.thumbnail,
+                    language = language,
+                    menuEntries = listOfNotNull(
+                        if (artistSongs.isNotEmpty()) {
+                            DetailMenuEntry(Localization.get(language, "play"), Icons.Filled.PlayArrow) {
+                                onPlayAll(artistSongs)
                             }
-                        }
-                    }
-                }
+                        } else null,
+                        if (artistSongs.isNotEmpty()) {
+                            DetailMenuEntry(Localization.get(language, "shuffle"), Icons.Filled.Shuffle) {
+                                onShuffleAll(artistSongs)
+                            }
+                        } else null,
+                        if (artistSongs.isNotEmpty()) {
+                            DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                                onPlayNext(artistSongs)
+                            }
+                        } else null,
+                        if (artistSongs.isNotEmpty()) {
+                            DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                                onAddAllToQueue(artistSongs)
+                            }
+                        } else null,
+                        if (artistSongs.isNotEmpty()) {
+                            DetailMenuEntry(Localization.get(language, "add_to_playlist"), Icons.AutoMirrored.Filled.PlaylistAdd) {
+                                artistSongs.firstOrNull()?.let(onAddToPlaylist)
+                            }
+                        } else null,
+                        DetailMenuEntry(
+                            Localization.get(language, if (subscribed) "subscribed" else "subscribe"),
+                            if (subscribed) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        ) {
+                            val next = DetailActions.toggleArtistSubscribed(artist.id)
+                            scope.launch { YouTube.subscribeChannel(artist.id, next) }
+                        },
+                        DetailMenuEntry(Localization.get(language, "share"), Icons.Filled.Share) {
+                            copyToClipboard(artist.shareLink)
+                            DesktopSnackbar.show(Localization.get(language, "copied_to_clipboard"))
+                        },
+                        DetailMenuEntry(Localization.get(language, "refresh"), Icons.Filled.Refresh) {
+                            refreshKey++
+                        },
+                    ),
+                )
                 if (showDescription) {
                     page!!.description?.takeIf { it.isNotBlank() }?.let { description ->
                         Text(
@@ -309,11 +387,17 @@ fun PlaylistScreen(
     onAddToPlaylist: (SongItem) -> Unit,
     onPlayAll: (List<SongItem>) -> Unit,
     onShuffleAll: (List<SongItem>) -> Unit,
+    /** Header menu: queue the whole playlist right after the current track. */
+    onPlayNext: (List<SongItem>) -> Unit = {},
+    /** Header menu: append the whole playlist to the queue. */
+    onAddAllToQueue: (List<SongItem>) -> Unit = {},
 ) {
     var page by remember { mutableStateOf<PlaylistPage?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    // Bumped by the header menu's "Refresh": re-runs the load below.
+    var refreshKey by remember { mutableStateOf(0) }
 
-    LaunchedEffect(playlistId) {
+    LaunchedEffect(playlistId, refreshKey) {
         YouTube.playlist(playlistId).fold(
             onSuccess = { page = it.filteredContent() },
             onFailure = { error = it.message },
@@ -327,30 +411,47 @@ fun PlaylistScreen(
             page == null -> LoadingBox(language)
             else -> {
                 val playlist = page!!.playlist
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Thumbnail(playlist.thumbnail, Modifier.size(128.dp))
-                    Spacer(Modifier.width(16.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            playlist.title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        playlist.author?.let {
-                            Text(
-                                it.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        playlist.songCountText?.let {
-                            Text(it, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                }
+                val playlistSongs = page!!.songs
+                val scope = rememberCoroutineScope()
+                val playlistLiked = DetailActions.isCollectionLiked(playlist.id)
+                GradientHeader(
+                    title = playlist.title,
+                    subtitle = playlist.author?.name,
+                    meta = playlist.songCountText,
+                    thumbnailUrl = playlist.thumbnail,
+                    language = language,
+                    menuEntries = listOfNotNull(
+                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow) {
+                            onPlayAll(playlistSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle) {
+                            onShuffleAll(playlistSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                            onPlayNext(playlistSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                            onAddAllToQueue(playlistSongs)
+                        },
+                        DetailMenuEntry(Localization.get(language, "add_to_playlist"), Icons.AutoMirrored.Filled.PlaylistAdd) {
+                            playlistSongs.firstOrNull()?.let(onAddToPlaylist)
+                        },
+                        DetailMenuEntry(
+                            Localization.get(language, if (playlistLiked) "unlike" else "like"),
+                            if (playlistLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        ) {
+                            val next = DetailActions.toggleCollectionLiked(playlist.id)
+                            scope.launch { YouTube.likePlaylist(playlist.id, next) }
+                        },
+                        DetailMenuEntry(Localization.get(language, "share"), Icons.Filled.Share) {
+                            copyToClipboard(playlist.shareLink)
+                            DesktopSnackbar.show(Localization.get(language, "copied_to_clipboard"))
+                        },
+                        DetailMenuEntry(Localization.get(language, "refresh"), Icons.Filled.Refresh) {
+                            refreshKey++
+                        },
+                    ),
+                )
                 Spacer(Modifier.height(16.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
