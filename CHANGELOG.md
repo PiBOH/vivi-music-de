@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.1_DE-1.53.28-alpha] - 2026-09-26
+
+### Fixed
+- [DE] **The device no longer starts under-primed — the gap heard while a track is playing (#3).** His own Windows sessions name it in two adjacent lines: `audio output primed: device started with 139ms already queued in its buffer (ring ~1000ms, target 500ms)` and then `audio writer stalled: 1170ms for one pass with only 2ms of it inside the device write (queue 7987ms, cushion 139ms)`. A 139 ms ring cannot absorb a pass that long, so the device ran dry the moment the track had begun — **with 7987 ms of PCM already sitting in the queue behind it**. The exit that fired was `producerLate`, a *wall-clock* bound: after `targetMs` (500 ms) the prime gave up, and the writer's first passes carry the device open and the JIT of the whole write path, so they can spend the entire window inside a single block — the wall clock said "the producer is behind" while the producer was 8 s ahead. Starting below the target is now allowed only when waiting cannot raise the cushion — the queue is **empty** (`queuedPcmMs() <= 0`) and the producer has nothing left to hand over — or after a hard `PRIME_GIVE_UP_MS` (3 s) bound that keeps a permanently starved writer from holding a track silent for ever; each exit is still named in the line it logs. **Constraint:** on a normal start the device now waits for the full 500 ms cushion instead of starting at whatever the warm-up happened to have produced, so a track can begin a few hundred ms later — the cost is latency, never a dry ring, and the queue-empty exit keeps a slow decoder from delaying the start indefinitely.
+
 ## [6.0.8.1_DE-1.53.27-alpha] - 2026-09-25
 
 ### Changed

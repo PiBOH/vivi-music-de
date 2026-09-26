@@ -256,6 +256,14 @@ class AudioPlayer {
         const val LINE_PRIME_MAX_RING_FRACTION = 0.5
 
         /**
+         * Hard bound on priming a device the writer has not caught up with:
+         * the start waits past [LINE_PRIME_SECONDS] while PCM is still queued
+         * (see the prime loop), but never beyond this, so a permanently starved
+         * writer cannot hold a track silent for ever.
+         */
+        const val PRIME_GIVE_UP_MS = 3_000L
+
+        /**
          * Seconds of audio that must already be on disk before the output line
          * is opened (issue #3). Playback used to start with only the first
          * fragment (~2 s) downloaded, so the PCM queue could never fill and the
@@ -1531,15 +1539,21 @@ class AudioPlayer {
                     // feeds the writer in bursts — a gap in the producer is not a
                     // full ring. Here, a short write is.
                     val full = refused && primed > 0.0
-                    // The producer is behind, and that is the one case where
-                    // waiting is right (the alternative is a cushion smaller than
-                    // the hiccups it has to absorb). The wait is bounded by the
-                    // cushion itself and not by an unrelated timer: past the
-                    // target there is nothing left to wait for. The pre-buffer
-                    // has already put seconds of source on disk, so this is the
-                    // decoder's warm-up, not a network wait.
-                    val producerLate = now - primeStartedWallMs >= targetMs
-                    if (enough || full || producerDone.get() || producerLate) {
+                    // Starting the device BELOW the target is right only when
+                    // waiting cannot raise the cushion any more, and that is a
+                    // producer with nothing left to hand over — not the wall
+                    // clock. The writer's first passes carry the device open and
+                    // the JIT of this whole path, so it can spend the entire
+                    // target window inside one block: the reporter's Windows
+                    // sessions show the device started at 139 ms that way and
+                    // running dry on the very next pass (1170 ms, 2 ms of it
+                    // inside the write) while 7987 ms of PCM sat in the queue —
+                    // the audible gap at the beginning of a track.
+                    val queueEmpty = queuedPcmMs() <= 0
+                    val producerLate = queueEmpty && now - primeStartedWallMs >= targetMs
+                    // A starved writer must not hold the track silent for ever.
+                    val primeTimedOut = now - primeStartedWallMs >= PRIME_GIVE_UP_MS
+                    if (enough || full || producerDone.get() || producerLate || primeTimedOut) {
                         lineStarted = true
                         justPrimed = true
                         runCatching { out.start() }
@@ -1551,10 +1565,14 @@ class AudioPlayer {
                                     "${pendingBytes} bytes handed to it"
                             producerDone.get() ->
                                 "the producer had nothing else to hand over"
+                            primeTimedOut ->
+                                "the writer stayed behind the ${targetMs.toInt()}ms " +
+                                    "target for ${PRIME_GIVE_UP_MS}ms with PCM still " +
+                                    "queued, so the device starts with ${primed.toInt()}ms"
                             else ->
-                                "the producer did not reach the ${targetMs.toInt()}ms " +
-                                    "target within ${targetMs.toInt()}ms of priming " +
-                                    "(decoder warm-up), so the device starts with " +
+                                "the producer had nothing queued for the writer " +
+                                    "within ${targetMs.toInt()}ms (waiting could not " +
+                                    "raise the cushion), so the device starts with " +
                                     "${primed.toInt()}ms"
                         }
                         AppLog.log(

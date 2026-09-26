@@ -781,7 +781,7 @@ order they appear for one track:
 | `stream ready for '<title>' (network\|cache)` | a stream URL is in hand |
 | `pre-buffered Xs of source before starting the output (wanted 8s)` | the download-frontier wait before the line is opened. Logged only when the wait actually ran |
 | `audio output: 44100Hz 16bit 2ch, device buffer Nms (asked Nms), pcm queue Ns, writes of Nms, volume N% (device gain)` | the line was opened and the backend **granted** N ms of ring — Windows caps it at 1000 ms, macOS grants 4000 ms |
-| `audio output primed: device started with Nms already queued … — <reason>` | the device was started with N ms in the ring. **Read the reason at the end**: `reached the Nms target` is the good one; anything else means it started with less than the configured cushion |
+| `audio output primed: device started with Nms already queued … — <reason>` | the device was started with N ms in the ring. **Read the reason at the end**: `reached the Nms target` is the good one; anything else means it started with less than the configured cushion. From **1.53.28** the only reason allowed below the target is a producer with an *empty* queue (`the producer had nothing queued for the writer`); the wall clock on its own is a starved writer (`the writer stayed behind the Nms target for 3000ms with PCM still queued`), and that is exactly the case that drains the ring |
 | `audio device check: played Nms of Mms wall (P%), cushion Nms, handed over Nms` | the sound card really played N ms of audio in M ms of wall time. ~100 % is healthy |
 | `audio device stall: … (P%)` | a window below ~100 %, at most 20 per track |
 | `audio cushion low: only Nms of audio left in the device buffer` | the ring is nearly empty — the one state that can be audible |
