@@ -1,0 +1,20 @@
+{
+  "version": "6.0.8.2",
+  "versionCode": 140,
+  "channel": "alpha",
+  "title": "fix(de): the changelog body is now a set of titled, selectable sections — no overlap, per-paragraph lines",
+  "builtAt": "2026-09-26T22:04:01Z",
+  "commit": "ab6bcd1439958c1215ec7ed6d319a45ac3acc9b5",
+  "files": [
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31628514,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gsm.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30110052,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    }
+  ]
+}
