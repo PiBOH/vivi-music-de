@@ -291,17 +291,22 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
             // like every error message in the app: a changelog line is exactly
             // the kind of thing a user quotes in a report. The SelectionContainer
             // wraps only this column, never a popup-bearing subtree (see the note
-            // in Main.kt about CMP-2326).
-            Column(
+            // in Main.kt about CMP-2326). The column is constrained by its weight,
+            // so it has a bounded height — SelectionContainer needs a bounded
+            // parent to lay out each line without overflowing or overlapping.
+            Box(
                 Modifier
                     .weight(1f)
-                    .fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
             ) {
                 SelectionContainer {
-                    ReleaseSection(selected)
+                    Column(
+                        Modifier.fillMaxWidth(),
+                    ) {
+                        ReleaseSection(selected)
+                        Spacer(Modifier.height(32.dp))
+                    }
                 }
-                Spacer(Modifier.height(32.dp))
             }
         }
     }
