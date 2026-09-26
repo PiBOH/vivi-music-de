@@ -2,6 +2,7 @@ package com.music.vivi.desktop.player
 
 import com.music.vivi.desktop.AppLog
 import com.music.vivi.desktop.AudioThreadBoost
+import com.music.vivi.desktop.DesktopSettings
 import com.music.vivi.desktop.EqualizerProcessor
 import com.music.vivi.desktop.GcMonitor
 import net.sourceforge.jaad.aac.Decoder
@@ -32,6 +33,25 @@ import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.SourceDataLine
 import kotlin.math.roundToInt
+
+/**
+ * Writes a writer-timing diagnostic only when verbose writer logging is on.
+ *
+ * The per-pass lines repeat at the writer's own frequency — roughly one line
+ * every 120 ms (about 8/s) through the opening window of every track, and again
+ * for every slow pass after that — which is what fills `playback.log` in a
+ * normal session. They are now gated on `super_logs_writer` in settings.json
+ * (off by default, applied live); the lines that always matter — the priming
+ * exit, the 10 s device check, the per-track `audio integrity` verdict and
+ * every stall / `audio writer stalled` warning — keep going through
+ * [AppLog.log].
+ *
+ * Loaded per call: `DesktopSettings.load()` reads a cached snapshot, so this is
+ * a volatile field read, not a file read.
+ */
+private fun writerDetailLog(message: String) {
+    if (DesktopSettings.load().superLogsWriter) AppLog.log("playback", message)
+}
 
 /**
  * Self-contained AAC player: downloads the MP4 stream to a local cache file,
@@ -1683,8 +1703,7 @@ class AudioPlayer {
                                 "none of them over ${WRITER_PASS_SLOW_MS}ms, so nothing after " +
                                     "the opening pass has been slow"
                         }
-                        AppLog.log(
-                            "playback",
+                        writerDetailLog(
                             "audio writer passes: ${passIndex} so far (${openingPasses} in the " +
                                 "opening window, ${passesLogged} logged in full), $repeats — " +
                                 "$worstPass",
@@ -1731,8 +1750,7 @@ class AudioPlayer {
                 if (justPrimed) {
                     justPrimed = false
                     primeWallMs = now
-                    AppLog.log(
-                        "playback",
+                    writerDetailLog(
                         "audio writer: the pass that opened the device took ${bodyMs}ms " +
                             "(${inWriteMs}ms of it inside the device write) — the first write, " +
                             "the device open and the JIT of this path live on that one pass, so " +
@@ -1755,8 +1773,7 @@ class AudioPlayer {
                 }
                 if (opening || bodyMs >= WRITER_PASS_SLOW_MS) {
                     passesLogged++
-                    AppLog.log(
-                        "playback",
+                    writerDetailLog(
                         "audio writer pass #$passIndex (+${"%.1f".format(java.util.Locale.US, sinceStartMs / 1000.0)}s after the " +
                             "start): ${bodyMs}ms total, ${inWriteMs}ms inside the device write, " +
                             "${outsideMs}ms outside (queue ${queueMs.toInt()}ms, " +
@@ -2136,8 +2153,7 @@ class AudioPlayer {
                 // writer was ever late after the pass that opened the device.
                 // This is the line that decides if the cushion is still doing
                 // anything, or if the 1 s target can come back down (issue #3).
-                AppLog.log(
-                    "playback",
+                writerDetailLog(
                     "audio writer passes for this track: ${passIndex} total, " +
                         "${slowPasses} slow outside the device write over " +
                         "${WRITER_PASS_SLOW_MS}ms (${pacedPasses} paced by the device), " +

@@ -21,8 +21,9 @@ import java.security.MessageDigest
  * `device-sync.json` stays the app's own store (it also holds the queue, the
  * library, the account credentials, the pairing data and the histories), while
  * this file is a **mirror of the options only**: every value the user can
- * configure, with camelCase keys that match the app's own field names (the one
- * exception is `hide_custom_apk_download_button`, which has no UI switch).
+ * configure, with camelCase keys that match the app's own field names (the
+ * exceptions are `hide_custom_apk_download_button` and `super_logs_writer`,
+ * which have no UI switch on purpose and are edited here by hand).
  *
  * Both directions work:
  *

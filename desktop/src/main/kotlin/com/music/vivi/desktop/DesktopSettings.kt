@@ -330,6 +330,27 @@ data class DesktopSyncState(
      */
     @SerialName("hide_custom_apk_download_button")
     val hideCustomApkDownloadButton: Boolean = true,
+    /**
+     * Verbose audio-writer diagnostics: every single writer pass is timed and
+     * written to `playback.log`.
+     *
+     * That detail was added while the Windows gap in #3 was being measured and
+     * it repeats at the writer's own frequency — roughly one line every 120 ms
+     * (about 8/s) for the first passes of every track and again for every slow
+     * pass after that — which is what fills `playback.log` in a normal session.
+     * It is now behind this option and **off by default**, so a shipped build
+     * writes the summary lines only (the priming exit, the 10 s device check,
+     * the per-track `audio integrity` verdict and every stall/warning still go
+     * through `AppLog.log` unchanged). Turn it on by editing
+     * `~/.vivimusic/settings.json` — the file is applied live, no restart — when
+     * a writer stall has to be measured again.
+     *
+     * There is deliberately no UI switch for this one: it is an option that only
+     * exists in `settings.json` (see [SettingsFile]), like
+     * [hideCustomApkDownloadButton].
+     */
+    @SerialName("super_logs_writer")
+    val superLogsWriter: Boolean = false,
 )
 
 object DesktopSettings {
