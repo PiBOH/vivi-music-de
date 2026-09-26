@@ -36,8 +36,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -259,122 +261,134 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
                         Modifier
                             .fillMaxWidth()
                             .padding(vertical = 2.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                else Color.Transparent
-                            )
                             .clickable { selectedVersion = release.version }
                             .padding(horizontal = 12.dp, vertical = 8.dp),
                     ) {
-                        Text(
-                            release.version,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                            color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                            else MaterialTheme.colorScheme.onSurface,
-                        )
-                        if (release.date.isNotBlank()) {
-                            Text(
-                                release.date,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                                    else Color.Transparent
+                                ),
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 5.dp)) {
+                                Text(
+                                    release.version,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                    else MaterialTheme.colorScheme.onSurface,
+                                )
+                                if (release.date.isNotBlank()) {
+                                    Text(
+                                        release.date,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
                 Spacer(Modifier.height(16.dp))
             }
 
-            // Selected release details. The text is selectable (and copyable)
-            // like every error message in the app: a changelog line is exactly
-            // the kind of thing a user quotes in a report. The SelectionContainer
-            // wraps only this column, never a popup-bearing subtree (see the note
-            // in Main.kt about CMP-2326). The column is constrained by its weight,
-            // so it has a bounded height — SelectionContainer needs a bounded
-            // parent to lay out each line without overflowing or overlapping.
-            Box(
+            // Selected release details — each section is a titled block, each
+            // bullet is a paragraph line in its own SelectableText (so the body
+            // never collapses onto itself or overlaps). Issue links (#N) stay
+            // clickable; the text is selectable like every error in the app.
+            Column(
                 Modifier
                     .weight(1f)
+                    .fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
             ) {
-                SelectionContainer {
-                    Column(
-                        Modifier.fillMaxWidth(),
-                    ) {
-                        ReleaseSection(selected)
-                        Spacer(Modifier.height(32.dp))
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReleaseSection(release: ChangelogRelease) {
-    Text(
-        release.version,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-    )
-    if (release.date.isNotBlank()) {
-        Text(
-            release.date,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-
-    release.sections.forEach { section ->
-        Spacer(Modifier.height(12.dp))
-        if (section.title.isNotBlank()) {
-            Text(
-                section.title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.height(4.dp))
-        }
-        section.items.forEach { item ->
-            Row(
-                Modifier.padding(vertical = 4.dp),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Box(
-                    Modifier
-                        .padding(top = 8.dp)
-                        .size(6.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape),
+                val secColor = MaterialTheme.colorScheme.primary
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    selected.version,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = secColor,
                 )
-                val clean = cleanInline(item)
-                if (Regex("(^|[^\\w#])#(\\d+)").containsMatchIn(clean)) {
-                    val (annotated, onClick) = issueLinks(
-                        clean,
-                        color = MaterialTheme.colorScheme.primary,
-                        onOpenUrl = { openUrl(it) },
-                    )
-                    ClickableText(
-                        text = annotated,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        onClick = onClick,
-                    )
-                } else {
+                if (selected.date.isNotBlank()) {
                     Text(
-                        clean,
+                        selected.date,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 2.dp),
                     )
                 }
+                Spacer(Modifier.height(12.dp))
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                Spacer(Modifier.height(4.dp))
+                selected.sections.forEachIndexed { idx, section ->
+                    if (section.title.isNotBlank()) {
+                        Text(
+                            section.title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = secColor,
+                            modifier = Modifier.padding(top = if (idx == 0) 0.dp else 10.dp, bottom = 4.dp),
+                        )
+                    }
+                    section.items.forEach { item ->
+                        val (annotated, onClick) = issueLinks(
+                            cleanInline(item),
+                            color = MaterialTheme.colorScheme.primary,
+                            onOpenUrl = { openUrl(it) },
+                        )
+                        SelectionContainer {
+                            Text(
+                                text = annotated,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    lineHeight = 20.sp,
+                                ),
+                                modifier = Modifier.padding(vertical = 2.dp),
+                                textAlign = TextAlign.Start,
+                            )
+                        }
+                        // Non-selectable click target for the #N link, so the
+                        // SelectionContainer around the body never swallows the
+                        // tap on an issue link and the link stays reachable.
+                        if (Regex("(^|[^\\w#])#(\\d+)").containsMatchIn(item)) {
+                            val linked = buildAnnotatedString {
+                                var pos = 0
+                                val pattern = Regex("(^|[^\\w#])#(\\d+)")
+                                for (m in pattern.findAll(item)) {
+                                    append(item.substring(pos, m.range.first))
+                                    pos = m.range.first + m.groupValues[1].length
+                                    withStyle(SpanStyle(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontWeight = FontWeight.Bold,
+                                    )) {
+                                        append(item.substring(pos, m.range.last + 1))
+                                    }
+                                    pos = m.range.last + 1
+                                }
+                                if (pos < item.length) append(item.substring(pos))
+                            }
+                            ClickableText(
+                                text = linked,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    textDecoration = null,
+                                    fontWeight = FontWeight.Normal,
+                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Normal,
+                                ),
+                                modifier = Modifier.padding(vertical = 2.dp),
+                                onClick = onClick,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(6.dp))
+                }
+                Spacer(Modifier.height(16.dp))
             }
         }
     }
-
-    HorizontalDivider(Modifier.padding(top = 16.dp))
 }
