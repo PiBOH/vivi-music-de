@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -286,14 +287,20 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
             }
 
-            // Selected release details.
+            // Selected release details. The text is selectable (and copyable)
+            // like every error message in the app: a changelog line is exactly
+            // the kind of thing a user quotes in a report. The SelectionContainer
+            // wraps only this column, never a popup-bearing subtree (see the note
+            // in Main.kt about CMP-2326).
             Column(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
             ) {
-                ReleaseSection(selected)
+                SelectionContainer {
+                    ReleaseSection(selected)
+                }
                 Spacer(Modifier.height(32.dp))
             }
         }

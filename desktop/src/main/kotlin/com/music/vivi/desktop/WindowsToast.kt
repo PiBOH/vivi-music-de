@@ -194,6 +194,12 @@ ${'$'}xml.LoadXml(@'
 $xml
 '@)
 ${'$'}toast = New-Object Windows.UI.Notifications.ToastNotification ${'$'}xml
+# A unique Tag/Group per toast: two notifications shown back to back with the
+# default empty tag make Windows reject the second one with
+# SQLITE_CONSTRAINT_UNIQUE (the Action Center stores toasts by (AUMID, Tag,
+# Group)). Seen in native-notify.log as "Show ... SQLITE_CONSTRAINT_UNIQUE".
+${'$'}toast.Tag = [guid]::NewGuid().ToString('N').Substring(0,16)
+${'$'}toast.Group = 'VIVIMusicDE'
 [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('$AUMID').Show(${'$'}toast)
         """.trimIndent()
     }
