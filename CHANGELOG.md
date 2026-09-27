@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.2_DE-1.53.32-alpha] - 2026-09-27
+
+### Fixed
+- [DE] **The changelog release body is laid out in its own bounded, scrollable column, so nothing overlaps and every line stands on its own.** The About → Changelog page drew the release text into the same column as the version selector, and a long entry (“squeezed”, with the lines running into each other) could not be read. The body now lives in a bounded `Box(weight(1f))` that scrolls, and each release is rendered as a header (version + date), a divider, then a heading per section and one `Text` line per bullet — so a wrapped bullet never sits on top of the next one. **Constraint:** only the release body is selectable/copyable (the targeted `SelectionContainer` of 1.53.31 is kept); the `#N` issue links are still clickable, and the version list keeps its own rounded, clipped container.
+
 ## [6.0.8.1_DE-1.53.31-alpha] - 2026-09-26
 
 ### Fixed
