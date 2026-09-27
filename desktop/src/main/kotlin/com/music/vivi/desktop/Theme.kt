@@ -14,6 +14,8 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLocalization
+import androidx.compose.ui.platform.PlatformLocalization
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import com.materialkolor.PaletteStyle
@@ -435,6 +437,12 @@ fun AppTheme(
     spotify: Boolean = false,
     accentIntensity: Float = 1f,
     customFontPath: String? = null,
+    // Language of the app's own string table. The shared Compose components
+    // (the text-selection context menu above all) draw their labels from
+    // `LocalLocalization`, whose default follows the OS locale — an English
+    // build on an Italian machine showed "Copia". Providing it here makes those
+    // labels follow the language selected in the app.
+    language: String = "en",
     content: @Composable () -> Unit,
 ) {
     val useDark = when (mode) {
@@ -522,6 +530,9 @@ fun AppTheme(
         CompositionLocalProvider(
             LocalAppIsDark provides useDark,
             LocalContentColor provides effective.onBackground,
+            // Copy / Cut / Paste / Select all of the right-click text menu, in
+            // the app's language (see `platformLocalization`).
+            LocalLocalization provides platformLocalization(language),
         ) {
             Box(Modifier.fillMaxSize().background(effective.background)) {
                 content()
@@ -529,3 +540,20 @@ fun AppTheme(
         }
     }
 }
+
+/**
+ * The labels of the shared Compose text-selection context menu (right-click on
+ * any selectable text: Copy / Cut / Paste / Select all), from the app's table.
+ *
+ * Compose's own strings follow the platform locale — the OS — so an English
+ * build on an Italian machine showed "Copia". These come from the desktop
+ * localization table instead (`action_copy` / `action_cut` / `action_paste` /
+ * `action_select_all`), so the menu always speaks the language the app is set to.
+ */
+private fun platformLocalization(language: String): PlatformLocalization =
+    object : PlatformLocalization {
+        override val copy: String get() = Localization.get(language, "action_copy")
+        override val cut: String get() = Localization.get(language, "action_cut")
+        override val paste: String get() = Localization.get(language, "action_paste")
+        override val selectAll: String get() = Localization.get(language, "action_select_all")
+    }

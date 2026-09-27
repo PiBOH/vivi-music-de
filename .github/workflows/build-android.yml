@@ -166,12 +166,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # The published file names are FIXED (`vivi-gsm.apk`, `vivi-foss.apk`)
-          # while the Gradle flavour is `gms`: the build used to write
-          # `dist/vivi-gms.apk` and the publish job then looked for
-          # `vivi-gsm.apk`, which is why a green build ended in "is missing —
-          # not publishing a partial build" and no APK ever reached apk-latest.
-          NAME="${{ matrix.flavor == 'gms' && 'vivi-gsm.apk' || 'vivi-foss.apk' }}"
+          # The published file names are FIXED (`vivi-gms.apk`, `vivi-foss.apk`)
+          # and match the Gradle flavour (`gms` = Google Mobile Services), so the
+          # built APK and the published name can never drift apart again — the
+          # old `vivi-gsm` spelling (the letters transposed) is what once made a
+          # green build end in "is missing — not publishing a partial build".
+          NAME="${{ matrix.flavor == 'gms' && 'vivi-gms.apk' || 'vivi-foss.apk' }}"
           mkdir -p dist
           APK_DIR="app/build/outputs/apk/universal${{ matrix.flavor == 'gms' && 'Gms' || 'Foss' }}/release"
           APK="$(find "$APK_DIR" -name '*.apk' -print -quit)"
@@ -186,12 +186,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: android-apk-${{ matrix.flavor }}
-          path: dist/${{ matrix.flavor == 'gms' && 'vivi-gsm.apk' || 'vivi-foss.apk' }}
+          path: dist/${{ matrix.flavor == 'gms' && 'vivi-gms.apk' || 'vivi-foss.apk' }}
           if-no-files-found: error
 
   # Makes the two APKs reachable at a fixed URL, which is what every download
   # link in the project points at:
-  #   https://raw.githubusercontent.com/<owner>/<repo>/apk-latest/.releases/apk/latest/vivi-gsm.apk
+  #   https://raw.githubusercontent.com/<owner>/<repo>/apk-latest/.releases/apk/latest/vivi-gms.apk
   # (and `vivi-foss.apk` / `version.json`). The branch is recreated from
   # scratch and force-pushed, so only the latest build is ever there.
   publish:
@@ -216,7 +216,7 @@ jobs:
           # (the common ancestor of the uploaded paths), so a single-file
           # upload is not guaranteed to land at the artifact root: the publish
           # step assumed `apk/vivi-<flavor>.apk` and aborted with
-          # "apk/vivi-gsm.apk is missing - not publishing a partial build"
+          # "apk/vivi-gms.apk is missing - not publishing a partial build"
           # even though both APKs had built and been downloaded. Locate them
           # wherever they landed and normalise the layout the rest of the job
           # expects, so the step cannot depend on that detail again.
@@ -225,7 +225,9 @@ jobs:
           # visible in the log instead of only in the failure message.
           echo "--- downloaded artifacts ---"
           find apk -type f -print 2>/dev/null | sort || true
-          for flavor in gsm foss; do
+          # `gms` (not the transposed `gsm`) so the name matches what the build
+          # job writes and what the published channel serves.
+          for flavor in gms foss; do
             file="$(find apk -type f -name "vivi-$flavor.apk" -print -quit)"
             if [ -z "$file" ]; then
               # Fallback: any APK whose path still carries the flavour, so a
@@ -286,8 +288,13 @@ jobs:
           cp -f ../keep/INSTALL-GUIDE.md . 2>/dev/null || true
           cp -f ../keep/README.md . 2>/dev/null || true
           # Verified (and flattened) by the previous step.
-          cp ../apk-flat/vivi-gsm.apk .releases/apk/latest/vivi-gsm.apk
+          cp ../apk-flat/vivi-gms.apk .releases/apk/latest/vivi-gms.apk
           cp ../apk-flat/vivi-foss.apk .releases/apk/latest/vivi-foss.apk
+          # Legacy alias for the old (transposed) `vivi-gsm.apk` name: builds
+          # shipped before the rename look for it, and this keeps their updater
+          # working for one more release so nobody has to reinstall by hand.
+          # Safe to delete once every install reads `vivi-gms.apk`.
+          cp ../apk-flat/vivi-gms.apk .releases/apk/latest/vivi-gsm.apk
           # version.json is what the updaters read: version + version code +
           # when it was built, with the exact URLs and sizes of both files.
           VERSION="$VERSION" VERSION_CODE="$VERSION_CODE" CHANNEL="$CHANNEL" TITLE="$TITLE" BASE="$BASE" \
@@ -301,7 +308,7 @@ jobs:
                   "sizeBytes": os.path.getsize(os.path.join(".releases/apk/latest", name)),
                   "url": f"{base}/{name}",
               }
-              for name in ("vivi-gsm.apk", "vivi-foss.apk")
+              for name in ("vivi-gms.apk", "vivi-foss.apk", "vivi-gsm.apk")
           ]
           doc = {
               "version": os.environ["VERSION"],

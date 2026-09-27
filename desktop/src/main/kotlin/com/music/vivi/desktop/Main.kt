@@ -685,6 +685,7 @@ fun main(args: Array<String>) {
             spotify = spotifyLayout,
             accentIntensity = accentIntensity,
             customFontPath = customFontPath,
+            language = language,
         ) {
             // NOTE: do NOT wrap this in a global SelectionContainer. Popup-based
             // components (DropdownMenu, AlertDialog) inherit the selection
@@ -1877,8 +1878,19 @@ fun WindowScope.App(
 
     // Apply incoming playback snapshots from the peer.
     LaunchedEffect(syncManager) {
+        // The peer's last unambiguous play/pause intent: the `isPlaying` of the
+        // most recent snapshot taken while the peer was NOT rebuffering. While
+        // the peer is resolving, its `isPlaying` reads false for a moment even
+        // though the user never pressed pause (see the track-change branch
+        // below, which is the one that has to tell the two apart).
+        var peerPlayIntent = false
         syncManager.incomingPlayback.collect { pb ->
             latestRemotePlayback.set(System.currentTimeMillis() to pb)
+            // Remember the peer's clear intent for the next track change: a
+            // snapshot taken while the peer is rebuffering says `isPlaying =
+            // false` without the user having pressed pause, so it must not
+            // overwrite the last real intent.
+            if (!pb.isResolving) peerPlayIntent = pb.isPlaying
             // App (player) volume sync: mirror the peer's in-app volume slider.
             // A very recent local drag wins: the peer's value may be an echo of
             // our own push or a stale pre-drag snapshot, and re-applying it
@@ -2062,17 +2074,36 @@ fun WindowScope.App(
                         NowPlaying(videoId = ref.id, title = ref.title, artist = ref.artist.orEmpty(), thumbnail = ref.thumbnail, durationMs = ref.durationMs)
                     }
                     if (tracks.isNotEmpty()) {
+                        // A skipped track on the phone arrives as
+                        // `playing=false resolving=true`: the skip itself makes
+                        // the new stream rebuffer, and the phone's `isPlaying`
+                        // (playWhenReady && playbackState != ended) is briefly
+                        // false while the media item is swapped in. Reading that
+                        // as a *pause* left the desktop silent on the new track
+                        // until play was pressed ("the song changes on the
+                        // desktop but I have to press play"): every later
+                        // `playing=true` tick landed while the desktop was still
+                        // resolving its own new stream, so it was deferred, and
+                        // the deferral re-applies a *position*, not an intent.
+                        // The phone's skip path (seekToNext / seekToPrevious)
+                        // always forces playWhenReady = true, so a track change
+                        // that arrives mid-rebuffer inherits the peer's last
+                        // clear intent. A change from a peer that was really
+                        // paused (first pair, queue edit while paused) still
+                        // stays paused.
+                        val peerPlaying = pb.isPlaying || (pb.isResolving && peerPlayIntent)
                         AppLog.log(
                             "sync",
                             "track change applied from the peer: '${pb.trackTitle ?: pb.trackId}' " +
                                 "(index ${pb.queueIndex.coerceAtLeast(0)} of ${tracks.size}), " +
-                                "playing=${pb.isPlaying} resolving=${pb.isResolving} at ${syncManager.effectivePosition(pb)}ms",
+                                "playing=${pb.isPlaying} resolving=${pb.isResolving} " +
+                                "startPlaying=$peerPlaying at ${syncManager.effectivePosition(pb)}ms",
                         )
                         // Same ordering rule as above: the applied snapshot is
                         // recorded first, so the queue change that follows is not
                         // mistaken for a local edit of ours.
                         syncManager.noteQueueApplied(pb)
-                        player.applyRemotePlayback(tracks, pb.queueIndex, syncManager.effectivePosition(pb), pb.isPlaying, pb.isResolving)
+                        player.applyRemotePlayback(tracks, pb.queueIndex, syncManager.effectivePosition(pb), peerPlaying, pb.isResolving)
                     }
                 }
             }

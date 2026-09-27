@@ -79,7 +79,10 @@ import coil3.compose.AsyncImage
 import com.music.vivi.BuildConfig
 import com.music.vivi.LocalPlayerAwareWindowInsets
 import com.music.vivi.R
+import com.music.vivi.vivimusic.updater.UPDATE_SOURCE_FORK
 import com.music.vivi.vivimusic.updater.extractUrls
+import com.music.vivi.vivimusic.updater.getUpdateSource
+import com.music.vivi.vivimusic.updater.updateRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -139,22 +142,47 @@ fun ChangelogScreen(
                         showingCached = true
                     }
                 } else {
-                    val changelogUrl = URL("https://github.com/vivizzz007/vivi-music/releases/download/$tag/changelog.json")
+                    val isOurSource = getUpdateSource(context) == UPDATE_SOURCE_FORK
+                    // Our own releases carry NO `changelog.json` asset: the
+                    // combined release ships the desktop installers and keeps the
+                    // changelog entry in its release *body* (Auto Release extracts
+                    // that from CHANGELOG.md). So this source asks the API for the
+                    // release list and parses that markdown, while upstream keeps
+                    // the per-tag asset it has always published.
+                    val changelogUrl = URL(
+                        if (isOurSource) {
+                            "https://api.github.com/repos/${updateRepo(context)}/releases?per_page=100"
+                        } else {
+                            "https://github.com/${updateRepo(context)}/releases/download/$tag/changelog.json"
+                        }
+                    )
                     val connection = changelogUrl.openConnection() as HttpURLConnection
                     connection.setRequestProperty("User-Agent", "ViviMusic-Changelog-App")
-                    connection.setRequestProperty("Accept", "application/json")
+                    connection.setRequestProperty(
+                        "Accept",
+                        if (isOurSource) "application/vnd.github+json" else "application/json"
+                    )
                     
                     if (connection.responseCode == 200) {
                         val changelogJson = connection.inputStream.bufferedReader().use { it.readText() }
-                        val changelogData = JSONObject(changelogJson)
+                        // Our source: pick the release this tag belongs to — the
+                        // version chip passes a tag, the very first load only
+                        // knows the app version — and read its markdown body.
+                        val ownRelease = if (isOurSource) pickOwnRelease(JSONArray(changelogJson), tag) else null
+                        val resolvedTag = if (isOurSource) ownRelease?.optString("tag_name", tag) ?: tag else tag
+                        val changelogData = if (isOurSource) JSONObject() else JSONObject(changelogJson)
                         
                         val desc = changelogData.optString("description", null)
                         val imageUrl = changelogData.optString("image", null)
                         val warning = changelogData.optString("warning", null)
                         val changelogArray = changelogData.optJSONArray("changelog")
                         
-                        val sections = mutableListOf<ChangelogSection>()
-                        if (changelogArray != null) {
+                        val sections = if (isOurSource) {
+                            changelogSectionsFromReleaseBody(ownRelease?.optString("body", "").orEmpty())
+                        } else {
+                            mutableListOf<ChangelogSection>()
+                        }
+                        if (!isOurSource && changelogArray != null) {
                             for (i in 0 until changelogArray.length()) {
                                 val sectionObj = changelogArray.optJSONObject(i)
                                 if (sectionObj != null) {
@@ -182,7 +210,7 @@ fun ChangelogScreen(
                             }
                         }
                         
-                        saveChangelogToCache(context, tag, sections, imageUrl, desc, warning)
+                        saveChangelogToCache(context, resolvedTag, sections, imageUrl, desc, warning)
                         withContext(Dispatchers.Main) {
                             changelogSections = sections
                             updateImage = imageUrl.takeIf { !it.isNullOrBlank() }
@@ -191,6 +219,13 @@ fun ChangelogScreen(
                             isLoading = false
                             hasError = false
                             showingCached = false
+                            if (isOurSource && resolvedTag != currentVersionTag) {
+                                // The first load only knows the app version; adopt
+                                // the release tag it resolved to, so the version
+                                // chip names the real release (and the cache is
+                                // keyed by it from now on).
+                                currentVersionTag = resolvedTag
+                            }
                         }
                     } else {
                         Log.e("ChangelogScreen", "HTTP Error ${connection.responseCode} for $tag")
@@ -212,7 +247,8 @@ fun ChangelogScreen(
         isFetchingOldReleases = true
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                val releasesUrl = URL("https://api.github.com/repos/vivizzz007/vivi-music/releases")
+                val isOurSource = getUpdateSource(context) == UPDATE_SOURCE_FORK
+                val releasesUrl = URL("https://api.github.com/repos/${updateRepo(context)}/releases")
                 val connection = releasesUrl.openConnection() as HttpURLConnection
                 connection.setRequestProperty("User-Agent", "ViviMusic-Changelog-App")
                 connection.setRequestProperty("Accept", "application/vnd.github+json")
@@ -226,7 +262,9 @@ fun ChangelogScreen(
                 for (i in 0 until array.length()) {
                     val obj = array.getJSONObject(i)
                     val tagName = obj.getString("tag_name")
-                    if (!tagName.startsWith("v", ignoreCase = true)) continue
+                    // Upstream tags are "v"-prefixed; ours are not (they read
+                    // "<mobile>_DE-<de>[-<channel>]", see Auto Release).
+                    if (!isOurSource && !tagName.startsWith("v", ignoreCase = true)) continue
 
                     val name = obj.optString("name", tagName)
                     val publishedAt = obj.getString("published_at")
@@ -244,12 +282,15 @@ fun ChangelogScreen(
                         }
                     }
 
-                    if (changelogUrl != null) {
+                    // Our releases publish no changelog.json asset — their body
+                    // is read instead (see fetchChangelog) — so they must not be
+                    // filtered out for lacking one.
+                    if (isOurSource || changelogUrl != null) {
                         list.add(ReleaseMetadata(tagName, name, formattedDate, null))
                     }
                 }
                     withContext(Dispatchers.Main) {
-                        val currentVersion = ReleaseMetadata(versionTag, versionTag, context.getString(R.string.current), null)
+                        val currentVersion = ReleaseMetadata(currentVersionTag, currentVersionTag, context.getString(R.string.current), null)
                         availableReleases = (listOf(currentVersion) + list).distinctBy { it.tagName }
                         isFetchingOldReleases = false
                     }
@@ -535,4 +576,69 @@ private fun loadChangelogFromCache(context: Context, versionTag: String): Cached
             warning = cacheData.optString("warning", null).takeIf { !it.isNullOrBlank() }
         )
     } catch (e: Exception) { null }
+}
+
+/**
+ * The release of our own repository that the changelog screen should show: the
+ * requested tag when the list carries it (a tap on an older version chip),
+ * otherwise the newest release that belongs to the *installed* app version.
+ *
+ * Our tags read "<mobile>_DE-<de>[-<channel>]" and the APK only knows its own
+ * mobile version (the DE half and the channel name a desktop release), so
+ * matching the prefix is what ties the running build to its changelog entry.
+ * The newest release is the fallback when nothing matches (a build from an
+ * older branch, or a release that has not been published yet).
+ */
+private fun pickOwnRelease(releases: JSONArray, requestedTag: String): JSONObject? {
+    var newest: JSONObject? = null
+    var sameVersion: JSONObject? = null
+    for (i in 0 until releases.length()) {
+        val obj = releases.optJSONObject(i) ?: continue
+        if (obj.optBoolean("draft", false)) continue
+        if (newest == null) newest = obj
+        val tag = obj.optString("tag_name", "")
+        if (tag == requestedTag || tag == "v$requestedTag") return obj
+        if (sameVersion == null && tag.startsWith("${BuildConfig.VERSION_NAME}_DE-")) sameVersion = obj
+    }
+    return sameVersion ?: newest
+}
+
+/**
+ * Turns the markdown of a release body into the changelog sections the screen
+ * already renders.
+ *
+ * Auto Release writes the CHANGELOG.md entry of the version into the release
+ * body, so a heading (`## ...` / `### ...`) opens a section and the `-` / `*`
+ * bullets under it become its items — the same shape the upstream
+ * `changelog.json` asset provided. Every heading that never collects an item is
+ * dropped (the release title and the `**Release channel:**` line are headings,
+ * not entries), and the trailing `### Commits` list is left to the Commit
+ * screen, which shows those commits properly.
+ */
+private fun changelogSectionsFromReleaseBody(body: String): MutableList<ChangelogSection> {
+    val sections = mutableListOf<ChangelogSection>()
+    var current: ChangelogSection? = null
+    for (raw in body.lines()) {
+        val line = raw.trim()
+        when {
+            line.startsWith("### Commits") -> break
+            line.startsWith("#") -> {
+                val section = ChangelogSection(line.trimStart('#').trim(), mutableListOf())
+                current = section
+                sections.add(section)
+            }
+            line.startsWith("- ") || line.startsWith("* ") -> {
+                val existing = current
+                if (existing == null) {
+                    val section = ChangelogSection("", mutableListOf())
+                    current = section
+                    sections.add(section)
+                    (section.items as MutableList<String>).add(line.drop(2).trim())
+                } else {
+                    (existing.items as MutableList<String>).add(line.drop(2).trim())
+                }
+            }
+        }
+    }
+    return sections.filter { it.items.isNotEmpty() }.toMutableList()
 }

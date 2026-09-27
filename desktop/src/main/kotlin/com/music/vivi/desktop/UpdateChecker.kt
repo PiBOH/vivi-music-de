@@ -49,7 +49,7 @@ sealed interface UpdateStatus {
  */
 object ApkDownloads {
     const val BASE = "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest"
-    const val GMS_URL = "$BASE/vivi-gsm.apk"
+    const val GMS_URL = "$BASE/vivi-gms.apk"
     const val FOSS_URL = "$BASE/vivi-foss.apk"
     const val VERSION_URL = "$BASE/version.json"
 

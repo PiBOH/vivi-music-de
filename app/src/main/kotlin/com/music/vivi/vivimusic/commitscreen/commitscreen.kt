@@ -60,6 +60,8 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.music.vivi.LocalPlayerAwareWindowInsets
 import com.music.vivi.R
+import com.music.vivi.vivimusic.updater.updateBranch
+import com.music.vivi.vivimusic.updater.updateRepo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -103,7 +105,14 @@ fun CommitScreen(
         hasError = false
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                val url = URL("https://api.github.com/repos/vivizzz007/vivi-music/commits?branch=main&per_page=50")
+                // The "what's new" list follows the selected update source: the
+                // commits of OUR repository on the DE branch (upstream carries no
+                // "v"-less versioning of its own here, and its `main` has nothing
+                // to do with our releases).
+                val url = URL(
+                    "https://api.github.com/repos/${updateRepo(context)}/commits" +
+                        "?branch=${updateBranch(context)}&per_page=50"
+                )
                 val json = url.openStream().bufferedReader().use { it.readText() }
                 val array = JSONArray(json)
                 val outputFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())

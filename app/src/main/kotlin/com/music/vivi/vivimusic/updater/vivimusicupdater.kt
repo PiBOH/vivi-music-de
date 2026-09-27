@@ -715,6 +715,8 @@ const val UPDATE_SOURCE_ORIGINAL = "original"
 const val UPDATE_SOURCE_FORK = "fork"
 const val REPO_ORIGINAL = "vivizzz007/vivi-music"
 const val REPO_FORK = "PiBOH/vivi-music-de"
+const val BRANCH_ORIGINAL = "main"
+const val BRANCH_FORK = "vivi-music-de"
 
 /**
  * Where the companion APKs are published.
@@ -745,6 +747,14 @@ fun saveUpdateSource(context: Context, source: String) {
 /** GitHub owner/name for the currently selected update source. */
 fun updateRepo(context: Context): String =
     if (getUpdateSource(context) == UPDATE_SOURCE_FORK) REPO_FORK else REPO_ORIGINAL
+
+/**
+ * Default branch of the selected update source: the "what's new" screens read
+ * the commits from it (upstream keeps its work on `main`, ours lives on the DE
+ * branch).
+ */
+fun updateBranch(context: Context): String =
+    if (getUpdateSource(context) == UPDATE_SOURCE_FORK) BRANCH_FORK else BRANCH_ORIGINAL
 
 // ──────────────────────────────────────────────────────────────────────────
 // 9 PM daily gate for beta/nightly update checks
@@ -1097,7 +1107,7 @@ suspend fun checkForUpdate(
                     // asset so a release is only offered when an APK is
                     // actually attached.
                     val apkAssets = (0 until assets.length()).map { assets.getJSONObject(it) }
-                    val expectedApk = if (BuildConfig.CAST_AVAILABLE) "vivi-gsm.apk" else "vivi-foss.apk"
+                    val expectedApk = if (BuildConfig.CAST_AVAILABLE) "vivi-gms.apk" else "vivi-foss.apk"
                     val apkAsset = apkAssets.firstOrNull { it.getString("name") == expectedApk }
                         ?: apkAssets.firstOrNull { it.getString("name") == "vivi.apk" }
                         ?: apkAssets.firstOrNull { it.getString("name").endsWith(".apk", ignoreCase = true) }
@@ -1147,7 +1157,9 @@ private suspend fun checkForkApkUpdate(
     try {
         val json = URL(APK_LATEST_VERSION_URL).openStream().bufferedReader().use { it.readText() }
         val doc = JSONObject(json)
-        val target = if (BuildConfig.CAST_AVAILABLE) "vivi-gsm.apk" else "vivi-foss.apk"
+        // `vivi-gms.apk` (Google Mobile Services), not the old, transposed
+        // `vivi-gsm`: the published channel now uses the corrected name.
+        val target = if (BuildConfig.CAST_AVAILABLE) "vivi-gms.apk" else "vivi-foss.apk"
 
         var apkUrl: String? = null
         var apkSizeBytes = 0L

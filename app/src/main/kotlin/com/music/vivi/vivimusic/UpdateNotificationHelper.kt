@@ -12,10 +12,14 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.music.vivi.BuildConfig
 import com.music.vivi.R
 import com.music.vivi.constants.EnableNotificationsKey
 import com.music.vivi.utils.dataStore
 import com.music.vivi.utils.get
+import com.music.vivi.vivimusic.updater.APK_LATEST_BASE
+import com.music.vivi.vivimusic.updater.UPDATE_SOURCE_FORK
+import com.music.vivi.vivimusic.updater.getUpdateSource
 import com.music.vivi.vivimusic.updater.updateRepo
 
 object UpdateNotificationHelper {
@@ -37,11 +41,22 @@ object UpdateNotificationHelper {
             nm.createNotificationChannel(channel)
         }
 
-        // Direct download URL format from vivimusicupdater - use the full tag (vX.X.X or bX.X.X) or nightly link
-        val apkUrl = if (versionName.contains("nightly", ignoreCase = true)) {
-            "https://nightly.link/${updateRepo(context)}/workflows/nightly.yml/main/vivi-music-gms-nightly.zip"
-        } else {
-            "https://github.com/${updateRepo(context)}/releases/download/$versionName/vivi.apk"
+        // Where the notification sends the user to download the build.
+        //
+        // Our own source publishes the companion APK on the `apk-latest` branch
+        // (`.releases/apk/latest`), never as a release asset — our releases
+        // carry the desktop installers only — so the old
+        // `releases/download/<tag>/vivi.apk` URL 404s on this repository, and
+        // the nightly CI only exists upstream. The click therefore opens the
+        // fixed channel URL that the in-app updater itself downloads from.
+        val apkUrl = when {
+            getUpdateSource(context) == UPDATE_SOURCE_FORK ->
+                if (BuildConfig.CAST_AVAILABLE) "$APK_LATEST_BASE/vivi-gms.apk"
+                else "$APK_LATEST_BASE/vivi-foss.apk"
+            versionName.contains("nightly", ignoreCase = true) ->
+                "https://nightly.link/${updateRepo(context)}/workflows/nightly.yml/main/vivi-music-gms-nightly.zip"
+            else ->
+                "https://github.com/${updateRepo(context)}/releases/download/$versionName/vivi.apk"
         }
         val intent = Intent(Intent.ACTION_VIEW, apkUrl.toUri())
 
