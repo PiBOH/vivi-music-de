@@ -417,6 +417,12 @@ object DesktopSettings {
             // current options. Inside the lock, so two writers cannot land in
             // the file out of order.
             SettingsFile.mirror(state)
+            // An in-app change must invalidate the reads keyed on the settings
+            // revision exactly like a hand edit of the file does: otherwise a
+            // `remember(settingsFileRevision()) { DesktopSettings.load() }` kept
+            // serving the value it captured first (the expressive player's lyrics
+            // options and their check marks needed a tab switch to update).
+            SettingsFile.bumpRevision()
         }
     }
 

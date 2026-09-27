@@ -93,8 +93,24 @@ object SettingsFile {
 
     private val _revision = MutableStateFlow(0L)
 
-    /** Bumped every time the file was edited from outside the app. */
+    /**
+     * Bumped every time an option changes — from the app ([bumpRevision], called
+     * by `DesktopSettings.save`) or from outside ([applyExternal]).
+     *
+     * `DesktopSettings.load()` keeps an in-memory snapshot that IS refreshed by
+     * every write, but the reads keyed on this flow (`remember(settingsFileRevision())
+     * { DesktopSettings.load() }`) are only re-initialised when the revision
+     * moves. Bumping it on external edits alone meant a change made in the app —
+     * the expressive player's lyrics quick menu, for one — did not invalidate
+     * those remembers, so the option (and the menu's check mark) only appeared
+     * after a tab switch rebuilt the composable.
+     */
     val revision: StateFlow<Long> = _revision.asStateFlow()
+
+    /** Marks every `settingsFileRevision()`-keyed read as stale (in-app change). */
+    fun bumpRevision() {
+        _revision.value = _revision.value + 1
+    }
 
     private val lock = Any()
     private var started = false

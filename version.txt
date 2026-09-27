@@ -1,6 +1,12 @@
-6.0.8.2
-140
+6.0.8.3
+141
 alpha
-1.53.32
-395
+1.53.33
+396
 alpha
+# version.txt - the release metadata, read by the workflows and by
+# desktop/build.gradle.kts. Six value lines, then these notes:
+#   line 1 = mobile version          line 2 = mobile version code   line 3 = mobile channel
+#   line 4 = DE (desktop) version     line 5 = DE version code       line 6 = DE channel
+# Lines starting with "#" are ignored everywhere (the readers strip them), so
+# notes may be added here without renumbering the six value lines.

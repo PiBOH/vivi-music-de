@@ -354,6 +354,11 @@ fun main(args: Array<String>) {
 
     YouTube.locale = resolveYouTubeLocale(initialSettings.contentLanguage, initialSettings.contentCountry)
 
+    // The shared Compose strings (the text-selection context menu above all)
+    // localise from the platform locale, not from the app's own table: on an
+    // Italian machine an English build showed "Copia". Follow the app language.
+    Languages.applyJvmLocale(initialSettings.language)
+
     // The options that are cached outside Compose follow an edit of the file too.
     LaunchedEffect(settingsRevision) {
         if (settingsRevision <= 0L) return@LaunchedEffect
@@ -363,6 +368,9 @@ fun main(args: Array<String>) {
         runCatching { DeveloperOptions.load() }
         val current = DesktopSettings.load()
         YouTube.locale = resolveYouTubeLocale(current.contentLanguage, current.contentCountry)
+        // A language change made in the app (or in the file) has to reach the
+        // platform locale too, so the right-click menu follows it.
+        Languages.applyJvmLocale(current.language)
     }
     YouTubeExtractor.cacheDir = File(System.getProperty("user.home"), ".vivimusic/cache").apply { mkdirs() }
     LoginManager.restore()
@@ -1902,12 +1910,21 @@ fun WindowScope.App(
             pb.isShuffle?.let { player.setShuffle(it) }
             val currentId = player.state.value.current?.videoId
             val sameTrack = currentId != null && pb.trackId != null && pb.trackId == currentId
+            // One line that says everything a sync report needs: what the peer
+            // sent (track/queue/index/playing/resolving/pos/seek) AND what this
+            // device held at that instant. Without the local half a dropped
+            // command could not be told from an applied one (a bare 'seek=true' in
+            // the recv line never says whether we already sat at that position, or were
+            // still resolving our own stream and therefore deferred it).
+            val localState = player.state.value
             AppLog.log(
                 "sync",
                 "recv: track='${pb.trackTitle ?: pb.trackId}' queue=${pb.queue.size} index=${pb.queueIndex} " +
                     "playing=${pb.isPlaying} resolving=${pb.isResolving} pos=${pb.positionMs} " +
                     "seek=${pb.userSeek} queueAt=${pb.queueUpdatedAt} " +
                     "localQueueAt=${syncManager.queueUpdatedAt()} " +
+                    "localPos=${localState.positionMs} localPlaying=${localState.isPlaying} " +
+                    "localResolving=${localState.isResolving} " +
                     (if (sameTrack) "[same track]" else "[track change] [local='${player.state.value.current?.title ?: "-"}']"),
             )
             if (currentId != null && pb.trackId != null && pb.trackId == currentId) {
@@ -1980,6 +1997,22 @@ fun WindowScope.App(
                         !pb.userSeek &&
                         localPlayAgo >= 0L && localPlayAgo < 3_000L
                     when {
+                        // A user seek is checked FIRST, before the resolving
+                        // hold: a phone user seek always arrives that way — the
+                        // seek makes the phone rebuffer, so its very snapshot
+                        // carries `resolving=true`. As the second branch it fell
+                        // into the hold and was dropped, and the follow-up tick
+                        // (seek=false) is applied by the receiver as a
+                        // *forward-only* catch-up, so a backward seek had no way
+                        // back ("forward transmits, backward does not").
+                        pb.userSeek -> {
+                            AppLog.log(
+                                "sync",
+                                "applying peer USER SEEK: -> ${target}ms (was ${player.state.value.positionMs}ms), " +
+                                    "playing=${pb.isPlaying} peerResolving=${pb.isResolving} (exact, both directions)",
+                            )
+                            player.seekRemote(target, pb.isPlaying, toleranceMs = 0L)
+                        }
                         pb.isResolving -> {
                             // Peer is mid-song buffering (position frozen): keep
                             // playing and skip the seek instead of pausing, so a
@@ -1995,14 +2028,6 @@ fun WindowScope.App(
                             // The next fresh tick applies the peer's real state.
                             AppLog.log("sync", "ignored a peer 'paused' echo inside the local play grace window (${localPlayAgo}ms)")
                         }
-                        pb.userSeek -> {
-                            AppLog.log(
-                                "sync",
-                                "applying peer USER SEEK: -> ${target}ms (was ${player.state.value.positionMs}ms), " +
-                                    "playing=${pb.isPlaying} (exact, both directions)",
-                            )
-                            player.seekRemote(target, pb.isPlaying, toleranceMs = 0L)
-                        }
                         else -> {
                             // Periodic drift tick: forward-only catch-up.
                             if (pb.isPlaying && target - player.state.value.positionMs > SyncServer.RESYNC_TOLERANCE_MS) {
@@ -2011,6 +2036,19 @@ fun WindowScope.App(
                             player.seekRemoteCatchUp(target, pb.isPlaying, SyncServer.RESYNC_TOLERANCE_MS)
                         }
                     }
+                } else {
+                    // We are still resolving our OWN stream, so the peer's
+                    // play/pause and position are deferred (our own resolution
+                    // decides when audio starts). Say so explicitly: without
+                    // this line the snapshot is logged in and then nothing
+                    // happens, which reads as "the command vanished". The
+                    // re-apply effect below picks it up the moment the stream is
+                    // ready.
+                    AppLog.log(
+                        "sync",
+                        "deferred (our own stream is resolving): peer playing=${pb.isPlaying} " +
+                            "seek=${pb.userSeek} peerResolving=${pb.isResolving} -> re-applied when ready",
+                    )
                 }
             } else {
                 // Last-write-wins for the queue: only replace the local queue if
@@ -2059,8 +2097,13 @@ fun WindowScope.App(
                 // left the button stuck and forced a second play press.
                 val (receivedAt, pb) = latestRemotePlayback.get() ?: (0L to null)
                 val currentId = player.state.value.current?.videoId
-                if (receivedAt >= resolvingSince && pb != null && !pb.isResolving &&
-                    currentId != null && pb.trackId == currentId
+                // A user seek is a discrete command, not drift: it is honoured
+                // even when it arrived just BEFORE we started resolving (the
+                // `receivedAt >= resolvingSince` guard exists to drop a stale
+                // pre-play *drift* tick, which a seek never is).
+                if (pb != null && !pb.isResolving &&
+                    currentId != null && pb.trackId == currentId &&
+                    (receivedAt >= resolvingSince || pb.userSeek)
                 ) {
                     val target = syncManager.effectivePosition(pb)
                     AppLog.log(

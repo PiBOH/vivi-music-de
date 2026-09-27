@@ -86,4 +86,25 @@ object Languages {
         "zh-rTW" -> "zh-TW"
         else -> code
     }
+
+    /** A `java.util.Locale` for a desktop language code ("zh-rCN" -> `zh-CN`). */
+    fun jvmLocale(code: String): java.util.Locale =
+        java.util.Locale.forLanguageTag(code.replace("-r", "-"))
+
+    /**
+     * Makes the platform locale follow the app language.
+     *
+     * The shared Compose components localise themselves from
+     * `java.util.Locale.getDefault()` through `PlatformLocalization` — the
+     * text-selection context menu (Copy / Cut / Paste / Select all) and every
+     * other built-in string — never from the app's own string table. On an
+     * Italian machine an English build therefore showed "Copia" in the
+     * right-click menu. Pointing the default locale at the selected language
+     * makes those strings match the rest of the UI (and the date formatting
+     * with them); languages Compose has no translation for fall back to English.
+     */
+    fun applyJvmLocale(code: String) {
+        if (code.isBlank()) return
+        runCatching { java.util.Locale.setDefault(jvmLocale(code)) }
+    }
 }

@@ -28,10 +28,10 @@ android {
         // VIVI for DE companion build: it installs as com.vivi.music.desktop so
         // it can coexist with the upstream app. The mobile version is the
         // upstream feature version plus our own patch counter (6.0.8 ->
-        // 6.0.8.1); versionCode is our own counter and only ever increases.
-        versionCode = 139
+        // 6.0.8.3); versionCode is our own counter and only ever increases.
+        versionCode = 141
         val betaVersionName = project.findProperty("betaVersionName") as String?
-        versionName = betaVersionName ?: "6.0.8.1"
+        versionName = betaVersionName ?: "6.0.8.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

@@ -10,6 +10,8 @@ orientation.
 
 ### Diagnostics (26 Sep logs, all categories)
 - [x] **Windows toast `SQLITE_CONSTRAINT_UNIQUE` (done 26 Sep, 1.53.31).** `native-notify.log` shows the second `Show` of a burst throwing `SQLITE_CONSTRAINT_UNIQUE`: every toast was created with the default empty `Tag`/`Group`, and the Action Center stores toasts by `(AUMID, Tag, Group)`. Each toast now carries a unique GUID `Tag` and the app's `Group`.
+- [x] **The expressive player's lyrics options needed a tab switch to apply (done 27 Sep, 1.53.33).** `settingsFileRevision()` was only bumped by a hand edit of `settings.json`, so a change made *in* the app refreshed the cached state but not the revision, and every `remember(settingsFileRevision()) { DesktopSettings.load() }` kept the value it captured first — the live lyrics panel and the quick menu's check marks included. `DesktopSettings.save` now bumps the revision, so an in-app change behaves like a file edit.
+- [x] **The right-click menu showed Italian ("Copia") in an English build (done 27 Sep, 1.53.33).** The shared Compose text-selection menu (Copy / Cut / Paste / Select all) localises from `java.util.Locale.getDefault()`, not from the app table, so it followed the OS locale. The platform locale is now set from the app language at startup and on every language change.
 - [x] **The changelog body overlapped and read as “squeezed” (done 27 Sep, 1.53.32).** After the selectable copy of 1.53.31 the release text still shared a column with the version list, so a long entry wrapped into itself. The body is now a bounded, scrollable column: a version+date header, a divider, a heading per section and one `Text` per bullet, so no line can overlap the next.
 - [x] **The changelog text was not selectable (done 26 Sep, 1.53.31).** The release body is now wrapped in a targeted `SelectionContainer`, so a line can be copied like every error message.
 - [ ] **The playlist "repair" churn was investigated and is not an open defect.** In session `20260926-221741` the log shows each account playlist being re-mirrored with a new local `LP…` id and the previous copy removed as a duplicate; the next session (`20260926-223350`) is already clean (`'…': already a local playlist — not mirrored again`, `2 playlist(s) in the account`, `0 of 2 updated`). The churn was the one-time cleanup of pre-existing duplicate account playlists (two account ids per name), not a per-start bug. **Watch:** if a fresh session starts showing `repair:` lines again, the mirror's `linkedRemoteIds` filter is failing and that is the line to read.
@@ -18,6 +20,7 @@ orientation.
 - [ ] **`crash.log` holds one `IllegalStateException: Vertically scrollable component was measured with an infinity maximum height constraints` (1.53.17).** It is the expressive lyrics menu’s nested scroll, removed in 1.53.19; the file has not been written since. Re-check only if a new crash dump appears.
 
 ### Android ↔ Desktop sync
+- [x] **A user seek was dropped by the receiver's own "peer is resolving" hold (done 27 Sep, 1.53.33).** Both receivers checked `isResolving` before `userSeek`; a phone seek always carries `resolving=true` (the seek makes the phone rebuffer), so it fell into the hold and the follow-up `seek=false` tick is a forward-only catch-up — a backward seek had no way back. `userSeek` is now checked first on both sides, the `recv:` line also prints the local position/play/resolving, and a snapshot deferred because *we* are resolving says so explicitly. **Watch:** `applying peer USER SEEK` after a backward drag now has to appear on whichever device did not move, and `deferred (our own stream is resolving)` has to be followed by a `stream ready — re-applying` line, never nothing.
 - [ ] **Verify the seek and track-start fixes with a fresh paired session (1.53.30).** The fixes are read from the code paths they share, not from a live paired log: a user seek is now forced past the echo-suppression window (both directions) and a receiver no longer stays silent when the sender is still resolving. The `sync.log` now carries the verdict — look for `applying peer USER SEEK` after a backward drag, and for `audio started on this device` on **both** devices after a track change. If a seek is still one-way, the line that names it is `send [tick/state]` carrying a position the peer only sees as a forward-only catch-up.
 
 ### Audio (macOS)
@@ -113,6 +116,8 @@ orientation.
   Android build from this branch, and scratch branches are banned (AGENTS.md).
 
 ## Done — one line per release
+
+- [x] **DE 1.53.33 / APK 6.0.8.3** — a user seek on both receivers is applied before the "peer is resolving" hold (a phone seek always carries `resolving=true`), the sync log prints what the receiver held, an in-app settings change bumps the settings revision (the expressive player's lyrics options apply live), and the right-click text menu follows the app language
 
 - [x] **DE 1.53.32** — the changelog release body is a bounded, scrollable column (version+date header, divider, a heading per section, one line per bullet) so it no longer overlaps, keeping the 1.53.31 selectable/copyable text and clickable `#N` links
 
