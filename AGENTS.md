@@ -177,7 +177,8 @@ dependencies there, or you break the desktop build.
     APKs; a slow or failed APK run must never hold a release back, and a release
     never carries an APK. Its input (`signing_key`) resolves the same way
     whichever trigger started it. It builds GMS and FOSS in parallel and
-    publishes them, with fixed file names (`vivi-gsm.apk`, `vivi-foss.apk`) plus
+    publishes them, with fixed file names (`vivi-gms.apk`, `vivi-foss.apk`, plus
+    the old transposed `vivi-gsm.apk` as a one-release legacy alias) plus
     a `version.json` (version, version code, channel, build time, sizes and
     URLs), to `.releases/apk/latest` on the dedicated **`apk-latest`** branch —
     the only place an APK ever lives. That branch is recreated from scratch and

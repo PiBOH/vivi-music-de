@@ -11,6 +11,12 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.4_DE-1.53.34-alpha] - 2026-09-27
+
+### Fixed
+- [DE] **A track skipped on the phone starts on the desktop instead of waiting for a play press.** A skip made on the phone reaches the desktop as `playing=false resolving=true`: the skip itself makes the new stream rebuffer, and the phone's `isPlaying` (`playWhenReady && state != ended`) reads false while the media item is swapped in (in the paired session of 27 Sep every push of the skip at 15:38:26.8 carries exactly that). The desktop adopted the new queue with `startPaused = !isPlaying`, so it changed the song and stayed silent; every later `playing=true` tick then landed while the desktop was still resolving its *own* new stream and was deferred, and the deferral re-applies a *position*, not an intent — the reported "the song changes on the desktop but I have to press play". The phone's skip path (`seekToNext` / `seekToPrevious`) always forces `playWhenReady = true`, so a track change that arrives mid-rebuffer now inherits the peer's last clear intent (tracked per snapshot, only updated while the peer is *not* resolving) and starts as soon as its own stream is primed; the `track change applied from the peer` line gained `startPlaying=` so the decision is readable in `sync.log`. **Constraint:** a change from a peer that was genuinely paused (the first pair, a queue edit while paused) still stays paused — only a snapshot that says the peer is resolving can inherit an intent, because a real pause always arrives as a non-resolving snapshot.
+- [DE] **The right-click Copy / Cut / Paste / Select all labels come from the app's own table, in every language.** Pointing the platform locale at the app language (1.53.33) made the shared Compose text menu follow the app, but only as far as the platform has a translation and with the system's wording. `AppTheme` now provides `LocalLocalization` itself, with the four labels read from the desktop table, and the keys exist in all 52 languages (`action_copy` / `action_cut` / `action_paste` / `action_select_all`, added through `scripts/desktop_extra_translations_87.py` so a regeneration of `Localization.kt` keeps them). **Constraint:** the localization audit stays clean (0 missing keys, 0 leaking keys, 0 English text left in a language map) and `action_copy` / `action_select_all` are gap-filled from the Android table (`copy` / `select`) where it has them, so both editions word those two the same.
+
 ## [6.0.8.3_DE-1.53.33-alpha] - 2026-09-27
 
 ### Fixed

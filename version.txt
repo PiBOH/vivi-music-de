@@ -1,8 +1,8 @@
-6.0.8.3
-141
+6.0.8.4
+142
 alpha
-1.53.33
-396
+1.53.34
+397
 alpha
 # version.txt - the release metadata, read by the workflows and by
 # desktop/build.gradle.kts. Six value lines, then these notes:
