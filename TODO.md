@@ -10,6 +10,7 @@ orientation.
 
 ### Diagnostics (26 Sep logs, all categories)
 - [x] **Windows toast `SQLITE_CONSTRAINT_UNIQUE` (done 26 Sep, 1.53.31).** `native-notify.log` shows the second `Show` of a burst throwing `SQLITE_CONSTRAINT_UNIQUE`: every toast was created with the default empty `Tag`/`Group`, and the Action Center stores toasts by `(AUMID, Tag, Group)`. Each toast now carries a unique GUID `Tag` and the app's `Group`.
+- [x] **The changelog body overlapped and read as “squeezed” (done 27 Sep, 1.53.32).** After the selectable copy of 1.53.31 the release text still shared a column with the version list, so a long entry wrapped into itself. The body is now a bounded, scrollable column: a version+date header, a divider, a heading per section and one `Text` per bullet, so no line can overlap the next.
 - [x] **The changelog text was not selectable (done 26 Sep, 1.53.31).** The release body is now wrapped in a targeted `SelectionContainer`, so a line can be copied like every error message.
 - [ ] **The playlist "repair" churn was investigated and is not an open defect.** In session `20260926-221741` the log shows each account playlist being re-mirrored with a new local `LP…` id and the previous copy removed as a duplicate; the next session (`20260926-223350`) is already clean (`'…': already a local playlist — not mirrored again`, `2 playlist(s) in the account`, `0 of 2 updated`). The churn was the one-time cleanup of pre-existing duplicate account playlists (two account ids per name), not a per-start bug. **Watch:** if a fresh session starts showing `repair:` lines again, the mirror's `linkedRemoteIds` filter is failing and that is the line to read.
 - [ ] **Login can deliver a partial session (`LOGIN_INFO` missing).** `login-debug.log` shows several runs where the cookie capture has no `LOGIN_INFO`, the extra visit to `www.youtube.com` still returns none, and the app hands over `delivering PARTIAL session, missing critical: [LOGIN_INFO]`; one run also got a `500 INTERNAL` from `account_menu` (`E1029`). The account works after a retry, but this is the path to re-check if a login "succeeds" with the sidebar empty.
@@ -112,6 +113,8 @@ orientation.
   Android build from this branch, and scratch branches are banned (AGENTS.md).
 
 ## Done — one line per release
+
+- [x] **DE 1.53.32** — the changelog release body is a bounded, scrollable column (version+date header, divider, a heading per section, one line per bullet) so it no longer overlaps, keeping the 1.53.31 selectable/copyable text and clickable `#N` links
 
 - [x] **DE 1.53.29** — `super_logs_writer` (the per-pass writer diagnostics are off by default, so `playback.log` is not filled at pass frequency), the Album/Artist/Playlist gradient headers and context menus, the canvas actually replacing the player artwork (mobile "Use canvas"), and the notification-permission row
 - [x] **DE 1.53.27** — the writer verdict no longer counts the sound card's own pacing as a stall (a pass is a stall only when it is slow *outside* `out.write()`; on Windows four passes a second are legitimately over 200 ms), and the mobile base is upstream 6.0.8 with our `applicationId`, channel and updater kept
