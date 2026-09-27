@@ -290,13 +290,13 @@ jobs:
           # Verified (and flattened) by the previous step.
           cp ../apk-flat/vivi-gms.apk .releases/apk/latest/vivi-gms.apk
           cp ../apk-flat/vivi-foss.apk .releases/apk/latest/vivi-foss.apk
-          # Legacy alias for the old (transposed) `vivi-gsm.apk` name: builds
-          # shipped before the rename look for it, and this keeps their updater
-          # working for one more release so nobody has to reinstall by hand.
-          # Safe to delete once every install reads `vivi-gms.apk`.
-          cp ../apk-flat/vivi-gms.apk .releases/apk/latest/vivi-gsm.apk
+          # No file under the old (transposed) `vivi-gsm.apk` name is written
+          # any more: an install shipped before the rename still sees its update
+          # through the legacy *entry* of version.json below, whose URL is this
+          # same `vivi-gms.apk`, so the misspelt name is never downloaded.
           # version.json is what the updaters read: version + version code +
-          # when it was built, with the exact URLs and sizes of both files.
+          # when it was built, with the exact URL and size of each APK (the
+          # current builds, plus the legacy lookup key described below).
           VERSION="$VERSION" VERSION_CODE="$VERSION_CODE" CHANNEL="$CHANNEL" TITLE="$TITLE" BASE="$BASE" \
             python3 - <<'PY'
           import datetime, json, os
@@ -308,8 +308,15 @@ jobs:
                   "sizeBytes": os.path.getsize(os.path.join(".releases/apk/latest", name)),
                   "url": f"{base}/{name}",
               }
-              for name in ("vivi-gms.apk", "vivi-foss.apk", "vivi-gsm.apk")
+              for name in ("vivi-gms.apk", "vivi-foss.apk")
           ]
+          # Legacy entry: builds up to 6.0.8.3 look their APK up by the OLD,
+          # transposed name, and without an entry they would be told they are up
+          # to date forever — so the entry stays, but it points at the corrected
+          # file (same bytes). The old spelling survives only as a lookup key:
+          # no `vivi-gsm.apk` exists on the branch and nothing named that is
+          # ever downloaded.
+          files.append({**next(f for f in files if f["name"] == "vivi-gms.apk"), "name": "vivi-gsm.apk"})
           doc = {
               "version": os.environ["VERSION"],
               "versionCode": int(os.environ.get("VERSION_CODE") or 0),
