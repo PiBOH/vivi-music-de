@@ -11,6 +11,15 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.2-beta] - 2026-09-28
+
+### Fixed
+- [DE] **"Sync OS volume" no longer switches itself back on.** The native-volume switch is a per-device choice about *this* machine's own master volume, but it was also carried in the synced settings map in both directions — and the peer keeps pushing its stored value (default on, and it cannot be changed from the phone) while our own push is still in flight, so the local toggle lost the race and re-enabled itself a moment after being turned off. It is device-local now: the desktop neither sends it nor applies it, and the send/receive gates it controls are what actually stop the volume crossing — the peer's pushes are ignored and ours carry no `systemVolume` at all, so one side switching it off is enough. **Constraint:** the phone's own preference (`syncNativeVolume`, default on) is unchanged and still read by its push/apply gates, so a phone-side switch stays possible without ever being overwritten by the desktop.
+
+### Changed
+- [DE] **The row is called "Sync OS volume" and says so in all 52 languages.** 1.54.0 borrowed the already-translated "Sync volume" (`lt_sync_volume`, Listen Together's own label) because a new key meant 52 new translations for one row; sitting directly under "Sync VIVI volume" that read as a second *app*-volume sync instead of the operating system's. It has its own key now (`sync_os_volume`, supplied by `desktop_extra_translations_89.py`) and each language renders "OS" with its own word for the operating system where one is in common use. **Constraint:** the localization audit stays clean (0 missing, 0 leaking, 0 English left, 0 wrong script).
+- [DE] **Disconnect and Unpair are one action, not two buttons.** Disconnect already drops the pairing (1.54.0: it tells the peer and clears the pair id), so showing Unpair next to a live link was the same action twice. Unpair now only appears when there is no link to disconnect — paired but offline, where Disconnect is not on screen — so exactly one leaving button is visible at a time. **Constraint:** the LAN mode keeps its own Stop LAN server button, which already takes the same path.
+
 ## [6.0.8.5_DE-1.54.1-beta] - 2026-09-28
 
 ### Changed
