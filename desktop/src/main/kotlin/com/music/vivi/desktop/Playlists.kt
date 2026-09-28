@@ -502,9 +502,21 @@ fun LocalPlaylistsScreen(
             if (LoginManager.isLoggedIn()) {
                 val pendingUpload = active.count { it.remoteId == null && !PlaylistSync.isMirrored(it.id) }
                 val syncStatus by PlaylistSync.status.collectAsState()
+                // What the action would really do: playlists that have to be
+                // CREATED on the account, and ones that already live there and
+                // would only be brought up to date. The label follows the plan
+                // (create / sync / both) instead of always saying "Create", which
+                // was wrong as soon as every local playlist already existed on
+                // YouTube Music under its own name.
+                val uploadPlan by PlaylistSync.uploadPlan.collectAsState()
+                val planKey = active.joinToString("|") {
+                    "${it.id}:${PlaylistSync.accountPlaylistIdOf(it)}:${it.name}"
+                }
+                LaunchedEffect(planKey) { PlaylistSync.refreshUploadPlan() }
+                val uploadLabel = Localization.get(language, uploadPlan.labelKey)
                 var confirmUpload by remember { mutableStateOf(false) }
                 Tooltip(
-                    if (pendingUpload > 0) Localization.get(language, "playlists_upload")
+                    if (pendingUpload > 0) uploadLabel
                     else Localization.get(language, "playlists_upload_none"),
                 ) {
                     OutlinedButton(
@@ -513,7 +525,7 @@ fun LocalPlaylistsScreen(
                     ) {
                         Icon(Icons.Filled.CloudUpload, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text(Localization.get(language, "playlists_upload"))
+                        Text(uploadLabel)
                     }
                 }
                 if (syncStatus.phase == PlaylistSync.Phase.RUNNING) {
@@ -536,11 +548,24 @@ fun LocalPlaylistsScreen(
                 if (confirmUpload) {
                     AlertDialog(
                         onDismissRequest = { confirmUpload = false },
-                        title = { Text(Localization.get(language, "playlists_upload")) },
+                        title = { Text(uploadLabel) },
                         text = {
                             Text(
-                                Localization.get(language, "playlists_upload_confirm")
-                                    .replace("%d", pendingUpload.toString()),
+                                // Nothing new to create: the honest body is the
+                                // generic description of the action (it creates
+                                // the missing ones — none — and syncs the
+                                // account's playlists back), not a sentence about
+                                // creating N playlists.
+                                if (uploadPlan.create == 0 && uploadPlan.update > 0) {
+                                    Localization.get(language, "playlists_upload_desc")
+                                } else {
+                                    Localization.get(language, "playlists_upload_confirm")
+                                        .replace(
+                                            "%d",
+                                            (if (uploadPlan.create > 0) uploadPlan.create else pendingUpload)
+                                                .toString(),
+                                        )
+                                },
                             )
                         },
                         confirmButton = {

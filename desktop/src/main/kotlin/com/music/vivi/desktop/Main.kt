@@ -5858,12 +5858,24 @@ fun AccountSection(
         val pendingUpload = localPlaylists.count { p ->
             !p.deleted && p.remoteId == null && !PlaylistSync.isMirrored(p.id)
         }
+        // Same plan as the playlist list's own button: the row is labelled by
+        // what it would really do (create, sync, or both), not always "Create"
+        // — which was wrong once every local playlist already existed on the
+        // account under its own name.
+        val uploadPlan by PlaylistSync.uploadPlan.collectAsState()
+        val uploadPlanKey = localPlaylists
+            .filterNot { it.deleted }
+            .joinToString("|") {
+                "${it.id}:${PlaylistSync.accountPlaylistIdOf(it)}:${it.name}"
+            }
+        LaunchedEffect(uploadPlanKey) { PlaylistSync.refreshUploadPlan() }
+        val uploadLabel = Localization.get(language, uploadPlan.labelKey)
         var confirmUpload by remember { mutableStateOf(false) }
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.CloudUpload,
-                    title = { Text(Localization.get(language, "playlists_upload")) },
+                    title = { Text(uploadLabel) },
                     description = {
                         Text(
                             if (pendingUpload > 0) {
@@ -5881,11 +5893,23 @@ fun AccountSection(
         if (confirmUpload) {
             AlertDialog(
                 onDismissRequest = { confirmUpload = false },
-                title = { Text(Localization.get(language, "playlists_upload")) },
+                title = { Text(uploadLabel) },
                 text = {
                     Text(
-                        Localization.get(language, "playlists_upload_confirm")
-                            .replace("%d", pendingUpload.toString()),
+                        // Nothing new to create: the generic description of the
+                        // action is the honest body (it creates the missing ones
+                        // — none — and syncs the account's playlists back),
+                        // instead of a sentence about creating N playlists.
+                        if (uploadPlan.create == 0 && uploadPlan.update > 0) {
+                            Localization.get(language, "playlists_upload_desc")
+                        } else {
+                            Localization.get(language, "playlists_upload_confirm")
+                                .replace(
+                                    "%d",
+                                    (if (uploadPlan.create > 0) uploadPlan.create else pendingUpload)
+                                        .toString(),
+                                )
+                        },
                     )
                 },
                 confirmButton = {

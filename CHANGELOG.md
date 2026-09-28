@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.1-beta] - 2026-09-28
+
+### Changed
+- [DE] **The bulk playlist action now says what it will really do — Create, Sync, or both — instead of always "Create on YouTube Music".** The action uploads the local playlists that are *not* on the account yet, but it does not always create something: when a playlist already exists there under the same name (created on the phone, on another computer, or in the YouTube Music web UI) the run adopts that copy and only pushes the songs it is missing — an update, not a creation. The label was `playlists_upload` regardless, so with every playlist already on the account the button promised to create playlists and then created none. `PlaylistSync.UploadPlan` now counts, for the pending work, how many playlists would be **created** and how many would be **updated**, and the label follows: "Create on YouTube Music" when everything is new, "Sync with YouTube Music" when nothing is new and only the existing copies are brought up to date, "Create and sync with YouTube Music" when both kinds are pending. The plan is computed with the very same two lookups the run uses (a local row already linked to an account copy, or an account playlist of the same name), against the cached account list, so labelling the button also warms the cache the run then reads. The confirm dialog follows: its title is the same label, and when there is nothing to create its body is the generic description of the action instead of "This creates N playlist(s)". **Constraint:** the plan is a preview, never a promise — it is recomputed when the library changes and the run itself still decides playlist by playlist, so a playlist created on the account in between is adopted (no duplicate) exactly as before; a plan that has not been computed yet falls back to the existing "create" wording rather than showing a guess. The three keys exist in all 52 languages (`desktop_extra_translations_88.py`), and the localization audit stays clean.
+
 ## [6.0.8.5_DE-1.54.0-beta] - 2026-09-28
 
 ### Fixed

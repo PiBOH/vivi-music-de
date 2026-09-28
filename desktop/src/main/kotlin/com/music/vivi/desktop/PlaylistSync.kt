@@ -83,6 +83,72 @@ object PlaylistSync {
         }
     }
 
+    /**
+     * What the "create them on YouTube Music" action would do RIGHT NOW, for the
+     * pending work: a local playlist with no account copy is *created* there,
+     * unless an account playlist of the same name (or a local twin that already
+     * points at one) exists — then that copy is adopted and only its missing
+     * songs are pushed, i.e. the playlist is *updated*.
+     *
+     * The two counts are what the action's label is derived from: "create" when
+     * everything is new, "sync" when nothing is new and only existing playlists
+     * are brought up to date, and both when the pending set holds each kind.
+     */
+    data class UploadPlan(val create: Int = 0, val update: Int = 0) {
+        val total: Int get() = create + update
+
+        /** The desktop key of the label that describes this plan. */
+        val labelKey: String
+            get() = when {
+                create > 0 && update > 0 -> "playlists_upload_and_sync"
+                update > 0 -> "playlists_sync_ytm"
+                else -> "playlists_upload"
+            }
+    }
+
+    private val _uploadPlan = MutableStateFlow(UploadPlan())
+
+    /**
+     * The label of the bulk action, recomputed by [refreshUploadPlan]. Empty
+     * until the first computation, so a caller can fall back to the plain
+     * "create" wording instead of showing the sync label for a guess.
+     */
+    val uploadPlan: StateFlow<UploadPlan> = _uploadPlan.asStateFlow()
+
+    /**
+     * Recomputes [uploadPlan] for the current library (and the account's
+     * playlists, which the name match needs — the same cached read the action
+     * itself does, so labelling the button also warms it).
+     */
+    fun refreshUploadPlan() {
+        if (!LoginManager.isLoggedIn()) {
+            _uploadPlan.value = UploadPlan()
+            return
+        }
+        scope.launch {
+            val pending = PlaylistStore.active.filter { it.accountPlaylistId() == null }
+            if (pending.isEmpty()) {
+                _uploadPlan.value = UploadPlan()
+                return@launch
+            }
+            var create = 0
+            var update = 0
+            for (playlist in pending) {
+                // Same two ways an account copy is found by the run itself: a
+                // local row that already points at one (adopted), or an account
+                // playlist of the same name (matched). Both mean "updated",
+                // never "created".
+                val twin = PlaylistStore.active.firstOrNull { other ->
+                    other.id != playlist.id &&
+                        other.accountPlaylistId() != null &&
+                        samePlaylist(other, playlist)
+                }
+                if (twin != null || accountPlaylistNamed(playlist.name) != null) update++ else create++
+            }
+            _uploadPlan.value = UploadPlan(create = create, update = update)
+        }
+    }
+
     private val _status = MutableStateFlow(Status())
     val status: StateFlow<Status> = _status.asStateFlow()
 
@@ -108,6 +174,13 @@ object PlaylistSync {
      * has it in the field.
      */
     fun SyncedPlaylist.accountPlaylistId(): String? = remoteId ?: remoteId(id)
+
+    /**
+     * [accountPlaylistId] as a plain function, for callers outside the object
+     * (a member extension is only in scope inside it).
+     */
+    fun accountPlaylistIdOf(playlist: SyncedPlaylist): String? =
+        playlist.remoteId ?: remoteId(playlist.id)
 
     /**
      * A song was added to a playlist that also lives on the account: push it,
