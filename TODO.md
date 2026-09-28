@@ -127,6 +127,8 @@ orientation.
 
 ## Done — one line per release
 
+- [x] **DE 1.54.1** — the bulk playlist action is labelled by what it will do ("Create on YouTube Music" only when playlists are really new, "Sync with YouTube Music" when only the account's existing copies are brought up to date, "Create and sync with YouTube Music" when both are pending), from a `PlaylistSync.UploadPlan` computed with the same lookups the run itself uses
+
 - [x] **DE 1.54.0 / APK 6.0.8.5** — the seek bars work again and the track time is real (the queue's durations are taken over on adoption, the desktop pushes the lengths it has, and a seek is only clamped against a *known* length, so a drift tick no longer restarts the track from 0:00); the native OS volume has its own "Sync volume" switch and can be left out of the sync; the desktop no longer builds all 53 language tables before the first frame (per-language, on demand) and `app.log` now times every startup stage; "Disconnect" unpairs like Unpair does; both editions move to the **beta** channel (DE 1.54.0 is a MINOR: a new feature, the Spotify import, is in this cycle)
 
 - [x] **DE 1.53.34 / APK 6.0.8.4** — a track skipped on the phone now starts on the desktop (a track change that arrives while the peer is rebuffering inherits the peer's last clear play intent instead of being adopted as a pause), and the right-click Copy / Cut / Paste / Select all labels come from the app's own table in all 52 languages; the APK side carries the silent upkeep only (the "what's new" screens read our repository and branch, and the companion APK is published as `vivi-gms.apk`)
