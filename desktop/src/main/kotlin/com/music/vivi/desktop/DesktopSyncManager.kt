@@ -151,9 +151,28 @@ class DesktopSyncManager {
         }
     }
 
+    /**
+     * Drops the relay link AND the pairing. "Disconnect" is a real "we are done
+     * together" action on this screen: it used to only close the socket, so the
+     * paired device stayed paired on both sides (the user then had to press
+     * Unpair by hand) and the other device kept showing a peer that could never
+     * come back. The peer is told first, like [unpair] does.
+     */
     fun disconnect() {
+        runCatching { client?.unpair() }
         teardownClient()
+        clearPairing()
         _status.value = ""
+    }
+
+    /** Forgets the pairing locally (peer notification is the caller's job). */
+    private fun clearPairing() {
+        DesktopSettings.update { it.copy(pairId = "") }
+        _paired.value = false
+        _pairCode.value = ""
+        _pairCodeExpiresAt.value = 0L
+        _peerDeviceName.value = ""
+        _peerDeviceId.value = ""
     }
 
     /** Starts the local LAN relay, connects the desktop to it, and generates
@@ -197,12 +216,7 @@ class DesktopSyncManager {
         _lanAddress.value = ""
         teardownClient()
         // Stopping the LAN server unpairs both sides.
-        DesktopSettings.update { it.copy(pairId = "") }
-        _paired.value = false
-        _pairCode.value = ""
-        _pairCodeExpiresAt.value = 0L
-        _peerDeviceName.value = ""
-        _peerDeviceId.value = ""
+        clearPairing()
     }
 
     fun requestPairingCode() {
@@ -217,12 +231,7 @@ class DesktopSyncManager {
 
     fun unpair() {
         client?.unpair()
-        DesktopSettings.update { it.copy(pairId = "") }
-        _paired.value = false
-        _pairCode.value = ""
-        _pairCodeExpiresAt.value = 0L
-        _peerDeviceName.value = ""
-        _peerDeviceId.value = ""
+        clearPairing()
     }
 
     /**

@@ -122,6 +122,7 @@ import com.music.vivi.constants.PauseOnMute
 import com.music.vivi.constants.PersistentQueueKey
 import com.music.vivi.constants.PersistentShuffleAcrossQueuesKey
 import com.music.vivi.constants.PlayerVolumeKey
+import com.music.vivi.constants.SyncNativeVolumeKey
 import com.music.vivi.constants.SyncViviVolumeKey
 import com.music.vivi.constants.RememberShuffleAndRepeatKey
 import com.music.vivi.constants.RepeatModeKey
@@ -1761,7 +1762,9 @@ class MusicService :
                 isResolving = player.playbackState == Player.STATE_BUFFERING,
                 isPlaying = player.isPlaying,
                 volume = if (dataStore.get(SyncViviVolumeKey, true)) playerVolume.value else null,
-                systemVolume = systemVolume(),
+                // The native OS volume is its own channel ("Sync volume"): with it
+                // off the phone's media volume must not leave this device.
+                systemVolume = if (dataStore.get(SyncNativeVolumeKey, true)) systemVolume() else null,
                 repeatMode = repeatModeString(player.repeatMode),
                 isShuffle = player.shuffleModeEnabled,
                 queue = items.map { item ->
@@ -1790,7 +1793,10 @@ class MusicService :
             playerVolume.value = c
             lastPushedPlayerVolume = c
         }
+        // Own channel, gated by "Sync volume": with it off the phone keeps its
+        // own media volume instead of following the desktop's OS volume.
         snapshot.systemVolume?.let { v ->
+            if (!dataStore.get(SyncNativeVolumeKey, true)) return@let
             setSystemVolume(v)
             lastPushedSystemVolume = v.coerceIn(0f, 1f)
         }

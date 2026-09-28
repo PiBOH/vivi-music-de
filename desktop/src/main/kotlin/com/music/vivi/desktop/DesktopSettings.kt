@@ -266,6 +266,12 @@ data class DesktopSyncState(
     val autoBackupBeforeUpdate: Boolean = true,
     /** Sync the in-app (VIVI) player volume slider between devices. */
     val syncViviVolume: Boolean = true,
+    /**
+     * Sync the *native* (OS) master volume between devices. A separate channel
+     * from [syncViviVolume]: turning it off keeps the two machines' own volume
+     * controls out of each other's way while the in-app slider still syncs.
+     */
+    val syncNativeVolume: Boolean = true,
     /** Last username used for Listen Together. */
     val listenTogetherUsername: String = "",
     /** Listen Together relay server URL (default = mobile's Hugging Face relay). */

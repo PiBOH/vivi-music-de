@@ -48,6 +48,7 @@ import com.music.vivi.constants.SelectedFontKey
 import com.music.vivi.constants.SelectedThemeColorKey
 import com.music.vivi.constants.SkipSilenceKey
 import com.music.vivi.constants.SuggestionRegionKey
+import com.music.vivi.constants.SyncNativeVolumeKey
 import com.music.vivi.constants.SyncViviVolumeKey
 import com.music.vivi.constants.TranslateLanguageKey
 import com.music.vivi.constants.TranslateLyricsKey
@@ -838,6 +839,7 @@ class DeviceSyncManager @Inject constructor(
         put(CrossfadeDurationKey.name, (prefs[CrossfadeDurationKey] ?: 0f).toString())
         put(SkipSilenceKey.name, (prefs[SkipSilenceKey] ?: false).toString())
         put(SyncViviVolumeKey.name, (prefs[SyncViviVolumeKey] ?: true).toString())
+        put(SyncNativeVolumeKey.name, (prefs[SyncNativeVolumeKey] ?: true).toString())
         // Lyrics
         put(PreferredLyricsProviderKey.name, prefs[PreferredLyricsProviderKey] ?: PreferredLyricsProvider.LRCLIB.name)
         put(TranslateLyricsKey.name, (prefs[TranslateLyricsKey] ?: false).toString())
@@ -894,6 +896,7 @@ class DeviceSyncManager @Inject constructor(
                 CrossfadeDurationKey.name -> prefs[CrossfadeDurationKey] = value.toFloatOrNull() ?: return@edit
                 SkipSilenceKey.name -> prefs[SkipSilenceKey] = value.toBooleanStrictOrNull() ?: return@edit
                 SyncViviVolumeKey.name -> prefs[SyncViviVolumeKey] = value.toBooleanStrictOrNull() ?: return@edit
+                SyncNativeVolumeKey.name -> prefs[SyncNativeVolumeKey] = value.toBooleanStrictOrNull() ?: return@edit
                 PreferredLyricsProviderKey.name -> prefs[PreferredLyricsProviderKey] = value
                 TranslateLyricsKey.name -> prefs[TranslateLyricsKey] = value.toBooleanStrictOrNull() ?: return@edit
                 TranslateLanguageKey.name -> prefs[TranslateLanguageKey] = value

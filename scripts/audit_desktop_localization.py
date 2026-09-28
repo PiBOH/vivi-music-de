@@ -120,7 +120,13 @@ def parse_tables():
         ):
             funcs[fn] = dict(re.findall(r'"([^"]+)" to "([^"]*)"', body))
     localization = read(os.path.join(DESKTOP, "Localization.kt"))
-    lang_of = dict(re.findall(r'"([^"]+)" to (strings_\w+)\(\)', localization))
+    # The table may be emitted as `"it" to { strings_it() }` (the on-demand
+    # shape: the map is built when the language is first read) or, from an older
+    # run, as `"it" to strings_it()`. Both are accepted, so the audit keeps
+    # seeing the languages instead of passing vacuously.
+    lang_of = dict(
+        re.findall(r'"([^"]+)" to \{?\s*(strings_\w+)\(\)', localization)
+    )
     missing = [fn for fn in lang_of.values() if fn not in funcs]
     if missing:
         raise SystemExit(

@@ -11,71 +11,88 @@ package com.music.vivi.desktop
  * app's resources — do not edit by hand.
  */
 object Localization {
-    private val strings: Map<String, Map<String, String>> = mapOf(
-        "en" to strings_en(),
-        "ar" to strings_ar(),
-        "as" to strings_as(),
-        "az" to strings_az(),
-        "be" to strings_be(),
-        "bg" to strings_bg(),
-        "bn" to strings_bn(),
-        "bs" to strings_bs(),
-        "ca" to strings_ca(),
-        "cs" to strings_cs(),
-        "de" to strings_de(),
-        "el" to strings_el(),
-        "es" to strings_es(),
-        "et" to strings_et(),
-        "eu" to strings_eu(),
-        "fa" to strings_fa(),
-        "fi" to strings_fi(),
-        "fil" to strings_fil(),
-        "fr" to strings_fr(),
-        "hi" to strings_hi(),
-        "hr" to strings_hr(),
-        "hu" to strings_hu(),
-        "id" to strings_id(),
-        "in" to strings_in(),
-        "it" to strings_it(),
-        "iw" to strings_iw(),
-        "ja" to strings_ja(),
-        "km" to strings_km(),
-        "ko" to strings_ko(),
-        "lt" to strings_lt(),
-        "ml" to strings_ml(),
-        "ms" to strings_ms(),
-        "nb" to strings_nb(),
-        "nb-rNO" to strings_nb_rNO(),
-        "nl" to strings_nl(),
-        "pa" to strings_pa(),
-        "pl" to strings_pl(),
-        "pt" to strings_pt(),
-        "pt-rBR" to strings_pt_rBR(),
-        "ro" to strings_ro(),
-        "ru" to strings_ru(),
-        "sk" to strings_sk(),
-        "sl" to strings_sl(),
-        "sr" to strings_sr(),
-        "sv" to strings_sv(),
-        "ta" to strings_ta(),
-        "te" to strings_te(),
-        "th" to strings_th(),
-        "tr" to strings_tr(),
-        "uk" to strings_uk(),
-        "vi" to strings_vi(),
-        "zh-rCN" to strings_zh_rCN(),
-        "zh-rTW" to strings_zh_rTW(),
+    /**
+     * The string tables, one per language, resolved ON DEMAND.
+     *
+     * They used to be a single eager `mapOf("en" to strings_en(), ...)` over
+     * all 53 languages, so every map — and the class behind it — was built
+     * before the first frame: tens of thousands of map entries and 53 classes
+     * with a very large constant pool, all on the startup path, for a session
+     * that reads exactly one language (plus English as the fallback).
+     */
+    private val tables: Map<String, () -> Map<String, String>> = mapOf(
+        "en" to { strings_en() },
+        "ar" to { strings_ar() },
+        "as" to { strings_as() },
+        "az" to { strings_az() },
+        "be" to { strings_be() },
+        "bg" to { strings_bg() },
+        "bn" to { strings_bn() },
+        "bs" to { strings_bs() },
+        "ca" to { strings_ca() },
+        "cs" to { strings_cs() },
+        "de" to { strings_de() },
+        "el" to { strings_el() },
+        "es" to { strings_es() },
+        "et" to { strings_et() },
+        "eu" to { strings_eu() },
+        "fa" to { strings_fa() },
+        "fi" to { strings_fi() },
+        "fil" to { strings_fil() },
+        "fr" to { strings_fr() },
+        "hi" to { strings_hi() },
+        "hr" to { strings_hr() },
+        "hu" to { strings_hu() },
+        "id" to { strings_id() },
+        "in" to { strings_in() },
+        "it" to { strings_it() },
+        "iw" to { strings_iw() },
+        "ja" to { strings_ja() },
+        "km" to { strings_km() },
+        "ko" to { strings_ko() },
+        "lt" to { strings_lt() },
+        "ml" to { strings_ml() },
+        "ms" to { strings_ms() },
+        "nb" to { strings_nb() },
+        "nb-rNO" to { strings_nb_rNO() },
+        "nl" to { strings_nl() },
+        "pa" to { strings_pa() },
+        "pl" to { strings_pl() },
+        "pt" to { strings_pt() },
+        "pt-rBR" to { strings_pt_rBR() },
+        "ro" to { strings_ro() },
+        "ru" to { strings_ru() },
+        "sk" to { strings_sk() },
+        "sl" to { strings_sl() },
+        "sr" to { strings_sr() },
+        "sv" to { strings_sv() },
+        "ta" to { strings_ta() },
+        "te" to { strings_te() },
+        "th" to { strings_th() },
+        "tr" to { strings_tr() },
+        "uk" to { strings_uk() },
+        "vi" to { strings_vi() },
+        "zh-rCN" to { strings_zh_rCN() },
+        "zh-rTW" to { strings_zh_rTW() },
     )
+
+    /** Built tables, so a language is parsed once per session. */
+    private val loaded = java.util.concurrent.ConcurrentHashMap<String, Map<String, String>>()
+
+    private fun table(language: String): Map<String, String>? =
+        tables[language]?.let { build -> loaded.getOrPut(language) { build() } }
+
     fun get(language: String, key: String): String {
-        val direct = strings[language]?.get(key)
-        if (direct != null) return direct
-        strings["en"]?.get(key)?.let { return it }
+        table(language)?.get(key)?.let { return it }
+        table("en")?.get(key)?.let { return it }
         // Safety net: a missing translation must never surface as a raw snake-
         // case key on screen. Fall back to the first dictionary that has a real
         // (non-key) translation, so even a gap in every map shows something
-        // readable instead of "player_background_visualizer".
-        for (map in strings.values) {
-            map[key]?.takeIf { it != key }?.let { return it }
+        // readable instead of "player_background_visualizer". This is the only
+        // path that builds the other tables, and it only runs when a key is
+        // missing from the requested language AND from English.
+        for (code in tables.keys) {
+            table(code)?.get(key)?.takeIf { it != key }?.let { return it }
         }
         return key
     }

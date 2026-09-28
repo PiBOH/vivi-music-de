@@ -334,7 +334,17 @@ fun main(args: Array<String>) {
     // from "the process was not scheduled".
     runCatching { GcMonitor.start() }
 
+    // Startup timing. The launch path is long — JVM, Skiko, the string tables,
+    // the settings/mixer/file loads — so "it takes 20 seconds" cannot be acted
+    // on without knowing WHICH stage costs what. One line per stage in `app.log`
+    // makes the next launch answer the question instead of guessing at it.
+    val startupAt = System.currentTimeMillis()
+    fun startupStage(name: String) {
+        AppLog.log("app", "startup: $name at +${System.currentTimeMillis() - startupAt}ms")
+    }
+
     application {
+    startupStage("compose started")
     // The user-editable settings file (~/.vivimusic/settings.json): adopt what it
     // holds (a value edited while the app was closed must win over the last one
     // stored by the app), create it when it is missing, and watch it for edits
@@ -345,6 +355,7 @@ fun main(args: Array<String>) {
     // Configure the shared YouTube client exactly like the Android App.onCreate() does,
     // honouring the saved content language/region (or the OS default).
     val initialSettings = DesktopSettings.load()
+    startupStage("settings loaded")
 
     // Bumped whenever settings.json is edited from outside the app. Every option
     // read from the store uses it as a remember key (`settingsFileRevision()`),
@@ -375,9 +386,11 @@ fun main(args: Array<String>) {
     YouTubeExtractor.cacheDir = File(System.getProperty("user.home"), ".vivimusic/cache").apply { mkdirs() }
     LoginManager.restore()
     DesktopSettings.ensureFirstLaunchDate()
-    // Restore the preferred audio output device (Java Sound mixer) before the
-    // first line is opened.
-    AudioOutput.load()
+    // Restore the preferred audio output device (Java Sound mixer). NOT here:
+    // enumerating the Java Sound mixers is a device round-trip that nothing
+    // before the first play needs, and it used to sit on the way to the first
+    // frame. The effect below still runs it before any audio line is opened.
+    LaunchedEffect(Unit) { runCatching { AudioOutput.load() } }
     // Restore the global UI animation speed.
     Animations.load()
     // Restore the content filters (explicit/video/Shorts).
@@ -385,6 +398,7 @@ fun main(args: Array<String>) {
     // Dev tools are non-critical: never let their initialization crash the app
     // at startup (which the jpackage launcher reports as "Failed to launch JVM").
     runCatching { DeveloperOptions.load() }
+    startupStage("cached options loaded")
 
     // Bootup speed: the settings file is parsed exactly ONCE (initialSettings)
     // instead of one disk read + JSON parse per setting (~12 of them here).
@@ -518,6 +532,7 @@ fun main(args: Array<String>) {
     // Captured from the Window content so onCloseRequest can persist geometry.
     val awtWindowRef = arrayOfNulls<java.awt.Frame>(1)
 
+    startupStage("pre-window work done")
     Window(
         onCloseRequest = {
             runCatching { HistoryStore.flush() }
@@ -1217,6 +1232,7 @@ fun WindowScope.App(
     var rememberShuffleRepeat by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().rememberShuffleRepeat) }
     var persistentQueue by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().persistentQueue) }
     var syncViviVolume by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().syncViviVolume) }
+    var syncNativeVolume by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().syncNativeVolume) }
     var lyricsTextSize by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().lyricsTextSize) }
     var lyricsLineSpacing by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().lyricsLineSpacing) }
     // Animation style + display options (mobile lyrics port). Kept as one object
@@ -1797,15 +1813,15 @@ fun WindowScope.App(
     // Poll the OS system volume and push changes to the peer (so changing the
     // Windows/Linux/mac volume controls the phone's system volume, and vice
     // versa). Echo-suppressed so a locally-applied remote value isn't bounced.
-    // The native OS volume is its own channel: it syncs whenever paired,
-    // independent of the "Sync VIVI volume" toggle (which only gates the
-    // in-app VIVI volume slider).
-    LaunchedEffect(syncManager) {
+    // The native OS volume is its own channel, gated by "Sync volume": with it
+    // off the two machines keep their own master volume (turning "Sync VIVI
+    // volume" off only gates the in-app slider and never stopped this one).
+    LaunchedEffect(syncManager, syncNativeVolume) {
         while (true) {
             // Unpaired: there is no peer to mirror the OS volume with, so skip
             // the native read (a COM round-trip on Windows) altogether instead
             // of doing it twice a second for nothing.
-            if (!syncManager.paired.value) {
+            if (!syncManager.paired.value || !syncNativeVolume) {
                 delay(2_000L)
                 continue
             }
@@ -1906,14 +1922,18 @@ fun WindowScope.App(
                 }
             }
             // Native OS system volume sync: mirror the peer's system volume.
-            // Independent channel: it syncs whenever paired, so turning
-            // "Sync VIVI volume" off (which only gates the in-app slider)
-            // does not stop the OS volume from following the peer.
-            pb.systemVolume?.let { v ->
-                systemVolumeGuard.echoUntil = System.currentTimeMillis() + 1500L
-                systemVolumeGuard.echoValue = v
-                systemVolumeGuard.lastPushed = v
-                SystemVolume.set(v)
+            // Its own channel, gated by "Sync volume": with that off neither
+            // side's master volume follows the other (turning "Sync VIVI
+            // volume" off only gates the in-app slider and never stopped this
+            // one). Read from the settings file, not from a captured state:
+            // this collector lives for the whole session.
+            if (DesktopSettings.load().syncNativeVolume) {
+                pb.systemVolume?.let { v ->
+                    systemVolumeGuard.echoUntil = System.currentTimeMillis() + 1500L
+                    systemVolumeGuard.echoValue = v
+                    systemVolumeGuard.lastPushed = v
+                    SystemVolume.set(v)
+                }
             }
             // Repeat mode + shuffle sync (independent of the queue/position).
             pb.repeatMode?.let { mode ->
@@ -2200,11 +2220,15 @@ fun WindowScope.App(
                 syncViviVolume = v
                 DesktopSettings.update { it.copy(syncViviVolume = v) }
             }
+            settings["syncNativeVolume"]?.toBooleanStrictOrNull()?.let { v ->
+                syncNativeVolume = v
+                DesktopSettings.update { it.copy(syncNativeVolume = v) }
+            }
         }
     }
 
     // Push the local settings when they change (also once on startup).
-    LaunchedEffect(syncManager, language, themeMode, accent, syncViviVolume) {
+    LaunchedEffect(syncManager, language, themeMode, accent, syncViviVolume, syncNativeVolume) {
         syncManager.updateSettings(desktopSettingsMap(language, themeMode, accent, syncViviVolume))
     }
 
@@ -2926,6 +2950,11 @@ fun WindowScope.App(
                         onToggleSyncViviVolume = { checked ->
                             syncViviVolume = checked
                             DesktopSettings.update { it.copy(syncViviVolume = checked) }
+                        },
+                        syncNativeVolume = syncNativeVolume,
+                        onToggleSyncNativeVolume = { checked ->
+                            syncNativeVolume = checked
+                            DesktopSettings.update { it.copy(syncNativeVolume = checked) }
                         },
                     )
                     is Screen.SettingsDesktop -> SettingsDesktopScreen(
@@ -5344,6 +5373,8 @@ fun DeviceSyncSection(
     syncManager: DesktopSyncManager,
     syncViviVolume: Boolean,
     onToggleSyncViviVolume: (Boolean) -> Unit,
+    syncNativeVolume: Boolean,
+    onToggleSyncNativeVolume: (Boolean) -> Unit,
 ) {
     var serverUrl by remember {
         val saved = DesktopSettings.load().serverUrl
@@ -5471,6 +5502,16 @@ fun DeviceSyncSection(
         key = "sync_vivi_volume",
         checked = syncViviVolume,
         onCheckedChange = onToggleSyncViviVolume,
+    )
+    // The native (OS) volume has its own switch: it is a different channel from
+    // the in-app slider above, and the two are wanted independently. The label
+    // reuses the already-translated "Sync volume" string — a new key would mean
+    // 52 new translations for one row.
+    SettingSwitch(
+        language = language,
+        key = "lt_sync_volume",
+        checked = syncNativeVolume,
+        onCheckedChange = onToggleSyncNativeVolume,
     )
 
     val connecting = connectionState == SyncConnectionState.CONNECTING
@@ -7153,11 +7194,21 @@ private fun PlayerController.toPlaybackSnapshot(): PlaybackSnapshot? {
         volume = if (DesktopSettings.load().syncViviVolume) s.volume else null,
         // Same toggle as the in-app channel: the OS volume must not leave this
         // device when volume sync is disabled.
-        systemVolume = if (DesktopSettings.load().syncViviVolume) SystemVolume.get() else null,
+        systemVolume = if (DesktopSettings.load().syncNativeVolume) SystemVolume.get() else null,
         repeatMode = s.repeatMode.name,
         isShuffle = s.isShuffle,
         queue = s.queue.map { np ->
-            TrackRef(id = np.videoId, title = np.title, artist = np.artist, thumbnail = np.thumbnail)
+            // The length travels with the queue: the peer's seek bar needs a real
+            // range, and a queue that arrives here without durations leaves it
+            // with a 0:00 bar (the same bug this side just fixed) — so the
+            // desktop must not be the one sending the empty lengths.
+            TrackRef(
+                id = np.videoId,
+                title = np.title,
+                artist = np.artist,
+                thumbnail = np.thumbnail,
+                durationMs = np.durationMs,
+            )
         },
         queueIndex = s.index,
     )
@@ -7188,5 +7239,6 @@ private fun desktopSettingsMap(
     "pureBlack" to "false",
     "dynamicTheme" to "false",
     "syncViviVolume" to syncViviVolume.toString(),
+    "syncNativeVolume" to s.syncNativeVolume.toString(),
     )
 }

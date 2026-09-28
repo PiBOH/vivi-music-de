@@ -440,8 +440,21 @@ class PlayerController {
             applyRemotePlayback(newQueue, 0, positionMs, isPlaying)
         } else {
             val wasPlaying = s.isPlaying
+            // Refresh our duration from the item that is now current. The
+            // adopted queue carries the peer's lengths, but a queue adopted
+            // while OUR duration was still unknown kept `durationMs = 0`
+            // forever: the seek bar showed 0:00, and every seek was clamped to
+            // the (unknown, i.e. zero) length — so the thumb snapped back and
+            // each drift tick restarted the track from the beginning (the
+            // "seek bar is dead / the elapsed time never moves" report).
+            val adoptedDurationMs = newQueue[newIndex].durationMs.takeIf { it > 0L } ?: s.durationMs
             _state.update {
-                it.copy(queue = newQueue, index = newIndex, isPlaying = wasPlaying || isPlaying)
+                it.copy(
+                    queue = newQueue,
+                    index = newIndex,
+                    durationMs = adoptedDurationMs,
+                    isPlaying = wasPlaying || isPlaying,
+                )
             }
             if (!wasPlaying && isPlaying) {
                 // Current track still loaded: just resume instead of reloading.
@@ -664,7 +677,11 @@ class PlayerController {
         // A real (time-based) seek means the duration is known: drop any
         // pending fraction so a stale thumb can't linger on a later track.
         _pendingSeekFraction.value = null
-        val target = ms.coerceIn(0L, s.durationMs)
+        // An unknown length is not a ceiling: `coerceIn(0, 0)` turned every
+        // remote seek into "go back to 0", so a receiver whose duration was
+        // still unknown restarted the track on each drift tick instead of
+        // seeking it. Only clamp when the length is actually known.
+        val target = if (s.durationMs > 0L) ms.coerceIn(0L, s.durationMs) else ms.coerceAtLeast(0L)
         if (loadedVideoId == s.current?.videoId && player.hasLoadedStream()) {
             player.seekTo(target)
         } else if (startStream && !s.isResolving) {

@@ -332,6 +332,13 @@ const val SYNC_COOLDOWN = 30 * 60L
 val DeviceSyncEnabledKey = booleanPreferencesKey("deviceSyncEnabled")
 val DeviceSyncServerUrlKey = stringPreferencesKey("deviceSyncServerUrl")
 val SyncViviVolumeKey = booleanPreferencesKey("syncViviVolume")
+
+/**
+ * Sync the *native* (OS/STREAM_MUSIC) volume with the desktop's OS master
+ * volume. A separate channel from [SyncViviVolumeKey]: with this off the phone
+ * keeps its own media volume while the in-app slider still syncs.
+ */
+val SyncNativeVolumeKey = booleanPreferencesKey("syncNativeVolume")
 val DeviceSyncPairIdKey = stringPreferencesKey("deviceSyncPairId")
 val DeviceSyncDeviceIdKey = stringPreferencesKey("deviceSyncDeviceId")
 val DeviceSyncDeviceNameKey = stringPreferencesKey("deviceSyncDeviceName")

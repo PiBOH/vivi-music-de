@@ -682,9 +682,18 @@ fun SettingsDevicesScreen(
     syncManager: DesktopSyncManager,
     syncViviVolume: Boolean,
     onToggleSyncViviVolume: (Boolean) -> Unit,
+    syncNativeVolume: Boolean,
+    onToggleSyncNativeVolume: (Boolean) -> Unit,
 ) {
     SettingsSubScreen(language, onBack) {
-        DeviceSyncSection(language, syncManager, syncViviVolume, onToggleSyncViviVolume)
+        DeviceSyncSection(
+            language,
+            syncManager,
+            syncViviVolume,
+            onToggleSyncViviVolume,
+            syncNativeVolume,
+            onToggleSyncNativeVolume,
+        )
     }
 }
 
