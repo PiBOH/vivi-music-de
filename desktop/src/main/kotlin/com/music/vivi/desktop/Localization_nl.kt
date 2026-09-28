@@ -702,6 +702,7 @@ internal fun strings_nl(): Map<String, String> =
         "swipe_sensitivity_desc" to "Swipe gevoeligheid voor het veranderen van nummers aanpassen",
         "sync_finished" to "Afspeellijsten zijn bijgewerkt",
         "sync_in_progress" to "Afspeellijsten synchroniseren…",
+        "sync_os_volume" to "Systeemvolume synchroniseren",
         "sync_playlist" to "Playlist synchroniseren",
         "sync_playlist_desc" to "Synchroniseer afspeellijst met YouTube Music",
         "sync_vivi_volume" to "VIVI-volume synchroniseren",

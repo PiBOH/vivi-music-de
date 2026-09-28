@@ -702,6 +702,7 @@ internal fun strings_ta(): Map<String, String> =
         "swipe_sensitivity_desc" to "பாடல்களை மாற்ற ஸ்வைப் சைகைகள் எவ்வளவு உணர்திறன் கொண்டவை என்பதை அமைக்கவும்",
         "sync_finished" to "பிளேலிஸ்ட்கள் புதுப்பித்த நிலையில்",
         "sync_in_progress" to "பிளேலிஸ்ட்கள் ஒத்திசைக்கப்படுகின்றன…",
+        "sync_os_volume" to "OS ஒலியளவை ஒத்திசைக்கவும்",
         "sync_playlist" to "ஒத்திசைவு பாடல்கள்",
         "sync_playlist_desc" to "பிளேலிஸ்ட்டை YouTube Music உடன் ஒத்திசை",
         "sync_vivi_volume" to "VIVI ஒலியளவை ஒத்திசை",

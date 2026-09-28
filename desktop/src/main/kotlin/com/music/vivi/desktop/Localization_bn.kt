@@ -702,6 +702,7 @@ internal fun strings_bn(): Map<String, String> =
         "swipe_sensitivity_desc" to "গান বদলানোর সোয়াইপ কতটা সংবেদনশীল তা ঠিক করুন",
         "sync_finished" to "প্লে-লিস্ট আপ-টু-ডেট",
         "sync_in_progress" to "প্লে-লিস্ট ছিংক কৰি আছে…",
+        "sync_os_volume" to "OS ভলিউম সিঙ্ক করুন",
         "sync_playlist" to "প্লেলিস্ট সমন্বয়",
         "sync_playlist_desc" to "প্লেলিস্ট YouTube Music-এর সাথে সিঙ্ক করুন",
         "sync_vivi_volume" to "VIVI ভলিউম সিঙ্ক করুন",

@@ -702,6 +702,7 @@ internal fun strings_tr(): Map<String, String> =
         "swipe_sensitivity_desc" to "Şarkı değiştirmek için yapılan kaydırma hareketlerinin hassasiyetini ayarla",
         "sync_finished" to "Çalma listeleri güncel",
         "sync_in_progress" to "Çalma listeleri eşitleniyor…",
+        "sync_os_volume" to "İşletim sistemi sesini eşitle",
         "sync_playlist" to "Çalma listesini senkronize et",
         "sync_playlist_desc" to "Oynatma listesini YouTube Music ile senkronize et",
         "sync_vivi_volume" to "VIVI sesini senkronla",

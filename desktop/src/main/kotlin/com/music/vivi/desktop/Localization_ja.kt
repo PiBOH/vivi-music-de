@@ -702,6 +702,7 @@ internal fun strings_ja(): Map<String, String> =
         "swipe_sensitivity_desc" to "曲を変更する際のスワイプ操作の感度を調整します",
         "sync_finished" to "プレイリストは最新です",
         "sync_in_progress" to "プレイリストを同期中…",
+        "sync_os_volume" to "OS の音量を同期",
         "sync_playlist" to "プレイリストを同期",
         "sync_playlist_desc" to "このプレイリストをYouTube Musicと同期します",
         "sync_vivi_volume" to "VIVIの音量を同期",

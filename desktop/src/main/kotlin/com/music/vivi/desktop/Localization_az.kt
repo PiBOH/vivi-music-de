@@ -702,6 +702,7 @@ internal fun strings_az(): Map<String, String> =
         "swipe_sensitivity_desc" to "Mahnı dəyişmək üçün svayp jestinin həssaslığını tənzimləyin",
         "sync_finished" to "Pleylistlər yenilənib",
         "sync_in_progress" to "Pleylistlər sinxronlaşdırılır…",
+        "sync_os_volume" to "OS səsini sinxronlaşdır",
         "sync_playlist" to "Çalğı siyahısını sinxronizasiya et",
         "sync_playlist_desc" to "Pleylisti YouTube Music ilə sinxronlaşdır",
         "sync_vivi_volume" to "VIVI səsini sinxronla",

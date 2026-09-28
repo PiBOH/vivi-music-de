@@ -704,6 +704,7 @@ internal fun strings_sv(): Map<String, String> =
         "sync_in_progress" to "Synkroniserar spellistor…",
         "sync_playlist" to "Synka spellista",
         "sync_playlist_desc" to "Synka spellistan med YouTube Music",
+        "sync_os_volume" to "Synkronisera systemvolym",
         "sync_vivi_volume" to "Synkronisera VIVI-volym",
         "synced_lyrics" to "Synkroniserad text",
         "synced_lyrics_desc" to "Markera aktuell rad medan låten spelas",

@@ -702,6 +702,7 @@ internal fun strings_th(): Map<String, String> =
         "swipe_sensitivity_desc" to "ปรับระดับความไวของท่าทางการปัดเพื่อเปลี่ยนเพลง",
         "sync_finished" to "เพลย์ลิสต์เป็นปัจจุบันแล้ว",
         "sync_in_progress" to "กำลังซิงค์เพลย์ลิสต์…",
+        "sync_os_volume" to "ซิงค์ระดับเสียงของระบบ",
         "sync_playlist" to "ซิงค์เพลย์ลิสต์",
         "sync_playlist_desc" to "ซิงค์เพลย์ลิสต์กับ YouTube Music",
         "sync_vivi_volume" to "ซิงค์ระดับเสียง VIVI",

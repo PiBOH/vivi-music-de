@@ -702,6 +702,7 @@ internal fun strings_hu(): Map<String, String> =
         "swipe_sensitivity_desc" to "Beállíthatja mennyire legyen érzékeny a zeneváltást kiváltó félrehúzás",
         "sync_finished" to "A lejátszási listák naprakészek",
         "sync_in_progress" to "Lejátszási listák szinkronizálása…",
+        "sync_os_volume" to "Rendszerhangerő szinkronizálása",
         "sync_playlist" to "Lejátszásilista szinkronizálása",
         "sync_playlist_desc" to "Lejátszási lista szinkronizálása a YouTube Music-kal",
         "sync_vivi_volume" to "VIVI hangerő szinkronizálása",

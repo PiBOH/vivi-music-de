@@ -2220,15 +2220,18 @@ fun WindowScope.App(
                 syncViviVolume = v
                 DesktopSettings.update { it.copy(syncViviVolume = v) }
             }
-            settings["syncNativeVolume"]?.toBooleanStrictOrNull()?.let { v ->
-                syncNativeVolume = v
-                DesktopSettings.update { it.copy(syncNativeVolume = v) }
-            }
+            // "Sync OS volume" is deliberately NOT read from the peer: it is a
+            // per-device choice about THIS machine's own master volume, and
+            // syncing it made the switch flip itself back on — the peer keeps
+            // pushing its stored value (default on) while our own push is still
+            // in flight, so the local toggle lost the race and re-enabled
+            // itself. Each side decides for itself and the send/receive gates
+            // below honour it, which is what stops the volume crossing.
         }
     }
 
     // Push the local settings when they change (also once on startup).
-    LaunchedEffect(syncManager, language, themeMode, accent, syncViviVolume, syncNativeVolume) {
+    LaunchedEffect(syncManager, language, themeMode, accent, syncViviVolume) {
         syncManager.updateSettings(desktopSettingsMap(language, themeMode, accent, syncViviVolume))
     }
 
@@ -5505,11 +5508,11 @@ fun DeviceSyncSection(
     )
     // The native (OS) volume has its own switch: it is a different channel from
     // the in-app slider above, and the two are wanted independently. The label
-    // reuses the already-translated "Sync volume" string — a new key would mean
-    // 52 new translations for one row.
+    // says NATIVE — next to "Sync VIVI volume" a bare "Sync volume" read as a
+    // second app-volume sync.
     SettingSwitch(
         language = language,
-        key = "lt_sync_volume",
+        key = "sync_os_volume",
         checked = syncNativeVolume,
         onCheckedChange = onToggleSyncNativeVolume,
     )
@@ -5652,7 +5655,12 @@ fun DeviceSyncSection(
         )
     }
 
-    if (paired) {
+    // ONE leaving action, not two: the relay "Disconnect" above already drops
+    // the pairing (it tells the peer and clears the pair id), so an Unpair
+    // button next to a live link was the same action twice. This button only
+    // appears when there is no link to disconnect — paired but offline, where
+    // Disconnect is not on screen at all — so exactly one is visible at a time.
+    if (paired && !relayConnected && !lanRunning) {
         Button(onClick = { syncManager.unpair() }, modifier = Modifier.padding(top = 8.dp)) {
             Text(Localization.get(language, "unpair"))
         }
@@ -7263,6 +7271,5 @@ private fun desktopSettingsMap(
     "pureBlack" to "false",
     "dynamicTheme" to "false",
     "syncViviVolume" to syncViviVolume.toString(),
-    "syncNativeVolume" to s.syncNativeVolume.toString(),
     )
 }

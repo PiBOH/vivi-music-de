@@ -702,6 +702,7 @@ internal fun strings_pa(): Map<String, String> =
         "swipe_sensitivity_desc" to "ਗੀਤ ਬਦਲਣ ਲਈ ਸਵਾਈਪ ਕਿੰਨੇ ਸੰਵੇਦਨਸ਼ੀਲ ਹੋਣ, ਇਹ ਸੈੱਟ ਕਰੋ",
         "sync_finished" to "ਪਲੇਲਿਸਟਾਂ ਅੱਪ-ਟੂ-ਡੇਟ ਹਨ",
         "sync_in_progress" to "ਪਲੇਲਿਸਟਾਂ ਸਿੰਕ ਹੋ ਰਹੀਆਂ ਹਨ…",
+        "sync_os_volume" to "OS ਵੌਲਿਊਮ ਸਿੰਕ ਕਰੋ",
         "sync_playlist" to "ਪਲੇਲਿਸਟ ਸਿੰਕ ਕਰੋ",
         "sync_playlist_desc" to "ਪਲੇਲਿਸਟ ਨੂੰ YouTube Music ਨਾਲ ਸਿੰਕ ਕਰੋ",
         "sync_vivi_volume" to "VIVI ਵਾਲੀਅਮ ਸਿੰਕ ਕਰੋ",

@@ -702,6 +702,7 @@ internal fun strings_ro(): Map<String, String> =
         "swipe_sensitivity_desc" to "Ajustează cât de sensibile sunt gesturile de glisare pentru schimbarea melodiei",
         "sync_finished" to "Listele sunt la zi",
         "sync_in_progress" to "Se sincronizează listele…",
+        "sync_os_volume" to "Sincronizează volumul sistemului",
         "sync_playlist" to "Sincronizează playlistul",
         "sync_playlist_desc" to "Sincronizează playlistul cu YouTube Music",
         "sync_vivi_volume" to "Sincronizează volumul VIVI",

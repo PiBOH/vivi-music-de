@@ -702,6 +702,7 @@ internal fun strings_ru(): Map<String, String> =
         "swipe_sensitivity_desc" to "Настроить чувствительность жестов для переключения песен",
         "sync_finished" to "Плейлисты обновлены",
         "sync_in_progress" to "Синхронизация плейлистов…",
+        "sync_os_volume" to "Синхронизировать системную громкость",
         "sync_playlist" to "Синхронизировать плейлист",
         "sync_playlist_desc" to "Синхронизировать плейлист с YouTube Music",
         "sync_vivi_volume" to "Синхронизировать громкость VIVI",

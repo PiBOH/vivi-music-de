@@ -702,6 +702,7 @@ internal fun strings_te(): Map<String, String> =
         "swipe_sensitivity_desc" to "పాటలు మార్చడానికి స్వైప్ సంజ్ఞల సున్నితత్వాన్ని సర్దుబాటు చేయండి",
         "sync_finished" to "ప్లేలిస్ట్‌లు తాజాగా ఉన్నాయి",
         "sync_in_progress" to "ప్లేలిస్ట్‌లు సింక్ అవుతున్నాయి…",
+        "sync_os_volume" to "OS వాల్యూమ్‌ను సమకాలీకరించండి",
         "sync_playlist" to "జాబితాను సమకాలీకరించు",
         "sync_playlist_desc" to "ప్లేలిస్ట్‌ను YouTube Music తో సింక్ చేయండి",
         "sync_vivi_volume" to "VIVI వాల్యూమ్‌ను సమకాలీకరించండి",

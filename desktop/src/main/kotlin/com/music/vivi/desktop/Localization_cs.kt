@@ -702,6 +702,7 @@ internal fun strings_cs(): Map<String, String> =
         "swipe_sensitivity_desc" to "Upravte, jak moc mají být citlivá gesta posunutí pro změnu skladeb",
         "sync_finished" to "Playlisty jsou aktuální",
         "sync_in_progress" to "Synchronizace playlistů…",
+        "sync_os_volume" to "Synchronizovat systémovou hlasitost",
         "sync_playlist" to "Synchronizovat playlist",
         "sync_playlist_desc" to "Synchronizovat playlist s YouTube Music",
         "sync_vivi_volume" to "Synchronizovat hlasitost VIVI",

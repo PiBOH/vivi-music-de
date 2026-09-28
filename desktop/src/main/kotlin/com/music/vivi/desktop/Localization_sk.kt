@@ -702,6 +702,7 @@ internal fun strings_sk(): Map<String, String> =
         "swipe_sensitivity_desc" to "Nastavenie citlivosti gest potiahnutia prstom pri zmene skladieb",
         "sync_finished" to "Playlisty sú aktuálne",
         "sync_in_progress" to "Synchronizácia playlistov…",
+        "sync_os_volume" to "Synchronizovať systémovú hlasitosť",
         "sync_playlist" to "Synchronizácia playlistu",
         "sync_playlist_desc" to "Synchronizácia playlistu s YouTube Music",
         "sync_vivi_volume" to "Synchronizovať hlasitosť VIVI",

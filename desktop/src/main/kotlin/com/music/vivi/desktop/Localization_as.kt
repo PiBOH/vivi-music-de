@@ -702,6 +702,7 @@ internal fun strings_as(): Map<String, String> =
         "swipe_sensitivity_desc" to "গান সলনি কৰাৰ স্বাইপ কিমান সংবেদনশীল হ'ব সেয়া ঠিক কৰক",
         "sync_finished" to "প্লে‌লিষ্টসমূহ আপ-টু-ডেট",
         "sync_in_progress" to "প্লে‌লিষ্টসমূহ ছিংক কৰি আছে…",
+        "sync_os_volume" to "OS ভলিউম ছিংক কৰক",
         "sync_playlist" to "প্লেলিষ্ট ছিঙ্ক কৰক",
         "sync_playlist_desc" to "গীত তালিকা YouTube Music-ৰ সৈতে ছিংক কৰক",
         "sync_vivi_volume" to "VIVI ভলিউম সিঙ্ক কৰক",

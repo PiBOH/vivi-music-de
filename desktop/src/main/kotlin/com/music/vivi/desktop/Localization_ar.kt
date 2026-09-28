@@ -702,6 +702,7 @@ internal fun strings_ar(): Map<String, String> =
         "swipe_sensitivity_desc" to "ضبط مدى حساسية إيماءات التمرير لتغيير الأغاني",
         "sync_finished" to "قوائم التشغيل محدَّثة",
         "sync_in_progress" to "جارٍ مزامنة قوائم التشغيل…",
+        "sync_os_volume" to "مزامنة صوت نظام التشغيل",
         "sync_playlist" to "مزامنة قائمة التشغيل",
         "sync_playlist_desc" to "مزامنة قائمة التشغيل مع YT Music",
         "sync_vivi_volume" to "مزامنة مستوى صوت VIVI",

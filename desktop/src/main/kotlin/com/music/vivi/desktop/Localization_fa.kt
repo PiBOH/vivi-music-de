@@ -702,6 +702,7 @@ internal fun strings_fa(): Map<String, String> =
         "swipe_sensitivity_desc" to "تنظیم کنید که ژست‌های کشیدن برای تغییر آهنگ چقدر حساس باشند",
         "sync_finished" to "فهرست‌های پخش به‌روز است",
         "sync_in_progress" to "در حال همگام‌سازی فهرست‌های پخش…",
+        "sync_os_volume" to "همگام‌سازی صدای سیستم‌عامل",
         "sync_playlist" to "همگام‌سازی لیست پخش",
         "sync_playlist_desc" to "همگام سازی این لیست پخش با یوتیوب موزیک",
         "sync_vivi_volume" to "همگام‌سازی صدای VIVI",

@@ -702,6 +702,7 @@ internal fun strings_sl(): Map<String, String> =
         "swipe_sensitivity_desc" to "Prilagajanje občutljivosti gest podrsavanja za spreminjanje skladb",
         "sync_finished" to "Seznami so posodobljeni",
         "sync_in_progress" to "Sinhroniziranje seznamov…",
+        "sync_os_volume" to "Sinhroniziraj sistemsko glasnost",
         "sync_playlist" to "Sinhronizacija seznama predvajanja",
         "sync_playlist_desc" to "Sinhroniziraj seznam predvajanja z YouTube Music",
         "sync_vivi_volume" to "Sinhroniziraj glasnost VIVI",

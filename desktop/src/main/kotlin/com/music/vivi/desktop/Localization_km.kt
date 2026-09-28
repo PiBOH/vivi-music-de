@@ -702,6 +702,7 @@ internal fun strings_km(): Map<String, String> =
         "swipe_sensitivity_desc" to "កំណត់ថាតើការអូសមានភាពប្រែប្រួលប៉ុណ្ណាសម្រាប់ការប្តូរបទចម្រៀង",
         "sync_finished" to "បញ្ជីចាក់ទាន់សម័យ",
         "sync_in_progress" to "កំពុងធ្វើសមកាលកម្មបញ្ជីចាក់…",
+        "sync_os_volume" to "ធ្វើសមកាលកម្មសំឡេង OS",
         "sync_playlist" to "ធ្វើសមកាលកម្មបញ្ជីចាក់",
         "sync_playlist_desc" to "ធ្វើសមកាលកម្មបញ្ជីចាក់ជាមួយ YouTube Music",
         "sync_vivi_volume" to "ធ្វើសមកាលកម្មកម្រិតសំឡេង VIVI",

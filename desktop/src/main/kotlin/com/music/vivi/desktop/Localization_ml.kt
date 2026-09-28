@@ -702,6 +702,7 @@ internal fun strings_ml(): Map<String, String> =
         "swipe_sensitivity_desc" to "പാട്ടുകൾ മാറ്റാനുള്ള സ്വൈപ്പ് ചലനങ്ങളുടെ സെൻസിറ്റിവിറ്റി ക്രമീകരിക്കുക",
         "sync_finished" to "പ്ലേലിസ്റ്റുകൾ പുതുക്കിയിരിക്കുന്നു",
         "sync_in_progress" to "പ്ലേലിസ്റ്റുകൾ സമന്വയിക്കുന്നു…",
+        "sync_os_volume" to "OS വോളിയം സമന്വയിപ്പിക്കുക",
         "sync_playlist" to "പ്ലേലിസ്റ്റ് സമന്വയിക്കുക",
         "sync_playlist_desc" to "പ്ലേലിസ്റ്റ് YouTube Music-മായി സമന്വയിപ്പിക്കുക",
         "sync_vivi_volume" to "VIVI വോളിയം സമന്വയിപ്പിക്കുക",

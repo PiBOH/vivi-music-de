@@ -702,6 +702,7 @@ internal fun strings_bg(): Map<String, String> =
         "swipe_sensitivity_desc" to "Регулирай колко чувствителни са жестовете за плъзгане при смяна на песни",
         "sync_finished" to "Плейлистите са актуални",
         "sync_in_progress" to "Синхронизиране на плейлистите…",
+        "sync_os_volume" to "Синхронизиране на системната сила на звука",
         "sync_playlist" to "Синхронизирай плейлист",
         "sync_playlist_desc" to "Синхронизирай плейлиста с YouTube Music",
         "sync_vivi_volume" to "Синхронизиране на силата на звука на VIVI",

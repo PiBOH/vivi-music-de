@@ -702,6 +702,7 @@ internal fun strings_et(): Map<String, String> =
         "swipe_sensitivity_desc" to "Määra, kui tundlikud on pühkimisliigutused lugude vahetamiseks",
         "sync_finished" to "Esitusloendid on ajakohased",
         "sync_in_progress" to "Esitusloendite sünkroonimine…",
+        "sync_os_volume" to "Sünkrooni süsteemi helitugevus",
         "sync_playlist" to "Sünkroniseeri esitusloend",
         "sync_playlist_desc" to "Sünkroniseeri esitlusloend Youtube Music'ga",
         "sync_vivi_volume" to "Sünkrooni VIVI helitugevust",

@@ -702,6 +702,7 @@ internal fun strings_ko(): Map<String, String> =
         "swipe_sensitivity_desc" to "노래를 바꿀 때 밀기 동작의 감도를 조절합니다",
         "sync_finished" to "재생목록이 최신 상태입니다",
         "sync_in_progress" to "재생목록 동기화 중…",
+        "sync_os_volume" to "OS 볼륨 동기화",
         "sync_playlist" to "재생목록 동기화",
         "sync_playlist_desc" to "재생목록을 YouTube Music과 동기화",
         "sync_vivi_volume" to "VIVI 볼륨 동기화",

@@ -702,6 +702,7 @@ internal fun strings_sr(): Map<String, String> =
         "swipe_sensitivity_desc" to "Podesi koliko su gestovi prevlačenja osjetljivi za promjenu pjesama",
         "sync_finished" to "Plejliste su ažurne",
         "sync_in_progress" to "Sinhronizacija plejlisti…",
+        "sync_os_volume" to "Синхрониши системску јачину звука",
         "sync_playlist" to "Sinhronizuj plejlistu",
         "sync_playlist_desc" to "Sinhronizuj plejlistu sa Youtube Music",
         "sync_vivi_volume" to "Sinhronizuj VIVI jačinu zvuka",

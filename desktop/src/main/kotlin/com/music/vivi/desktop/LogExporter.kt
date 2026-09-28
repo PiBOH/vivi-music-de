@@ -95,7 +95,7 @@ object LogExporter {
             appendLine("Sync URL: ${s.serverUrl}")
             appendLine("Paired: ${if (s.pairId.isNotBlank()) "yes" else "no"}")
             appendLine("Sync VIVI volume: ${s.syncViviVolume}")
-            appendLine("Sync native volume: ${s.syncNativeVolume}")
+            appendLine("Sync OS volume: ${s.syncNativeVolume}")
             appendLine("Logged in: ${if (LoginManager.isLoggedIn()) "yes" else "no"}")
         }
     }

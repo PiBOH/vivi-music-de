@@ -702,6 +702,7 @@ internal fun strings_hr(): Map<String, String> =
         "swipe_sensitivity_desc" to "Približi ili otkloni osjetljivost gesta prebacivanja pjesama",
         "sync_finished" to "Popisi su ažurni",
         "sync_in_progress" to "Sinkronizacija popisa…",
+        "sync_os_volume" to "Sinkroniziraj sistemsku glasnoću",
         "sync_playlist" to "Sinkroniziraj popis za reprodukciju",
         "sync_playlist_desc" to "Sinkroniziraj popis pjesama s YouTube Music",
         "sync_vivi_volume" to "Sinkroniziraj VIVI glasnoću",

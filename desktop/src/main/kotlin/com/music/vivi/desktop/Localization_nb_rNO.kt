@@ -702,6 +702,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "swipe_sensitivity_desc" to "Juster hvor følsomme sveipbevegelsene er for å bytte sang",
         "sync_finished" to "Spillelistene er oppdatert",
         "sync_in_progress" to "Synkroniserer spillelister…",
+        "sync_os_volume" to "Synkroniser systemvolum",
         "sync_playlist" to "Synkroniser spilleliste",
         "sync_playlist_desc" to "Synkroniser spilleliste med YouTube Music",
         "sync_vivi_volume" to "Synkroniser VIVI-volum",

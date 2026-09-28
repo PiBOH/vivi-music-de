@@ -702,6 +702,7 @@ internal fun strings_fil(): Map<String, String> =
         "swipe_sensitivity_desc" to "Ayusin kung gaano kasensitibo ang swipe para magpalit ng kanta",
         "sync_finished" to "Up to date ang mga playlist",
         "sync_in_progress" to "Sini-sync ang mga playlist…",
+        "sync_os_volume" to "I-sync ang volume ng OS",
         "sync_playlist" to "I-sync ang playlist",
         "sync_playlist_desc" to "I-sync ang playlist sa YouTube Music",
         "sync_vivi_volume" to "I-sync ang volume ng VIVI",

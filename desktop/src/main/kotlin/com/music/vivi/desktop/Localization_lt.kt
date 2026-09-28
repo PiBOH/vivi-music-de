@@ -702,6 +702,7 @@ internal fun strings_lt(): Map<String, String> =
         "swipe_sensitivity_desc" to "Nustatyk, kokie jautrūs braukimo judesiai keičiant dainas",
         "sync_finished" to "Grojaraščiai atnaujinti",
         "sync_in_progress" to "Sinchronizuojami grojaraščiai…",
+        "sync_os_volume" to "Sinchronizuoti sistemos garsumą",
         "sync_playlist" to "Sinchronizuoti grojaraštį",
         "sync_playlist_desc" to "Sinchronizuoti grojaraštį su YouTube Muzika",
         "sync_vivi_volume" to "Sinchronizuoti VIVI garsumą",

@@ -704,6 +704,7 @@ internal fun strings_it(): Map<String, String> =
         "sync_in_progress" to "Sincronizzazione delle playlist…",
         "sync_playlist" to "Sincronizza playlist",
         "sync_playlist_desc" to "Sincronizza la playlist con YouTube Music",
+        "sync_os_volume" to "Sincronizza il volume del sistema",
         "sync_vivi_volume" to "Sincronizza il volume di VIVI",
         "synced_lyrics" to "Testo sincronizzato",
         "synced_lyrics_desc" to "Evidenzia la riga corrente durante la riproduzione",

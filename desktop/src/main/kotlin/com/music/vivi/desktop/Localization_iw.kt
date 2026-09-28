@@ -702,6 +702,7 @@ internal fun strings_iw(): Map<String, String> =
         "swipe_sensitivity_desc" to "כוונן עד כמה מחוות ההחלקה רגישות להחלפת שירים",
         "sync_finished" to "הפלייליסטים מעודכנים",
         "sync_in_progress" to "מסנכרן פלייליסטים…",
+        "sync_os_volume" to "סנכרון עוצמת קול של המערכת",
         "sync_playlist" to "סנכרן את הפלייליסט",
         "sync_playlist_desc" to "סנכרן את הפלייליסט עם YouTube Music",
         "sync_vivi_volume" to "סנכרון עוצמת קול VIVI",

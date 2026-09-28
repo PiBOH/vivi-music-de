@@ -702,6 +702,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "swipe_sensitivity_desc" to "调整滑动切歌灵敏度",
         "sync_finished" to "播放列表已是最新",
         "sync_in_progress" to "正在同步播放列表…",
+        "sync_os_volume" to "同步系统音量",
         "sync_playlist" to "同步播放列表",
         "sync_playlist_desc" to "将播放列表与 YouTube Music 同步",
         "sync_vivi_volume" to "同步 VIVI 音量",

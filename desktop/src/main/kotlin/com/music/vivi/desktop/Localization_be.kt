@@ -702,6 +702,7 @@ internal fun strings_be(): Map<String, String> =
         "swipe_sensitivity_desc" to "Наладзьце, наколькі адчувальныя жэсты перакульвання для змены песень",
         "sync_finished" to "Спісы абноўлены",
         "sync_in_progress" to "Сінхранізацыя спісаў…",
+        "sync_os_volume" to "Сінхранізаваць сістэмную гучнасць",
         "sync_playlist" to "Сінхранізаваць плей-ліст",
         "sync_playlist_desc" to "Сінхранізіраваць плэйліст з YouTube Music",
         "sync_vivi_volume" to "Сінхранізаваць гучнасць VIVI",

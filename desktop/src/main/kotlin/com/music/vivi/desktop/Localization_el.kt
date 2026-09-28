@@ -702,6 +702,7 @@ internal fun strings_el(): Map<String, String> =
         "swipe_sensitivity_desc" to "Προσαρμόστε την ευαισθησία των κινήσεων σάρωσης για την αλλαγή τραγουδιών",
         "sync_finished" to "Οι λίστες είναι ενημερωμένες",
         "sync_in_progress" to "Συγχρονισμός λιστών αναπαραγωγής…",
+        "sync_os_volume" to "Συγχρονισμός έντασης λειτουργικού συστήματος",
         "sync_playlist" to "Συγχρονισμός Λιστών",
         "sync_playlist_desc" to "Συγχρονισμός λίστας αναπαραγωγής με το YouTube Music",
         "sync_vivi_volume" to "Συγχρονισμός έντασης VIVI",

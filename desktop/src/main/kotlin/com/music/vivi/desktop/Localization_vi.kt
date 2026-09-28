@@ -702,6 +702,7 @@ internal fun strings_vi(): Map<String, String> =
         "swipe_sensitivity_desc" to "Điều chỉnh độ nhạy của cử chỉ vuốt để thay đổi bài hát",
         "sync_finished" to "Danh sách phát đã cập nhật",
         "sync_in_progress" to "Đang đồng bộ danh sách phát…",
+        "sync_os_volume" to "Đồng bộ âm lượng hệ thống",
         "sync_playlist" to "Đồng bộ danh sách phát",
         "sync_playlist_desc" to "Đồng bộ danh sách phát với YouTube Music",
         "sync_vivi_volume" to "Đồng bộ âm lượng VIVI",

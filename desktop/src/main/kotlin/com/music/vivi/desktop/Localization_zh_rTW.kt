@@ -702,6 +702,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "swipe_sensitivity_desc" to "調整滑動手勢切換歌曲的靈敏度",
         "sync_finished" to "播放清單已是最新",
         "sync_in_progress" to "正在同步播放清單…",
+        "sync_os_volume" to "同步系統音量",
         "sync_playlist" to "同步播放清單",
         "sync_playlist_desc" to "將播放列表與YouTube Music同步",
         "sync_vivi_volume" to "同步 VIVI 音量",

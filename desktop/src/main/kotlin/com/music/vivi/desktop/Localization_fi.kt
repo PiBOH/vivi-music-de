@@ -702,6 +702,7 @@ internal fun strings_fi(): Map<String, String> =
         "swipe_sensitivity_desc" to "Säädä, kuinka herkät pyyhkäisyeleet ovat kappaleen vaihtamiseen",
         "sync_finished" to "Soittolistat ovat ajan tasalla",
         "sync_in_progress" to "Soittolistoja synkronoidaan…",
+        "sync_os_volume" to "Synkronoi järjestelmän äänenvoimakkuus",
         "sync_playlist" to "Synkronoi soittolista",
         "sync_playlist_desc" to "Synkronoi soittolista YouTuben kanssa",
         "sync_vivi_volume" to "Synkronoi VIVI-äänenvoimakkuus",

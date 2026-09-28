@@ -702,6 +702,7 @@ internal fun strings_en(): Map<String, String> =
         "swipe_sensitivity_desc" to "Adjust how sensitive swipe gestures are for changing songs",
         "sync_finished" to "Playlists are up to date",
         "sync_in_progress" to "Syncing your playlists…",
+        "sync_os_volume" to "Sync OS volume",
         "sync_playlist" to "Sync playlist",
         "sync_playlist_desc" to "Sync playlist with YouTube Music",
         "sync_vivi_volume" to "Sync VIVI volume",

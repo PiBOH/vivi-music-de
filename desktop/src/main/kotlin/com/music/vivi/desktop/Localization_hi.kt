@@ -702,6 +702,7 @@ internal fun strings_hi(): Map<String, String> =
         "swipe_sensitivity_desc" to "गाना बदलने के लिए स्वाइप कितने संवेदनशील हों, यह समायोजित करें",
         "sync_finished" to "प्लेलिस्ट अप-टू-डेट हैं",
         "sync_in_progress" to "प्लेलिस्ट सिंक हो रही हैं…",
+        "sync_os_volume" to "OS वॉल्यूम सिंक करें",
         "sync_playlist" to "प्लेलिस्ट सिंक करें",
         "sync_playlist_desc" to "प्लेलिस्ट को YouTube Music के साथ सिंक करें",
         "sync_vivi_volume" to "VIVI वॉल्यूम सिंक करें",

@@ -702,6 +702,7 @@ internal fun strings_in(): Map<String, String> =
         "swipe_sensitivity_desc" to "Sesuaikan seberapa sensitif gerakan geser untuk mengganti lagu",
         "sync_finished" to "Playlist sudah terbaru",
         "sync_in_progress" to "Menyinkronkan playlist…",
+        "sync_os_volume" to "Sinkronkan volume OS",
         "sync_playlist" to "Sinkronkan playlist",
         "sync_playlist_desc" to "Sinkronkan playlist dengan YouTube Music",
         "sync_vivi_volume" to "Sinkronkan volume VIVI",

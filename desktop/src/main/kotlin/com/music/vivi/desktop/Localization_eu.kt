@@ -702,6 +702,7 @@ internal fun strings_eu(): Map<String, String> =
         "swipe_sensitivity_desc" to "Abestiak aldatzeko irrista-sentikortasuna ezarri",
         "sync_finished" to "Erreprodukzio-zerrendak eguneratuta",
         "sync_in_progress" to "Erreprodukzio-zerrendak sinkronizatzen…",
+        "sync_os_volume" to "Sinkronizatu sistemaren bolumena",
         "sync_playlist" to "Zerrenda sinkronizatu",
         "sync_playlist_desc" to "Sinkronizatu erreprodukzio-zerrenda YouTube Music-ekin",
         "sync_vivi_volume" to "Sinkronizatu VIVI bolumena",

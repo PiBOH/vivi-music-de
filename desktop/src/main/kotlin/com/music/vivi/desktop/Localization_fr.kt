@@ -702,6 +702,7 @@ internal fun strings_fr(): Map<String, String> =
         "swipe_sensitivity_desc" to "Réglez la sensibilité des gestes de balayage pour changer de titre.",
         "sync_finished" to "Les playlists sont à jour",
         "sync_in_progress" to "Synchronisation des playlists…",
+        "sync_os_volume" to "Synchroniser le volume du système",
         "sync_playlist" to "Synchroniser la playlist",
         "sync_playlist_desc" to "Synchroniser la playlist avec YouTube Music",
         "sync_vivi_volume" to "Synchroniser le volume de VIVI",
