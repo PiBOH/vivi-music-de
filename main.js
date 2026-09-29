@@ -420,10 +420,12 @@
   /* ---------- footer year ---------- */
   $$("[data-year]").forEach(function (el) { el.textContent = new Date().getFullYear(); });
   /* ---------- screenshot gallery helper ----------
-     Lists .webp / .png / .jpg files in images/screenshots via the GitHub
-     contents API and renders 16:9 cards into `container`. Freshly pushed
-     images may not be on Pages yet, so every <img> falls back to
-     raw.githubusercontent.com once. */
+     Lists the .webp / .png / .jpg files in images/screenshots and renders 16:9
+     cards into `container`. The names come from images/screenshots.json, which
+     the Pages deploy regenerates from the files actually in that folder: Pages
+     serves no directory listing, and the GitHub contents API is the same
+     60-per-hour budget releases.json exists to avoid. Every card is
+     same-origin, so a shot can never be staler than the page showing it. */
   function vmShotsLightbox(container) {
     var doc = container.ownerDocument;
     var lb = doc.createElement('div');
@@ -503,9 +505,9 @@
   window.vmShots = function (container, opts) {
     opts = opts || {};
     if (!container) return;
-    var API = 'https://api.github.com/repos/' + REPO + '/contents/.websitede/images/screenshots?ref=vivi-music-de';
-    var PAGES = 'https://piboh.github.io/vivi-music-de/images/screenshots/';
-    var RAW = 'https://raw.githubusercontent.com/' + REPO + '/vivi-music-de/.websitede/images/screenshots/';
+    var PAGES = 'images/screenshots/';
+    var SHOTS_URL = 'images/screenshots.json';
+    var API = 'https://api.github.com/repos/' + REPO + '/contents/images/screenshots?ref=gh-pages';
 
     function pretty(name) {
             /* "000.foo.webp" -> "Foo": the leading 3-digit + dot prefix only
@@ -520,46 +522,52 @@
         if (sec) sec.style.display = 'none';
       }
     }
+    /* The manifest carries names (strings); the API fallback carries file
+       objects. Both end up as one sorted list of usable file names. */
+    function shots(list) {
+      var names = (list || []).map(function (f) { return typeof f === 'string' ? f : (f && f.name); })
+        .filter(function (n) { return n && /\.(webp|png|jpe?g|gif)$/i.test(n); })
+        .sort(function (a, b) { return a.localeCompare(b); });
+      /* Same shot in two formats (e.g. shot.webp + shot.png) shows once,
+         preferring .webp, then .png, then .jpg, then .gif. */
+      var rankOf = function (n) { return { webp: 0, png: 1, jpg: 2, jpeg: 2, gif: 3 }[n.split('.').pop().toLowerCase()]; };
+      var best = {};
+      names.forEach(function (n) {
+        var stem = n.replace(/\.(webp|png|jpe?g|gif)$/i, '').toLowerCase();
+        if (best[stem] === undefined || rankOf(n) < best[stem]) best[stem] = rankOf(n);
+      });
+      return names.filter(function (n) {
+        return rankOf(n) === best[n.replace(/\.(webp|png|jpe?g|gif)$/i, '').toLowerCase()];
+      });
+    }
+    function render(all) {
+      var list = opts.max > 0 ? all.slice(0, opts.max) : all;
+      if (!list.length) { empty(); return []; }
+      var html = '';
+      list.forEach(function (name) {
+        var src = PAGES + encodeURIComponent(name);
+        var alt = pretty(name);
+        // Explicit intrinsic size (the gallery is 16:9 by rule): the browser
+        // reserves the box before the image loads, so the grid never reflows
+        // (CLS) while the screenshots stream in.
+        html += '<figure class="gshot" data-src="' + src + '">' +
+          '<img src="' + src + '" alt="VIVI Music DE screenshot — ' + alt + '" width="1920" height="1080" loading="lazy" decoding="async">' +
+          '<figcaption>' + alt + '</figcaption></figure>';
+      });
+      container.innerHTML = html;
+      if (opts.lightbox !== false) vmShotsLightbox(container);
+      return list;
+    }
 
-    return window.vmGH.json(API)
-      .then(function (files) {
-                var shots = (files || []).filter(function (f) { return f.type === 'file' && /\.(webp|png|jpe?g|gif)$/i.test(f.name); })
-          .sort(function (a, b) { return a.name.localeCompare(b.name); });
-        /* Same shot in two formats (e.g. shot.webp + shot.png) shows once,
-           preferring .webp, then .png, then .jpg, then .gif. */
-        var best = {};
-        shots.forEach(function (f) {
-          var stem = f.name.replace(/\.(webp|png|jpe?g|gif)$/i, '').toLowerCase();
-          var rank = { webp: 0, png: 1, jpg: 2, jpeg: 2, gif: 3 }[f.name.split('.').pop().toLowerCase()];
-          if (best[stem] === undefined || rank < best[stem]) best[stem] = rank;
-        });
-        shots = shots.filter(function (f) {
-          var stem = f.name.replace(/\.(webp|png|jpe?g|gif)$/i, '').toLowerCase();
-          var rank = { webp: 0, png: 1, jpg: 2, jpeg: 2, gif: 3 }[f.name.split('.').pop().toLowerCase()];
-          return rank === best[stem];
-        });
-        if (opts.max > 0) shots = shots.slice(0, opts.max);
-        if (!shots.length) { empty(); return []; }
-        var html = '';
-        shots.forEach(function (f) {
-          var enc = encodeURIComponent(f.name);
-          var alt = pretty(f.name);
-          // Explicit intrinsic size (the gallery is 16:9 by rule): the browser
-          // reserves the box before the image loads, so the grid never reflows
-          // (CLS) while the screenshots stream in.
-          html += '<figure class="gshot" data-src="' + PAGES + enc + '" data-fallback="' + RAW + enc + '">' +
-            '<img src="' + PAGES + enc + '" alt="VIVI Music DE screenshot — ' + alt + '" width="1920" height="1080" loading="lazy" decoding="async">' +
-            '<figcaption>' + alt + '</figcaption></figure>';
-        });
-        container.innerHTML = html;
-        Array.prototype.forEach.call(container.querySelectorAll('img'), function (img) {
-          img.addEventListener('error', function () {
-            var fb = img.getAttribute('data-fallback');
-            if (fb && img.src.indexOf(fb) === -1) img.src = fb;
+    return staticJson(SHOTS_URL)
+      .then(function (m) { return render(shots(m && (m.images || m.list))); })
+      .catch(function () {
+        /* No manifest: an old deploy, or the site running from a copy. Fall
+           back to the contents API, which is what the gallery used before. */
+        return window.vmGH.json(API)
+          .then(function (files) {
+            return render(shots((files || []).filter(function (f) { return f && f.type === 'file'; })));
           });
-        });
-        if (opts.lightbox !== false) vmShotsLightbox(container);
-        return shots;
       })
       .catch(function () { empty(); return []; });
   };
