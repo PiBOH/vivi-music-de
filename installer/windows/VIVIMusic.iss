@@ -24,12 +24,17 @@
 ; ignores the Windows UI language); the Select Language page is always shown so
 ; the choice stays the user's.
 ;
-; Where Inno Setup ships a translation of its own wizard (29 of them, in
-; `compiler:Languages`), that file is loaded and the whole wizard follows the
-; choice. For the other languages the wizard chrome stays English — there is no
-; translation to load — while everything THIS installer authors does follow the
-; selection: the task and Run descriptions are `{cm:...}` lookups into Inno's
-; own (already translated) tables, plus the one [CustomMessages] entry below.
+; Where Inno Setup ships a translation of its own wizard, that file is loaded
+; and the whole wizard follows the choice. For the other languages the wizard
+; chrome stays English — there is no translation to load — while everything THIS
+; installer authors does follow the selection: the task and Run descriptions are
+; `{cm:...}` lookups into Inno's own (already translated) tables, plus the one
+; [CustomMessages] entry below.
+;
+; Which translations exist depends on the compiler: Inno Setup 6 (what CI's
+; Chocolatey installs today) has 27 of them, 7 added four more. The four that
+; only 7 has are emitted behind a `FileExists` check, because naming a file the
+; compiler does not have stops the build — see the [Languages] section.
 
 #ifndef AppVersion
 #define AppVersion "0.0.0-dev"
@@ -138,8 +143,25 @@ Name: "arabic"; MessagesFile: "compiler:Languages\Arabic.isl"
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 Name: "bulgarian"; MessagesFile: "compiler:Languages\Bulgarian.isl"
 Name: "catalan"; MessagesFile: "compiler:Languages\Catalan.isl"
+; --------- Translations only Inno Setup 7 has --------------------------------
+; Chinese (both scripts), Lithuanian and Thai are not in Inno Setup 6's
+; `Languages` folder — they were added in 7 — and naming a messages file the
+; installed compiler does not have is a hard error ("Couldn't open include
+; file"), which is exactly how the first build of this list failed on a runner
+; whose Chocolatey had installed 6.x. Each of the four is therefore emitted only
+; when the compiler in use really ships it, and otherwise falls back to the
+; English messages it would have had anyway, with the small overlay in
+; `languages\` supplying its name for the Select Language page.
+#if FileExists(AddBackslash(CompilerPath) + "Languages\ChineseSimplified.isl")
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+#else
+Name: "chinesesimplified"; MessagesFile: "compiler:Default.isl,languages\chinesesimplified.isl"
+#endif
+#if FileExists(AddBackslash(CompilerPath) + "Languages\ChineseTraditional.isl")
 Name: "chinesetraditional"; MessagesFile: "compiler:Languages\ChineseTraditional.isl"
+#else
+Name: "chinesetraditional"; MessagesFile: "compiler:Default.isl,languages\chinesetraditional.isl"
+#endif
 Name: "czech"; MessagesFile: "compiler:Languages\Czech.isl"
 Name: "dutch"; MessagesFile: "compiler:Languages\Dutch.isl"
 Name: "finnish"; MessagesFile: "compiler:Languages\Finnish.isl"
@@ -150,7 +172,11 @@ Name: "hungarian"; MessagesFile: "compiler:Languages\Hungarian.isl"
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "korean"; MessagesFile: "compiler:Languages\Korean.isl"
+#if FileExists(AddBackslash(CompilerPath) + "Languages\Lithuanian.isl")
 Name: "lithuanian"; MessagesFile: "compiler:Languages\Lithuanian.isl"
+#else
+Name: "lithuanian"; MessagesFile: "compiler:Default.isl,languages\lithuanian.isl"
+#endif
 Name: "norwegian"; MessagesFile: "compiler:Languages\Norwegian.isl"
 Name: "polish"; MessagesFile: "compiler:Languages\Polish.isl"
 Name: "portuguese"; MessagesFile: "compiler:Languages\Portuguese.isl"
@@ -160,7 +186,11 @@ Name: "slovenian"; MessagesFile: "compiler:Languages\Slovenian.isl"
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "swedish"; MessagesFile: "compiler:Languages\Swedish.isl"
 Name: "tamil"; MessagesFile: "compiler:Languages\Tamil.isl"
+#if FileExists(AddBackslash(CompilerPath) + "Languages\Thai.isl")
 Name: "thai"; MessagesFile: "compiler:Languages\Thai.isl"
+#else
+Name: "thai"; MessagesFile: "compiler:Default.isl,languages\thai.isl"
+#endif
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 Name: "ukrainian"; MessagesFile: "compiler:Languages\Ukrainian.isl"
 
