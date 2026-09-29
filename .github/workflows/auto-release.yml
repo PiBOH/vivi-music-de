@@ -72,6 +72,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    # The tag is what the Telegram job below hands to the bot, so it is
+    # published to the other job instead of being resolved twice.
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -234,4 +238,39 @@ jobs:
             This release was built automatically from commit `${{ github.sha }}`.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # The bot that posts the release to the Telegram channel is a workflow in
+  # ANOTHER repository (`PiBOH/vivimusicde_bot`), so nothing here can trigger it
+  # with the job token and its own hourly poll was the only thing that ever
+  # noticed a new release — which meant a post could land hours late (GitHub's
+  # scheduler is best-effort and this repo was getting roughly one run every
+  # 3-5 hours). The release is therefore pushed to it the moment it exists: an
+  # explicit dispatch, seconds after the assets are uploaded.
+  #
+  # The bot's own dedupe cache makes this safe to repeat — it posts a given tag
+  # at most once, so a dispatch for a tag it already posted is a no-op, and the
+  # poll backstop can never double-post.
+  notify-bot:
+    name: Hand the release to the Telegram bot
+    needs: release
+    if: ${{ needs.release.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Dispatch the bot
+        env:
+          GH_TOKEN: ${{ secrets.BOT_DISPATCH_TOKEN }}
+          TAG: ${{ needs.release.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # BOT_DISPATCH_TOKEN is the cross-repository PAT (the job token cannot
+          # reach another repository). It is deliberately NOT best-effort: if it
+          # ever loses access to the bot repo the run says so instead of letting
+          # the poll quietly cover for it again. The release itself is already
+          # published by now, so a failure here only colors this job.
+          gh workflow run upload-release.yml \
+            --repo PiBOH/vivimusicde_bot \
+            --ref main \
+            -f release_tag="$TAG"
 

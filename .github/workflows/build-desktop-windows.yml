@@ -58,15 +58,24 @@ jobs:
           New-Item -ItemType Directory -Force -Path $output | Out-Null
           $mainExecutable = Join-Path $source 'VIVIMusic.exe'
           if (-not (Test-Path $mainExecutable)) { throw "jpackage app image is incomplete: $mainExecutable was not found" }
-          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          # The compiler is looked up instead of hardcoding "Inno Setup 6":
+          # `choco install innosetup` installs whatever the current major is
+          # (7, "Inno Setup 7"), and the installer script itself only needs the
+          # 6.3+ directives, so both majors compile it.
+          $iscc = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:ProgramFiles\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $iscc) { throw "Inno Setup compiler (ISCC.exe) not found under Program Files" }
+          Write-Host "Using Inno Setup compiler: $iscc"
           $compileLog = Join-Path $output 'innosetup.log'
+          $icons = Join-Path $env:GITHUB_WORKSPACE 'desktop\icons'
           & $iscc `
             "/DAppVersion=$fullVersion" `
             "/DInstallerVersion=$installerVersion" `
             "/DSourceDir=$source" `
             "/DOutputDir=$output" `
-            "/DIconFile=$env:GITHUB_WORKSPACE\desktop\icons\logo_vmde.ico" `
+            "/DIconFile=$icons\logo_vmde.ico" `
+            "/DWizardImageFile=$icons\logo_vmde_wizard.bmp" `
+            "/DWizardSmallImageFile=$icons\logo_vmde_small.bmp" `
             "$env:GITHUB_WORKSPACE\installer\windows\VIVIMusic.iss" 2>&1 |
             Tee-Object -FilePath $compileLog
           if ($LASTEXITCODE -ne 0) {

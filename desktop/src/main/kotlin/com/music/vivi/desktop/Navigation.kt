@@ -61,6 +61,7 @@ sealed interface Screen {
     data object SettingsNotifications : Screen
     data object SettingsNotificationsHistory : Screen
     data object SettingsIntegrations : Screen
+    data object SettingsSpotifyImport : Screen
     data object SettingsDesktop : Screen
     data object SettingsEqualizer : Screen
     data object SettingsDataSaver : Screen

@@ -3008,6 +3008,10 @@ fun WindowScope.App(
                             DesktopSettings.update { it.copy(lastfmNowPlaying = v) }
                         },
                     )
+                    is Screen.SettingsSpotifyImport -> SettingsSpotifyImportScreen(
+                        language = language,
+                        onBack = goBack,
+                    )
                     is Screen.SettingsWrapped -> SettingsWrappedScreen(
                         language = language,
                         onBack = goBack,
@@ -5056,6 +5060,19 @@ fun SettingsScreen(
             },
             trailing = { SettingsChevron() },
             onClick = { onOpen(Screen.SettingsIntegrations) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.LibraryMusic,
+            title = { Text(Localization.get(language, "spotify_import")) },
+            description = {
+                val name = SpotifyImport.state.collectAsState().value.accountName
+                Text(
+                    if (name.isBlank()) Localization.get(language, "spotify_not_connected")
+                    else Localization.get(language, "spotify_connected_as").format(name),
+                )
+            },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsSpotifyImport) },
         ),
         M3SettingsItem(
             icon = Icons.Filled.DesktopWindows,

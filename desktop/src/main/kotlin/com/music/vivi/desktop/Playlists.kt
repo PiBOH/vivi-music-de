@@ -155,6 +155,37 @@ object PlaylistStore {
     }
 
     /**
+     * Writes a playlist an import owns, under a **stable id of its own**
+     * ([SpotifyImport] uses `SPOT…`), replacing whatever it held before.
+     *
+     * This is what makes an import repeatable: the mobile app keys an imported
+     * playlist to the Spotify source id, and the desktop has to do the same, or
+     * importing the same Spotify playlist twice would leave two local copies.
+     * The id is not the store's own `LP…` form on purpose — it must never be
+     * mistaken for a mirror of an account playlist (`yt-…`) and it carries no
+     * account id, so nothing here is ever pushed to YouTube Music: an import
+     * only ever writes on this machine.
+     *
+     * A tombstoned entry with that id is revived rather than duplicated (the
+     * user deleted the imported playlist, now asks for it again).
+     */
+    fun upsert(id: String, name: String, songs: List<SyncedSong>) {
+        val now = System.currentTimeMillis()
+        val existing = _all.value.firstOrNull { it.id == id }
+        val entry = SyncedPlaylist(
+            id = id,
+            name = name.trim(),
+            songs = songs,
+            updatedAt = now,
+            deleted = false,
+            remoteId = null,
+        )
+        _all.value = if (existing == null) _all.value + entry
+        else _all.value.map { if (it.id == id) entry else it }
+        persist()
+    }
+
+    /**
      * Records the account's playlist id on an existing local playlist, so its
      * later edits can reach the account (see [PlaylistSync.songAdded]).
      */

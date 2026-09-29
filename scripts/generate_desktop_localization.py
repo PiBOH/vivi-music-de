@@ -722,6 +722,11 @@ MAPPING = {
     "action_cut": "Cut",
     "action_paste": "Paste",
     "action_select_all": "select",
+    # Spotify import (settings screen). Android has a full `spotify_*` set, but
+    # it is translated in only a handful of languages, so the desktop reuses the
+    # one resource that IS translated everywhere it matters: "Liked Songs".
+    # Everything else is authored in desktop_extra_translations_90.
+    "spotify_liked_songs": "liked_songs",
 }
 
 # Full desktop English table (source language).
@@ -1115,6 +1120,21 @@ ENGLISH = {
     # sync: the row sits next to "Sync VIVI volume", so it has to say NATIVE.
     # Supplied by desktop_extra_translations_89.
     "sync_os_volume": "Sync OS volume",
+    # --- Import from Spotify (settings screen) ---------------------------------
+    # The desktop port of the mobile Spotify import. "Liked Songs" comes from
+    # Android's `liked_songs` through MAPPING; the rest have no Android source
+    # that is translated widely enough to borrow, so desktop_extra_translations_90
+    # writes them out for every language.
+    "spotify_import": "Import from Spotify",
+    "spotify_desc": "Bring your Spotify playlists and Liked Songs over. Every track is searched on YouTube Music and the closest match is saved in a local playlist.",
+    "spotify_not_connected": "Not connected to Spotify",
+    "spotify_connected_as": "Connected as %s",
+    "spotify_cookie_hint": "Sign in to open.spotify.com in your browser, then copy the sp_dc cookie. sp_key is optional.",
+    "spotify_open_login": "Sign in to Spotify",
+    "spotify_import_selected": "Import selected",
+    "spotify_importing": "Importing %s — %d of %d",
+    "spotify_import_done": "Done: %d of %d tracks matched",
+    "spotify_no_sources": "No playlists found on this account",
     "more": "More",
     "like": "Like",
     "unlike": "Unlike",
@@ -1832,12 +1852,13 @@ from desktop_extra_translations_86 import EXTRA_TRANSLATIONS as _EXTRA_86
 from desktop_extra_translations_87 import EXTRA_TRANSLATIONS as _EXTRA_87
 from desktop_extra_translations_88 import EXTRA_TRANSLATIONS as _EXTRA_88
 from desktop_extra_translations_89 import EXTRA_TRANSLATIONS as _EXTRA_89
+from desktop_extra_translations_90 import EXTRA_TRANSLATIONS as _EXTRA_90
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 
