@@ -98,12 +98,22 @@ def main() -> None:
 
     build_ico(img, os.path.join(OUT_DIR, "logo_vmde.ico"))
     build_icns(img, os.path.join(OUT_DIR, "logo_vmde.icns"))
+    # The wizard follows Windows' light/dark setting (`WizardStyle=modern
+    # dynamic`), and these BMPs are opaque, so dark mode needs its own pair on
+    # the deep VIVI violet panel — otherwise the white square behind the mark
+    # is a bright box on an otherwise dark wizard.
+    DARK = (30, 20, 56)
     build_bmp(img, os.path.join(OUT_DIR, "logo_vmde_wizard.bmp"), (164, 314))
+    build_bmp(img, os.path.join(OUT_DIR, "logo_vmde_wizard_dark.bmp"), (164, 314), bg=DARK)
     # Inno Setup's modern wizard header wants exactly 55x55 (the size its own
     # WizModernSmallImage.bmp uses). 55x58 — what this used to write — is
     # stretched by Inno Setup 7 but rejected by some 6.x compilers.
     build_bmp(img, os.path.join(OUT_DIR, "logo_vmde_small.bmp"), (55, 55))
-    print(f"Wrote {OUT_DIR}/logo_vmde.ico, logo_vmde.icns, logo_vmde_wizard.bmp and logo_vmde_small.bmp")
+    build_bmp(img, os.path.join(OUT_DIR, "logo_vmde_small_dark.bmp"), (55, 55), bg=DARK)
+    print(
+        f"Wrote {OUT_DIR}/logo_vmde.ico, logo_vmde.icns, logo_vmde_wizard.bmp, "
+        "logo_vmde_small.bmp and their two *_dark.bmp counterparts"
+    )
 
 
 if __name__ == "__main__":

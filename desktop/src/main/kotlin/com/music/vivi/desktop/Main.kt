@@ -5062,7 +5062,10 @@ fun SettingsScreen(
             onClick = { onOpen(Screen.SettingsIntegrations) },
         ),
         M3SettingsItem(
-            icon = Icons.Filled.LibraryMusic,
+            // The Spotify mark rather than a generic library icon: the entry is
+            // "import from Spotify", and the phone has drawn it this way all
+            // along (same path data as its own drawable).
+            icon = SpotifyIcon,
             title = { Text(Localization.get(language, "spotify_import")) },
             description = {
                 val name = SpotifyImport.state.collectAsState().value.accountName

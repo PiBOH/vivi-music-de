@@ -33,8 +33,10 @@ import java.util.concurrent.atomic.AtomicInteger
  *  1. **Connect.** Spotify's web player authenticates with the `sp_dc` cookie;
  *     [SpotifyAuth] turns it into a short-lived access token (with a TOTP the
  *     token endpoint requires) and [Spotify] then talks GraphQL with it. The
- *     cookie is what the user pastes, the token is derived and cached until it
- *     expires. Everything is stored locally, in `~/.vivimusic/spotify.json`:
+ *     cookie is what [loginWithWindow] reads off the embedded sign-in window
+ *     (the manual paste is only the fallback for a machine where that window
+ *     cannot open), the token is derived and cached until it expires:
+ *     everything is stored locally, in `~/.vivimusic/spotify.json`:
  *     nothing about this feature leaves the machine except the requests to
  *     Spotify and to YouTube Music.
  *  2. **List.** The account's playlists (paged) and the Liked Songs count, so
@@ -59,7 +61,7 @@ object SpotifyImport {
         parentFile?.mkdirs()
     }
 
-    /** The local session: the pasted cookies plus the token derived from them. */
+    /** The local session: the captured cookies plus the token derived from them. */
     @Serializable
     private data class Session(
         val spDc: String = "",
@@ -108,11 +110,32 @@ object SpotifyImport {
     const val LIKED_SOURCE: String = "liked"
 
     /**
-     * The page the screen's "sign in" button opens in the system browser. The
-     * cookie is read from there by hand: there is no embedded browser for
-     * Spotify on the desktop (see the screen's docs).
+     * The page the sign-in window opens, and the page the manual fallback links
+     * to when no window can be created.
      */
     fun loginUrl(): String = SpotifyAuth.LOGIN_URL
+
+    /**
+     * Opens the embedded Spotify sign-in window (the desktop port of the phone's
+     * `SpotifyLoginSheet`) and connects with the cookies it captures.
+     *
+     * Returns false when the window could not be created at all — the screen
+     * then falls back to the manual `sp_dc` paste.
+     */
+    fun loginWithWindow(language: String): Boolean {
+        val opened = SpotifyLoginWebView.open(language) { captured ->
+            if (captured == null || captured.spDc.isBlank()) {
+                // The window was closed without signing in: keep the session the
+                // account already had (there is nothing new to adopt) and stop
+                // the spinner.
+                _state.update { it.copy(loading = false) }
+            } else {
+                connect(captured.spDc, captured.spKey)
+            }
+        }
+        if (opened) _state.update { it.copy(loading = true, error = null) }
+        return opened
+    }
 
     /**
      * The stable local playlist id a Spotify source imports into: the account's

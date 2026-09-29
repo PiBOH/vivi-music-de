@@ -36,8 +36,6 @@ object LoginWebView {
     @Volatile private var windowOpen = false
     @Volatile private var unavailable = false
     @Volatile private var delivered = false
-    @Volatile private var fxStarted = false
-    private val fxStartupLock = Any()
 
     private val debugLog = File(System.getProperty("user.home"), ".vivimusic/login-debug.log")
 
@@ -92,44 +90,11 @@ object LoginWebView {
         true
     }.getOrDefault(false)
 
-    private fun ensureFxStarted() {
-        if (fxStarted) return
-        synchronized(fxStartupLock) {
-            if (fxStarted) return
-            // The packaged app runs a Compose/Skia window on the same display;
-            // on machines with weak or conflicting GPU drivers the JavaFX WebView
-            // then stays blank white even though the page loaded (paint never
-            // happens). The WebView is the only JavaFX surface we have, so force
-            // the software renderer: slower but guaranteed to paint.
-            runCatching {
-                if (System.getProperty("prism.order") == null) {
-                    System.setProperty("prism.order", "sw")
-                }
-                if (System.getProperty("prism.dirtyopts") == null) {
-                    System.setProperty("prism.dirtyopts", "false")
-                }
-            }
-            val failure = arrayOfNulls<Throwable>(1)
-            val ready = CountDownLatch(1)
-            Thread {
-                try {
-                    FxPlatform.startup { ready.countDown() }
-                } catch (t: IllegalStateException) {
-                    // Toolkit was started by another component between the
-                    // check and startup; it is safe to use runLater now.
-                    ready.countDown()
-                } catch (t: Throwable) {
-                    failure[0] = t
-                    ready.countDown()
-                }
-            }.apply { name = "vivimusic-javafx-startup"; isDaemon = true }.start()
-            if (!ready.await(15, TimeUnit.SECONDS)) {
-                throw IllegalStateException("JavaFX toolkit startup timed out")
-            }
-            failure[0]?.let { throw it }
-            fxStarted = true
-        }
-    }
+    /**
+     * The toolkit is shared with the Spotify sign-in window: see [JavaFxToolkit]
+     * for why one process has exactly one place that starts it.
+     */
+    private fun ensureFxStarted() = JavaFxToolkit.ensureStarted()
 
     private fun deliver(cookie: String?, dataSyncId: String?, visitorData: String?, callback: (Capture?) -> Unit) {
         if (delivered) return
