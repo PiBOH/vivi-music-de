@@ -141,6 +141,12 @@ orientation.
 
 ## Done — one line per release
 
+- [x] **DE 1.54.4** — the "Auto skip to next song when error occurs" description states the behaviour in all 52 languages ("Passa automaticamente alla canzone successiva in caso di errore") instead of the benefit sentence the Android resource carried; silently in the same pass, the website's screenshot gallery stopped asking the GitHub contents API for a `.websitede` directory that no longer exists and reads a manifest the Pages deploy regenerates from `images/screenshots/`, so the home page and the gallery show the twelve shots again
+
+- [x] **DE 1.54.3** — the Spotify import lands on the desktop (Settings → Import from Spotify: paste the `sp_dc` cookie, pick the playlists, every track is matched on YouTube Music and written to a local `SPOT…` playlist, never to the account) and the Windows setup becomes the app's own (brand wizard bitmaps, all 51 languages with English as the default, a log, App Paths, previous-install memory); a follow-up freed it from a hardcoded `Inno Setup 6` and from naming translations the compiler does not have
+
+- [x] **DE 1.54.2**
+
 - [x] **DE 1.54.2** — "Sync OS volume" is device-local (it stopped switching itself back on because the peer kept pushing its own default-on value) and has its own label in all 52 languages; Disconnect and Unpair are a single button (Unpair only shows when offline)
 
 - [x] **DE 1.54.1** — the bulk playlist action is labelled by what it will do ("Create on YouTube Music" only when playlists are really new, "Sync with YouTube Music" when only the account's existing copies are brought up to date, "Create and sync with YouTube Music" when both are pending), from a `PlaylistSync.UploadPlan` computed with the same lookups the run itself uses
