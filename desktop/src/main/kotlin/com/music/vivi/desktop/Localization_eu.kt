@@ -116,7 +116,7 @@ internal fun strings_eu(): Map<String, String> =
         "auto_load_more" to "Kargatu abesti gehiago automatikoki",
         "auto_load_more_desc" to "Gehitu abesti gehiago automatikoki ilara amaierara iristean, posible bada",
         "auto_skip_next_on_error" to "Salta automatikoki hurrengo abestira akats bat gertatzen denean",
-        "auto_skip_next_on_error_desc" to "Ziurtatu etengabeko erreprodukzio-esperientzia",
+        "auto_skip_next_on_error_desc" to "Errore bat gertatuz gero, jauzi egin automatikoki hurrengo abestira",
         "automatic_backup_desc" to "Zure datuen babeskopia automatikoa egiten du ordutegi baten arabera.",
         "autoplay_next" to "Erreproduzitu automatikoki hurrengo abestia",
         "back" to "Atzera",

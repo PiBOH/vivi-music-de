@@ -116,7 +116,7 @@ internal fun strings_bn(): Map<String, String> =
         "auto_load_more" to "অটো আরও গান লোড করুন",
         "auto_load_more_desc" to "যদি সম্ভব হয়, কিউর শেষ হলে স্বয়ংক্রিয়ভাবে আরও গান যোগ করুন",
         "auto_skip_next_on_error" to "ত্রুটি ঘটলে স্বয়ংক্রিয়ভাবে পরবর্তী গানে চলে যাওয়া",
-        "auto_skip_next_on_error_desc" to "আপনার অবিচ্ছিন্ন প্লেব্যাক অভিজ্ঞতা নিশ্চিত করুন",
+        "auto_skip_next_on_error_desc" to "ত্রুটি হলে স্বয়ংক্রিয়ভাবে পরবর্তী গানে যান",
         "automatic_backup_desc" to "নির্ধারিত সময়সূচিতে স্বয়ংক্রিয়ভাবে আপনার ডেটা ব্যাকআপ করে।",
         "autoplay_next" to "পরবর্তী গান স্বয়ংক্রিয়ভাবে চালান",
         "back" to "পিছনে",

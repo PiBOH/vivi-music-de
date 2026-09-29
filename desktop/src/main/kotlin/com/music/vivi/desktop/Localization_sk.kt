@@ -116,7 +116,7 @@ internal fun strings_sk(): Map<String, String> =
         "auto_load_more" to "Automatické načítanie ďalších skladieb",
         "auto_load_more_desc" to "Automaticky pridávať ďalšie skladby, keď sa dosiahne koniec fronty, ak je to možné",
         "auto_skip_next_on_error" to "Automaticky preskočiť na ďalšiu skladbu, keď nastane chyba",
-        "auto_skip_next_on_error_desc" to "Zabezpečte plynulé prehrávanie",
+        "auto_skip_next_on_error_desc" to "Pri chybe automaticky prejsť na ďalšiu skladbu",
         "automatic_backup_desc" to "Automaticky zálohuje vaše údaje podľa plánu.",
         "autoplay_next" to "Automaticky prehrať ďalšiu skladbu",
         "back" to "Späť",

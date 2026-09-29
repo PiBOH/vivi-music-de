@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.4-beta] - 2026-09-29
+
+### Changed
+- [DE] **"Auto skip to next song when error occurs" says what the switch does instead of what it is good for.** The row's description was the mobile app's own line — "Ensure your continuous playback experience" — a sentence about the benefit that names no behaviour, and which reads as filler in most languages because it was never about this switch: the Italian row promised "Garantisci la tua esperienza di riproduzione continua" under a setting that skips a track. Every language now states the behaviour ("Passa automaticamente alla canzone successiva in caso di errore" / "Automatically skip to the next song when a track fails to play"), rewritten through `scripts/desktop_extra_translations_91.py` — all 52 of them, because the old sentence came from the shared Android resource `auto_skip_next_on_error_desc` and any language left out would have kept it. **Constraint:** the localization audit stays clean (0 missing keys, 0 leaking keys, 0 English left in a language map, 0 wrong-script values) and the two hand-tuned files (`Localization_it.kt`, `Localization_sv.kt`) keep their edits, which a regeneration of the tables now preserves for this key too.
+
 ## [6.0.8.5_DE-1.54.3-beta] - 2026-09-29
 
 ### Added

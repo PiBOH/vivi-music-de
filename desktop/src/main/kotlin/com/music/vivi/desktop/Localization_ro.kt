@@ -116,7 +116,7 @@ internal fun strings_ro(): Map<String, String> =
         "auto_load_more" to "Încarcă automat mai multe melodii",
         "auto_load_more_desc" to "Adaugă în mod automat mai multe melodii când ajungi la finalul cozii, dacă este posibil",
         "auto_skip_next_on_error" to "Sari automat la următoarea melodie atunci când apare o eroare",
-        "auto_skip_next_on_error_desc" to "Asigură-ți experiența continuă de redare",
+        "auto_skip_next_on_error_desc" to "Treci automat la piesa următoare în caz de eroare",
         "automatic_backup_desc" to "Face automat o copie de rezervă a datelor dvs. conform unui program.",
         "autoplay_next" to "Redă automat următoarea melodie",
         "back" to "Înapoi",

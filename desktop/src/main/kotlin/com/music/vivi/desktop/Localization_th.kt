@@ -116,7 +116,7 @@ internal fun strings_th(): Map<String, String> =
         "auto_load_more" to "โหลดเพลงเพิ่มโดยอัตโนมัติ",
         "auto_load_more_desc" to "เพิ่มเพลงเพิ่มโดยอัตโนมัติเมื่อถึงจุดสิ้นสุดคิว หากเป็นไปได้",
         "auto_skip_next_on_error" to "ข้ามไปเพลงถัดไปโดยอัตโนมัติเมื่อเกิดข้อผิดพลาด",
-        "auto_skip_next_on_error_desc" to "รับประกันประสบการณ์การเล่นต่อเนื่อง",
+        "auto_skip_next_on_error_desc" to "ข้ามไปเพลงถัดไปโดยอัตโนมัติเมื่อเกิดข้อผิดพลาด",
         "automatic_backup_desc" to "สำรองข้อมูลของคุณโดยอัตโนมัติตามกำหนดการ",
         "autoplay_next" to "เล่นเพลงถัดไปโดยอัตโนมัติ",
         "back" to "กลับ",

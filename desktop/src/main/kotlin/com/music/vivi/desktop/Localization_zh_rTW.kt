@@ -116,7 +116,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "auto_load_more" to "自動載入更多歌曲",
         "auto_load_more_desc" to "當播放佇列快結束時，自動加入更多歌曲，如果可以的話",
         "auto_skip_next_on_error" to "發生錯誤時自動跳到下一首",
-        "auto_skip_next_on_error_desc" to "讓你享受音樂不中斷",
+        "auto_skip_next_on_error_desc" to "發生錯誤時自動跳到下一首",
         "automatic_backup_desc" to "依排程自動備份您的資料。",
         "autoplay_next" to "自動播放下一首",
         "back" to "返回",

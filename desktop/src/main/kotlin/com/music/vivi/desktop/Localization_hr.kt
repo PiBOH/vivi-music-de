@@ -116,7 +116,7 @@ internal fun strings_hr(): Map<String, String> =
         "auto_load_more" to "Automatski učitaj više pjesama",
         "auto_load_more_desc" to "Automatski dodaj više pjesama kada se dosegne kraj reda, ako je moguće",
         "auto_skip_next_on_error" to "Automatski preskoči do sljedeće pjesme kada dođe do greške",
-        "auto_skip_next_on_error_desc" to "Osigurajte vaše kontinuirano iskustvo reprodukcije",
+        "auto_skip_next_on_error_desc" to "Automatski prijeđi na sljedeću pjesmu u slučaju pogreške",
         "automatic_backup_desc" to "Automatski stvara sigurnosnu kopiju vaših podataka prema rasporedu.",
         "autoplay_next" to "Automatski pusti sljedeću pjesmu",
         "back" to "Natrag",

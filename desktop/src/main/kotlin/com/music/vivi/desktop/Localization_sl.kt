@@ -116,7 +116,7 @@ internal fun strings_sl(): Map<String, String> =
         "auto_load_more" to "Samodejno dodajaj več pesmi",
         "auto_load_more_desc" to "Samodejno dodajaj več pesmi, ko je konec seznama predvajanja dosežen, če je mogoče",
         "auto_skip_next_on_error" to "Samodejno preskoči na naslednjo pesem ob napaki",
-        "auto_skip_next_on_error_desc" to "Zagotovi nemoteno predvajanje",
+        "auto_skip_next_on_error_desc" to "Ob napaki samodejno preskoči na naslednjo skladbo",
         "automatic_backup_desc" to "Samodejno ustvarja varnostno kopijo vaših podatkov po urniku.",
         "autoplay_next" to "Samodejno predvajaj naslednjo skladbo",
         "back" to "Nazaj",

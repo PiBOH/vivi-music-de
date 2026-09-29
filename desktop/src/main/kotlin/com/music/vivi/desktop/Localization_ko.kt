@@ -116,7 +116,7 @@ internal fun strings_ko(): Map<String, String> =
         "auto_load_more" to "자동으로 더 많은 노래 불러오기",
         "auto_load_more_desc" to "가능하다면 대기열 끝에 도달하면 자동으로 노래를 더 추가합니다",
         "auto_skip_next_on_error" to "오류 발생 시 다음 곡으로 자동 건너뛰기",
-        "auto_skip_next_on_error_desc" to "끊김 없는 재생 경험 보장",
+        "auto_skip_next_on_error_desc" to "오류가 발생하면 자동으로 다음 곡으로 넘어갑니다",
         "automatic_backup_desc" to "일정에 따라 데이터를 자동으로 백업합니다.",
         "autoplay_next" to "다음 곡 자동 재생",
         "back" to "뒤로",

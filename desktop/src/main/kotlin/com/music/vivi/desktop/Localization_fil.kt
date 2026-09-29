@@ -116,7 +116,7 @@ internal fun strings_fil(): Map<String, String> =
         "auto_load_more" to "Awtomatikong magdagdag ng mas maraming kanta",
         "auto_load_more_desc" to "Awtomatikong magdagdag ng mga kanta kapag naabot na ang dulo ng queue, kung maaari",
         "auto_skip_next_on_error" to "Awtomatikong laktawan sa susunod na kanta kapag may error",
-        "auto_skip_next_on_error_desc" to "Tiyaking tuluy-tuloy ang iyong playback",
+        "auto_skip_next_on_error_desc" to "Awtomatikong lumipat sa susunod na kanta kapag nagka-error",
         "automatic_backup_desc" to "Awtomatikong nagba-backup ng iyong data ayon sa iskedyul.",
         "autoplay_next" to "Awtomatikong i-play ang susunod na kanta",
         "back" to "Bumalik",

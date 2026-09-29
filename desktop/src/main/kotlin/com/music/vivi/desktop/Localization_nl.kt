@@ -116,7 +116,7 @@ internal fun strings_nl(): Map<String, String> =
         "auto_load_more" to "Automatisch meer nummers laden",
         "auto_load_more_desc" to "Voeg indien mogelijk automatisch meer nummers toe wanneer het einde van de wachtrij is bereikt",
         "auto_skip_next_on_error" to "Automatisch overspringen naar het volgende nummer bij een fout",
-        "auto_skip_next_on_error_desc" to "Zorg voor een continue afspeelervaring",
+        "auto_skip_next_on_error_desc" to "Automatisch naar het volgende nummer gaan bij een fout",
         "automatic_backup_desc" to "Maakt automatisch een back-up van uw gegevens volgens een schema.",
         "autoplay_next" to "Volgende nummer automatisch afspelen",
         "back" to "Terug",

@@ -116,7 +116,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "auto_load_more" to "Last inn flere sanger automatisk",
         "auto_load_more_desc" to "Legg til flere sanger automatisk når køens slutt er nådd, om mulig",
         "auto_skip_next_on_error" to "Hopp til neste sang automatisk når en feil oppstår",
-        "auto_skip_next_on_error_desc" to "Sørger for at avspillingen er fortløpende",
+        "auto_skip_next_on_error_desc" to "Hopp automatisk til neste sang ved feil",
         "automatic_backup_desc" to "Sikkerhetskopierer dataene dine automatisk etter en tidsplan.",
         "autoplay_next" to "Spill neste spor automatisk",
         "back" to "Tilbake",

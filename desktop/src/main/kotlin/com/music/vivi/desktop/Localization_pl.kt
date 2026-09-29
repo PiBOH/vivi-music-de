@@ -116,7 +116,7 @@ internal fun strings_pl(): Map<String, String> =
         "auto_load_more" to "Automatycznie załaduj więcej utworów",
         "auto_load_more_desc" to "Automatycznie dodaj więcej utworów, kiedy kolejka się skończy, o ile to możliwe",
         "auto_skip_next_on_error" to "Automatycznie pomiń do następnego utworu, gdy wystąpi błąd",
-        "auto_skip_next_on_error_desc" to "Zapewnij ciągłość odtwarzania",
+        "auto_skip_next_on_error_desc" to "Automatycznie przejdź do następnego utworu w razie błędu",
         "automatic_backup_desc" to "Automatycznie tworzy kopię zapasową danych zgodnie z harmonogramem.",
         "autoplay_next" to "Automatycznie odtwarzaj następny utwór",
         "back" to "Wstecz",

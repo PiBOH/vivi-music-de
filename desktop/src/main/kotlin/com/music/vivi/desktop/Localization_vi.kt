@@ -116,7 +116,7 @@ internal fun strings_vi(): Map<String, String> =
         "auto_load_more" to "Tự động tải thêm bài hát",
         "auto_load_more_desc" to "Tự động thêm nhiều bài hát hơn khi hàng đợi kết thúc, nếu có thể",
         "auto_skip_next_on_error" to "Tự động chuyển sang bài hát tiếp theo khi xảy ra lỗi",
-        "auto_skip_next_on_error_desc" to "Đảm bảo trải nghiệm phát lại liên tục của bạn",
+        "auto_skip_next_on_error_desc" to "Tự động chuyển sang bài tiếp theo khi xảy ra lỗi",
         "automatic_backup_desc" to "Tự động sao lưu dữ liệu của bạn theo lịch trình.",
         "autoplay_next" to "Tự động phát bài tiếp theo",
         "back" to "Quay lại",

@@ -116,7 +116,7 @@ internal fun strings_fi(): Map<String, String> =
         "auto_load_more" to "Automaattisesti lataa lisää kappaleita",
         "auto_load_more_desc" to "Automaattisesti lisää enemmän kappaleita, kun jonon loppu saavutetaan, jos mahdollista",
         "auto_skip_next_on_error" to "Automaattisesti ohita seuraavaan kappaleeseen, kun tapahtuu virhe",
-        "auto_skip_next_on_error_desc" to "Varmista jatkuva toistokokemus",
+        "auto_skip_next_on_error_desc" to "Siirry automaattisesti seuraavaan kappaleeseen virheen sattuessa",
         "automatic_backup_desc" to "Varmuuskopioi tietosi automaattisesti aikataulun mukaan.",
         "autoplay_next" to "Toista seuraava kappale automaattisesti",
         "back" to "Takaisin",

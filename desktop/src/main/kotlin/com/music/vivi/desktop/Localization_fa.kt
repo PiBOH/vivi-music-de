@@ -116,7 +116,7 @@ internal fun strings_fa(): Map<String, String> =
         "auto_load_more" to "بارگذاری خودکار آهنگ‌های بیشتر",
         "auto_load_more_desc" to "افزودن خودکار آهنگ‌های بیشتر هنگام رسیدن به انتهای صف، در صورت امکان",
         "auto_skip_next_on_error" to "پرش خودکار به آهنگ بعدی هنگام خطا",
-        "auto_skip_next_on_error_desc" to "تضمین تجربه پخش بی‌وقفه",
+        "auto_skip_next_on_error_desc" to "در صورت بروز خطا به‌طور خودکار به آهنگ بعدی برو",
         "automatic_backup_desc" to "پشتیبان‌گیری خودکار از داده‌ها طبق برنامه زمانی.",
         "autoplay_next" to "پخش خودکار ترک بعدی",
         "back" to "بازگشت",

@@ -116,7 +116,7 @@ internal fun strings_lt(): Map<String, String> =
         "auto_load_more" to "Automatiškai įkelti daugiau dainų",
         "auto_load_more_desc" to "Automatiškai pridėti daugiau dainų, kai pasiekiama eilės pabaiga, jei įmanoma",
         "auto_skip_next_on_error" to "Automatiškai peršokti prie kitos dainos, kai įvyksta klaida",
-        "auto_skip_next_on_error_desc" to "Užtikrinkite nenutrūkstamą klausymosi patirtį",
+        "auto_skip_next_on_error_desc" to "Klaidos atveju automatiškai pereiti prie kitos dainos",
         "automatic_backup_desc" to "Automatiškai kuria jūsų duomenų atsarginę kopiją pagal grafiką.",
         "autoplay_next" to "Automatiškai paleisti kitą kūrinį",
         "back" to "Atgal",

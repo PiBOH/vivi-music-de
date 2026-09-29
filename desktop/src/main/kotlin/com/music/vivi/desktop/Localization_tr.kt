@@ -116,7 +116,7 @@ internal fun strings_tr(): Map<String, String> =
         "auto_load_more" to "Daha fazla şarkıyı otomatik ekle",
         "auto_load_more_desc" to "Sıranın sonuna gelindiğinde mümkünse otomatik olarak daha fazla şarkı ekler",
         "auto_skip_next_on_error" to "Hata oluştuğunda sonraki şarkıya otomatik atla",
-        "auto_skip_next_on_error_desc" to "Kesintisiz dinleme deneyimi sağlar",
+        "auto_skip_next_on_error_desc" to "Hata oluştuğunda otomatik olarak sonraki şarkıya geç",
         "automatic_backup_desc" to "Verilerinizi bir takvime göre otomatik olarak yedekler.",
         "autoplay_next" to "Sonraki parçayı otomatik oynat",
         "back" to "Geri",

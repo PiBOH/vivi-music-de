@@ -116,7 +116,7 @@ internal fun strings_uk(): Map<String, String> =
         "auto_load_more" to "Автозавантаження більшої кількості пісень",
         "auto_load_more_desc" to "Автоматично додавати більше пісень при досягненні кінця черги, якщо це можливо",
         "auto_skip_next_on_error" to "Автоперехід до наступної пісні при помилці",
-        "auto_skip_next_on_error_desc" to "Забезпечити безперервне відтворення",
+        "auto_skip_next_on_error_desc" to "Автоматично переходити до наступного треку в разі помилки",
         "automatic_backup_desc" to "Автоматично створює резервну копію ваших даних за розкладом.",
         "autoplay_next" to "Автоматично відтворювати наступний трек",
         "back" to "Назад",

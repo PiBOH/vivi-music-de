@@ -116,7 +116,7 @@ internal fun strings_hi(): Map<String, String> =
         "auto_load_more" to "और गाने स्वतः जोड़ें",
         "auto_load_more_desc" to "कतार के अंत तक पहुँचने पर, यदि संभव हो, स्वतः और गाने जोड़ें",
         "auto_skip_next_on_error" to "त्रुटि होने पर स्वतः अगले गाने पर जाएँ",
-        "auto_skip_next_on_error_desc" to "आपका प्लेबैक निर्बाध रहे",
+        "auto_skip_next_on_error_desc" to "त्रुटि होने पर स्वतः अगले गाने पर जाएँ",
         "automatic_backup_desc" to "शेड्यूल के अनुसार स्वचालित रूप से आपके डेटा का बैकअप लेता है।",
         "autoplay_next" to "अगला गाना स्वतः चलाएँ",
         "back" to "वापस",

@@ -116,7 +116,7 @@ internal fun strings_pa(): Map<String, String> =
         "auto_load_more" to "ਹੋਰ ਗਾਣੇ ਆਪਣੇ ਆਪ ਜੋੜੋ",
         "auto_load_more_desc" to "ਕਤਾਰ ਦੇ ਅੰਤ ਤੱਕ ਪਹੁੰਚਣ 'ਤੇ, ਜੇ ਸੰਭਵ ਹੋਵੇ, ਹੋਰ ਗਾਣੇ ਆਪਣੇ ਆਪ ਜੋੜੋ",
         "auto_skip_next_on_error" to "ਗਲਤੀ ਆਉਣ 'ਤੇ ਆਪਣੇ ਆਪ ਅਗਲੇ ਗਾਣੇ 'ਤੇ ਜਾਓ",
-        "auto_skip_next_on_error_desc" to "ਤੁਹਾਡਾ ਪਲੇਬੈਕ ਨਿਰਵਿਘਨ ਰਹੇ",
+        "auto_skip_next_on_error_desc" to "ਗਲਤੀ ਹੋਣ 'ਤੇ ਆਪਣੇ-ਆਪ ਅਗਲੇ ਗੀਤ 'ਤੇ ਜਾਓ",
         "automatic_backup_desc" to "ਸਮਾਂ-ਸਾਰਣੀ ਅਨੁਸਾਰ ਆਪਣੇ ਡੇਟਾ ਦਾ ਆਪਣੇ ਆਪ ਬੈਕਅੱਪ ਕਰਦਾ ਹੈ।",
         "autoplay_next" to "ਅਗਲਾ ਟਰੈਕ ਆਪਣੇ ਆਪ ਚਲਾਓ",
         "back" to "ਵਾਪਸ",

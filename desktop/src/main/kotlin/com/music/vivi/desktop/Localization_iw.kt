@@ -116,7 +116,7 @@ internal fun strings_iw(): Map<String, String> =
         "auto_load_more" to "טעינה אוטומטית של שירים נוספים",
         "auto_load_more_desc" to "הוסף אוטומטית שירים נוספים כאשר מגיעים לסוף התור, אם אפשר",
         "auto_skip_next_on_error" to "דילוג אוטומטי לשיר הבא כאשר מתרחשת שגיאה",
-        "auto_skip_next_on_error_desc" to "הבטיחו את חוויית ההשמעה הרציפה שלכם",
+        "auto_skip_next_on_error_desc" to "דלג אוטומטית לשיר הבא במקרה של שגיאה",
         "automatic_backup_desc" to "גבה את הנתונים שלך אוטומטית לפי לוח זמנים.",
         "autoplay_next" to "נגן אוטומטית את הרצועה הבאה",
         "back" to "חזור",

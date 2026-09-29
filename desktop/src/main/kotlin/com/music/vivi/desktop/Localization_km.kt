@@ -116,7 +116,7 @@ internal fun strings_km(): Map<String, String> =
         "auto_load_more" to "ផ្ទុកបទចម្រៀងបន្ថែមដោយស្វ័យប្រវត្តិ",
         "auto_load_more_desc" to "បន្ថែមបទចម្រៀងបន្ថែមដោយស្វ័យប្រវត្តិ នៅពេលដល់ចុងបញ្ចប់នៃបញ្ជីចាក់ ប្រសិនបើអាច",
         "auto_skip_next_on_error" to "រំលងទៅបទបន្ទាប់ដោយស្វ័យប្រវត្តិ នៅពេលមានកំហុស",
-        "auto_skip_next_on_error_desc" to "ធានានូវបទពិសោធន៍ចាក់បន្ត",
+        "auto_skip_next_on_error_desc" to "លោតទៅបទបន្ទាប់ដោយស្វ័យប្រវត្តិនៅពេលមានបញ្ហា",
         "automatic_backup_desc" to "បម្រុងទុកទិន្នន័យរបស់អ្នកដោយស្វ័យប្រវត្តិតាមកាលវិភាគ។",
         "autoplay_next" to "ចាក់បទបន្ទាប់ដោយស្វ័យប្រវត្តិ",
         "back" to "ត្រឡប់",

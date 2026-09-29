@@ -116,7 +116,7 @@ internal fun strings_sv(): Map<String, String> =
         "auto_load_more" to "Ladda fler låtar automatiskt",
         "auto_load_more_desc" to "Lägg automatiskt till fler låtar när kön är slut, om möjligt",
         "auto_skip_next_on_error" to "Hoppa automatiskt till nästa låt när ett fel inträffar",
-        "auto_skip_next_on_error_desc" to "Säkerställ en sömlös uppspelningsupplevelse",
+        "auto_skip_next_on_error_desc" to "Hoppa automatiskt till nästa låt vid fel",
         "automatic_backup_desc" to "Säkerhetskopierar dina data automatiskt enligt ett schema.",
         "autoplay_next" to "Spela nästa låt automatiskt",
         "back" to "Tillbaka",

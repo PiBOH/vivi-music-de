@@ -116,7 +116,7 @@ internal fun strings_az(): Map<String, String> =
         "auto_load_more" to "Daha çox mahnı yüklə",
         "auto_load_more_desc" to "Növbənin sonuna çatdıqda mümkünsə avtomatik daha çox mahnı əlavə et",
         "auto_skip_next_on_error" to "Xəta baş verərsə avtomatik növbəti mahnıya keç",
-        "auto_skip_next_on_error_desc" to "Kesintisiz oxutma təcrübəsini təmin edin",
+        "auto_skip_next_on_error_desc" to "Xəta olduqda avtomatik olaraq növbəti mahnıya keç",
         "automatic_backup_desc" to "Məlumatlarınızı cədvəl üzrə avtomatik ehtiyat nüsxəsini çıxarır.",
         "autoplay_next" to "Növbəti treki avtomatik oynat",
         "back" to "Geri",

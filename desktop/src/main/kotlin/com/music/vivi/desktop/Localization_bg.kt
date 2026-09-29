@@ -116,7 +116,7 @@ internal fun strings_bg(): Map<String, String> =
         "auto_load_more" to "Автоматично зареди още песни",
         "auto_load_more_desc" to "Автоматично добави още песни при достигане края на опашката, ако е възможно",
         "auto_skip_next_on_error" to "Автоматично премини към следваща песен, когато възникне грешка",
-        "auto_skip_next_on_error_desc" to "Осигурете си непрекъснато изживяване при възпроизвеждане",
+        "auto_skip_next_on_error_desc" to "Автоматично преминаване към следващата песен при грешка",
         "automatic_backup_desc" to "Автоматично архивира данните ви по график.",
         "autoplay_next" to "Автоматично пускане на следващата песен",
         "back" to "Назад",

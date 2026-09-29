@@ -55,6 +55,28 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Refresh the screenshot manifest
+        # The gallery lays out whatever images/screenshots.json lists. Pages
+        # serves no directory listing, and the GitHub contents API is the same
+        # 60-per-hour budget releases.json exists to avoid, so the list is built
+        # here from the files actually in images/screenshots/ — dropping a shot
+        # in that folder is still the only step needed to publish it. Written
+        # into the artifact, not the branch: the committed copy stays the
+        # fallback for a deploy that does not run (a hand copy of the site).
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os
+
+          root = 'images/screenshots'
+          exts = ('.webp', '.png', '.jpg', '.jpeg', '.gif')
+          images = sorted(n for n in os.listdir(root) if n.lower().endswith(exts))
+          stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+          with open('images/screenshots.json', 'w', encoding='utf-8') as fh:
+              json.dump({'generatedAt': stamp, 'images': images}, fh)
+              fh.write('\n')
+          print('screenshots.json:', len(images), 'image(s)')
+          PY
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:

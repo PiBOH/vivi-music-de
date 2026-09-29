@@ -116,7 +116,7 @@ internal fun strings_ms(): Map<String, String> =
         "auto_load_more" to "Muat naik lebih banyak lagu secara automatik",
         "auto_load_more_desc" to "Tambah lebih banyak lagu secara automatik apabila sampai ke hujung baris giliran, jika boleh",
         "auto_skip_next_on_error" to "Langkau ke lagu seterusnya secara automatik apabila ralat berlaku",
-        "auto_skip_next_on_error_desc" to "Pastikan pengalaman main balik yang berterusan",
+        "auto_skip_next_on_error_desc" to "Langkau secara automatik ke lagu seterusnya jika berlaku ralat",
         "automatic_backup_desc" to "Menyandarkan data anda secara automatik mengikut jadual.",
         "autoplay_next" to "Main lagu seterusnya secara automatik",
         "back" to "Kembali",

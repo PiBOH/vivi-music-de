@@ -116,7 +116,7 @@ internal fun strings_ta(): Map<String, String> =
         "auto_load_more" to "ஆட்டோ ஏற்றும் கூடுதல் பாடல்கள்",
         "auto_load_more_desc" to "முடிந்தால், வரிசையின் முடிவை எட்டும்போது தானாகவே அதிகமான பாடல்களைச் சேர்க்கவும்",
         "auto_skip_next_on_error" to "பிழை ஏற்படும்போது அடுத்த பாடலுக்கு தானாகத் தவிர்க்கவும்",
-        "auto_skip_next_on_error_desc" to "உங்கள் தொடர்ச்சியான பின்னணி அனுபவத்தை உறுதிப்படுத்தவும்",
+        "auto_skip_next_on_error_desc" to "பிழை ஏற்பட்டால் தானாகவே அடுத்த பாடலுக்குச் செல்லும்",
         "automatic_backup_desc" to "அட்டவணையின்படி உங்கள் தரவை தானாக காப்புப் பிரதி எடுக்கிறது.",
         "autoplay_next" to "அடுத்த பாடலை தானாக இயக்கு",
         "back" to "பின்",

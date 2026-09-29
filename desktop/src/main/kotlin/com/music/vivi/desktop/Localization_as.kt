@@ -116,7 +116,7 @@ internal fun strings_as(): Map<String, String> =
         "auto_load_more" to "স্বয়ংক্ৰিয়ভাৱে অধিক গীত লোড কৰক",
         "auto_load_more_desc" to "যেতিয়া ক্যুৰ শেষ হয়, সম্ভৱ হ'লে স্বয়ংক্ৰিয়ভাৱে অধিক গীত যোগ কৰক",
         "auto_skip_next_on_error" to "ত্ৰুটি হ'লে স্বয়ংক্ৰিয়ভাৱে পৰৱৰ্তী গীতলৈ যাওক",
-        "auto_skip_next_on_error_desc" to "একেৰাহে শুনাৰ অভিজ্ঞতা নিশ্চিত কৰক",
+        "auto_skip_next_on_error_desc" to "ত্ৰুটি হ'লে স্বয়ংক্ৰিয়ভাৱে পৰৱৰ্তী গীতলৈ যাওক",
         "automatic_backup_desc" to "নিৰ্ধাৰিত সময়ত আপোনাৰ তথ্য স্বয়ংক্ৰিয়ভাৱে বেকআপ কৰে।",
         "autoplay_next" to "পৰৱৰ্তী ট্ৰেক স্বয়ংক্ৰিয়ভাৱে চলাওক",
         "back" to "পিছলৈ",

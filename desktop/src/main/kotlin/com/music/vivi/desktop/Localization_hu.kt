@@ -116,7 +116,7 @@ internal fun strings_hu(): Map<String, String> =
         "auto_load_more" to "Automatikusan betölt még dalokat",
         "auto_load_more_desc" to "Ha lehetséges, automatikusan hozzáad dalokat a listához, amint a végéhez ért",
         "auto_skip_next_on_error" to "Hiba esetén átlép a következő dalra",
-        "auto_skip_next_on_error_desc" to "Biztosítva a folyamatos zene hallgatást",
+        "auto_skip_next_on_error_desc" to "Hiba esetén automatikus ugrás a következő számra",
         "automatic_backup_desc" to "Automatikusan biztonsági mentést készít adatairól ütemezés szerint.",
         "autoplay_next" to "Következő dal automatikus lejátszása",
         "back" to "Vissza",

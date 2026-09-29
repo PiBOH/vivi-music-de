@@ -116,7 +116,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "auto_load_more" to "自动加载更多歌曲",
         "auto_load_more_desc" to "如果可能，在播放队列快结束时自动添加更多歌曲",
         "auto_skip_next_on_error" to "发生错误时自动跳到下一首歌曲",
-        "auto_skip_next_on_error_desc" to "确保您的连续播放体验",
+        "auto_skip_next_on_error_desc" to "出错时自动跳到下一首",
         "automatic_backup_desc" to "按计划自动备份您的数据。",
         "autoplay_next" to "自动播放下一首",
         "back" to "返回",

@@ -116,7 +116,7 @@ internal fun strings_es(): Map<String, String> =
         "auto_load_more" to "Cargar automáticamente más canciones",
         "auto_load_more_desc" to "Añade automáticamente más canciones cuando llegues al final de la cola, si es posible",
         "auto_skip_next_on_error" to "Saltar automáticamente a la siguiente canción cuando se produce un error",
-        "auto_skip_next_on_error_desc" to "Asegura una experiencia de reproducción continua",
+        "auto_skip_next_on_error_desc" to "Pasar automáticamente a la siguiente canción si hay un error",
         "automatic_backup_desc" to "Hace una copia de seguridad automática de tus datos según un horario.",
         "autoplay_next" to "Reproducir automáticamente la siguiente canción",
         "back" to "Atrás",

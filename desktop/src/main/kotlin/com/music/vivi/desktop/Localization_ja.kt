@@ -116,7 +116,7 @@ internal fun strings_ja(): Map<String, String> =
         "auto_load_more" to "追加の曲を自動で読み込む",
         "auto_load_more_desc" to "キューの最後まで再生した時、可能なら自動で曲を追加",
         "auto_skip_next_on_error" to "エラー発生時に自動で次の曲を再生",
-        "auto_skip_next_on_error_desc" to "継続的な再生体験を維持します",
+        "auto_skip_next_on_error_desc" to "エラーが発生したら自動的に次の曲へスキップ",
         "automatic_backup_desc" to "スケジュールに従ってデータを自動的にバックアップします。",
         "autoplay_next" to "次の曲を自動で再生",
         "back" to "戻る",

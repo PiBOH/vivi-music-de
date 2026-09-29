@@ -116,7 +116,7 @@ internal fun strings_in(): Map<String, String> =
         "auto_load_more" to "Memuat lebih banyak lagu secara otomatis",
         "auto_load_more_desc" to "Otomatis menambahkan lebih banyak lagu ketika akhir antrean tercapai, jika memungkinkan",
         "auto_skip_next_on_error" to "Lewati otomatis ke lagu berikutnya ketika terjadi kesalahan",
-        "auto_skip_next_on_error_desc" to "Memastikan pengalaman pemutaran Anda yang berkesinambungan",
+        "auto_skip_next_on_error_desc" to "Otomatis lompat ke lagu berikutnya jika terjadi kesalahan",
         "automatic_backup_desc" to "Otomatis mencadangkan data Anda sesuai jadwal.",
         "autoplay_next" to "Putar lagu berikutnya secara otomatis",
         "back" to "Kembali",

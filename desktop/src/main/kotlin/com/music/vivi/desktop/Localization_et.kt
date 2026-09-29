@@ -116,7 +116,7 @@ internal fun strings_et(): Map<String, String> =
         "auto_load_more" to "Laadi automaatselt täiendavaid lugusid",
         "auto_load_more_desc" to "Esitusjärjekorra lõppedes, kui vähegi võimalik, siis laadi automaatselt täiendavaid lugusid",
         "auto_skip_next_on_error" to "Vea puhul hüppa automaatselt järgmise loo juurde",
-        "auto_skip_next_on_error_desc" to "Taga jätkuv taasesitus",
+        "auto_skip_next_on_error_desc" to "Vea korral mine automaatselt järgmise laulu juurde",
         "automatic_backup_desc" to "Varundab teie andmed automaatselt ajakava alusel.",
         "autoplay_next" to "Mängi järgmine lugu automaatselt",
         "back" to "Tagasi",

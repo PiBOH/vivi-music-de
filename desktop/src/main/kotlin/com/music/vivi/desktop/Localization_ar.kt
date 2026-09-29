@@ -116,7 +116,7 @@ internal fun strings_ar(): Map<String, String> =
         "auto_load_more" to "تحميل تلقائي لمزيد من الأغاني",
         "auto_load_more_desc" to "ضف المزيد من الأغاني تلقائيًا عند الوصول إلى نهاية قائمة الانتظار، إن أمكن",
         "auto_skip_next_on_error" to "انتقل تلقائيًا إلى الأغنية التالية عند حدوث خطأ",
-        "auto_skip_next_on_error_desc" to "أضمن تجربة التشغيل المستمر الخاصة بك",
+        "auto_skip_next_on_error_desc" to "تخطَّ إلى الأغنية التالية تلقائيًا في حال حدوث خطأ",
         "automatic_backup_desc" to "يقوم تلقائيًا بعمل نسخة احتياطية لبياناتك وفقًا لجدول زمني.",
         "autoplay_next" to "تشغيل المقطع التالي تلقائيًا",
         "back" to "رجوع",

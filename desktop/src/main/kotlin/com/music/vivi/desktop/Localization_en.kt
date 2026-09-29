@@ -116,7 +116,7 @@ internal fun strings_en(): Map<String, String> =
         "auto_load_more" to "Auto load more songs",
         "auto_load_more_desc" to "Automatically add more songs when the end of the queue is reached, if possible",
         "auto_skip_next_on_error" to "Auto skip to next song when error occurs",
-        "auto_skip_next_on_error_desc" to "Ensure your continuous playback experience",
+        "auto_skip_next_on_error_desc" to "Automatically skip to the next song when a track fails to play",
         "automatic_backup_desc" to "Automatically back up your data on a schedule.",
         "autoplay_next" to "Autoplay next track",
         "back" to "Back",

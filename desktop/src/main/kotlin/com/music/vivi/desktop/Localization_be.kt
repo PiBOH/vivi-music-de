@@ -116,7 +116,7 @@ internal fun strings_be(): Map<String, String> =
         "auto_load_more" to "Аўтаматычна дадаваць больш песень",
         "auto_load_more_desc" to "Аўтаматычна дадаваць песні пры дасягненні канца чаргі, калі магчыма",
         "auto_skip_next_on_error" to "Аўтаматычны пераход да наступнай песні пры памылцы",
-        "auto_skip_next_on_error_desc" to "Забяспечце бесперапыннае прайграванне",
+        "auto_skip_next_on_error_desc" to "Аўтаматычна пераходзіць да наступнай песні пры памылцы",
         "automatic_backup_desc" to "Аўтаматычна стварае рэзервовую копію даных па раскладзе.",
         "autoplay_next" to "Аўтаматычна гуляць наступны трэк",
         "back" to "Назад",

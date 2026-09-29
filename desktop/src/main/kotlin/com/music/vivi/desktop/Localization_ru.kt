@@ -116,7 +116,7 @@ internal fun strings_ru(): Map<String, String> =
         "auto_load_more" to "Автозагрузка большего количества песен",
         "auto_load_more_desc" to "Автоматически добавлять больше песен при достижении конца очереди, если это возможно",
         "auto_skip_next_on_error" to "Автопереход к следующей композиции при ошибке",
-        "auto_skip_next_on_error_desc" to "Обеспечить непрерывное воспроизведение",
+        "auto_skip_next_on_error_desc" to "Автоматически переходить к следующему треку при ошибке",
         "automatic_backup_desc" to "Автоматически создаёт резервную копию ваших данных по расписанию.",
         "autoplay_next" to "Автоматически играть следующий трек",
         "back" to "Назад",
