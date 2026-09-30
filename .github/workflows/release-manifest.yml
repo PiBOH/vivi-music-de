@@ -41,6 +41,12 @@ concurrency:
 jobs:
   manifest:
     runs-on: ubuntu-latest
+    permissions:
+      # contents: write for the push to the site branch, actions: write for the
+      # `gh workflow run` below - dispatching a workflow is an Actions-scoped
+      # call, which is why that step used to borrow the cross-repository PAT.
+      contents: write
+      actions: write
     steps:
       - name: Checkout the DE branch (generator script)
         uses: actions/checkout@v4
@@ -88,9 +94,12 @@ jobs:
 
       - name: Publish the refreshed data
         # A push made with the job token does not start other workflows, so ask
-        # for a deployment explicitly. Best effort: without the secret (or with a
-        # token lacking the `workflows` scope) the scheduled deploy on the
-        # default branch publishes the data within the hour anyway.
+        # for a deployment explicitly - in this same repository, which the job
+        # token can dispatch on its own (`actions: write` above). It used to ask
+        # for `BOT_DISPATCH_TOKEN`, a cross-repository token it never needed: when
+        # that PAT died this step silently skipped and the refreshed data waited
+        # for the scheduled deploy instead. Still best effort: a refused dispatch
+        # only costs the hour the schedule needs anyway.
         env:
-          GH_TOKEN: ${{ secrets.BOT_DISPATCH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh workflow run pages-deploy.yml --ref vivi-music-de || echo "deploy dispatch skipped"

@@ -39,9 +39,40 @@ jobs:
         shell: bash
         run: ./gradlew :desktop:createDistributable --no-daemon
 
-      - name: Install Inno Setup
+      - name: Install Inno Setup 7
         shell: pwsh
-        run: choco install innosetup --no-progress -y
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # `choco install innosetup` is not enough: the Chocolatey community
+          # package is still on Inno Setup 6 (6.7.1 at the time of writing — its
+          # own page is already asking for 7), and that is exactly why the
+          # setups this workflow produced were compiled by Inno Setup 6 while
+          # the project is developed with Inno Setup 7. The official 7.1.0
+          # 64-bit installer is therefore downloaded from the pinned upstream
+          # release and installed silently: the compiler matches the one on the
+          # developer's machine, and nothing depends on a community package
+          # being refreshed.
+          $installerVersion = '7.1.0'
+          $installDir = Join-Path $env:ProgramFiles 'Inno Setup 7'
+          $installer = Join-Path $env:RUNNER_TEMP "innosetup-$installerVersion-x64.exe"
+          Invoke-WebRequest -UseBasicParsing `
+            -Uri "https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-$installerVersion-x64.exe" `
+            -OutFile $installer
+          $installerLog = Join-Path $env:RUNNER_TEMP 'innosetup-install.log'
+          # /DIR pins the location instead of leaving it to this installer's own
+          # install-mode dialog: unattended it would take that dialog's default,
+          # and a per-user answer would put the compiler in %LOCALAPPDATA%\Programs.
+          $proc = Start-Process -FilePath $installer `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=`"$installDir`"", "/LOG=`"$installerLog`"" `
+            -Wait -PassThru
+          if ($proc.ExitCode -ne 0) {
+            if (Test-Path $installerLog) { Get-Content $installerLog }
+            throw "Inno Setup $installerVersion installer failed (exit $($proc.ExitCode))"
+          }
+          if (-not (Test-Path (Join-Path $installDir 'ISCC.exe'))) {
+            throw "Inno Setup $installerVersion was installed but $(Join-Path $installDir 'ISCC.exe') is missing"
+          }
+          Write-Host "Installed Inno Setup $installerVersion: $installDir"
 
       - name: Compile branded installer
         id: custom_setup
@@ -58,14 +89,24 @@ jobs:
           New-Item -ItemType Directory -Force -Path $output | Out-Null
           $mainExecutable = Join-Path $source 'VIVIMusic.exe'
           if (-not (Test-Path $mainExecutable)) { throw "jpackage app image is incomplete: $mainExecutable was not found" }
-          # The compiler is looked up instead of hardcoding "Inno Setup 6":
-          # `choco install innosetup` installs whatever the current major is
-          # (7, "Inno Setup 7"), so both majors compile it. The script now needs
-          # 6.6+ — `WizardStyle=modern dynamic` and the DynamicDark brand images
-          # are what make the setup follow Windows' light/dark setting — and the
-          # picture CI actually gets today is 6.7.1.
-          $iscc = Get-ChildItem "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:ProgramFiles\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue |
-            Sort-Object FullName -Descending | Select-Object -First 1 -ExpandProperty FullName
+          # Every installation of the compiler is read out of its folder name
+          # ("Inno Setup 7"), the newest one wins, and a build that can only see
+          # an older major fails here instead of shipping: the point of the step
+          # above is that the setups come from the same compiler the project is
+          # developed with (Inno Setup 7), not from whichever one happens to be
+          # found first. Note that the engine version is checked against the
+          # compiler's own log further down as well.
+          $iscc = @(Get-ChildItem "$env:ProgramFiles\Inno Setup *\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:LOCALAPPDATA\Programs\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue) |
+            ForEach-Object {
+              # The version is the folder name ("Inno Setup 7"), and a bare major
+              # is not a version string .NET parses on its own - hence the minor.
+              if ($_.Directory.Name -match '^Inno Setup (?<major>\d+)(\.(?<minor>\d+))?$') {
+                $minor = 0
+                if ($Matches.minor) { $minor = [int]$Matches.minor }
+                [pscustomobject]@{ Path = $_.FullName; Version = [version]"$([int]$Matches.major).$minor" }
+              }
+            } |
+            Sort-Object Version -Descending | Select-Object -First 1 -ExpandProperty Path
           if (-not $iscc) { throw "Inno Setup compiler (ISCC.exe) not found under Program Files" }
           Write-Host "Using Inno Setup compiler: $iscc"
           $compileLog = Join-Path $output 'innosetup.log'
@@ -87,6 +128,14 @@ jobs:
             Get-Content $compileLog
             throw "Inno Setup compilation failed (exit $LASTEXITCODE)"
           }
+          # The compiler names itself in the log it just wrote: the build refuses
+          # to publish a setup that an older Inno Setup compiled, so a runner
+          # image or a package that smuggles one back in cannot go unnoticed.
+          $engineMatch = Select-String -Path $compileLog -Pattern 'Compiler engine version: (.+)' | Select-Object -First 1
+          if (-not $engineMatch) { throw "The Inno Setup log does not name a compiler engine version" }
+          $engine = $engineMatch.Matches[0].Groups[1].Value.Trim()
+          Write-Host "Compiler engine version: $engine"
+          if ($engine -notlike 'Inno Setup 7*') { throw "Expected the Inno Setup 7 compiler, but the log says: $engine" }
 
       - name: Install WiX Toolset
         shell: pwsh

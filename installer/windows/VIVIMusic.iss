@@ -49,10 +49,12 @@
 ; `{cm:...}` lookups into Inno's own (already translated) tables, plus the one
 ; [CustomMessages] entry below.
 ;
-; Which translations exist depends on the compiler: Inno Setup 6 (what CI's
-; Chocolatey installs today) has 27 of them, 7 added four more. The four that
-; only 7 has are emitted behind a `FileExists` check, because naming a file the
-; compiler does not have stops the build — see the [Languages] section.
+; Which translations exist depends on the compiler: Inno Setup 6 has 27 of
+; them, 7 added four more. Both CI and the machine this is developed on compile
+; with Inno Setup 7.1.0, so all four are there — they are still emitted behind a
+; `FileExists` check, because naming a file the compiler does not have stops the
+; build, and a local Inno Setup 6 install has to keep compiling too — see the
+; [Languages] section.
 
 #ifndef AppVersion
 #define AppVersion "0.0.0-dev"
@@ -127,7 +129,7 @@ OutputBaseFilename=VIVIMusic-{#AppVersion}-setup
 SetupIconFile={#IconFile}
 ; --- Branding: the wizard's own artwork (see the file header) ---------------
 ; `dynamic` follows Windows' light/dark setting (needs Inno Setup 6.6+; CI has
-; 6.7.1), so `WizardImageFileDynamicDark` below is what the wizard shows when
+; 7.1.0), so `WizardImageFileDynamicDark` below is what the wizard shows when
 ; the user's Windows is in dark mode.
 WizardStyle=modern dynamic
 WizardImageFile={#WizardImageFile}
@@ -179,11 +181,13 @@ Name: "catalan"; MessagesFile: "compiler:Languages\Catalan.isl"
 ; Chinese (both scripts), Lithuanian and Thai are not in Inno Setup 6's
 ; `Languages` folder — they were added in 7 — and naming a messages file the
 ; installed compiler does not have is a hard error ("Couldn't open include
-; file"), which is exactly how the first build of this list failed on a runner
-; whose Chocolatey had installed 6.x. Each of the four is therefore emitted only
-; when the compiler in use really ships it, and otherwise falls back to the
-; English messages it would have had anyway, with the small overlay in
-; `languages\` supplying its name for the Select Language page.
+; file"), which is how the first build of this list failed on a runner whose
+; Chocolatey had installed 6.x. That runner is handed Inno Setup 7.1.0 now (see
+; `.github/workflows/build-desktop-windows.yml`), so all four load there, but
+; each one is still emitted only when the compiler in use really ships it: a
+; local Inno Setup 6 install keeps compiling, and what it gets is the English
+; messages it would have had anyway, with the small overlay in `languages\`
+; supplying its name for the Select Language page.
 #if FileExists(AddBackslash(CompilerPath) + "Languages\ChineseSimplified.isl")
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 #else
@@ -857,10 +861,20 @@ begin
   if GetArrayLength(LangIds) = 0 then Exit;
   ApplyWelcomeStrings();
 
+  // The picker cannot hang below Inno's own welcome labels: WelcomeLabel2 is a
+  // fixed-height box whose bottom edge is pinned 4 pixels above the page's
+  // bottom edge (`AutoSize` is off, and Inno only moves that box up when its
+  // own heading shrinks), so a control placed "under" it - which is where the
+  // first version of this picker was placed - lands outside the visible page
+  // and is never seen. Both controls are anchored to the bottom edge of the
+  // page instead: visible in every language, whatever the description says.
+  // The combo needs 40 units of that bottom edge (a combo box picks its own
+  // height from its style, so it cannot be measured from Pascal Script), and
+  // the label takes the 28 units above the combo.
   LanguageLabel := TNewStaticText.Create(WizardForm);
   LanguageLabel.Parent := WizardForm.WelcomePage;
   LanguageLabel.Left := WizardForm.WelcomeLabel1.Left;
-  LanguageLabel.Top := WizardForm.WelcomeLabel2.Top + WizardForm.WelcomeLabel2.Height + ScaleY(16);
+  LanguageLabel.Top := WizardForm.WelcomePage.ClientHeight - ScaleY(40) - ScaleY(28);
   LanguageLabel.AutoSize := True;
   // A custom style is active in dark mode (and in light mode whenever Windows'
   // own style is not used), and a script-set font colour is ignored while one
@@ -875,7 +889,7 @@ begin
   LanguageCombo := TNewComboBox.Create(WizardForm);
   LanguageCombo.Parent := WizardForm.WelcomePage;
   LanguageCombo.Left := LanguageLabel.Left;
-  LanguageCombo.Top := LanguageLabel.Top + LanguageLabel.Height + ScaleY(4);
+  LanguageCombo.Top := WizardForm.WelcomePage.ClientHeight - ScaleY(40);
   LanguageCombo.Width := ScaleX(260);
   LanguageCombo.Style := csDropDownList;
   for I := 0 to GetArrayLength(LangNames) - 1 do
