@@ -43,8 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       # contents: write for the push to the site branch, actions: write for the
-      # `gh workflow run` below - dispatching a workflow is an Actions-scoped
-      # call, which is why that step used to borrow the cross-repository PAT.
+      # `gh workflow run` below: dispatching a workflow is an Actions-scoped
+      # call, and the job token is enough for one inside this repository.
       contents: write
       actions: write
     steps:
@@ -94,12 +94,14 @@ jobs:
 
       - name: Publish the refreshed data
         # A push made with the job token does not start other workflows, so ask
-        # for a deployment explicitly - in this same repository, which the job
-        # token can dispatch on its own (`actions: write` above). It used to ask
-        # for `BOT_DISPATCH_TOKEN`, a cross-repository token it never needed: when
-        # that PAT died this step silently skipped and the refreshed data waited
-        # for the scheduled deploy instead. Still best effort: a refused dispatch
-        # only costs the hour the schedule needs anyway.
+        # for a deployment explicitly. The repository has to be named: this job
+        # checks out into `build/` and `site/`, so its working directory holds no
+        # `.git` for `gh` to infer one from - which is what this step was really
+        # failing on (`failed to run git: fatal: not a git repository`), and the
+        # `||` below swallowed it from the day the step was added. The job token
+        # is the right one for a dispatch in this same repository (`actions:
+        # write` above); `BOT_DISPATCH_TOKEN`, a cross-repository PAT, was only
+        # ever borrowed here because of that 401-looking silence.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run pages-deploy.yml --ref vivi-music-de || echo "deploy dispatch skipped"
+        run: gh workflow run pages-deploy.yml --repo "$GITHUB_REPOSITORY" --ref vivi-music-de || echo "deploy dispatch skipped"
