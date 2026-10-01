@@ -941,20 +941,29 @@ fun HorizontalCarousel(
         val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
         val canGoForward by remember { derivedStateOf { state.canScrollForward } }
         if (canGoBackward || canGoForward) {
-            CarouselArrow(
-                language = language,
-                forward = false,
-                enabled = canGoBackward,
-                modifier = Modifier.align(Alignment.CenterStart),
-                onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
-            )
-            CarouselArrow(
-                language = language,
-                forward = true,
-                enabled = canGoForward,
-                modifier = Modifier.align(Alignment.CenterEnd),
-                onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
-            )
+            // The `align` modifier has to sit on a direct child of THIS Box. It
+            // used to be handed to `CarouselArrow` and applied to the `Surface`
+            // inside `Tooltip`, whose own internal Box consumed it: both arrows
+            // then fell back to the Box's default top-start position, and since
+            // the forward one is drawn last it covered the backward one. That is
+            // why only one arrow ever showed, on the left. Wrapping each arrow in
+            // its own aligned Box fixes the placement.
+            Box(Modifier.align(Alignment.CenterStart)) {
+                CarouselArrow(
+                    language = language,
+                    forward = false,
+                    enabled = canGoBackward,
+                    onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
+                )
+            }
+            Box(Modifier.align(Alignment.CenterEnd)) {
+                CarouselArrow(
+                    language = language,
+                    forward = true,
+                    enabled = canGoForward,
+                    onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
+                )
+            }
         }
     }
 }
@@ -972,7 +981,6 @@ private fun CarouselArrow(
     language: String,
     forward: Boolean,
     enabled: Boolean,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Tooltip(Localization.get(language, if (forward) "next" else "previous")) {
@@ -983,7 +991,7 @@ private fun CarouselArrow(
             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
             contentColor = MaterialTheme.colorScheme.onSurface,
             shadowElevation = 3.dp,
-            modifier = modifier.size(34.dp).alpha(if (enabled) 1f else 0.35f),
+            modifier = Modifier.size(34.dp).alpha(if (enabled) 1f else 0.35f),
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(

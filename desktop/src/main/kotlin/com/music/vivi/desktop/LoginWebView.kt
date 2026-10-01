@@ -111,7 +111,11 @@ object LoginWebView {
             val stage = Stage()
             // The header is dark: its text is set light, and a plain label could
             // not be selected (see [selectableText]).
-            val status = selectableText(Localization.get(language, "login_waiting"), Color.web("#e6e1e5"))
+            val status = selectableText(
+                Localization.get(language, "login_waiting"),
+                Color.web("#e6e1e5"),
+                background = Color.web("#1f1f2e"),
+            )
             val spinner = ProgressIndicator().apply {
                 prefWidth = 18.0
                 prefHeight = 18.0
@@ -126,9 +130,9 @@ object LoginWebView {
                 padding = Insets(10.0, 14.0, 6.0, 14.0)
                 background = Background(BackgroundFill(Color.web("#f3eef9"), CornerRadii.EMPTY, Insets.EMPTY))
                 children.addAll(
-                    selectableText("1. " + Localization.get(language, "login_step1"), Color.web("#1c1b1f"), 13.0),
-                    selectableText("2. " + Localization.get(language, "login_step2"), Color.web("#1c1b1f"), 13.0),
-                    selectableText("3. " + Localization.get(language, "login_step3"), Color.web("#1c1b1f"), 13.0),
+                    selectableText("1. " + Localization.get(language, "login_step1"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
+                    selectableText("2. " + Localization.get(language, "login_step2"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
+                    selectableText("3. " + Localization.get(language, "login_step3"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
                 )
             }
             val browser = WebView().apply {

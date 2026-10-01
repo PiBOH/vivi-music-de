@@ -23,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -323,7 +325,12 @@ private fun MarkdownText(
         ClickableText(
             text = annotated,
             style = style.copy(color = MaterialTheme.colorScheme.onSurface),
-            modifier = modifier,
+            // A clickable line has to look clickable: `ClickableText` never sets
+            // the pointing hand on its own, so hovering a changelog link showed
+            // the default arrow (the text cursor) over something that opens a
+            // browser. The hand is set for the whole line, which is the surface
+            // the click really lives on.
+            modifier = modifier.pointerHoverIcon(PointerIcon.Hand),
             onClick = { offset ->
                 annotated.getStringAnnotations("URL", offset, offset)
                     .firstOrNull()
@@ -358,8 +365,44 @@ internal fun markdownInline(
     issueBase: String,
     onOpenUrl: (String) -> Unit,
     linkColor: Color = Color.Unspecified,
-): AnnotatedString = buildAnnotatedString {
-    appendInline(text, SpanStyle(), issueBase, linkColor)
+): AnnotatedString {
+    val base = buildAnnotatedString { appendInline(text, SpanStyle(), issueBase, linkColor) }
+    return applyFontFallback(base)
+}
+
+/**
+ * Points every character the app's own font cannot draw at the operating
+ * system font that can (see [MarkdownFonts]): the emoji in a section heading, a
+ * rare symbol in a bullet (`→`, `⋮`, `⠿`), a CJK or fullwidth character. Without
+ * this those codepoints are laid out as the "tofu" box the changelog was
+ * reported to show, because Compose Desktop does not fall back to a second font
+ * on its own. Characters the app font covers get no span and keep their style.
+ */
+private fun applyFontFallback(annotated: AnnotatedString): AnnotatedString {
+    val source = annotated.text
+    var probe = 0
+    var needed = false
+    while (probe < source.length) {
+        val codePoint = source.codePointAt(probe)
+        if (MarkdownFonts.familyFor(codePoint) != null) {
+            needed = true
+            break
+        }
+        probe += Character.charCount(codePoint)
+    }
+    if (!needed) return annotated
+    return buildAnnotatedString {
+        append(annotated)
+        var index = 0
+        while (index < source.length) {
+            val codePoint = source.codePointAt(index)
+            val count = Character.charCount(codePoint)
+            MarkdownFonts.familyFor(codePoint)?.let { family ->
+                addStyle(SpanStyle(fontFamily = family), index, index + count)
+            }
+            index += count
+        }
+    }
 }
 
 private fun AnnotatedString.Builder.appendInline(

@@ -95,31 +95,59 @@ internal object SpotifyLoginWebView {
     private val googleShimScript: String = """
         (function () {
           try {
-            Object.defineProperty(navigator, 'webdriver', { get: function () { return false; } });
+            var def = function (obj, key, value) {
+              try { Object.defineProperty(obj, key, { configurable: true, get: function () { return value; } }); }
+              catch (e) { try { obj[key] = value; } catch (e2) {} }
+            };
+            var UA_BRANDS = [
+              { brand: 'Chromium', version: '131' },
+              { brand: 'Google Chrome', version: '131' },
+              { brand: 'Not?A_Brand', version: '24' }
+            ];
+            def(navigator, 'webdriver', false);
+            // Automation/embedded tells a real desktop Chrome does not have.
+            def(navigator, 'vendor', 'Google Inc.');
+            def(navigator, 'platform', '$platformName');
+            def(navigator, 'hardwareConcurrency', 8);
+            def(navigator, 'deviceMemory', 8);
+            def(navigator, 'maxTouchPoints', 0);
+            def(navigator, 'pdfViewerEnabled', true);
+            def(navigator, 'doNotTrack', 'unspecified');
+            var plugins = [
+              { name: 'PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+              { name: 'Chrome PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' },
+              { name: 'Chromium PDF Viewer', filename: 'internal-pdf-viewer', description: 'Portable Document Format' }
+            ];
+            def(navigator, 'plugins', plugins);
+            def(navigator, 'mimeTypes', [{ type: 'application/pdf' }, { type: 'text/pdf' }]);
+            def(navigator, 'languages', ['en-US', 'en']);
+            def(navigator, 'userAgentData', {
+              brands: UA_BRANDS,
+              mobile: false,
+              platform: '$platformName',
+              getHighEntropyValues: function () {
+                return Promise.resolve({
+                  architecture: 'x86', bitness: '64', brands: UA_BRANDS, mobile: false,
+                  model: '', platform: '$platformName', platformVersion: '15.0.0',
+                  uaFullVersion: '131.0.0.0'
+                });
+              }
+            });
             if (!window.chrome) { window.chrome = {}; }
             if (!window.chrome.runtime) { window.chrome.runtime = {}; }
-            if (!window.chrome.app) { window.chrome.app = { isInstalled: false }; }
-            if (!navigator.plugins || navigator.plugins.length === 0) {
-              Object.defineProperty(navigator, 'plugins', { get: function () { return [1, 2, 3, 4, 5]; } });
-            }
-            if (!navigator.mimeTypes || navigator.mimeTypes.length === 0) {
-              Object.defineProperty(navigator, 'mimeTypes', { get: function () { return [1, 2]; } });
-            }
-            if (!navigator.languages || navigator.languages.length === 0) {
-              Object.defineProperty(navigator, 'languages', { get: function () { return ['en-US', 'en']; } });
-            }
-            if (!navigator.userAgentData) {
-              Object.defineProperty(navigator, 'userAgentData', { get: function () {
-                return {
-                  brands: [
-                    { brand: 'Chromium', version: '131' },
-                    { brand: 'Google Chrome', version: '131' },
-                    { brand: 'Not?A_Brand', version: '24' }
-                  ],
-                  mobile: false,
-                  platform: '$platformName'
-                };
-              } });
+            if (!window.chrome.app) { window.chrome.app = { isInstalled: false, InstallState: {}, RunningState: {} }; }
+            def(window.chrome, 'csi', function () { return { startE: Date.now(), onloadT: Date.now(), pageT: 1, tran: 15 }; });
+            def(window.chrome, 'loadTimes', function () {
+              return { requestTime: Date.now() / 1000, startLoadTime: Date.now() / 1000, commitLoadTime: Date.now() / 1000, finishDocumentLoadTime: Date.now() / 1000, finishLoadTime: Date.now() / 1000, firstPaintTime: Date.now() / 1000, navigationType: 'Other' };
+            });
+            if (navigator.permissions && navigator.permissions.query) {
+              var realQuery = navigator.permissions.query.bind(navigator.permissions);
+              navigator.permissions.query = function (params) {
+                if (params && params.name === 'notifications') {
+                  return Promise.resolve({ state: 'default', onchange: null });
+                }
+                return realQuery(params);
+              };
             }
           } catch (e) {}
         })();
@@ -199,7 +227,11 @@ internal object SpotifyLoginWebView {
             val stage = Stage()
             // The header is dark: the status text is light and selectable, so
             // it is readable on it and can be copied (see [selectableText]).
-            val status = selectableText(Localization.get(language, "login_waiting"), Color.web("#e6e1e5"))
+            val status = selectableText(
+                Localization.get(language, "login_waiting"),
+                Color.web("#e6e1e5"),
+                background = Color.web("#1f1f2e"),
+            )
             val spinner = ProgressIndicator().apply {
                 prefWidth = 18.0
                 prefHeight = 18.0
@@ -275,15 +307,18 @@ internal object SpotifyLoginWebView {
             browser.engine.loadWorker.stateProperty().addListener { _, _, newState ->
                 val loaded = newState == Worker.State.SUCCEEDED
                 val running = newState == Worker.State.RUNNING
-                if (loaded || running) {
+                val scheduled = newState == Worker.State.SCHEDULED
+                if (loaded || running || scheduled) {
                     FxPlatform.runLater {
                         browser.resize(browser.width + 1.0, browser.height)
                         browser.resize(browser.width - 1.0, browser.height)
                         browser.requestLayout()
-                        // Re-apply the anti-WebView shim on every loaded page:
-                        // the sign-in flow navigates between documents, and the
-                        // shim does not survive a navigation.
-                        if (loaded) runCatching { browser.engine.executeScript(googleShimScript) }
+                        // Re-apply the anti-WebView shim on every state, not only
+                        // once the page finished: the sign-in flow navigates
+                        // between documents and Google's own detection runs from
+                        // the first script on the page, so the shim has to be in
+                        // place before that script, not after it.
+                        runCatching { browser.engine.executeScript(googleShimScript) }
                     }
                 }
             }
