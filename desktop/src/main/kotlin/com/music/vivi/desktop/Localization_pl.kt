@@ -688,6 +688,7 @@ internal fun strings_pl(): Map<String, String> =
         "spotify_connected_as" to "Połączono jako %s",
         "spotify_cookie_hint" to "Zaloguj się na open.spotify.com w przeglądarce i skopiuj plik cookie sp_dc. sp_key jest opcjonalny.",
         "spotify_desc" to "Przenieś swoje playlisty i polubione utwory ze Spotify. Każdy utwór jest wyszukiwany w YouTube Music, a najlepsze dopasowanie trafia do lokalnej playlisty.",
+        "spotify_google_blocked" to "Google nie pozwala zalogować się w oknie aplikacji. Naciśnij „Spróbuj ponownie” i zaloguj się swoim e-mailem i hasłem do Spotify (jeśli konto utworzono przez Google, najpierw ustaw hasło na spotify.com).",
         "spotify_import" to "Importuj ze Spotify",
         "spotify_import_done" to "Gotowe: dopasowano %d z %d utworów",
         "spotify_import_selected" to "Importuj wybrane",

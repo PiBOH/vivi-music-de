@@ -688,6 +688,7 @@ internal fun strings_fil(): Map<String, String> =
         "spotify_connected_as" to "Konektado bilang %s",
         "spotify_cookie_hint" to "Mag-sign in sa open.spotify.com sa iyong browser, pagkatapos kopyahin ang sp_dc cookie. Opsyonal ang sp_key.",
         "spotify_desc" to "Ilipat ang iyong mga playlist at Liked Songs mula sa Spotify. Hinahanap ang bawat track sa YouTube Music at ang pinakamalapit na tugma ang isinusulat sa lokal na playlist.",
+        "spotify_google_blocked" to "Hindi pinapayagan ng Google ang pag-sign in sa loob ng window ng app. Pindutin ang \"Subukan muli\" at mag-sign in gamit ang iyong Spotify email at password (kung ginawa ang account sa Google, magtakda muna ng password sa spotify.com).",
         "spotify_import" to "I-import mula sa Spotify",
         "spotify_import_done" to "Tapos na: %d ng %d track ang tumugma",
         "spotify_import_selected" to "I-import ang napili",

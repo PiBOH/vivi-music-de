@@ -688,6 +688,7 @@ internal fun strings_az(): Map<String, String> =
         "spotify_connected_as" to "%s kimi qoşulub",
         "spotify_cookie_hint" to "Brauzerinizdə open.spotify.com saytına daxil olun, sonra sp_dc kukisini kopyalayın. sp_key isteyə bağlıdır.",
         "spotify_desc" to "Spotify pleylistlərinizi və bəyəndiyiniz mahnıları gətirin. Hər trek YouTube Music-də axtarılır və ən yaxşı uyğunluq yerli pleylistə yazılır.",
+        "spotify_google_blocked" to "Google tətbiqin pəncərəsi daxilində girişə icazə vermir. \"Yenidən cəhd edin\" düyməsini basın və Spotify e-poçtunuzla və parolunuzla daxil olun (hesabı Google ilə yaratmısınızsa, əvvəlcə spotify.com saytında parol təyin edin).",
         "spotify_import" to "Spotify-dən idxal et",
         "spotify_import_done" to "Hazırdır: %d / %d trek uyğunlaşdı",
         "spotify_import_selected" to "Seçilənləri idxal et",

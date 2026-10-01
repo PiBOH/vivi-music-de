@@ -478,7 +478,8 @@ fun HomeScreen(
 
                 item(key = "content-$index-${section.title}") {
                     if (isSongsOnly) {
-                        LazyRow(
+                        HorizontalCarousel(
+                            language = language,
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             val sectionSongs = songs.distinctBy { it.id }
@@ -503,7 +504,8 @@ fun HomeScreen(
                             }
                         }
                     } else {
-                        LazyRow(
+                        HorizontalCarousel(
+                            language = language,
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
                             items(section.items, key = { it.id }) { item ->
@@ -528,7 +530,8 @@ fun HomeScreen(
                     )
                 }
                 item(key = "recommended_content") {
-                    LazyRow(
+                    HorizontalCarousel(
+                        language = language,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         val recSongs = recs.distinctBy { it.id }
@@ -590,7 +593,8 @@ fun HomeScreen(
             }
 
             item(key = "made_for_you_list") {
-                LazyRow(
+                HorizontalCarousel(
+                    language = language,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     // Same reason as the chips above: a mixed-for-you row can
@@ -648,7 +652,8 @@ fun HomeScreen(
                     SectionHeader(title = Localization.get(language, "mood_and_genres"), language = language)
                 }
                 item(key = "mood_list") {
-                    LazyRow(
+                    HorizontalCarousel(
+                        language = language,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(moodItems, key = { it.endpoint.browseId + it.title }) { item ->
@@ -1139,7 +1144,7 @@ private fun SummaryBody(
             )
         }
         if (others.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(others, key = { it.id }) { item ->
                     YtItemCard(
                         item = item,

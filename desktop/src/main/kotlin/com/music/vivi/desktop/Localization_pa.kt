@@ -688,6 +688,7 @@ internal fun strings_pa(): Map<String, String> =
         "spotify_connected_as" to "%s ਵਜੋਂ ਜੁੜਿਆ",
         "spotify_cookie_hint" to "ਆਪਣੇ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ open.spotify.com ਉੱਤੇ ਸਾਈਨ ਇਨ ਕਰੋ ਅਤੇ sp_dc ਕੂਕੀ ਕਾਪੀ ਕਰੋ। sp_key ਲਾਜ਼ਮੀ ਨਹੀਂ।",
         "spotify_desc" to "ਆਪਣੀਆਂ Spotify ਪਲੇਲਿਸਟਾਂ ਅਤੇ ਪਸੰਦੀਦਾ ਗੀਤ ਲੈ ਆਓ। ਹਰ ਟਰੈਕ YouTube Music ਉੱਤੇ ਖੋਜਿਆ ਜਾਂਦਾ ਹੈ ਅਤੇ ਸਭ ਤੋਂ ਵਧੀਆ ਮੇਲ ਸਥਾਨਕ ਪਲੇਲਿਸਟ ਵਿੱਚ ਸੰਭਾਲਿਆ ਜਾਂਦਾ ਹੈ।",
+        "spotify_google_blocked" to "Google ਐਪ ਦੀ ਵਿੰਡੋ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰਨ ਦੀ ਆਗਿਆ ਨਹੀਂ ਦਿੰਦਾ। \"ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ\" ਦਬਾਓ ਅਤੇ ਆਪਣੇ Spotify ਈਮੇਲ ਅਤੇ ਪਾਸਵਰਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ (ਜੇ ਖਾਤਾ Google ਨਾਲ ਬਣਾਇਆ ਹੈ ਤਾਂ ਪਹਿਲਾਂ spotify.com 'ਤੇ ਪਾਸਵਰਡ ਸੈੱਟ ਕਰੋ)।",
         "spotify_import" to "Spotify ਤੋਂ ਆਯਾਤ ਕਰੋ",
         "spotify_import_done" to "ਹੋ ਗਿਆ: %d ਵਿੱਚੋਂ %d ਟਰੈਕ ਮਿਲੇ",
         "spotify_import_selected" to "ਚੁਣੇ ਹੋਏ ਆਯਾਤ ਕਰੋ",

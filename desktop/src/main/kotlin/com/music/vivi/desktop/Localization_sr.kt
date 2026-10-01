@@ -688,6 +688,7 @@ internal fun strings_sr(): Map<String, String> =
         "spotify_connected_as" to "Повезано као %s",
         "spotify_cookie_hint" to "Пријави се на open.spotify.com у прегледачу и копирај колачић sp_dc. sp_key није обавезан.",
         "spotify_desc" to "Пренеси своје Spotify плејлисте и омиљене песме. Свака нумера се тражи на YouTube Music-у, а најбоље поклапање иде у локалну плејлисту.",
+        "spotify_google_blocked" to "Google не дозвољава пријаву унутар прозора апликације. Притисни „Покушај поново“ и пријави се својим Spotify имејлом и лозинком (ако је налог направљен преко Google-а, прво постави лозинку на spotify.com).",
         "spotify_import" to "Увези са Spotify-ја",
         "spotify_import_done" to "Готово: поклопило се %d од %d нумера",
         "spotify_import_selected" to "Увези изабрано",

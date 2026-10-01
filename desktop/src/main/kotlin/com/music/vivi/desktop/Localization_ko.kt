@@ -688,6 +688,7 @@ internal fun strings_ko(): Map<String, String> =
         "spotify_connected_as" to "%s(으)로 연결됨",
         "spotify_cookie_hint" to "브라우저에서 open.spotify.com에 로그인한 뒤 sp_dc 쿠키를 복사하세요. sp_key는 선택 사항입니다.",
         "spotify_desc" to "Spotify 재생목록과 좋아하는 곡을 가져옵니다. 각 트랙은 YouTube Music에서 검색되고 가장 잘 맞는 결과가 로컬 재생목록에 저장됩니다.",
+        "spotify_google_blocked" to "Google은 앱 창 안에서의 로그인을 허용하지 않습니다. \"다시 시도\"를 누르고 Spotify 이메일과 비밀번호로 로그인하세요(Google로 계정을 만들었다면 먼저 spotify.com에서 비밀번호를 설정하세요).",
         "spotify_import" to "Spotify에서 가져오기",
         "spotify_import_done" to "완료: %d/%d 트랙 일치",
         "spotify_import_selected" to "선택 항목 가져오기",

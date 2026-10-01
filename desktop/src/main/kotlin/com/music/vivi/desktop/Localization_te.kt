@@ -688,6 +688,7 @@ internal fun strings_te(): Map<String, String> =
         "spotify_connected_as" to "%sగా కనెక్ట్ అయింది",
         "spotify_cookie_hint" to "మీ బ్రౌజర్‌లో open.spotify.comలో సైన్ ఇన్ చేసి sp_dc కుకీని కాపీ చేయండి. sp_key ఐచ్ఛికం.",
         "spotify_desc" to "మీ Spotify ప్లేలిస్ట్‌లను, ఇష్టపడిన పాటలను ఇక్కడికి తీసుకురండి. ప్రతి ట్రాక్ YouTube Music-లో వెతకబడుతుంది, దగ్గరి సరిపోలిక స్థానిక ప్లేలిస్ట్‌లో భద్రపరచబడుతుంది.",
+        "spotify_google_blocked" to "Google యాప్ విండోలో సైన్ ఇన్ చేయడాన్ని అనుమతించదు. \"మళ్ళీ ప్రయత్నించండి\" నొక్కి మీ Spotify ఇమెయిల్ మరియు పాస్‌వర్డ్‌తో సైన్ ఇన్ చేయండి (Googleతో ఖాతా సృష్టించినట్లయితే, ముందుగా spotify.comలో పాస్‌వర్డ్ సెట్ చేయండి).",
         "spotify_import" to "Spotify నుండి దిగుమతి చేయండి",
         "spotify_import_done" to "పూర్తయింది: %d / %d ట్రాక్‌లు సరిపోలాయి",
         "spotify_import_selected" to "ఎంచుకున్నవి దిగుమతి చేయండి",

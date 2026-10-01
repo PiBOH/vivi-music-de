@@ -688,6 +688,7 @@ internal fun strings_iw(): Map<String, String> =
         "spotify_connected_as" to "מחובר בתור %s",
         "spotify_cookie_hint" to "היכנס ל-open.spotify.com בדפדפן והעתק את קוקיית sp_dc. sp_key אופציונלי.",
         "spotify_desc" to "העבר את הפלייליסטים והשירים שאהבת מ-Spotify. כל שיר מחפש ב-YouTube Music וההתאמה הטובה ביותר נשמרת בפלייליסט מקומי.",
+        "spotify_google_blocked" to "‏Google אינה מאפשרת התחברות בתוך חלון האפליקציה. לחץ על \"נסה שוב\" והתחבר עם הדוא\"ל והסיסמה של Spotify (אם החשבון נוצר עם Google, קבע תחילה סיסמה ב-spotify.com).",
         "spotify_import" to "ייבוא מ-Spotify",
         "spotify_import_done" to "הושלם: %d מתוך %d שירים הותאמו",
         "spotify_import_selected" to "ייבוא הנבחרים",

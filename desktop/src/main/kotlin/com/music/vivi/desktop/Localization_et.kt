@@ -688,6 +688,7 @@ internal fun strings_et(): Map<String, String> =
         "spotify_connected_as" to "Ühendatud kasutajana %s",
         "spotify_cookie_hint" to "Logi brauseris sisse saidil open.spotify.com ja kopeeri küpsis sp_dc. sp_key on valikuline.",
         "spotify_desc" to "Tõi oma Spotify esitusloendid ja lemmiklaulud üle. Iga lugu otsitakse YouTube Musicust ja parim vaste salvestatakse kohalikku esitusloendisse.",
+        "spotify_google_blocked" to "Google ei luba rakenduse aknas sisse logida. Vajuta „Proovi uuesti“ ja logi sisse Spotify e-posti ja parooliga (kui konto loodi Google'iga, määra esmalt parool saidil spotify.com).",
         "spotify_import" to "Impordi Spotifyst",
         "spotify_import_done" to "Valmis: %d / %d lugu vastasid",
         "spotify_import_selected" to "Impordi valitud",

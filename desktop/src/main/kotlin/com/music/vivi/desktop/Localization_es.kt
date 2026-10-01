@@ -688,6 +688,7 @@ internal fun strings_es(): Map<String, String> =
         "spotify_connected_as" to "Conectado como %s",
         "spotify_cookie_hint" to "Inicia sesión en open.spotify.com en tu navegador y copia la cookie sp_dc. sp_key es opcional.",
         "spotify_desc" to "Trae tus listas de Spotify y tus canciones favoritas. Cada pista se busca en YouTube Music y la mejor coincidencia se guarda en una lista local.",
+        "spotify_google_blocked" to "Google no permite iniciar sesión dentro de la ventana de la aplicación. Pulsa «Reintentar» e inicia sesión con tu correo y contraseña de Spotify (si la cuenta se creó con Google, define primero una contraseña en spotify.com).",
         "spotify_import" to "Importar desde Spotify",
         "spotify_import_done" to "Listo: %d de %d pistas coinciden",
         "spotify_import_selected" to "Importar seleccionadas",

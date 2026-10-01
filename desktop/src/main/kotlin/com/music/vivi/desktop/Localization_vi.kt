@@ -688,6 +688,7 @@ internal fun strings_vi(): Map<String, String> =
         "spotify_connected_as" to "Đã kết nối với tên %s",
         "spotify_cookie_hint" to "Đăng nhập open.spotify.com trong trình duyệt, rồi sao chép cookie sp_dc. sp_key là tùy chọn.",
         "spotify_desc" to "Mang danh sách phát và bài hát bạn thích từ Spotify sang đây. Mỗi bài được tìm trên YouTube Music và kết quả khớp nhất được lưu vào một danh sách phát cục bộ.",
+        "spotify_google_blocked" to "Google không cho phép đăng nhập trong cửa sổ của ứng dụng. Nhấn \"Thử lại\" và đăng nhập bằng email và mật khẩu Spotify của bạn (nếu tài khoản được tạo bằng Google, hãy đặt mật khẩu trên spotify.com trước).",
         "spotify_import" to "Nhập từ Spotify",
         "spotify_import_done" to "Xong: khớp %d trên %d bài",
         "spotify_import_selected" to "Nhập mục đã chọn",

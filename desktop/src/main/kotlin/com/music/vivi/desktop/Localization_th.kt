@@ -688,6 +688,7 @@ internal fun strings_th(): Map<String, String> =
         "spotify_connected_as" to "เชื่อมต่อในชื่อ %s",
         "spotify_cookie_hint" to "ลงชื่อเข้าใช้ open.spotify.com ในเบราว์เซอร์ แล้วคัดลอกคุกกี้ sp_dc ส่วน sp_key ไม่จำเป็น",
         "spotify_desc" to "ย้ายเพลย์ลิสต์และเพลงที่คุณชื่นชอบจาก Spotify ทุกแทร็กจะถูกค้นหาใน YouTube Music และผลลัพธ์ที่ใกล้ที่สุดจะถูกบันทึกไว้ในเพลย์ลิสต์ในเครื่อง",
+        "spotify_google_blocked" to "Google ไม่อนุญาตให้ลงชื่อเข้าใช้ภายในหน้าต่างของแอป กด \"ลองอีกครั้ง\" แล้วลงชื่อเข้าใช้ด้วยอีเมลและรหัสผ่าน Spotify ของคุณ (หากสร้างบัญชีด้วย Google ให้ตั้งรหัสผ่านที่ spotify.com ก่อน)",
         "spotify_import" to "นำเข้าจาก Spotify",
         "spotify_import_done" to "เสร็จแล้ว: จับคู่ได้ %d จาก %d แทร็ก",
         "spotify_import_selected" to "นำเข้าที่เลือก",

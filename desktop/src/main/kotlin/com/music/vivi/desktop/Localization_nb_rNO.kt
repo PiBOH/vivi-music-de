@@ -688,6 +688,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "spotify_connected_as" to "Koblet til som %s",
         "spotify_cookie_hint" to "Logg inn på open.spotify.com i nettleseren og kopier sp_dc-informasjonskapselen. sp_key er valgfri.",
         "spotify_desc" to "Hent over Spotify-spillelistene og de likte sangene dine. Hvert spor søkes opp på YouTube Music og det beste treffet lagres i en lokal spilleliste.",
+        "spotify_google_blocked" to "Google tillater ikke pålogging inne i appens vindu. Trykk på «Prøv igjen» og logg inn med Spotify-e-posten og passordet ditt (hvis kontoen ble opprettet med Google, angir du først et passord på spotify.com).",
         "spotify_import" to "Importer fra Spotify",
         "spotify_import_done" to "Ferdig: %d av %d spor samsvarte",
         "spotify_import_selected" to "Importer valgte",

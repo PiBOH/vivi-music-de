@@ -688,6 +688,7 @@ internal fun strings_lt(): Map<String, String> =
         "spotify_connected_as" to "Prisijungta kaip %s",
         "spotify_cookie_hint" to "Prisijunkite prie open.spotify.com naršyklėje ir nukopijuokite slapuką sp_dc. sp_key neprivalomas.",
         "spotify_desc" to "Perkelkite savo Spotify grojaraščius ir mėgstamas dainas. Kiekvienas įrašas ieškomas „YouTube Music“, o geriausias atitikmuo įrašomas į vietinį grojaraštį.",
+        "spotify_google_blocked" to "„Google“ neleidžia prisijungti programos lango viduje. Spausk „Bandyti dar kartą“ ir prisijunk su „Spotify“ el. paštu ir slaptažodžiu (jei paskyra sukurta su „Google“, pirmiausia nustatyk slaptažodį spotify.com).",
         "spotify_import" to "Importuoti iš Spotify",
         "spotify_import_done" to "Atlikta: atitiko %d iš %d įrašų",
         "spotify_import_selected" to "Importuoti pasirinktus",

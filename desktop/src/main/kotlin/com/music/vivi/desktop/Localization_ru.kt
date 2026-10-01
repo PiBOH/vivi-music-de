@@ -688,6 +688,7 @@ internal fun strings_ru(): Map<String, String> =
         "spotify_connected_as" to "Подключено как %s",
         "spotify_cookie_hint" to "Войдите на open.spotify.com в браузере и скопируйте cookie sp_dc. sp_key необязателен.",
         "spotify_desc" to "Перенесите свои плейлисты и любимые треки из Spotify. Каждый трек ищется на YouTube Music, а лучшее совпадение сохраняется в локальный плейлист.",
+        "spotify_google_blocked" to "Google не разрешает вход внутри окна приложения. Нажми «Повторить» и войди с электронной почтой и паролем Spotify (если аккаунт создан через Google, сначала задай пароль на spotify.com).",
         "spotify_import" to "Импорт из Spotify",
         "spotify_import_done" to "Готово: совпало %d из %d треков",
         "spotify_import_selected" to "Импортировать выбранное",

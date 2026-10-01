@@ -688,6 +688,7 @@ internal fun strings_fa(): Map<String, String> =
         "spotify_connected_as" to "متصل به‌عنوان %s",
         "spotify_cookie_hint" to "در مرورگر خود وارد open.spotify.com شوید و کوکی sp_dc را کپی کنید. sp_key اختیاری است.",
         "spotify_desc" to "فهرست‌های پخش و آهنگ‌های موردعلاقه Spotify خود را بیاورید. هر قطعه در YouTube Music جست‌وجو می‌شود و بهترین تطابق در یک فهرست پخش محلی ذخیره می‌شود.",
+        "spotify_google_blocked" to "‏Google اجازهٔ ورود در پنجرهٔ برنامه را نمی‌دهد. «تلاش مجدد» را بزن و با ایمیل و رمز Spotify وارد شو (اگر حساب با Google ساخته شده، ابتدا در spotify.com رمز تعیین کن).",
         "spotify_import" to "درون‌ریزی از Spotify",
         "spotify_import_done" to "انجام شد: %d از %d قطعه تطبیق یافت",
         "spotify_import_selected" to "درون‌ریزی موارد انتخاب‌شده",

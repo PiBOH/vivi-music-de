@@ -99,6 +99,12 @@ object LoginWebView {
     private fun deliver(cookie: String?, dataSyncId: String?, visitorData: String?, callback: (Capture?) -> Unit) {
         if (delivered) return
         delivered = true
+        // The app closes this window itself once it has the session, and a
+        // window closed that way never reaches its own close request: without
+        // clearing `windowOpen` here, the first sign-in attempt of a session
+        // was the only one that could ever open a window. See the same line in
+        // [SpotifyLoginWebView].
+        windowOpen = false
         runCatching { callback(Capture(cookie, dataSyncId, visitorData)) }
     }
 

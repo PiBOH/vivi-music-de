@@ -688,6 +688,7 @@ internal fun strings_uk(): Map<String, String> =
         "spotify_connected_as" to "З'єднано як %s",
         "spotify_cookie_hint" to "Увійдіть на open.spotify.com у браузері та скопіюйте cookie sp_dc. sp_key необов'язковий.",
         "spotify_desc" to "Перенесіть свої списки відтворення та вподобані пісні зі Spotify. Кожен трек шукається на YouTube Music, а найкращий збіг зберігається в локальному списку.",
+        "spotify_google_blocked" to "Google не дозволяє вхід усередині вікна програми. Натисни «Повторити» і увійди з електронною поштою та паролем Spotify (якщо акаунт створено через Google, спершу задай пароль на spotify.com).",
         "spotify_import" to "Імпорт із Spotify",
         "spotify_import_done" to "Готово: збіглося %d з %d треків",
         "spotify_import_selected" to "Імпортувати вибране",

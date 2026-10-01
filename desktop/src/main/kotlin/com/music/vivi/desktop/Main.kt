@@ -571,6 +571,21 @@ fun main(args: Array<String>) {
         val frameWindow = window
         awtWindowRef[0] = frameWindow
 
+        // The window wears the app's own mark. The packaged Windows and macOS
+        // bundles get it from the launcher, but a Linux launcher has nothing to
+        // take it from: jpackage's app image carries no window icon, so the
+        // AppImage showed the JVM's default icon wherever the window appeared
+        // (taskbar, Alt+Tab, window list) even though the AppDir's `.desktop`
+        // names the right one. AWT has no default to fall back on either way, so
+        // it is set here, from the same brand mark the tray already uses.
+        LaunchedEffect(frameWindow) {
+            runCatching {
+                BrandLogo.awtImage(256)?.let { mark -> frameWindow.iconImage = mark }
+            }.onFailure { error ->
+                AppLog.log("window", "could not set the window icon: $error")
+            }
+        }
+
         // Screen-recording tools (OBS and friends) list a window only when it
         // is VISIBLE and NOT minimized — they enumerate with
         // `EXCLUDE_MINIMIZED`, so a minimized VIVI (or one whose window has not

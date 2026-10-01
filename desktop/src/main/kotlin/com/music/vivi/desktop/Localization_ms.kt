@@ -688,6 +688,7 @@ internal fun strings_ms(): Map<String, String> =
         "spotify_connected_as" to "Bersambung sebagai %s",
         "spotify_cookie_hint" to "Log masuk ke open.spotify.com dalam pelayar anda, kemudian salin kuki sp_dc. sp_key adalah pilihan.",
         "spotify_desc" to "Bawa playlist Spotify dan Lagu Yang Disukai anda. Setiap trek dicari di YouTube Music dan padanan terbaik disimpan ke playlist setempat.",
+        "spotify_google_blocked" to "Google tidak membenarkan daftar masuk di dalam tetingkap aplikasi. Tekan \"Cuba lagi\" dan daftar masuk dengan e-mel dan kata laluan Spotify anda (jika akaun dibuat dengan Google, tetapkan kata laluan di spotify.com dahulu).",
         "spotify_import" to "Import daripada Spotify",
         "spotify_import_done" to "Selesai: %d daripada %d trek sepadan",
         "spotify_import_selected" to "Import yang dipilih",

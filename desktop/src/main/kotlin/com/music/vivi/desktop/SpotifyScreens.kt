@@ -99,8 +99,11 @@ fun SettingsSpotifyImportScreen(language: String, onBack: () -> Unit) {
     var spDc by remember { mutableStateOf("") }
     var spKey by remember { mutableStateOf("") }
     var selected by remember { mutableStateOf(emptySet<String>()) }
-    // Set when no sign-in window could be created: the screen then offers the
-    // manual cookie paste, which is the only way in without the window.
+    // Turns on the manual cookie paste. It appears on its own when no sign-in
+    // window could be created, and the user can ask for it at any time — a
+    // Google-only account can never finish the sign-in inside the window (see
+    // `spotify_google_blocked`), so the paste has to be reachable without
+    // waiting for the window to fail.
     var manualFallback by remember { mutableStateOf(false) }
 
     // A refresh replaces the list: a selection pointing at playlists that are no
@@ -164,6 +167,8 @@ fun SettingsSpotifyImportScreen(language: String, onBack: () -> Unit) {
                 onOpenWindow = {
                     if (!SpotifyImport.loginWithWindow(language)) manualFallback = true
                 },
+                windowUnavailable = SpotifyLoginWebView.isUnavailable,
+                onShowManual = { manualFallback = true },
             )
         } else {
             SpotifyAccountRow(
@@ -199,6 +204,9 @@ private fun SpotifyConnectSection(
     onSpKeyChange: (String) -> Unit,
     onConnect: () -> Unit,
     onOpenWindow: () -> Unit,
+    /** True when no sign-in window can be created on this machine at all. */
+    windowUnavailable: Boolean,
+    onShowManual: () -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
@@ -231,24 +239,36 @@ private fun SpotifyConnectSection(
         Text(Localization.get(language, "spotify_open_login"))
     }
 
-    if (!manualFallback) return
+    // The way to the paste is always on screen, not only after a window has
+    // failed: a Google-only Spotify account is refused by Google itself inside
+    // the window, so the user has to be able to switch to the cookie without
+    // first making the window break.
+    if (!manualFallback) {
+        TextButton(onClick = onShowManual, modifier = Modifier.padding(top = 2.dp)) {
+            Text(Localization.get(language, "login_manual_title"))
+        }
+        return
+    }
 
-    // Fallback only, and it says why it is there. The two fields are labelled
-    // with the cookie names themselves: `sp_dc` and `sp_key` are Spotify's
-    // identifiers, not words, so there is nothing to translate and no key to
-    // keep in 51 tables.
-    Text(
-        Localization.get(language, "login_webview_unavailable"),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 10.dp),
-    )
+    // Why the fields are here at all — but only when the window really cannot
+    // be created, since the same block also opens on request.
+    if (windowUnavailable) {
+        Text(
+            Localization.get(language, "login_webview_unavailable"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+    }
     OutlinedButton(
         onClick = { runCatching { Desktop.getDesktop().browse(URI(SpotifyImport.loginUrl())) } },
         modifier = Modifier.padding(top = 8.dp),
     ) {
         Text(Localization.get(language, "spotify_open_login"))
     }
+    // The two fields are labelled with the cookie names themselves: `sp_dc` and
+    // `sp_key` are Spotify's identifiers, not words, so there is nothing to
+    // translate and no key to keep in 51 tables.
     OutlinedTextField(
         value = spDc,
         onValueChange = onSpDcChange,

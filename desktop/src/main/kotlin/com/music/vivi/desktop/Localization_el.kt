@@ -688,6 +688,7 @@ internal fun strings_el(): Map<String, String> =
         "spotify_connected_as" to "Συνδεδεμένος ως %s",
         "spotify_cookie_hint" to "Συνδεθείτε στο open.spotify.com από το πρόγραμμα περιήγησης και αντιγράψτε το cookie sp_dc. Το sp_key είναι προαιρετικό.",
         "spotify_desc" to "Μετέφερε τις λίστες αναπαραγωγής και τα αγαπημένα σου τραγούδια από το Spotify. Κάθε κομμάτι αναζητείται στο YouTube Music και η καλύτερη αντιστοίχιση αποθηκεύεται σε τοπική λίστα.",
+        "spotify_google_blocked" to "Το Google δεν επιτρέπει τη σύνδεση μέσα στο παράθυρο της εφαρμογής. Πάτησε «Δοκιμή ξανά» και συνδέσου με το email και τον κωδικό σου στο Spotify (αν ο λογαριασμός δημιουργήθηκε με Google, όρισε πρώτα κωδικό στο spotify.com).",
         "spotify_import" to "Εισαγωγή από το Spotify",
         "spotify_import_done" to "Έτοιμο: %d από %d κομμάτια αντιστοιχίστηκαν",
         "spotify_import_selected" to "Εισαγωγή επιλεγμένων",

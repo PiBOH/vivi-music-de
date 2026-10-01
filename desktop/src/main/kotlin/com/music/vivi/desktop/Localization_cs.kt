@@ -688,6 +688,7 @@ internal fun strings_cs(): Map<String, String> =
         "spotify_connected_as" to "Připojeno jako %s",
         "spotify_cookie_hint" to "Přihlas se v prohlížeči na open.spotify.com a zkopíruj cookie sp_dc. sp_key je nepovinný.",
         "spotify_desc" to "Přenes si své playlisty a oblíbené skladby ze Spotify. Každá skladba se hledá na YouTube Music a nejlepší shoda se uloží do místního playlistu.",
+        "spotify_google_blocked" to "Google neumožňuje přihlášení uvnitř okna aplikace. Stiskni „Zkusit znovu“ a přihlas se e-mailem a heslem k Spotify (pokud byl účet vytvořen přes Google, nejprve si nastav heslo na spotify.com).",
         "spotify_import" to "Importovat ze Spotify",
         "spotify_import_done" to "Hotovo: shoda u %d z %d skladeb",
         "spotify_import_selected" to "Importovat vybrané",

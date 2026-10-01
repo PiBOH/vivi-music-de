@@ -688,6 +688,7 @@ internal fun strings_ar(): Map<String, String> =
         "spotify_connected_as" to "متصل باسم %s",
         "spotify_cookie_hint" to "سجّل الدخول إلى open.spotify.com في متصفحك، ثم انسخ ملف تعريف الارتباط sp_dc. ملف sp_key اختياري.",
         "spotify_desc" to "انقل قوائم تشغيل Spotify وأغانيك المفضلة. يُبحث عن كل مقطع في YouTube Music وتُحفظ المطابقة الأفضل في قائمة تشغيل محلية.",
+        "spotify_google_blocked" to "لا يسمح Google بتسجيل الدخول داخل نافذة التطبيق. اضغط على «إعادة المحاولة» ثم سجّل الدخول ببريد Spotify وكلمة المرور (عيّن كلمة مرور على spotify.com أولًا إذا أنشأت الحساب عبر Google).",
         "spotify_import" to "استيراد من Spotify",
         "spotify_import_done" to "تم: تم مطابقة %d من %d مقطعًا",
         "spotify_import_selected" to "استيراد المحدد",

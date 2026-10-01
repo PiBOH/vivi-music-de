@@ -688,6 +688,7 @@ internal fun strings_it(): Map<String, String> =
         "spotify_connected_as" to "Connesso come %s",
         "spotify_cookie_hint" to "Accedi a open.spotify.com nel browser, poi copia il cookie sp_dc. sp_key è facoltativo.",
         "spotify_desc" to "Porta qui le tue playlist di Spotify e i brani che ti piacciono. Ogni brano viene cercato su YouTube Music e la corrispondenza migliore finisce in una playlist locale.",
+        "spotify_google_blocked" to "Google non consente l'accesso dentro la finestra dell'app. Premi «Riprova» e accedi con l'email e la password di Spotify (se l'account è stato creato con Google, imposta prima una password su spotify.com).",
         "spotify_import" to "Importa da Spotify",
         "spotify_import_done" to "Fatto: %d brani su %d abbinati",
         "spotify_import_selected" to "Importa selezionate",

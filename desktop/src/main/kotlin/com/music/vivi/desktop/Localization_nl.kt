@@ -688,6 +688,7 @@ internal fun strings_nl(): Map<String, String> =
         "spotify_connected_as" to "Verbonden als %s",
         "spotify_cookie_hint" to "Log in op open.spotify.com in je browser en kopieer de cookie sp_dc. sp_key is optioneel.",
         "spotify_desc" to "Haal je Spotify-afspeellijsten en favoriete nummers hierheen. Elk nummer wordt op YouTube Music gezocht en de beste match belandt in een lokale afspeellijst.",
+        "spotify_google_blocked" to "Google staat aanmelden in het venster van de app niet toe. Klik op 'Opnieuw proberen' en meld je aan met je Spotify-e-mailadres en wachtwoord (stel eerst een wachtwoord in op spotify.com als het account met Google is aangemaakt).",
         "spotify_import" to "Importeren uit Spotify",
         "spotify_import_done" to "Klaar: %d van %d nummers gematcht",
         "spotify_import_selected" to "Selectie importeren",

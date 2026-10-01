@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
@@ -349,7 +348,7 @@ fun ArtistScreen(
                                     }
                                 } else {
                                     item(key = "grid-${tab}-${section.title}") {
-                                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                             items((albums + others).distinctBy { it.id }, key = { it.id }) { item ->
                                                 YtItemCard(item = item, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                                             }
@@ -361,7 +360,7 @@ fun ArtistScreen(
                                     Text(section.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                                 }
                                 item(key = "grid-${tab}-${section.title}") {
-                                    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                         items((albums + others).distinctBy { it.id }, key = { it.id }) { item ->
                                             YtItemCard(item = item, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                                         }

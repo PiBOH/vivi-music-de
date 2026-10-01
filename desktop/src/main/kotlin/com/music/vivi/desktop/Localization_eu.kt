@@ -688,6 +688,7 @@ internal fun strings_eu(): Map<String, String> =
         "spotify_connected_as" to "%s gisa konektatuta",
         "spotify_cookie_hint" to "Hasi saioa open.spotify.com-en zure nabigatzailean eta kopiatu sp_dc cookiea. sp_key aukerakoa da.",
         "spotify_desc" to "Ekarri zure Spotify zerrendak eta gustuko abestiak. Pista bakoitza YouTube Music-en bilatzen da eta onena den bat-etortzea tokiko zerrenda batean gordetzen da.",
+        "spotify_google_blocked" to "Googlek ez du uzten aplikazioaren leihoan saioa hasten. Sakatu «Saiatu berriro» eta hasi saioa Spotify-ko posta eta pasahitzarekin (kontua Google-rekin sortu bada, ezarri lehenik pasahitz bat spotify.com-en).",
         "spotify_import" to "Inportatu Spotify-tik",
         "spotify_import_done" to "Eginda: %d / %d pista bat etorri dira",
         "spotify_import_selected" to "Inportatu hautatutakoa",

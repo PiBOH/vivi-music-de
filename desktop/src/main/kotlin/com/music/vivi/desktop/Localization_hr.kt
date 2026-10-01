@@ -688,6 +688,7 @@ internal fun strings_hr(): Map<String, String> =
         "spotify_connected_as" to "Povezano kao %s",
         "spotify_cookie_hint" to "Prijavi se na open.spotify.com u pregledniku, pa kopiraj kolačić sp_dc. sp_key nije obavezan.",
         "spotify_desc" to "Prenesi svoje Spotify popise i lajkane pjesme. Svaka se pjesma traži na YouTube Musicu, a najbolje podudaranje ide u lokalni popis.",
+        "spotify_google_blocked" to "Google ne dopušta prijavu unutar prozora aplikacije. Pritisni \"Pokušaj ponovno\" i prijavi se svojim Spotify e-mailom i lozinkom (ako je račun izrađen putem Googlea, prvo postavi lozinku na spotify.com).",
         "spotify_import" to "Uvezi iz Spotifyja",
         "spotify_import_done" to "Gotovo: poklopljeno %d od %d pjesama",
         "spotify_import_selected" to "Uvezi odabrano",

@@ -688,6 +688,7 @@ internal fun strings_ro(): Map<String, String> =
         "spotify_connected_as" to "Conectat ca %s",
         "spotify_cookie_hint" to "Conectează-te la open.spotify.com în browser, apoi copiază cookie-ul sp_dc. sp_key este opțional.",
         "spotify_desc" to "Adu-ți listele de redare și melodiile apreciate din Spotify. Fiecare piesă este căutată pe YouTube Music, iar cea mai bună potrivire ajunge într-o listă locală.",
+        "spotify_google_blocked" to "Google nu permite conectarea în fereastra aplicației. Apasă „Încearcă din nou” și conectează-te cu e-mailul și parola de Spotify (dacă contul a fost creat cu Google, setează mai întâi o parolă pe spotify.com).",
         "spotify_import" to "Importă din Spotify",
         "spotify_import_done" to "Gata: %d din %d piste potrivite",
         "spotify_import_selected" to "Importă selecția",

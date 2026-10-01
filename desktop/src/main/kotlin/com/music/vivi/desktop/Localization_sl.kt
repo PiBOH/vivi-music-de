@@ -688,6 +688,7 @@ internal fun strings_sl(): Map<String, String> =
         "spotify_connected_as" to "Povezan kot %s",
         "spotify_cookie_hint" to "Prijavi se v brskalniku na open.spotify.com in kopiraj piškotek sp_dc. sp_key ni obvezen.",
         "spotify_desc" to "Prenesi svoje Spotify sezname in všečne skladbe. Vsaka skladba se poišče na YouTube Music, najboljše ujemanje pa se shrani v krajevni seznam.",
+        "spotify_google_blocked" to "Google ne dovoli prijave v oknu aplikacije. Pritisni »Poskusi znova« in se prijavi z e-pošto in geslom za Spotify (če je bil račun ustvarjen z Googlom, najprej nastavi geslo na spotify.com).",
         "spotify_import" to "Uvozi iz Spotifyja",
         "spotify_import_done" to "Končano: ujemalo se %d od %d skladb",
         "spotify_import_selected" to "Uvozi izbrano",

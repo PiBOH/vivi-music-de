@@ -688,6 +688,7 @@ internal fun strings_fi(): Map<String, String> =
         "spotify_connected_as" to "Yhdistetty tilinä %s",
         "spotify_cookie_hint" to "Kirjaudu selaimessa osoitteeseen open.spotify.com ja kopioi sp_dc-eväste. sp_key on valinnainen.",
         "spotify_desc" to "Tuo Spotify-soittolistasi ja tykätyt kappaleesi. Jokainen kappale haetaan YouTube Musicista ja paras osuma tallennetaan paikalliseen soittolistaan.",
+        "spotify_google_blocked" to "Google ei salli kirjautumista sovelluksen ikkunassa. Paina ”Yritä uudelleen” ja kirjaudu Spotify-sähköpostillasi ja salasanallasi (jos tili luotiin Googlella, aseta ensin salasana osoitteessa spotify.com).",
         "spotify_import" to "Tuo Spotifysta",
         "spotify_import_done" to "Valmis: %d / %d kappaletta täsmäsi",
         "spotify_import_selected" to "Tuo valitut",

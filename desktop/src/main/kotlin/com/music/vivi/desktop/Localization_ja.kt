@@ -688,6 +688,7 @@ internal fun strings_ja(): Map<String, String> =
         "spotify_connected_as" to "%s として接続中",
         "spotify_cookie_hint" to "ブラウザで open.spotify.com にサインインし、sp_dc Cookie をコピーしてください。sp_key は任意です。",
         "spotify_desc" to "Spotify のプレイリストと「いいねした曲」を取り込みます。各トラックは YouTube Music で検索され、最も近い一致がローカルのプレイリストに保存されます。",
+        "spotify_google_blocked" to "Google はアプリのウィンドウ内でのサインインを許可していません。「再試行」を押し、Spotify のメールアドレスとパスワードでサインインしてください（Google でアカウントを作成した場合は、先に spotify.com でパスワードを設定してください）。",
         "spotify_import" to "Spotify からインポート",
         "spotify_import_done" to "完了: %d / %d 曲が一致",
         "spotify_import_selected" to "選択したものをインポート",

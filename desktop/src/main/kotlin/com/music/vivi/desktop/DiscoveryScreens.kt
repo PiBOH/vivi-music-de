@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
@@ -156,7 +155,8 @@ fun ChartsScreen(
                     item(key = "content-${section.title}") {
                         val songs = section.items.filterIsInstance<SongItem>()
                         if (songs.size == section.items.size) {
-                            LazyRow(
+                            HorizontalCarousel(
+                                language = language,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                             ) {
@@ -167,7 +167,8 @@ fun ChartsScreen(
                                 }
                             }
                         } else {
-                            LazyRow(
+                            HorizontalCarousel(
+                                language = language,
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                             ) {
@@ -184,7 +185,8 @@ fun ChartsScreen(
                         SectionHeader(title = Localization.get(language, "top_music_videos"), language = language)
                     }
                     item(key = "top_videos_content") {
-                        LazyRow(
+                        HorizontalCarousel(
+                            language = language,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp),
                         ) {

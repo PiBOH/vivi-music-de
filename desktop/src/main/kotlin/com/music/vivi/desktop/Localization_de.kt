@@ -688,6 +688,7 @@ internal fun strings_de(): Map<String, String> =
         "spotify_connected_as" to "Verbunden als %s",
         "spotify_cookie_hint" to "Melde dich im Browser bei open.spotify.com an und kopiere das Cookie sp_dc. sp_key ist optional.",
         "spotify_desc" to "Hol deine Spotify-Playlists und Lieblingstitel herüber. Jeder Titel wird auf YouTube Music gesucht und der beste Treffer in einer lokalen Playlist gespeichert.",
+        "spotify_google_blocked" to "Google erlaubt keine Anmeldung im Fenster der App. Klicke auf „Erneut versuchen“ und melde dich mit deiner Spotify-E-Mail und deinem Passwort an (lege zuerst ein Passwort auf spotify.com fest, wenn das Konto mit Google erstellt wurde).",
         "spotify_import" to "Aus Spotify importieren",
         "spotify_import_done" to "Fertig: %d von %d Titeln zugeordnet",
         "spotify_import_selected" to "Auswahl importieren",

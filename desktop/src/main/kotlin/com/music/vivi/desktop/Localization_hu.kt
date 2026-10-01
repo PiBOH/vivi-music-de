@@ -688,6 +688,7 @@ internal fun strings_hu(): Map<String, String> =
         "spotify_connected_as" to "%s néven kapcsolódva",
         "spotify_cookie_hint" to "Jelentkezz be a böngészőben az open.spotify.com oldalon, majd másold ki az sp_dc sütit. Az sp_key nem kötelező.",
         "spotify_desc" to "Hozd át a Spotify lejátszási listáidat és kedvelt számaidat. Minden számot megkeresünk a YouTube Musicon, és a legjobb találat egy helyi listába kerül.",
+        "spotify_google_blocked" to "A Google nem engedélyezi a bejelentkezést az alkalmazás ablakában. Nyomd meg az „Újra” gombot, és jelentkezz be a Spotify e-mail-címeddel és jelszavaddal (ha a fiók Google-lal készült, előbb állíts be jelszót a spotify.com oldalon).",
         "spotify_import" to "Importálás Spotifyból",
         "spotify_import_done" to "Kész: %d / %d szám talált egyezést",
         "spotify_import_selected" to "Kijelöltek importálása",

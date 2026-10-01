@@ -688,6 +688,7 @@ internal fun strings_tr(): Map<String, String> =
         "spotify_connected_as" to "%s olarak bağlı",
         "spotify_cookie_hint" to "Tarayıcında open.spotify.com adresine giriş yap ve sp_dc çerezini kopyala. sp_key isteğe bağlıdır.",
         "spotify_desc" to "Spotify listelerini ve beğendiğin şarkıları buraya getir. Her parça YouTube Music'te aranır ve en iyi eşleşme yerel bir listeye kaydedilir.",
+        "spotify_google_blocked" to "Google, uygulamanın penceresi içinde oturum açmaya izin vermiyor. \"Tekrar dene\"ye bas ve Spotify e-postan ve şifrenle oturum aç (hesabı Google ile oluşturduysan önce spotify.com'da bir şifre belirle).",
         "spotify_import" to "Spotify'dan içe aktar",
         "spotify_import_done" to "Bitti: %d / %d parça eşleşti",
         "spotify_import_selected" to "Seçilenleri içe aktar",

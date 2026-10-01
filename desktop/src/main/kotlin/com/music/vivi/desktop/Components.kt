@@ -10,8 +10,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,27 +32,34 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlin.math.sin
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -880,6 +892,107 @@ fun ViviSlider(
                 center = Offset(thumbX, waveY(thumbX)),
                 style = Stroke(width = 1.5f),
             )
+        }
+    }
+}
+
+/**
+ * A horizontal carousel: a [LazyRow] with a scroll arrow at each end.
+ *
+ * Every Home/Browse row is a `LazyRow`, and on a mouse without a horizontal
+ * wheel (or without a trackpad) everything past the right edge is simply
+ * unreachable — the row shows its first three or four cards and nothing says
+ * there are more, which is what makes "Mood & genres" and the "made for you"
+ * playlists look like they only hold the few entries that fit. This puts the
+ * Spotify desktop home rows' own affordance over the row: a round arrow at each
+ * end, the one in a direction that still has content active and the other one
+ * dimmed, each press moving the row about a page.
+ *
+ * A row that already fits shows no arrows at all — an arrow that cannot do
+ * anything is worse than no arrow.
+ *
+ * `language` is only there for the two tooltips, so the buttons are named the
+ * way every other icon button in the app is (see the tooltip rule in
+ * AGENTS.md); the labels come from the existing `previous` / `next` keys.
+ */
+@Composable
+fun HorizontalCarousel(
+    language: String,
+    modifier: Modifier = Modifier,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(12.dp),
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    content: LazyListScope.() -> Unit,
+) {
+    val state = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    // The arrows must not eat the row's own clicks: the Box only overlays them,
+    // the LazyRow keeps the full width underneath.
+    Box(modifier.fillMaxWidth()) {
+        LazyRow(
+            state = state,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = horizontalArrangement,
+            contentPadding = contentPadding,
+            content = content,
+        )
+
+        // Both flags come from the row's own layout, so they are recomputed when
+        // it scrolls or the window is resized, not on every recomposition.
+        val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
+        val canGoForward by remember { derivedStateOf { state.canScrollForward } }
+        if (canGoBackward || canGoForward) {
+            CarouselArrow(
+                language = language,
+                forward = false,
+                enabled = canGoBackward,
+                modifier = Modifier.align(Alignment.CenterStart),
+                onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
+            )
+            CarouselArrow(
+                language = language,
+                forward = true,
+                enabled = canGoForward,
+                modifier = Modifier.align(Alignment.CenterEnd),
+                onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
+            )
+        }
+    }
+}
+
+/**
+ * How far one press moves the row: most of a screenful, so a press reveals the
+ * cards that were cut off at the edge instead of nudging them by one card.
+ * Never so small that a press looks like it did nothing (a narrow row/panel).
+ */
+private fun carouselPage(state: LazyListState): Float =
+    (state.layoutInfo.viewportSize.width * 0.85f).coerceAtLeast(240f)
+
+@Composable
+private fun CarouselArrow(
+    language: String,
+    forward: Boolean,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Tooltip(Localization.get(language, if (forward) "next" else "previous")) {
+        Surface(
+            onClick = onClick,
+            enabled = enabled,
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shadowElevation = 3.dp,
+            modifier = modifier.size(34.dp).alpha(if (enabled) 1f else 0.35f),
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = if (forward) Icons.AutoMirrored.Filled.KeyboardArrowRight
+                    else Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }

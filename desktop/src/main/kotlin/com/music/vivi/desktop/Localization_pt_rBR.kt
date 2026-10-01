@@ -688,6 +688,7 @@ internal fun strings_pt_rBR(): Map<String, String> =
         "spotify_connected_as" to "Conectado como %s",
         "spotify_cookie_hint" to "Entre em open.spotify.com no navegador e copie o cookie sp_dc. O sp_key é opcional.",
         "spotify_desc" to "Traga suas playlists e músicas curtidas do Spotify. Cada faixa é procurada no YouTube Music e a melhor correspondência vai para uma playlist local.",
+        "spotify_google_blocked" to "O Google não permite entrar dentro da janela do aplicativo. Toque em \"Tentar novamente\" e entre com seu e-mail e senha do Spotify (se a conta foi criada com o Google, defina primeiro uma senha em spotify.com).",
         "spotify_import" to "Importar do Spotify",
         "spotify_import_done" to "Concluído: %d de %d faixas correspondidas",
         "spotify_import_selected" to "Importar selecionadas",

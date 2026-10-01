@@ -688,6 +688,7 @@ internal fun strings_bg(): Map<String, String> =
         "spotify_connected_as" to "Свързан като %s",
         "spotify_cookie_hint" to "Влезте в open.spotify.com в браузъра си и копирайте бисквитката sp_dc. sp_key не е задължителна.",
         "spotify_desc" to "Пренесете плейлистите и харесаните си песни от Spotify. Всяка песен се търси в YouTube Music и най-доброто съвпадение се записва в местен плейлист.",
+        "spotify_google_blocked" to "Google не позволява влизане в прозореца на приложението. Натиснете „Опитай отново“ и влезте с имейла и паролата си за Spotify (ако акаунтът е създаден с Google, първо задайте парола на spotify.com).",
         "spotify_import" to "Импортиране от Spotify",
         "spotify_import_done" to "Готово: съвпаднаха %d от %d песни",
         "spotify_import_selected" to "Импортиране на избраните",

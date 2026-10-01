@@ -688,6 +688,7 @@ internal fun strings_fr(): Map<String, String> =
         "spotify_connected_as" to "Connecté en tant que %s",
         "spotify_cookie_hint" to "Connectez-vous à open.spotify.com dans votre navigateur, puis copiez le cookie sp_dc. sp_key est facultatif.",
         "spotify_desc" to "Récupérez vos playlists et vos titres favoris Spotify. Chaque piste est recherchée sur YouTube Music et la meilleure correspondance est enregistrée dans une playlist locale.",
+        "spotify_google_blocked" to "Google n'autorise pas la connexion dans la fenêtre de l'application. Clique sur « Réessayer » et connecte-toi avec ton e-mail et ton mot de passe Spotify (si le compte a été créé avec Google, définis d'abord un mot de passe sur spotify.com).",
         "spotify_import" to "Importer depuis Spotify",
         "spotify_import_done" to "Terminé : %d pistes sur %d correspondent",
         "spotify_import_selected" to "Importer la sélection",

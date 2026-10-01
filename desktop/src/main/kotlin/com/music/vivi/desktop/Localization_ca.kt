@@ -688,6 +688,7 @@ internal fun strings_ca(): Map<String, String> =
         "spotify_connected_as" to "Connectat com a %s",
         "spotify_cookie_hint" to "Inicia sessió a open.spotify.com al navegador i copia la galeta sp_dc. sp_key és opcional.",
         "spotify_desc" to "Porta les teves llistes de Spotify i les cançons que t'agraden. Cada pista es busca a YouTube Music i la millor coincidència va a una llista local.",
+        "spotify_google_blocked" to "Google no permet iniciar sessió dins de la finestra de l'aplicació. Prem «Torna-ho a provar» i inicia sessió amb el correu i la contrasenya de Spotify (si el compte es va crear amb Google, defineix primer una contrasenya a spotify.com).",
         "spotify_import" to "Importa des de Spotify",
         "spotify_import_done" to "Fet: %d de %d pistes coincidents",
         "spotify_import_selected" to "Importa la selecció",

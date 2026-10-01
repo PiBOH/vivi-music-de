@@ -688,6 +688,7 @@ internal fun strings_km(): Map<String, String> =
         "spotify_connected_as" to "បានភ្ជាប់ជា %s",
         "spotify_cookie_hint" to "ចូលទៅ open.spotify.com ក្នុងកម្មវិធីរុករករបស់អ្នក បន្ទាប់មកចម្លងខូគី sp_dc។ sp_key មិនចាំបាច់ទេ។",
         "spotify_desc" to "នាំយកបញ្ជីចាក់ និងបទចម្រៀងដែលអ្នកចូលចិត្តពី Spotify។ រាល់បទត្រូវបានស្វែងរកនៅលើ YouTube Music ហើយការផ្គូផ្គងដ៏ល្អបំផុតត្រូវបានរក្សាទុកក្នុងបញ្ជីចាក់ក្នុងម៉ាស៊ីន។",
+        "spotify_google_blocked" to "Google មិនអនុញ្ញាតឱ្យចូលក្នុងវីនដូរបស់កម្មវិធីទេ។ ចុច «ព្យាយាមម្តងទៀត» ហើយចូលដោយអ៊ីមែល និងពាក្យសម្ងាត់ Spotify របស់អ្នក (បើគណនីបង្កើតដោយ Google សូមកំណត់ពាក្យសម្ងាត់នៅ spotify.com ជាមុន)។",
         "spotify_import" to "នាំចូលពី Spotify",
         "spotify_import_done" to "រួចរាល់៖ ត្រូវគ្នា %d ក្នុង %d បទ",
         "spotify_import_selected" to "នាំចូលអ្វីដែលបានជ្រើស",

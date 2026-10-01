@@ -688,6 +688,7 @@ internal fun strings_sv(): Map<String, String> =
         "spotify_connected_as" to "Ansluten som %s",
         "spotify_cookie_hint" to "Logga in på open.spotify.com i webbläsaren och kopiera cookien sp_dc. sp_key är valfritt.",
         "spotify_desc" to "Hämta hit dina Spotify-spellistor och låtar du gillat. Varje spår söks på YouTube Music och den bästa träffen sparas i en lokal spellista.",
+        "spotify_google_blocked" to "Google tillåter inte inloggning i appens fönster. Tryck på ”Försök igen” och logga in med din Spotify-e-post och ditt lösenord (om kontot skapades med Google, ange först ett lösenord på spotify.com).",
         "spotify_import" to "Importera från Spotify",
         "spotify_import_done" to "Klart: %d av %d spår matchade",
         "spotify_import_selected" to "Importera valda",

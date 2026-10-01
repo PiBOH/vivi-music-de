@@ -231,6 +231,14 @@ jobs:
 
           cp desktop/icons/logo_vmde.png "$APPDIR/vivimusic.png"
 
+          # The icon the AppImage itself carries is `.DirIcon` at the AppDir
+          # root: `Icon=vivimusic` in the .desktop above names the file, and the
+          # bundler embeds whatever `.DirIcon` points at. Without it a build of
+          # appimagetool can fall back to its own default, which is what left the
+          # AppImage — and the panel entry it integrates — wearing the wrong
+          # icon. Symlinked rather than copied so the two can never drift.
+          ln -sf vivimusic.png "$APPDIR/.DirIcon"
+
           # appimagetool is itself an AppImage; extract it to avoid the FUSE
           # requirement on the runner, then run the extracted AppRun.
           wget -q "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage" -O appimagetool.AppImage

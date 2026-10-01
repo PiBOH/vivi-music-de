@@ -4,7 +4,9 @@ import com.music.spotify.SpotifyAuth
 import javafx.application.Platform as FxPlatform
 import javafx.concurrent.Worker
 import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.Scene
+import javafx.scene.control.Hyperlink
 import javafx.scene.control.Label
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.layout.Background
@@ -127,19 +129,44 @@ internal object SpotifyLoginWebView {
     private fun deliver(capture: Capture?, callback: (Capture?) -> Unit) {
         if (delivered) return
         delivered = true
+        // The window is done with, whatever it is done for: a capture, a close
+        // without one, or a failure. Clearing `windowOpen` here (and not only in
+        // the close request) is what lets the button open a second window in the
+        // same session — the app closes the window itself once it has the
+        // cookies, and a window closed that way used to leave the flag set for
+        // the rest of the session, so only the very first attempt ever showed a
+        // window.
+        windowOpen = false
         runCatching { callback(capture) }
     }
 
     private fun createWindow(language: String, callback: (Capture?) -> Unit) {
         try {
             val stage = Stage()
-            val status = Label(Localization.get(language, "login_waiting"))
+            val status = Label(Localization.get(language, "login_waiting")).apply {
+                // The message the block below writes is a whole sentence, not a
+                // status word: it has to wrap and take the room it needs.
+                isWrapText = true
+                maxWidth = Double.MAX_VALUE
+                HBox.setHgrow(this, Priority.ALWAYS)
+            }
             val spinner = ProgressIndicator().apply {
                 prefWidth = 18.0
                 prefHeight = 18.0
             }
-            val header = HBox(10.0, spinner, status).apply {
+            // Shown only once Google has refused to serve its sign-in page in
+            // this window: that page cannot be used, so the way out is the
+            // Spotify form the window opened on.
+            val retry = Hyperlink(Localization.get(language, "retry")).apply {
+                isVisible = false
+                isManaged = false
+                // The header is dark already; the default hyperlink blue is hard
+                // to read on it.
+                textFill = Color.web("#d0bcff")
+            }
+            val header = HBox(10.0, spinner, status, retry).apply {
                 padding = Insets(10.0, 14.0, 10.0, 14.0)
+                alignment = Pos.CENTER_LEFT
                 background = Background(BackgroundFill(Color.web("#1f1f2e"), CornerRadii.EMPTY, Insets.EMPTY))
             }
             val browser = WebView().apply {
@@ -163,6 +190,33 @@ internal object SpotifyLoginWebView {
             }
             stage.show()
 
+            // A Spotify profile created with Google cannot be signed into from
+            // here at all: Google answers any embedded browser with
+            // `disallowed_useragent` ("This browser or app may not be secure")
+            // instead of its sign-in page, and the browser checks it does that
+            // on cannot be faked from a WebView. The window says what happened
+            // and hands the Spotify form back, which is the one way in that
+            // Google has no say in.
+            browser.engine.locationProperty().addListener { _, _, location ->
+                if (!isGoogleSignInHost(location)) return@addListener
+                AppLog.log("spotify", "Google refused its sign-in page inside the window ($location)")
+                FxPlatform.runLater {
+                    spinner.isVisible = false
+                    status.text = Localization.get(language, "spotify_google_blocked")
+                    retry.isVisible = true
+                    retry.isManaged = true
+                }
+            }
+            retry.setOnAction { event ->
+                event.consume()
+                AppLog.click("Spotify sign-in: back to Spotify's own form after Google blocked the window")
+                retry.isVisible = false
+                retry.isManaged = false
+                spinner.isVisible = true
+                status.text = Localization.get(language, "login_waiting")
+                browser.engine.load(SpotifyAuth.LOGIN_URL)
+            }
+
             // Kick the WebView so it paints its first frame. In a process where
             // Compose/AWT already owns the display, the WebView can stay blank
             // (known JavaFX painting bug) until it is nudged: force a re-layout
@@ -180,7 +234,9 @@ internal object SpotifyLoginWebView {
             }
 
             // The window is its own deadline: it stays open until the user
-            // finishes, and closing it ends the poll through `windowOpen`.
+            // finishes (or Google blocks the sign-in and the user retries in
+            // this same window), and closing it ends the poll through
+            // `windowOpen`.
             Thread {
                 while (windowOpen && !delivered) {
                     val captured = capture()
@@ -240,6 +296,19 @@ internal object SpotifyLoginWebView {
         val spKey = scoped["sp_key"]?.takeIf { it.isNotBlank() }
             ?: store["sp_key"]?.value.orEmpty()
         return Capture(spDc, spKey)
+    }
+
+    /**
+     * True for a Google sign-in URL.
+     *
+     * Google's `disallowed_useragent` answer is served from a Google host
+     * (`accounts.google.com`), and that page is the one the user can never get
+     * past — so seeing it is the signal that this window's sign-in is over.
+     */
+    private fun isGoogleSignInHost(location: String?): Boolean {
+        if (location.isNullOrBlank()) return false
+        val host = runCatching { URI(location).host }.getOrNull()?.lowercase() ?: return false
+        return host == "google.com" || host.endsWith(".google.com")
     }
 
     private fun HttpCookie.isSpotifyCookie(): Boolean =

@@ -688,6 +688,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "spotify_connected_as" to "已連線為 %s",
         "spotify_cookie_hint" to "在瀏覽器登入 open.spotify.com，然後複製 sp_dc cookie。sp_key 為選填。",
         "spotify_desc" to "把 Spotify 播放清單與喜歡的歌曲帶過來。每首歌都會在 YouTube Music 上搜尋，最接近的結果會存到本機播放清單。",
+        "spotify_google_blocked" to "Google 不允許在應用程式視窗內登入。請按「重試」，然後用你的 Spotify 電子郵件與密碼登入（若帳號是用 Google 建立的，請先在 spotify.com 設定密碼）。",
         "spotify_import" to "從 Spotify 匯入",
         "spotify_import_done" to "完成：%d / %d 首成功配對",
         "spotify_import_selected" to "匯入所選",
