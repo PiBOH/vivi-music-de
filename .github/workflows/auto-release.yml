@@ -72,10 +72,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    # The tag is what the Telegram job below hands to the bot, so it is
-    # published to the other job instead of being resolved twice.
-    outputs:
-      tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -239,28 +235,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # The bot that posts the release to the Telegram channel is a workflow in
-  # ANOTHER repository (`PiBOH/vivimusicde_bot`), so nothing here can trigger it
-  # with the job token and its own hourly poll was the only thing that ever
-  # noticed a new release — which meant a post could land hours late (GitHub's
-  # scheduler is best-effort and this repo was getting roughly one run every
-  # 3-5 hours). The release is therefore pushed to it the moment it exists.
-  #
-  # What pushes it is `call-vmde-bot.yml`, not an inline dispatch: that file is
-  # the one place that knows how to talk to the bot (the cross-repository PAT,
-  # which the job token cannot stand in for) and it carries the bot's hourly
-  # backstop as well, so the trigger lives in a single file instead of being
-  # spelled out again here. This job only hands it the tag.
-  #
-  # The bot's own dedupe cache makes this safe to repeat — it posts a given tag
-  # at most once, so a dispatch for a tag it already posted is a no-op, and the
-  # poll backstop can never double-post.
-  notify-bot:
-    name: Hand the release to the Telegram bot
-    needs: release
-    if: ${{ needs.release.result == 'success' }}
-    uses: ./.github/workflows/call-vmde-bot.yml
-    with:
-      release_tag: ${{ needs.release.outputs.tag }}
-    secrets: inherit
+  # The Telegram bot is deliberately NOT started from here any more. The owner
+  # triggers it by hand when they want a release posted, so a published release
+  # must never launch the bot on its own. The bot's own hourly poll in
+  # `call-vmde-bot.yml` (a schedule in THIS repository, no cross-repository
+  # token needed for the poll path itself) remains the automatic fallback.
 

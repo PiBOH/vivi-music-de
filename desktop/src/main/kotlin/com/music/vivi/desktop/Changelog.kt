@@ -17,8 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -33,13 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -48,6 +41,8 @@ data class ChangelogRelease(
     val version: String,
     val date: String,
     val sections: List<ChangelogSection>,
+    /** The release's raw Markdown body, rendered in full by [MarkdownView]. */
+    val raw: String = "",
 )
 
 /** A Keep-a-Changelog section (Added / Fixed / Changed / …) and its bullets. */
@@ -83,6 +78,10 @@ object ChangelogLoader {
         var sectionTitle: String? = null
         val sectionItems = mutableListOf<String>()
         var currentItem: StringBuilder? = null
+        // Raw Markdown of the release being read, so the screen can render the
+        // whole body (headings, lists, links, tables, emoji) instead of a
+        // stripped-down summary.
+        val rawLines = mutableListOf<String>()
 
         fun endItem() {
             currentItem?.let { sb ->
@@ -102,9 +101,14 @@ object ChangelogLoader {
 
         fun endRelease() {
             endSection()
-            val v = version ?: return
-            releases.add(ChangelogRelease(v, date, sections.toList()))
+            val v = version
+            if (v == null) {
+                rawLines.clear()
+                return
+            }
+            releases.add(ChangelogRelease(v, date, sections.toList(), rawLines.joinToString("\n").trim()))
             sections.clear()
+            rawLines.clear()
             version = null
             date = ""
         }
@@ -124,6 +128,9 @@ object ChangelogLoader {
                 }
                 continue
             }
+
+            // Everything after the release heading belongs to its raw body.
+            if (version != null) rawLines.add(rawLine)
 
             sectionRegex.matchEntire(line)?.let { m ->
                 if (version != null) {
@@ -150,56 +157,6 @@ object ChangelogLoader {
 
         return releases
     }
-}
-
-/** Strips inline markdown (backticks / emphasis) so bullets read cleanly. */
-private fun cleanInline(text: String): String =
-    text.replace("`", "").replace("**", "")
-
-/**
- * Builds an annotated string for a changelog bullet, turning every "#N"
- * reference into a clickable link to the GitHub issue
- * (https://github.com/PiBOH/vivi-music-de/issues/N). The link URL always points
- * at the user's configured update source repo when it is the fork, otherwise
- * the original repo — so "Closes #2" stays clickable regardless of source.
- */
-internal fun issueLinks(
-    text: String,
-    color: Color,
-    onOpenUrl: (String) -> Unit,
-): Pair<androidx.compose.ui.text.AnnotatedString, (Int) -> Unit> {
-    val base = "https://github.com/${UpdateSource.repo()}/issues/"
-    val pattern = Regex("(^|[^\\w#])#(\\d+)")
-    val matches = pattern.findAll(text).toList()
-
-    val sb = buildAnnotatedString {
-        var pos = 0
-        for (m in matches) {
-            append(text.substring(pos, m.range.first))
-            val prefix = m.groupValues[1]
-            val number = m.groupValues[2]
-            append(prefix)
-            val start = length
-            withStyle(SpanStyle(color = color, fontWeight = FontWeight.Bold)) {
-                append("#$number")
-            }
-            addStringAnnotation(
-                tag = "LINK",
-                annotation = base + number,
-                start = start,
-                end = length,
-            )
-            pos = m.range.last + 1
-        }
-        if (pos < text.length) append(text.substring(pos))
-    }
-
-    val onClick: (Int) -> Unit = { offset ->
-        sb.getStringAnnotations(tag = "LINK", start = offset, end = offset)
-            .firstOrNull()
-            ?.let { onOpenUrl(it.item) }
-    }
-    return sb to onClick
 }
 
 /**
@@ -296,23 +253,22 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
                 Spacer(Modifier.height(16.dp))
             }
 
-            // Selected release details — each section is a titled block, each
-            // bullet is a paragraph line in its own SelectableText (so the body
-            // never collapses onto itself or overlaps). Issue links (#N) stay
-            // clickable; the text is selectable like every error in the app.
+            // Selected release details: the release body is rendered as real
+            // Markdown (headings, lists, links, code, tables, emoji) through the
+            // shared renderer, instead of the stripped-down bullet list it used
+            // to be. Issue links (#N) stay clickable.
             Column(
                 Modifier
                     .weight(1f)
                     .fillMaxHeight()
                     .verticalScroll(rememberScrollState()),
             ) {
-                val secColor = MaterialTheme.colorScheme.primary
                 Spacer(Modifier.height(16.dp))
                 Text(
                     selected.version,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = secColor,
+                    color = MaterialTheme.colorScheme.primary,
                 )
                 if (selected.date.isNotBlank()) {
                     Text(
@@ -325,67 +281,25 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider(Modifier.padding(vertical = 8.dp))
                 Spacer(Modifier.height(4.dp))
-                selected.sections.forEachIndexed { idx, section ->
-                    if (section.title.isNotBlank()) {
-                        Text(
-                            section.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = secColor,
-                            modifier = Modifier.padding(top = if (idx == 0) 0.dp else 10.dp, bottom = 4.dp),
-                        )
-                    }
-                    section.items.forEach { item ->
-                        val (annotated, onClick) = issueLinks(
-                            cleanInline(item),
-                            color = MaterialTheme.colorScheme.primary,
-                            onOpenUrl = { openUrl(it) },
-                        )
-                        SelectionContainer {
+                if (selected.raw.isNotBlank()) {
+                    MarkdownView(selected.raw, onOpenUrl = { openUrl(it) })
+                } else {
+                    // Fallback for a release parsed without a raw body.
+                    selected.sections.forEachIndexed { idx, section ->
+                        if (section.title.isNotBlank()) {
                             Text(
-                                text = annotated,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    lineHeight = 20.sp,
-                                ),
-                                modifier = Modifier.padding(vertical = 2.dp),
-                                textAlign = TextAlign.Start,
+                                section.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = if (idx == 0) 0.dp else 10.dp, bottom = 4.dp),
                             )
                         }
-                        // Non-selectable click target for the #N link, so the
-                        // SelectionContainer around the body never swallows the
-                        // tap on an issue link and the link stays reachable.
-                        if (Regex("(^|[^\\w#])#(\\d+)").containsMatchIn(item)) {
-                            val linked = buildAnnotatedString {
-                                var pos = 0
-                                val pattern = Regex("(^|[^\\w#])#(\\d+)")
-                                for (m in pattern.findAll(item)) {
-                                    append(item.substring(pos, m.range.first))
-                                    pos = m.range.first + m.groupValues[1].length
-                                    withStyle(SpanStyle(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        fontWeight = FontWeight.Bold,
-                                    )) {
-                                        append(item.substring(pos, m.range.last + 1))
-                                    }
-                                    pos = m.range.last + 1
-                                }
-                                if (pos < item.length) append(item.substring(pos))
-                            }
-                            ClickableText(
-                                text = linked,
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textDecoration = null,
-                                    fontWeight = FontWeight.Normal,
-                                    fontStyle = androidx.compose.ui.text.font.FontStyle.Normal,
-                                ),
-                                modifier = Modifier.padding(vertical = 2.dp),
-                                onClick = onClick,
-                            )
+                        section.items.forEach { item ->
+                            Text(item, style = MaterialTheme.typography.bodyMedium)
                         }
+                        Spacer(Modifier.height(6.dp))
                     }
-                    Spacer(Modifier.height(6.dp))
                 }
                 Spacer(Modifier.height(16.dp))
             }

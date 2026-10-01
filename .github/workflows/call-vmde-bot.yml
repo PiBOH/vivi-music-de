@@ -1,24 +1,25 @@
 name: Call the VMDE bot
 
-# The one place that tells the Telegram bot to start.
+# The Telegram bot is a workflow in ANOTHER repository (`PiBOH/vivimusicde_bot`),
+# and the job token of a run here cannot reach another repository, so the call
+# has to go through a cross-repository token: `BOT_DISPATCH_TOKEN`, a classic PAT
+# with the `repo` AND `workflow` scopes (dispatching a workflow is a
+# `workflow`-scoped call; a token without it answers 401/403 even though it can
+# read the repo), or a fine-grained one with "Actions: read and write" on the bot
+# repository.
 #
-# The bot is a workflow in ANOTHER repository (`PiBOH/vivimusicde_bot`), and the
-# job token of a run here cannot reach another repository, so the call has to go
-# through a cross-repository token: `BOT_DISPATCH_TOKEN`, a classic PAT with the
-# `repo` AND `workflow` scopes (dispatching a workflow is a `workflow`-scoped
-# call; a token without it answers 401/403 even though it can read the repo), or
-# a fine-grained one with "Actions: read and write" on the bot repository.
+# This file is the ONLY place that talks to the bot, and it has exactly two
+# entries:
 #
-# Keeping that single dispatch here, instead of inline in `Auto Release`, gives
-# the bot exactly two entries and nothing else in the repositories has to know
-# how to talk to it:
+#   * the manual one (`workflow_dispatch`), which is how the owner asks for a
+#     post now, optionally naming a release tag;
+#   * the schedule below, which asks the bot, on its own, to look for a release
+#     to post: the backstop for a manual release, a release the owner did not
+#     post by hand, or a poll the bot's own cron did not get to run.
 #
-#   * a release hands the bot its tag the second the assets are uploaded
-#     (`Auto Release` -> `notify-bot` -> this file, `workflow_call`), which is
-#     the prompt path;
-#   * the schedule below asks the bot, every hour, to look for a release to post
-#     on its own — the backstop for a missed dispatch, a manual release or a
-#     poll that the bot's own cron did not get to run.
+# `Auto Release` deliberately does NOT call this workflow any more: a published
+# release must not launch the bot by itself (the owner posts by hand when they
+# want to). The schedule is the only automatic trigger left.
 #
 # The bot's `upload-release.yml` keeps a per-tag dedupe cache, so a tag is
 # posted at most once however many of these arrive, and its own hourly cron
@@ -26,25 +27,19 @@ name: Call the VMDE bot
 #
 # GitHub's scheduler is best-effort, not a promise: measured over several days,
 # an hourly cron in this repository and in the bot repository was delivering
-# roughly one run every 3-5 hours. Nothing here can change that — the hour below
-# is requested anyway, and the release dispatch is what makes a post prompt.
+# roughly one run every 3-5 hours, because under load the scheduler queues and
+# stretches every interval. A `*/15` request is the honest response to that: a
+# delay of a few hours turns "every 15 minutes" into "roughly once an hour",
+# which is what was wanted all along, and the runs that do land are cheap (a
+# single `gh workflow run`). Five minutes is GitHub's floor for a cron, so 15 is
+# a safe value; the header above stays truthful about GitHub only promising
+# best-effort, never an exact cadence.
 #
-# This job is deliberately not best-effort either: a token that lost access to
-# the bot repository has to show up as a failed run rather than be quietly
-# covered by the two polls.
+# This job is deliberately not best-effort in one respect: a token that lost
+# access to the bot repository has to show up as a failed run rather than be
+# quietly covered by the bot's own poll.
 
 on:
-  workflow_call:
-    inputs:
-      release_tag:
-        description: 'Release tag to post (empty lets the bot resolve the newest release)'
-        required: false
-        type: string
-        default: ''
-    secrets:
-      BOT_DISPATCH_TOKEN:
-        description: 'PAT allowed to dispatch workflows in PiBOH/vivimusicde_bot (scopes: repo, workflow)'
-        required: true
   workflow_dispatch:
     inputs:
       release_tag:
@@ -53,9 +48,9 @@ on:
         type: string
         default: ''
   schedule:
-    # Every hour, exactly as asked. See the note above about how much of that
-    # GitHub actually delivers.
-    - cron: '0 * * * *'
+    # Every 15 minutes, which GitHub stretches to roughly hourly under load.
+    # See the note above for why.
+    - cron: '*/15 * * * *'
 
 permissions:
   contents: read
@@ -72,9 +67,9 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
-          # A tag from a release is posted within seconds; an empty one leaves
-          # the bot to resolve the newest release itself (the same poll its own
-          # cron runs), which is what the hourly schedule wants.
+          # A named tag is posted directly; an empty one leaves the bot to
+          # resolve the newest release itself (the same poll its own cron runs),
+          # which is what the schedule wants.
           if [[ -n "$RELEASE_TAG" ]]; then
             gh workflow run upload-release.yml \
               --repo PiBOH/vivimusicde_bot \

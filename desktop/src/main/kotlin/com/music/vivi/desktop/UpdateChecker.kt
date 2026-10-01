@@ -36,7 +36,13 @@ sealed interface UpdateStatus {
     data object Idle : UpdateStatus
     data object Checking : UpdateStatus
     data object UpToDate : UpdateStatus
-    data class Available(val version: String, val url: String, val asset: UpdateAsset? = null) : UpdateStatus
+    data class Available(
+        val version: String,
+        val url: String,
+        val asset: UpdateAsset? = null,
+        /** The release's Markdown body, shown under the update controls. */
+        val body: String? = null,
+    ) : UpdateStatus
     data class Failed(val message: String) : UpdateStatus
 }
 
@@ -258,12 +264,22 @@ object UpdateChecker {
                 .firstOrNull()
 
             if (withAsset != null) {
-                return UpdateStatus.Available(withAsset.first, withAsset.second.htmlUrl, withAsset.third)
+                return UpdateStatus.Available(
+                    withAsset.first,
+                    withAsset.second.htmlUrl,
+                    withAsset.third,
+                    body = withAsset.second.body.takeIf { it.isNotBlank() },
+                )
             }
             // A newer release exists but none of them has an installer asset for
             // this OS — surface the version anyway so the UI can offer the
             // release page instead of a broken in-app download.
-            UpdateStatus.Available(newest.first, newest.second.htmlUrl, null)
+            UpdateStatus.Available(
+                newest.first,
+                newest.second.htmlUrl,
+                null,
+                body = newest.second.body.takeIf { it.isNotBlank() },
+            )
         }
     } catch (e: Exception) {
         UpdateStatus.Failed(e.message ?: e::class.simpleName ?: "error")

@@ -7,7 +7,6 @@ import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Hyperlink
-import javafx.scene.control.Label
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.layout.Background
 import javafx.scene.layout.BackgroundFill
@@ -70,6 +69,61 @@ internal object SpotifyLoginWebView {
         DesktopOs.MACOS -> "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         DesktopOs.LINUX -> "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     }
+
+    /**
+     * The `navigator.userAgentData.platform` a real desktop Chrome would report.
+     */
+    private val platformName: String = when (Platform.os) {
+        DesktopOs.WINDOWS -> "Windows"
+        DesktopOs.MACOS -> "macOS"
+        DesktopOs.LINUX -> "Linux"
+    }
+
+    /**
+     * Best-effort JavaScript shim applied to every page the window loads, on top
+     * of the real Chrome user agent above.
+     *
+     * Google answers any embedded browser it recognises with
+     * `disallowed_useragent` ("This browser or app may not be secure"). The UA
+     * is already a desktop Chrome string; this adds the JavaScript surface a
+     * desktop Chrome exposes and an embedded engine does not (no
+     * `navigator.webdriver`, a `window.chrome` object, `navigator.userAgentData`,
+     * plugins, mime types and languages). It is a mitigation, not a guarantee:
+     * Google can still identify the engine, and when it does the window keeps
+     * its honest `spotify_google_blocked` message and the Retry link.
+     */
+    private val googleShimScript: String = """
+        (function () {
+          try {
+            Object.defineProperty(navigator, 'webdriver', { get: function () { return false; } });
+            if (!window.chrome) { window.chrome = {}; }
+            if (!window.chrome.runtime) { window.chrome.runtime = {}; }
+            if (!window.chrome.app) { window.chrome.app = { isInstalled: false }; }
+            if (!navigator.plugins || navigator.plugins.length === 0) {
+              Object.defineProperty(navigator, 'plugins', { get: function () { return [1, 2, 3, 4, 5]; } });
+            }
+            if (!navigator.mimeTypes || navigator.mimeTypes.length === 0) {
+              Object.defineProperty(navigator, 'mimeTypes', { get: function () { return [1, 2]; } });
+            }
+            if (!navigator.languages || navigator.languages.length === 0) {
+              Object.defineProperty(navigator, 'languages', { get: function () { return ['en-US', 'en']; } });
+            }
+            if (!navigator.userAgentData) {
+              Object.defineProperty(navigator, 'userAgentData', { get: function () {
+                return {
+                  brands: [
+                    { brand: 'Chromium', version: '131' },
+                    { brand: 'Google Chrome', version: '131' },
+                    { brand: 'Not?A_Brand', version: '24' }
+                  ],
+                  mobile: false,
+                  platform: '$platformName'
+                };
+              } });
+            }
+          } catch (e) {}
+        })();
+    """.trimIndent()
 
     @Volatile private var windowOpen = false
     @Volatile private var unavailable = false
@@ -143,13 +197,9 @@ internal object SpotifyLoginWebView {
     private fun createWindow(language: String, callback: (Capture?) -> Unit) {
         try {
             val stage = Stage()
-            val status = Label(Localization.get(language, "login_waiting")).apply {
-                // The message the block below writes is a whole sentence, not a
-                // status word: it has to wrap and take the room it needs.
-                isWrapText = true
-                maxWidth = Double.MAX_VALUE
-                HBox.setHgrow(this, Priority.ALWAYS)
-            }
+            // The header is dark: the status text is light and selectable, so
+            // it is readable on it and can be copied (see [selectableText]).
+            val status = selectableText(Localization.get(language, "login_waiting"), Color.web("#e6e1e5"))
             val spinner = ProgressIndicator().apply {
                 prefWidth = 18.0
                 prefHeight = 18.0
@@ -190,13 +240,14 @@ internal object SpotifyLoginWebView {
             }
             stage.show()
 
-            // A Spotify profile created with Google cannot be signed into from
-            // here at all: Google answers any embedded browser with
+            // A Spotify profile created with Google is the hard case: Google
+            // answers an embedded browser it recognises with
             // `disallowed_useragent` ("This browser or app may not be secure")
-            // instead of its sign-in page, and the browser checks it does that
-            // on cannot be faked from a WebView. The window says what happened
-            // and hands the Spotify form back, which is the one way in that
-            // Google has no say in.
+            // instead of its sign-in page. The window mitigates that (the real
+            // Chrome UA plus the JavaScript shim applied on every load, see
+            // [googleShimScript]), but it is not a guarantee: when Google still
+            // refuses, the window says what happened and hands the Spotify form
+            // back, which is the one way in that Google has no say in.
             browser.engine.locationProperty().addListener { _, _, location ->
                 if (!isGoogleSignInHost(location)) return@addListener
                 AppLog.log("spotify", "Google refused its sign-in page inside the window ($location)")
@@ -229,6 +280,10 @@ internal object SpotifyLoginWebView {
                         browser.resize(browser.width + 1.0, browser.height)
                         browser.resize(browser.width - 1.0, browser.height)
                         browser.requestLayout()
+                        // Re-apply the anti-WebView shim on every loaded page:
+                        // the sign-in flow navigates between documents, and the
+                        // shim does not survive a navigation.
+                        if (loaded) runCatching { browser.engine.executeScript(googleShimScript) }
                     }
                 }
             }

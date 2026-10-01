@@ -2,7 +2,6 @@ package com.music.vivi.desktop
 
 import javafx.application.Platform as FxPlatform
 import javafx.scene.Scene
-import javafx.scene.control.Label
 import javafx.scene.control.ProgressIndicator
 import javafx.scene.layout.Background
 import javafx.scene.layout.BackgroundFill
@@ -13,7 +12,6 @@ import javafx.scene.layout.VBox
 import javafx.scene.web.WebView
 import javafx.geometry.Insets
 import javafx.scene.paint.Color
-import javafx.scene.text.Font
 import javafx.stage.Stage
 
 import java.awt.Desktop
@@ -111,7 +109,9 @@ object LoginWebView {
     private fun createWindow(language: String, callback: (Capture?) -> Unit) {
         try {
             val stage = Stage()
-            val status = Label(Localization.get(language, "login_waiting"))
+            // The header is dark: its text is set light, and a plain label could
+            // not be selected (see [selectableText]).
+            val status = selectableText(Localization.get(language, "login_waiting"), Color.web("#e6e1e5"))
             val spinner = ProgressIndicator().apply {
                 prefWidth = 18.0
                 prefHeight = 18.0
@@ -120,12 +120,15 @@ object LoginWebView {
                 padding = Insets(10.0, 14.0, 10.0, 14.0)
                 background = Background(BackgroundFill(Color.web("#1f1f2e"), CornerRadii.EMPTY, Insets.EMPTY))
             }
+            // The numbered steps sit on a light bar: dark text on light, and
+            // selectable so they can be copied.
             val steps = VBox(6.0).apply {
                 padding = Insets(10.0, 14.0, 6.0, 14.0)
+                background = Background(BackgroundFill(Color.web("#f3eef9"), CornerRadii.EMPTY, Insets.EMPTY))
                 children.addAll(
-                    Label("1. " + Localization.get(language, "login_step1")).apply { font = Font.font(13.0) },
-                    Label("2. " + Localization.get(language, "login_step2")).apply { font = Font.font(13.0) },
-                    Label("3. " + Localization.get(language, "login_step3")).apply { font = Font.font(13.0); isWrapText = true },
+                    selectableText("1. " + Localization.get(language, "login_step1"), Color.web("#1c1b1f"), 13.0),
+                    selectableText("2. " + Localization.get(language, "login_step2"), Color.web("#1c1b1f"), 13.0),
+                    selectableText("3. " + Localization.get(language, "login_step3"), Color.web("#1c1b1f"), 13.0),
                 )
             }
             val browser = WebView().apply {

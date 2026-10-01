@@ -288,6 +288,22 @@ dependencies there, or you break the desktop build.
   never overrides explicit user requests, the trust-boundary/error-handling
   rules, or the localization rule in §6.
 
+### Never use the long dash (em dash) - MANDATORY
+
+Never use the **long dash** (the em dash, the character `—`, also written as
+`&mdash;` or `&#8212;`) in any text you write: chat replies, commit messages,
+commit bodies, code and KDoc comments, documentation, release notes, changelog
+entries, issue bodies and localization strings. This is a standing preference of
+the project owner, not a typographic detail.
+
+Use instead a plain hyphen-minus `-`, a comma, a colon, parentheses or a full
+stop, whichever fits the sentence. Example: write `Spotify login - manual
+cookies` and **not** `Spotify login — manual cookies`.
+
+Existing text that already contains a long dash and is not being edited is left
+as it is: do not go looking for em dashes to replace. The rule governs new text
+and the lines you actually touch.
+
 ### Installer size and the icon-minimization task
 
 The desktop installers ship a **minimized Material-icons jar**. The extended

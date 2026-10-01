@@ -8,6 +8,8 @@ table below to understand what happened and how to try to fix it.
   on screen or in the playback logs (Settings → Content → Playback logs).
 - **VIVI codes (E1000+)** are VIVI-specific errors (login, sync, backup…)
   and are shown with the `E` prefix in the error dialog.
+- **Spotify codes (SPOT-*)** come from the Spotify sign-in and import (see the
+  table at the end); they are shown on the import screen or in `spotify.log`.
 
 ---
 
@@ -86,6 +88,37 @@ table below to understand what happened and how to try to fix it.
 | E1032 | BROWSE_BAD_REQUEST | A browse request reached the server but was rejected as invalid: `400 INVALID_ARGUMENT — Request contains an invalid argument` (`music.youtube.com/youtubei/v1/browse`). The session is fine — the request itself is wrong, typically a tabbed page opened without the selection params it requires (e.g. the library corpus root `FEmusic_library_corpus` instead of one of its browsable views such as `FEmusic_library_corpus_artists`). Before, such a failure was reported as E1031, which sent users to re-sign-in for a request problem. | Update VIVI (the wrong request is a bug on our side); if it appears on a specific page, report that page so its request can be fixed. |
 | E1033 | LOGIN_INFO_MISSING | The embedded sign-in captured a session without the `LOGIN_INFO` cookie. The session itself is valid, but YouTube issues that cookie for its **own** domain and the sign-in window is opened on `accounts.google.com` (with `music.youtube.com` as the post-login target), so the cookie store can come back with the whole Google session and no `LOGIN_INFO`. Validating with such a header answers `401 UNAUTHENTICATED`, which looks exactly like an expired session — while the very same cookies pasted by hand include `LOGIN_INFO` and work. | Update VIVI: the sign-in window now visits `www.youtube.com` once (that is where the cookie is issued) before handing the session over, and only falls back to a partial hand-over if the cookie never appears. Until you update, use the manual cookie method (Settings → Account), which always carries `LOGIN_INFO`. |
 | E1034 | PLAYLIST_DUPLICATED_BY_SYNC | Every playlist that also lives on YouTube Music appeared **two or more times** in the playlist list after pairing the phone with the desktop. The identity of a playlist across the two apps is its **account** id, but both apps generate their own local row id (`LP` + 8 characters) and that is what the sync sent, so the copy arriving from the paired device could not be recognised as the playlist already there: each side imported the other's copy, and each sync round could import it again. The duplicates could not even be cleaned up by hand, because a local playlist that knows its account id is deleted **on YouTube Music** together with it. | Update VIVI on **both** devices (desktop and the paired app): the account's playlist id now travels with the playlist (`remoteId`), so a mirrored copy is merged into the single local playlist instead of being imported, and the copies that a pairing already created are collapsed automatically at startup. **That cleanup is local only** — the extra copies are removed here and never from your YouTube Music account; it is recorded in `playlists.log` (`repair: …`). Only the delete you perform yourself (and a rename, and a song you add) still reaches the account. |
+
+## Spotify login error codes (SPOT-*)
+
+The Spotify import (Settings → Import from Spotify) connects by reading the
+`sp_dc` cookie the sign-in window captures, turning it into an access token
+(`SpotifyAuth`) and talking to the web player with it. These codes cover every
+failure that flow can produce. "Where" is the surface that shows the message:
+**window** (the sign-in window's header), **screen** (the red error line on the
+import screen) or **log** (the `spotify` tag in the app log).
+
+| Code | Where | What it means | How to try to fix it |
+| --- | --- | --- | --- |
+| SPOT-001 | screen | The embedded sign-in window is unavailable, so cookies have to be pasted (`login_webview_unavailable`). | JavaFX could not start, or there is no display. The screen opens the manual `sp_dc` / `sp_key` paste on its own: paste the cookie from a browser session on `open.spotify.com`. |
+| SPOT-002 | window | Google refused its sign-in page inside the window (`spotify_google_blocked`). | The account was created with Google. Set a password on `spotify.com` (the on-screen button opens the password-reset page), then sign in with the email and password; `Retry` reloads Spotify's own form. |
+| SPOT-003 | - | The sign-in window was closed without finishing (no message). | Reopen the window and complete the sign-in, or paste the cookie manually. |
+| SPOT-004 | screen | The manual `sp_dc` field is empty (the Connect button stays disabled). | Paste a non-empty `sp_dc`; the `sp_key` is optional. |
+| SPOT-005 | screen | `Received anonymous token - sp_dc cookie is invalid or expired`. | The cookie is wrong, expired or belongs to no session. Sign in again in the window, or paste a fresh `sp_dc` from a logged-in browser. |
+| SPOT-006 | screen | `Failed to fetch TOTP secret from gist: <reason>`. | The token endpoint needs a TOTP whose secret is fetched at sign-in time; that fetch failed. Check the connection and retry. |
+| SPOT-007 | screen | `Gist has no files`. | The TOTP-secret gist answered empty (it changed shape upstream). Retry later. |
+| SPOT-008 | screen | `No nuance data found in gist`. | The gist answered but held no usable nuance entry. Retry later. |
+| SPOT-009 | screen | `Failed to fetch Spotify server time: <reason>`. | The TOTP is computed against Spotify's clock; that request failed. Check the connection and retry. |
+| SPOT-010 | screen | `HTTP <status>: <body>` from the token endpoint. | `401`: the cookie (`SPOT-005`). `429`: rate limited, wait. `5xx`: Spotify side, retry later. |
+| SPOT-011 | screen | The stored session expired and could not be refreshed (`<message>`). | The app disconnects rather than keep a dead session: connect again (window or manual paste). |
+| SPOT-012 | screen | Loading the account failed (`<message>`) - profile, Liked Songs count or a playlists page. | Retry with Refresh; a repeated `401` means the cookie is dead (`SPOT-005`). |
+| SPOT-013 | screen | The import itself failed (`<message>`) - reading a source, searching YouTube Music, or writing the local playlist. | Retry the import. A single unmatched track is not an error: it just lowers the matched figure. |
+
+`SPOT-002` is the only error the sign-in window itself raises; the others reach
+the screen or the log. Signing in with a Google-created account can never
+succeed inside the window - Google refuses embedded browsers - so `SPOT-002` is
+the honest answer, and the password-reset button plus the manual paste are the
+two ways past it.
 
 ---
 

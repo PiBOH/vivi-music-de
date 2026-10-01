@@ -6431,6 +6431,23 @@ fun UpdateSection(
         is UpdateStatus.Idle -> Unit
     }
 
+    // The available release's own notes, rendered as Markdown (the same renderer
+    // the About → Changelog screen uses), so the update can be judged before it
+    // is downloaded. The section below the update controls is the natural place
+    // for it.
+    (status as? UpdateStatus.Available)?.body?.takeIf { it.isNotBlank() }?.let { body ->
+        Text(
+            Localization.get(language, "latest_release"),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        MarkdownView(
+            markdown = body,
+            modifier = Modifier.padding(top = 4.dp),
+            onOpenUrl = { openUrl(it) },
+        )
+    }
+
     openError?.let {
         SelectionContainer { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
     }

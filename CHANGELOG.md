@@ -11,6 +11,20 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.9-beta] - 2026-10-01
+
+### ✨ Added
+- [DE] **The changelog is rendered as real Markdown now, emoji included.** About → Changelog showed the selected release through a renderer that stripped the markers it did not understand (`cleanInline` removed `**` and backticks) and dropped everything else, which is why the body looked plain. The whole release body now goes through a new, dependency-free Markdown renderer (`desktop/.../Markdown.kt`): headings, bold, italic, strikethrough, inline and fenced code, clickable links, issue references (`#N`), nested bullet and numbered lists, block quotes, tables, horizontal rules and emoji. A construct it does not know is shown as plain text instead of breaking, so nothing can make the screen crash.
+- [DE] **An available update shows its own release notes in the section below the update controls.** Settings → Updates now renders the release's Markdown body under the download button, so what an update contains can be read *before* it is downloaded instead of only after installing it. The update check carries the release body (`UpdateStatus.Available.body`) and the same renderer draws it, keeping the two changelog surfaces in step.
+- [DE] **`ERRORS.md` gives the Spotify sign-in and import failures stable codes (`SPOT-001` … `SPOT-013`).** Each code names where the message appears (window, screen or log), its cause and its remedy, so a report can point at an exact failure instead of pasting a sentence, and the code can be searched in the codebase.
+
+### 🔧 Changed
+- **`Auto Release` no longer starts the Telegram bot.** The `notify-bot` job is gone: the owner posts by hand when a release should be announced, so a published release cannot launch the bot on its own any more. The only automatic trigger left is the schedule in `call-vmde-bot.yml`, which is now every 15 minutes (`*/15 * * * *`) instead of hourly: GitHub runs scheduled workflows best-effort and stretches the interval under load (an hourly cron was delivering roughly one run every 3-5 hours here), so a 15-minute request is what actually lands near hourly.
+- [DE] **The sign-in windows' texts are readable and selectable.** The status line (both windows) and the numbered steps (YouTube) were plain labels: on the dark header their default dark text was unreadable, and a label cannot be selected. They are now a transparent, non-editable, selectable control with explicit contrast (light text on the dark header, dark text on the light steps bar) whose height follows the text, so a long message wraps instead of growing an inner scrollbar.
+
+### 🐛 Fixed
+- [DE] **The anti-embedded-browser check is now attempted, not only reported.** On top of the real Chrome user agent the Spotify sign-in window injects a best-effort JavaScript shim on every page it loads: `navigator.webdriver` reports false, a `window.chrome` object exists, and `navigator.userAgentData`, plugins, mime types and languages match a desktop Chrome, so Google sees a normal browser where it used to see an embedded engine. **Constraint:** this is a mitigation, not a guarantee - Google can still identify the engine, and when it does the window keeps its honest `spotify_google_blocked` message and the Retry link instead of pretending.
+
 ## [6.0.8.5_DE-1.54.8-beta] - 2026-10-01
 
 ### Added
