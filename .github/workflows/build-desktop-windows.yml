@@ -72,7 +72,11 @@ jobs:
           if (-not (Test-Path (Join-Path $installDir 'ISCC.exe'))) {
             throw "Inno Setup $installerVersion was installed but $(Join-Path $installDir 'ISCC.exe') is missing"
           }
-          Write-Host "Installed Inno Setup $installerVersion: $installDir"
+          # `${installerVersion}` and not `$installerVersion:` — PowerShell reads a
+          # `:` right after a variable name as a scope qualifier and refuses to
+          # parse the script at all ("Variable reference is not valid"). That one
+          # colon is what failed this step in every release since it was added.
+          Write-Host "Installed Inno Setup ${installerVersion}: $installDir"
 
       - name: Compile branded installer
         id: custom_setup

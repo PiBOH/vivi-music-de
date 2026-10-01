@@ -22,7 +22,6 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -379,7 +378,8 @@ fun HomeScreen(
             val chipsList = page.chips.orEmpty().filter { !it.title.equals("Podcasts", ignoreCase = true) }
             if (chipsList.isNotEmpty()) {
                 item(key = "chips") {
-                    LazyRow(
+                    HorizontalCarousel(
+                        language = language,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp),
                     ) {
@@ -640,7 +640,7 @@ fun HomeScreen(
             }
 
             // The API can repeat the same mood/genre (identical browseId+title)
-            // across category sections; the LazyRow below is keyed by
+            // across category sections; the carousel below is keyed by
             // `browseId + title`, so duplicates must be removed or Compose
             // crashes with "key ... was already used" as soon as the row
             // scrolls into view.
@@ -959,7 +959,8 @@ fun SearchScreen(
                 YouTube.SearchFilter.FILTER_ARTIST to Localization.get(language, "filter_artists"),
                 YouTube.SearchFilter.FILTER_FEATURED_PLAYLIST to Localization.get(language, "filter_playlists"),
             )
-            LazyRow(
+            HorizontalCarousel(
+                language = language,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {

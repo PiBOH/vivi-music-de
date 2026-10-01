@@ -1,0 +1,126 @@
+# -*- coding: utf-8 -*-
+"""The Spotify "created with Google" guidance on the import screen itself.
+
+Google refuses to serve its sign-in page to any embedded browser
+(`disallowed_useragent` — "This browser or app may not be secure"), so a Spotify
+profile created with Google can never be signed in from the app's own window.
+The sign-in window says so when it happens; these two strings put the same
+answer where it can be acted on *before* pressing anything: the Import from
+Spotify screen states the two steps and links to the password reset page, so the
+user can set a password and then use Spotify's email/password form.
+
+Neither key has an Android resource behind it, so every language is written out
+here. A language left out falls back to English (`Localization.get`), which the
+audit then reports as a gap — never a raw key.
+
+"Google" and "Spotify" stay Latin on purpose: they are product names, and the
+audit's script check ignores Latin letters. The button label keeps the host name
+`spotify.com` for the same reason.
+"""
+
+EXTRA_TRANSLATIONS = {
+    "spotify_google_help": {
+        "ar": "هل أنشأت حسابك في Spotify عبر Google؟ يمنع Google تسجيل الدخول داخل نافذة التطبيق: افتح الصفحة أدناه، عيّن كلمة مرور، ثم سجّل الدخول من الأعلى ببريد Spotify وكلمة المرور.",
+        "as": "Google-ৰ জৰিয়তে Spotify একাউণ্ট বনাইছেনে? Google-এ এপৰ উইণ্ডোৰ ভিতৰত ছাইন ইন কৰিবলৈ নিদিয়ে: তলৰ পৃষ্ঠাখন খোলক, এটা পাছৱৰ্ড সাজি লওক, তাৰ পিছত ওপৰত Spotify ইমেইল আৰু পাছৱৰ্ডেৰে ছাইন ইন কৰক।",
+        "az": "Spotify hesabınızı Google ilə yaratmısınız? Google tətbiqin pəncərəsi daxilində girişə icazə vermir: aşağıdaki səhifəni açın, parol təyin edin və sonra yuxarıdan Spotify e-poçtunuzla və parolunuzla daxil olun.",
+        "be": "Стварылі ўліковы запіс Spotify праз Google? Google не дазваляе ўваходзіць унутры акна праграмы: адкрыйце старонку ніжэй, задайце пароль і ўвайдзіце вышэй праз электронную пошту і пароль Spotify.",
+        "bg": "Създаде ли акаунта си в Spotify с Google? Google не позволява влизане в прозореца на приложението: отворете страницата по-долу, задайте парола и влезте отгоре с имейла и паролата си за Spotify.",
+        "bn": "Google দিয়ে Spotify অ্যাকাউন্ট তৈরি করেছেন? Google অ্যাপের উইন্ডোর ভিতরে সাইন-ইন করতে দেয় না: নিচের পৃষ্ঠাটি খুলুন, একটি পাসওয়ার্ড সেট করুন, তারপর উপরে Spotify ইমেল ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+        "bs": "Jesi li račun na Spotifyju napravio preko Googlea? Google ne dozvoljava prijavu unutar prozora aplikacije: otvori stranicu ispod, postavi lozinku i zatim se prijavi iznad svojim Spotify e-mailom i lozinkom.",
+        "ca": "Has creat el compte de Spotify amb Google? Google no permet iniciar sessió dins de la finestra de l'aplicació: obre la pàgina de sota, defineix una contrasenya i després inicia sessió a dalt amb el correu i la contrasenya de Spotify.",
+        "cs": "Vytvořil jsi účet na Spotify přes Google? Google neumožňuje přihlášení v okně aplikace: otevři stránku níže, nastav si heslo a pak se přihlas nahoře e-mailem a heslem k Spotify.",
+        "de": "Konto bei Spotify mit Google erstellt? Google erlaubt keine Anmeldung im Fenster der App: Öffne die Seite unten, lege ein Passwort fest und melde dich dann oben mit deiner Spotify-E-Mail und deinem Passwort an.",
+        "el": "Δημιούργησες τον λογαριασμό σου στο Spotify με Google; Το Google δεν επιτρέπει τη σύνδεση μέσα στο παράθυρο της εφαρμογής: άνοιξε τη σελίδα παρακάτω, όρισε κωδικό και μετά συνδέσου παραπάνω με το email και τον κωδικό σου στο Spotify.",
+        "es": "¿Creaste tu cuenta de Spotify con Google? Google no permite iniciar sesión dentro de la ventana de la aplicación: abre la página de abajo, define una contraseña y luego inicia sesión arriba con tu correo y contraseña de Spotify.",
+        "et": "Kas lõid Spotify konto Google'iga? Google ei luba rakenduse aknas sisse logida: ava allolev leht, määra parool ja logi seejärel ülal sisse Spotify e-posti ja parooliga.",
+        "eu": "Spotify kontua Google-rekin sortu duzu? Googlek ez du aplikazioaren leihoan saioa hasten uzten: ireki beheko orria, ezarri pasahitz bat eta gero hasi saioa goian Spotify-ko posta eta pasahitzarekin.",
+        "fa": "‏حساب Spotify را با Google ساخته‌اید؟ Google اجازهٔ ورود در پنجرهٔ برنامه را نمی‌دهد: صفحهٔ زیر را باز کنید، یک رمز تعیین کنید و سپس از بالا با ایمیل و رمز Spotify وارد شوید.",
+        "fi": "Loitko Spotify-tilisi Googlella? Google ei salli kirjautumista sovelluksen ikkunassa: avaa alla oleva sivu, aseta salasana ja kirjaudu sitten ylhäällä Spotify-sähköpostillasi ja salasanallasi.",
+        "fil": "Ginawa mo ba ang Spotify account mo gamit ang Google? Hindi pinapayagan ng Google ang pag-sign in sa loob ng window ng app: buksan ang page sa ibaba, magtakda ng password, at pagkatapos ay mag-sign in sa itaas gamit ang iyong Spotify email at password.",
+        "fr": "Tu as créé ton compte Spotify avec Google ? Google n'autorise pas la connexion dans la fenêtre de l'application : ouvre la page ci-dessous, définis un mot de passe, puis connecte-toi ci-dessus avec ton e-mail et ton mot de passe Spotify.",
+        "hi": "Spotify खाता Google से बनाया है? Google ऐप की विंडो के भीतर साइन इन की अनुमति नहीं देता: नीचे दिया पृष्ठ खोलें, पासवर्ड सेट करें और फिर ऊपर अपने Spotify ईमेल और पासवर्ड से साइन इन करें।",
+        "hr": "Jesi li račun na Spotifyju izradio preko Googlea? Google ne dopušta prijavu unutar prozora aplikacije: otvori stranicu ispod, postavi lozinku i zatim se prijavi iznad svojim Spotify e-mailom i lozinkom.",
+        "hu": "Google-lal hoztad létre a Spotify-fiókodat? A Google nem engedélyezi a bejelentkezést az alkalmazás ablakában: nyisd meg a lenti oldalt, állíts be jelszót, majd jelentkezz be fent a Spotify e-mail-címeddel és jelszavaddal.",
+        "id": "Membuat akun Spotify dengan Google? Google tidak mengizinkan masuk di dalam jendela aplikasi: buka halaman di bawah, atur kata sandi, lalu masuk di atas dengan email dan kata sandi Spotify Anda.",
+        "it": "Hai creato l'account Spotify con Google? Google non consente l'accesso dentro la finestra dell'app: apri la pagina qui sotto, imposta una password e poi accedi qui sopra con l'email e la password di Spotify.",
+        "iw": "‏יצרת את חשבון Spotify עם Google? Google אינה מאפשרת התחברות בתוך חלון האפליקציה: פתח את העמוד למטה, קבע סיסמה ואחר כך התחבר למעלה עם הדוא\"ל והסיסמה של Spotify.",
+        "ja": "Spotify のアカウントを Google で作成しましたか？Google はアプリのウィンドウ内でのサインインを許可していません。下のページを開いてパスワードを設定し、上の Spotify メールアドレスとパスワードでサインインしてください。",
+        "km": "បង្កើតគណនី Spotify ដោយ Google មែនទេ? Google មិនអនុញ្ញាតឱ្យចូលក្នុងវីនដូរបស់កម្មវិធីទេ៖ បើកទំព័រខាងក្រោម កំណត់ពាក្យសម្ងាត់ បន្ទាប់មកចូលខាងលើដោយអ៊ីមែល និងពាក្យសម្ងាត់ Spotify របស់អ្នក។",
+        "ko": "Spotify 계정을 Google로 만드셨나요? Google은 앱 창 안에서의 로그인을 허용하지 않습니다. 아래 페이지를 열어 비밀번호를 설정한 뒤 위에서 Spotify 이메일과 비밀번호로 로그인하세요.",
+        "lt": "„Spotify“ paskyrą sukūrei su „Google“? „Google“ neleidžia prisijungti programos lango viduje: atidaryk žemiau esantį puslapį, nustatyk slaptažodį ir tada prisijunk viršuje su „Spotify“ el. paštu ir slaptažodžiu.",
+        "ml": "Spotify അക്കൗണ്ട് Google ഉപയോഗിച്ച് ഉണ്ടാക്കിയതാണോ? ആപ്പിന്റെ ജാലകത്തിനുള്ളിൽ സൈൻ ഇൻ ചെയ്യാൻ Google അനുവദിക്കുന്നില്ല: താഴെയുള്ള പേജ് തുറന്ന് ഒരു പാസ്‌വേഡ് സെറ്റ് ചെയ്ത ശേഷം മുകളിൽ Spotify ഇമെയിലും പാസ്‌വേഡും ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക.",
+        "ms": "Cipta akaun Spotify dengan Google? Google tidak membenarkan daftar masuk di dalam tetingkap aplikasi: buka halaman di bawah, tetapkan kata laluan, kemudian daftar masuk di atas dengan e-mel dan kata laluan Spotify anda.",
+        "nb": "Opprettet du Spotify-kontoen med Google? Google tillater ikke pålogging inne i appens vindu: åpne siden nedenfor, angi et passord og logg deretter inn ovenfor med Spotify-e-posten og passordet ditt.",
+        "nl": "Heb je je Spotify-account met Google aangemaakt? Google staat aanmelden in het venster van de app niet toe: open de pagina hieronder, stel een wachtwoord in en meld je daarna hierboven aan met je Spotify-e-mailadres en wachtwoord.",
+        "pa": "Spotify ਖਾਤਾ Google ਨਾਲ ਬਣਾਇਆ ਹੈ? Google ਐਪ ਦੀ ਵਿੰਡੋ ਵਿੱਚ ਸਾਈਨ ਇਨ ਕਰਨ ਦੀ ਆਗਿਆ ਨਹੀਂ ਦਿੰਦਾ: ਹੇਠਾਂ ਦਿੱਤਾ ਪੰਨਾ ਖੋਲ੍ਹੋ, ਪਾਸਵਰਡ ਸੈੱਟ ਕਰੋ ਅਤੇ ਫਿਰ ਉੱਪਰ ਆਪਣੇ Spotify ਈਮੇਲ ਅਤੇ ਪਾਸਵਰਡ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।",
+        "pl": "Konto Spotify utworzone przez Google? Google nie pozwala zalogować się w oknie aplikacji: otwórz stronę poniżej, ustaw hasło, a następnie zaloguj się powyżej swoim e-mailem i hasłem do Spotify.",
+        "pt": "Criaste a conta Spotify com o Google? O Google não permite iniciar sessão dentro da janela da aplicação: abre a página abaixo, define uma palavra-passe e depois inicia sessão acima com o teu e-mail e palavra-passe do Spotify.",
+        "pt-rBR": "Criou a conta do Spotify com o Google? O Google não permite entrar dentro da janela do aplicativo: abra a página abaixo, defina uma senha e depois entre acima com seu e-mail e senha do Spotify.",
+        "ro": "Ai creat contul Spotify cu Google? Google nu permite conectarea în fereastra aplicației: deschide pagina de mai jos, setează o parolă și apoi conectează-te mai sus cu e-mailul și parola de Spotify.",
+        "ru": "Создал аккаунт Spotify через Google? Google не разрешает вход внутри окна приложения: открой страницу ниже, задай пароль и затем войди выше с электронной почтой и паролем Spotify.",
+        "sk": "Vytvoril si účet na Spotify cez Google? Google neumožňuje prihlásenie v okne aplikácie: otvor stránku nižšie, nastav si heslo a potom sa prihlás hore e-mailom a heslom k Spotify.",
+        "sl": "Si račun na Spotifyju ustvaril z Googlom? Google ne dovoli prijave v oknu aplikacije: odpri stran spodaj, nastavi geslo in se nato prijavi zgoraj z e-pošto in geslom za Spotify.",
+        "sr": "Да ли си налог на Spotifyју направио преко Google-а? Google не дозвољава пријаву унутар прозора апликације: отвори страницу испод, постави лозинку и затим се пријави изнад својим Spotify имејлом и лозинком.",
+        "sv": "Skapade du ditt Spotify-konto med Google? Google tillåter inte inloggning i appens fönster: öppna sidan nedan, ange ett lösenord och logga sedan in ovan med din Spotify-e-post och ditt lösenord.",
+        "ta": "Spotify கணக்கை Google மூலம் உருவாக்கியதா? Google ஆப்பின் சாளரத்திற்குள் உள்நுழைவதை அனுமதிக்காது: கீழே உள்ள பக்கத்தைத் திறந்து கடவுச்சொல்லை அமைத்து, பிறகு மேலே உங்கள் Spotify மின்னஞ்சல் மற்றும் கடவுச்சொல்லுடன் உள்நுழையுங்கள்.",
+        "te": "Spotify ఖాతాను Googleతో సృష్టించారా? Google యాప్ విండోలో సైన్ ఇన్ చేయడాన్ని అనుమతించదు: క్రింది పేజీని తెరిచి పాస్‌వర్డ్ సెట్ చేసి, తర్వాత పైన మీ Spotify ఇమెయిల్ మరియు పాస్‌వర్డ్‌తో సైన్ ఇన్ చేయండి.",
+        "th": "สร้างบัญชี Spotify ด้วย Google ใช่ไหม? Google ไม่อนุญาตให้ลงชื่อเข้าใช้ภายในหน้าต่างของแอป: เปิดหน้าด้านล่าง ตั้งรหัสผ่าน แล้วลงชื่อเข้าใช้ด้านบนด้วยอีเมลและรหัสผ่าน Spotify ของคุณ",
+        "tr": "Spotify hesabını Google ile mi oluşturdun? Google, uygulamanın penceresi içinde oturum açmaya izin vermiyor: aşağıdaki sayfayı aç, bir şifre belirle ve sonra yukarıdan Spotify e-postan ve şifrenle oturum aç.",
+        "uk": "Створив акаунт Spotify через Google? Google не дозволяє вхід усередині вікна програми: відкрий сторінку нижче, задай пароль і потім увійди вгорі з електронною поштою та паролем Spotify.",
+        "vi": "Bạn tạo tài khoản Spotify bằng Google? Google không cho phép đăng nhập trong cửa sổ của ứng dụng: mở trang bên dưới, đặt mật khẩu rồi đăng nhập ở trên bằng email và mật khẩu Spotify của bạn.",
+        "zh-rCN": "你的 Spotify 账号是用 Google 创建的吗？Google 不允许在应用窗口内登录：请打开下面的页面，设置密码，然后用你的 Spotify 邮箱和密码在上方登录。",
+        "zh-rTW": "你的 Spotify 帳號是用 Google 建立的嗎？Google 不允許在應用程式視窗內登入：請開啟下方的頁面，設定密碼，然後用你的 Spotify 電子郵件與密碼在上方登入。",
+    },
+    "spotify_set_password": {
+        "ar": "عيّن كلمة مرور على spotify.com",
+        "as": "spotify.com-ত পাছৱৰ্ড সাজি লওক",
+        "az": "spotify.com saytında parol təyin edin",
+        "be": "Задаць пароль на spotify.com",
+        "bg": "Задай парола на spotify.com",
+        "bn": "spotify.com-এ পাসওয়ার্ড সেট করুন",
+        "bs": "Postavi lozinku na spotify.com",
+        "ca": "Defineix una contrasenya a spotify.com",
+        "cs": "Nastavit heslo na spotify.com",
+        "de": "Passwort auf spotify.com festlegen",
+        "el": "Όρισε κωδικό στο spotify.com",
+        "es": "Define una contraseña en spotify.com",
+        "et": "Määra parool saidil spotify.com",
+        "eu": "Ezarri pasahitz bat spotify.com-en",
+        "fa": "‏تعیین رمز در spotify.com",
+        "fi": "Aseta salasana osoitteessa spotify.com",
+        "fil": "Magtakda ng password sa spotify.com",
+        "fr": "Définir un mot de passe sur spotify.com",
+        "hi": "spotify.com पर पासवर्ड सेट करें",
+        "hr": "Postavi lozinku na spotify.com",
+        "hu": "Jelszó beállítása a spotify.com oldalon",
+        "id": "Atur kata sandi di spotify.com",
+        "it": "Imposta una password su spotify.com",
+        "iw": "‏קבע סיסמה ב-spotify.com",
+        "ja": "spotify.com でパスワードを設定",
+        "km": "កំណត់ពាក្យសម្ងាត់នៅ spotify.com",
+        "ko": "spotify.com에서 비밀번호 설정",
+        "lt": "Nustatyti slaptažodį spotify.com",
+        "ml": "spotify.com-ൽ പാസ്‌വേഡ് സെറ്റ് ചെയ്യുക",
+        "ms": "Tetapkan kata laluan di spotify.com",
+        "nb": "Angi et passord på spotify.com",
+        "nl": "Wachtwoord instellen op spotify.com",
+        "pa": "spotify.com 'ਤੇ ਪਾਸਵਰਡ ਸੈੱਟ ਕਰੋ",
+        "pl": "Ustaw hasło na spotify.com",
+        "pt": "Definir uma palavra-passe em spotify.com",
+        "pt-rBR": "Definir uma senha no spotify.com",
+        "ro": "Setează o parolă pe spotify.com",
+        "ru": "Задать пароль на spotify.com",
+        "sk": "Nastaviť heslo na spotify.com",
+        "sl": "Nastavi geslo na spotify.com",
+        "sr": "Постави лозинку на spotify.com",
+        "sv": "Ange ett lösenord på spotify.com",
+        "ta": "spotify.com-இல் கடவுச்சொல்லை அமைக்கவும்",
+        "te": "spotify.comలో పాస్‌వర్డ్ సెట్ చేయండి",
+        "th": "ตั้งรหัสผ่านที่ spotify.com",
+        "tr": "spotify.com'da şifre belirle",
+        "uk": "Задати пароль на spotify.com",
+        "vi": "Đặt mật khẩu trên spotify.com",
+        "zh-rCN": "在 spotify.com 设置密码",
+        "zh-rTW": "在 spotify.com 設定密碼",
+    },
+}
