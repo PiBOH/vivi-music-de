@@ -134,13 +134,17 @@ jobs:
           if [[ -f CHANGELOG.md ]]; then
             for v in "$VERSION" "$DE_VERSION"; do
               [[ -z "$v" ]] && continue
+              # The version heading itself is NOT copied into the section: the
+              # release already carries the version in its title, and printing
+              # the `## [x.y.z_DE-n]` line again put a second version heading at
+              # the top of every release body. The section starts right after it.
               SECTION="$(awk -v v="$v" '
                 # Match the exact version, with an optional channel suffix
                 # (e.g. -nightly), before the closing bracket.
-                index($0, "## [" v "]") == 1 || index($0, "## [" v "-") == 1 { found = 1; print; next }
+                index($0, "## [" v "]") == 1 || index($0, "## [" v "-") == 1 { found = 1; next }
                 found && /^## / { exit }
                 found { print }
-              ' CHANGELOG.md)"
+              ' CHANGELOG.md | sed '/./,$!d')"
               [[ -n "$SECTION" ]] && break
             done
           fi
@@ -228,8 +232,9 @@ jobs:
 
             ${{ steps.changelog.outputs.section }}
 
-            ### Commits
+            ### 📝 Commits
             ${{ steps.commits.outputs.commits }}
+
             ---
             This release was built automatically from commit `${{ github.sha }}`.
         env:
