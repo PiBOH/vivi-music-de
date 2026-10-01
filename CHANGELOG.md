@@ -11,6 +11,9 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+### 🔧 Changed
+- **The release body no longer repeats the version heading, and its commit list has an emoji.** `Auto Release` copied the changelog section including its own `## [x.y.z_DE-n]` line, so every release printed the version twice (once in the release title, once at the top of the body). The version line is skipped now and the section starts at its first `###` heading; the generated `### Commits` heading is `### 📝 Commits`, matching the emoji the changelog sections carry. The already-published `6.0.8.5_DE-1.54.9-beta` page was corrected the same way.
+
 ## [6.0.8.5_DE-1.54.9-beta] - 2026-10-01
 
 ### ✨ Added

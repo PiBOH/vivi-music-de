@@ -143,6 +143,17 @@ dependencies there, or you break the desktop build.
     `chore(website): refresh the static release manifest` is filtered out of the
     `Auto Release` notes (commit list and changelog section alike), and since
     the site moved it is not even a commit of this branch any more.
+  - **Website changes are SILENT (mandatory)**: every change to the site (the
+    `gh-pages` branch: pages, `style.css`, site JS, images, the generated
+    `releases.json` / `changelog.json`) must leave no trace anywhere else. It is
+    committed and pushed on `gh-pages` and nothing else in the repository
+    mentions it: no version bump, no `v` commit, no GitHub issue, no PR, no
+    CHANGELOG entry, no TODO item, no release note, no comment on an issue or a
+    release, no announcement. The release pipeline filters the website
+    bookkeeping commit for this reason, and the same applies by hand: never
+    list a site edit in a changelog, a release body or a commit of a
+    development branch. "Silent" is the point: the site changes, and nothing
+    else about the project reacts to it.
   - **Issue references use the official numbering**: the tracker lives in
     `PiBOH/vivi-music-de`. The fork's numbering is historical and must never be
     reused — its issues were transferred in order, so `#4` became `#3`, `#5`
