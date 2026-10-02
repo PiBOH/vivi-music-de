@@ -11,6 +11,16 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.13-beta] - 2026-10-02
+
+### ✨ Added
+- [DE] **The emoji are drawn from a custom colour font.** The app now bundles a subset of Noto Color Emoji (`fonts/NotoColorEmoji.ttf`, SIL OFL 1.1) carrying exactly the emoji codepoints it draws, and a generated coverage list (`EmojiCoverage`) tells the renderer which codepoint belongs to which font. One the colour subset does not have falls through to the monochrome Noto Emoji, and only then to the OS font, so a heading emoji is asked of a font that can actually paint it.
+
+### 🐛 Fixed
+- [DE] **Changelog bullets are bullets again.** The list parser and the renderer had their `bullet` flag swapped, so every `-` row was drawn as the literal `-.` and a numbered row as a bullet. Bullet rows show `•` and ordered rows show their number now.
+- [DE] **The pointing hand appears only on a link.** The hand was set for the whole clickable line, so a changelog paragraph that merely contained a link showed it over its entire surface. It is decided from the pointer's position inside the `URL` annotation now, so the rest of the line keeps the ordinary arrow.
+- [DE] **The System screen no longer shows the CPU/GPU description twice.** The live monitor row borrowed the "enabled" status string as its subtitle and the Developer options row still carried the old performance-monitor text; the monitor row shows its real description and Developer options has its own, translated in every language.
+
 ## [6.0.8.5_DE-1.54.12-beta] - 2026-10-02
 
 **Completes the 1.54.11 release.** `1.54.11` was published from an earlier commit before the work below landed, so this release carries it. The two real fixes are the missing About entry and the sign-in route for a Spotify account created with Google.
