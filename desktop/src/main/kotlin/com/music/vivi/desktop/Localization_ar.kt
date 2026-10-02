@@ -263,7 +263,7 @@ internal fun strings_ar(): Map<String, String> =
         "dev_unlocked_open" to "فتح",
         "dev_unlocked_title" to "تم تمكين خيارات المطور",
         "developer_options" to "خيارات المطور",
-        "developer_options_desc" to "استخدام مباشر لوحدة المعالجة المركزية وذاكرة الوصول العشوائي ووحدة معالجة الرسومات والشبكة لـ VIVI Music DE.",
+        "developer_options_desc" to "ذاكرة JVM، وسجلات تفصيلية للتشغيل وبدء التشغيل، وزر APK المخفي.",
         "developer_options_enabled" to "خيارات المطور مفعّلة",
         "developer_section" to "المطور",
         "device_paired_desc" to "هاتفك متصل الآن ومتزامن",

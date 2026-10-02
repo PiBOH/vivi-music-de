@@ -263,7 +263,7 @@ internal fun strings_km(): Map<String, String> =
         "dev_unlocked_open" to "បើក",
         "dev_unlocked_title" to "ជម្រើសអ្នកអភិវឌ្ឍន៍ត្រូវបានបើក",
         "developer_options" to "ជម្រើសអ្នកអភិវឌ្ឍន៍",
-        "developer_options_desc" to "ការប្រើប្រាស់ CPU, RAM, GPU និងបណ្ដាញផ្ទាល់របស់ VIVI Music DE។",
+        "developer_options_desc" to "JVM heap កំណត់ហេតុលម្អិតនៃការចាក់ និងការចាប់ផ្ដើម និងប៊ូតុង APK ដែលលាក់។",
         "developer_options_enabled" to "ជម្រើសអ្នកអភិវឌ្ឍន៍បានបើក",
         "developer_section" to "អ្នកអភិវឌ្ឍន៍",
         "device_paired_desc" to "ទូរស័ព្ទរបស់អ្នកបានភ្ជាប់ និងធ្វើសមកាលកម្មហើយ",

@@ -263,7 +263,7 @@ internal fun strings_iw(): Map<String, String> =
         "dev_unlocked_open" to "פתח",
         "dev_unlocked_title" to "אפשרויות המפתח הופעלו",
         "developer_options" to "אפשרויות מפתח",
-        "developer_options_desc" to "שימוש חי במעבד, זיכרון RAM, GPU ורשת של VIVI Music DE.",
+        "developer_options_desc" to "זיכרון JVM, יומני הפעלה ואתחול מפורטים, וכפתור ה-APK המוסתר.",
         "developer_options_enabled" to "אפשרויות המפתח הופעלו",
         "developer_section" to "מפתח",
         "device_paired_desc" to "הטלפון שלך מחובר ומסונכרן כעת",

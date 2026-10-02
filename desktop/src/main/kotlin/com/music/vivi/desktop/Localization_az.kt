@@ -263,7 +263,7 @@ internal fun strings_az(): Map<String, String> =
         "dev_unlocked_open" to "Aç",
         "dev_unlocked_title" to "Tərtibatçı seçimləri aktivləşdirildi",
         "developer_options" to "Tərtibatçı seçimləri",
-        "developer_options_desc" to "VIVI Music DE-nin canlı CPU, RAM, GPU və şəbəkə istifadəsi.",
+        "developer_options_desc" to "JVM heap, ətraflı oxutma və başlatma qeydləri və gizli APK düyməsi.",
         "developer_options_enabled" to "Tərtibatçı seçimləri aktivdir",
         "developer_section" to "Tərtibatçı",
         "device_paired_desc" to "Telefonunuz indi qoşulub və sinxronlaşdırılıb",

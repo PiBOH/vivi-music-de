@@ -1,6 +1,7 @@
 package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,19 +14,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -122,14 +128,18 @@ internal object MarkdownParser {
                 continue
             }
 
+            // `ListRow.bullet` means "this is a bullet list", so it is true for
+            // `-`/`*`/`+` and false for a numbered item. It used to be the other
+            // way round, which made every `-` row render as the literal "-." and
+            // every numbered row render as a bullet.
             bulletRegex.matchEntire(line)?.let { m ->
-                blocks.add(MdBlock.ListRow(false, "-", indentDepth(m.groupValues[1]), m.groupValues[3].trim()))
+                blocks.add(MdBlock.ListRow(true, "-", indentDepth(m.groupValues[1]), m.groupValues[3].trim()))
                 i++
                 continue
             }
 
             orderedRegex.matchEntire(line)?.let { m ->
-                blocks.add(MdBlock.ListRow(true, m.groupValues[2], indentDepth(m.groupValues[1]), m.groupValues[3].trim()))
+                blocks.add(MdBlock.ListRow(false, m.groupValues[2], indentDepth(m.groupValues[1]), m.groupValues[3].trim()))
                 i++
                 continue
             }
@@ -322,20 +332,44 @@ private fun MarkdownText(
         annotated.getStringAnnotations("URL", 0, annotated.length).isNotEmpty()
     }
     if (hasLinks) {
-        ClickableText(
+        // The pointing hand belongs to the link, not to the line: the hand used
+        // to be set for the whole clickable line, so a paragraph that merely
+        // contained a link showed it over its entire surface. The layout result
+        // is what maps the pointer back to a text offset, so the hand appears
+        // only while the pointer is inside a `URL` annotation and the rest of
+        // the line keeps the ordinary arrow.
+        var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
+        var overLink by remember { mutableStateOf(false) }
+        BasicText(
             text = annotated,
             style = style.copy(color = MaterialTheme.colorScheme.onSurface),
-            // A clickable line has to look clickable: `ClickableText` never sets
-            // the pointing hand on its own, so hovering a changelog link showed
-            // the default arrow (the text cursor) over something that opens a
-            // browser. The hand is set for the whole line, which is the surface
-            // the click really lives on.
-            modifier = modifier.pointerHoverIcon(PointerIcon.Hand),
-            onClick = { offset ->
-                annotated.getStringAnnotations("URL", offset, offset)
-                    .firstOrNull()
-                    ?.let { onOpenUrl(it.item) }
-            },
+            onTextLayout = { layout = it },
+            modifier = modifier
+                .pointerHoverIcon(if (overLink) PointerIcon.Hand else PointerIcon.Default)
+                .pointerInput(annotated) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val position = awaitPointerEvent().changes.firstOrNull()?.position
+                            val result = layout
+                            val next = if (position != null && result != null) {
+                                val offset = result.getOffsetForPosition(position)
+                                annotated.getStringAnnotations(URL_TAG, offset, offset).isNotEmpty()
+                            } else {
+                                false
+                            }
+                            if (next != overLink) overLink = next
+                        }
+                    }
+                }
+                .pointerInput(annotated) {
+                    detectTapGestures { position ->
+                        val result = layout ?: return@detectTapGestures
+                        val offset = result.getOffsetForPosition(position)
+                        annotated.getStringAnnotations(URL_TAG, offset, offset)
+                            .firstOrNull()
+                            ?.let { onOpenUrl(it.item) }
+                    }
+                },
         )
     } else {
         SelectionContainer {

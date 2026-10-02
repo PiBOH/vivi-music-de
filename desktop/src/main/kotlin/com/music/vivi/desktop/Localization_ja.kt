@@ -263,7 +263,7 @@ internal fun strings_ja(): Map<String, String> =
         "dev_unlocked_open" to "開く",
         "dev_unlocked_title" to "開発者向けオプションが有効になりました",
         "developer_options" to "開発者向けオプション",
-        "developer_options_desc" to "VIVI Music DE の CPU、RAM、GPU、ネットワーク使用率をリアルタイム表示。",
+        "developer_options_desc" to "JVMヒープ、詳細な再生ログと起動ログ、非表示のAPKボタン。",
         "developer_options_enabled" to "開発者向けオプションが有効",
         "developer_section" to "開発者",
         "device_paired_desc" to "お使いのスマホが接続・同期されました",

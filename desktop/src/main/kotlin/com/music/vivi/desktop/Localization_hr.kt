@@ -263,7 +263,7 @@ internal fun strings_hr(): Map<String, String> =
         "dev_unlocked_open" to "Otvori",
         "dev_unlocked_title" to "Opcije za razvojne programere omogućene",
         "developer_options" to "Opcije za razvojne programere",
-        "developer_options_desc" to "Prikaz trenutnog korištenja procesora, RAM-a, GPU-a i mreže programa VIVI Music DE.",
+        "developer_options_desc" to "JVM heap, detaljni zapisi reprodukcije i pokretanja i skriveni gumb za APK.",
         "developer_options_enabled" to "Opcije za razvojne programere omogućene",
         "developer_section" to "Programer",
         "device_paired_desc" to "Tvoj telefon je sada povezan i sinkroniziran",

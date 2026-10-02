@@ -263,7 +263,7 @@ internal fun strings_hi(): Map<String, String> =
         "dev_unlocked_open" to "खोलें",
         "dev_unlocked_title" to "डेवलपर विकल्प सक्षम किए गए",
         "developer_options" to "डेवलपर विकल्प",
-        "developer_options_desc" to "VIVI Music DE का लाइव CPU, RAM, GPU और नेटवर्क उपयोग।",
+        "developer_options_desc" to "JVM हीप, विस्तृत प्लेबैक और स्टार्टअप लॉग, और छिपा हुआ APK बटन।",
         "developer_options_enabled" to "डेवलपर विकल्प सक्षम",
         "developer_section" to "डेवलपर",
         "device_paired_desc" to "आपका फ़ोन अब कनेक्ट और सिंक हो गया है",

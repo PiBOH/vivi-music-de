@@ -263,7 +263,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "dev_unlocked_open" to "開啟",
         "dev_unlocked_title" to "已啟用開發人員選項",
         "developer_options" to "開發人員選項",
-        "developer_options_desc" to "VIVI Music DE 的即時 CPU、記憶體、GPU 與網路使用量。",
+        "developer_options_desc" to "JVM 堆積記憶體、詳細的播放與啟動記錄，以及隱藏的 APK 按鈕。",
         "developer_options_enabled" to "開發人員選項已啟用",
         "developer_section" to "開發者",
         "device_paired_desc" to "您的手機現已連線並同步",

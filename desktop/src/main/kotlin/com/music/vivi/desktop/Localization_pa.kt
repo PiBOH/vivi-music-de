@@ -263,7 +263,7 @@ internal fun strings_pa(): Map<String, String> =
         "dev_unlocked_open" to "ਖੋਲ੍ਹੋ",
         "dev_unlocked_title" to "ਡਿਵੈਲਪਰ ਵਿਕਲਪ ਸਮਰੱਥ ਕੀਤੇ ਗਏ",
         "developer_options" to "ਡਿਵੈਲਪਰ ਵਿਕਲਪ",
-        "developer_options_desc" to "VIVI Music DE ਦੀ ਲਾਈਵ CPU, RAM, GPU ਅਤੇ ਨੈੱਟਵਰਕ ਵਰਤੋਂ।",
+        "developer_options_desc" to "JVM ਹੀਪ, ਵਿਸਤ੍ਰਿਤ ਪਲੇਬੈਕ ਅਤੇ ਸਟਾਰਟਅੱਪ ਲੌਗ, ਅਤੇ ਲੁਕਿਆ ਹੋਇਆ APK ਬਟਨ।",
         "developer_options_enabled" to "ਡਿਵੈਲਪਰ ਵਿਕਲਪ ਸਮਰੱਥ",
         "developer_section" to "ਡਿਵੈਲਪਰ",
         "device_paired_desc" to "ਤੁਹਾਡਾ ਫ਼ੋਨ ਹੁਣ ਕਨੈਕਟ ਅਤੇ ਸਿੰਕ ਹੋ ਗਿਆ ਹੈ",

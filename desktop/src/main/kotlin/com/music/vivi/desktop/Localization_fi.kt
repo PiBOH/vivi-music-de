@@ -263,7 +263,7 @@ internal fun strings_fi(): Map<String, String> =
         "dev_unlocked_open" to "Avaa",
         "dev_unlocked_title" to "Kehittäjäasetukset käytössä",
         "developer_options" to "Kehittäjäasetukset",
-        "developer_options_desc" to "VIVI Music DE:n suorittimen, RAM:n, GPU:n ja verkon käyttö reaaliajassa.",
+        "developer_options_desc" to "JVM-keko, yksityiskohtaiset toisto- ja käynnistyslokit sekä piilotettu APK-painike.",
         "developer_options_enabled" to "Kehittäjäasetukset käytössä",
         "developer_section" to "Kehittäjä",
         "device_paired_desc" to "Puhelimesi on nyt yhdistetty ja synkronoitu",

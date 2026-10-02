@@ -263,7 +263,7 @@ internal fun strings_uk(): Map<String, String> =
         "dev_unlocked_open" to "Відкрити",
         "dev_unlocked_title" to "Параметри розробника ввімкнено",
         "developer_options" to "Параметри розробника",
-        "developer_options_desc" to "Використання CPU, RAM, GPU та мережі VIVI Music DE в реальному часі.",
+        "developer_options_desc" to "Купа JVM, докладні журнали відтворення та запуску і прихована кнопка APK.",
         "developer_options_enabled" to "Параметри розробника ввімкнено",
         "developer_section" to "Розробник",
         "device_paired_desc" to "Ваш телефон тепер підключено та синхронізовано",

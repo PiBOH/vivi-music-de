@@ -263,7 +263,7 @@ internal fun strings_ro(): Map<String, String> =
         "dev_unlocked_open" to "Deschide",
         "dev_unlocked_title" to "Opțiunile pentru dezvoltatori au fost activate",
         "developer_options" to "Opțiuni pentru dezvoltatori",
-        "developer_options_desc" to "Utilizarea în timp real a CPU, RAM, GPU și rețelei de către VIVI Music DE.",
+        "developer_options_desc" to "Heap JVM, jurnale detaliate de redare și pornire și butonul APK ascuns.",
         "developer_options_enabled" to "Opțiunile pentru dezvoltatori sunt activate",
         "developer_section" to "Dezvoltator",
         "device_paired_desc" to "Telefonul tău este acum conectat și sincronizat",

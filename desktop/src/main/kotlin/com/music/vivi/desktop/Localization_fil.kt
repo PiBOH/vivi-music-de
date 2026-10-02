@@ -263,7 +263,7 @@ internal fun strings_fil(): Map<String, String> =
         "dev_unlocked_open" to "Buksan",
         "dev_unlocked_title" to "Pinagana ang mga opsyon ng developer",
         "developer_options" to "Mga opsyon ng developer",
-        "developer_options_desc" to "Live na paggamit ng CPU, RAM, GPU at network ng VIVI Music DE.",
+        "developer_options_desc" to "JVM heap, detalyadong playback at startup logs, at ang nakatagong APK button.",
         "developer_options_enabled" to "Pinagana ang mga opsyon ng developer",
         "developer_section" to "Developer",
         "device_paired_desc" to "Ang iyong phone ay nakakonekta at naka-sync na",

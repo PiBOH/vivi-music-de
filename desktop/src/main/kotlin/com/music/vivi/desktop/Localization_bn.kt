@@ -263,7 +263,7 @@ internal fun strings_bn(): Map<String, String> =
         "dev_unlocked_open" to "খুলুন",
         "dev_unlocked_title" to "ডেভেলপার অপশন সক্রিয় হয়েছে",
         "developer_options" to "ডেভেলপার অপশন",
-        "developer_options_desc" to "VIVI Music DE-এর লাইভ CPU, RAM, GPU এবং নেটওয়ার্ক ব্যবহার।",
+        "developer_options_desc" to "JVM heap, বিস্তারিত প্লেব্যাক ও স্টার্টআপ লগ এবং লুকানো APK বোতাম।",
         "developer_options_enabled" to "ডেভেলপার অপশন সক্রিয়",
         "developer_section" to "ডেভেলপার",
         "device_paired_desc" to "আপনার ফোন এখন সংযুক্ত এবং সিঙ্ক হয়েছে",

@@ -263,7 +263,7 @@ internal fun strings_th(): Map<String, String> =
         "dev_unlocked_open" to "เปิด",
         "dev_unlocked_title" to "เปิดใช้งานตัวเลือกนักพัฒนาแล้ว",
         "developer_options" to "ตัวเลือกนักพัฒนา",
-        "developer_options_desc" to "การใช้ CPU, RAM, GPU และเครือข่ายแบบสดของ VIVI Music DE",
+        "developer_options_desc" to "ฮีป JVM, บันทึกการเล่นและการเริ่มต้นอย่างละเอียด และปุ่ม APK ที่ซ่อนอยู่",
         "developer_options_enabled" to "เปิดใช้งานตัวเลือกนักพัฒนาแล้ว",
         "developer_section" to "นักพัฒนา",
         "device_paired_desc" to "โทรศัพท์ของคุณเชื่อมต่อและซิงค์แล้ว",

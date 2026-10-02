@@ -263,7 +263,7 @@ internal fun strings_vi(): Map<String, String> =
         "dev_unlocked_open" to "Mở",
         "dev_unlocked_title" to "Đã bật tùy chọn nhà phát triển",
         "developer_options" to "Tùy chọn nhà phát triển",
-        "developer_options_desc" to "Mức sử dụng CPU, RAM, GPU và mạng trực tiếp của VIVI Music DE.",
+        "developer_options_desc" to "Heap JVM, nhật ký phát lại và khởi động chi tiết, và nút APK ẩn.",
         "developer_options_enabled" to "Đã bật tùy chọn nhà phát triển",
         "developer_section" to "Nhà phát triển",
         "device_paired_desc" to "Điện thoại của bạn hiện đã kết nối và đồng bộ",

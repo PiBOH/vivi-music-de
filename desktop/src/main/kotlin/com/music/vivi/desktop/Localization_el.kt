@@ -263,7 +263,7 @@ internal fun strings_el(): Map<String, String> =
         "dev_unlocked_open" to "Άνοιγμα",
         "dev_unlocked_title" to "Ενεργοποιήθηκαν οι επιλογές προγραμματιστή",
         "developer_options" to "Επιλογές προγραμματιστή",
-        "developer_options_desc" to "Ζωντανή χρήση CPU, RAM, GPU και δικτύου του VIVI Music DE.",
+        "developer_options_desc" to "Μνήμη JVM, λεπτομερή αρχεία αναπαραγωγής και εκκίνησης και το κρυφό κουμπί APK.",
         "developer_options_enabled" to "Οι επιλογές προγραμματιστή είναι ενεργοποιημένες",
         "developer_section" to "Προγραμματιστής",
         "device_paired_desc" to "Το τηλέφωνό σας είναι πλέον συνδεδεμένο και συγχρονισμένο",

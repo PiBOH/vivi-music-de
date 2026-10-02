@@ -263,7 +263,7 @@ internal fun strings_ml(): Map<String, String> =
         "dev_unlocked_open" to "തുറക്കുക",
         "dev_unlocked_title" to "ഡെവലപ്പർ ഓപ്ഷനുകൾ പ്രവർത്തനക്ഷമമാക്കി",
         "developer_options" to "ഡെവലപ്പർ ഓപ്ഷനുകൾ",
-        "developer_options_desc" to "VIVI Music DE-യുടെ തത്സമയ CPU, RAM, GPU, നെറ്റ്വർക്ക് ഉപയോഗം.",
+        "developer_options_desc" to "JVM ഹീപ്പ്, വിശദമായ പ്ലേബാക്ക്, സ്റ്റാർട്ടപ്പ് ലോഗുകൾ, മറഞ്ഞിരിക്കുന്ന APK ബട്ടൺ.",
         "developer_options_enabled" to "ഡെവലപ്പർ ഓപ്ഷനുകൾ പ്രവർത്തനക്ഷമം",
         "developer_section" to "ഡെവലപ്പർ",
         "device_paired_desc" to "നിങ്ങളുടെ ഫോൺ ഇപ്പോൾ കണക്റ്റ് ചെയ്ത് സമന്വയിപ്പിച്ചു",

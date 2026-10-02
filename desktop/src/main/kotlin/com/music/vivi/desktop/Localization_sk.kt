@@ -263,7 +263,7 @@ internal fun strings_sk(): Map<String, String> =
         "dev_unlocked_open" to "Otvoriť",
         "dev_unlocked_title" to "Možnosti pre vývojárov povolené",
         "developer_options" to "Možnosti pre vývojárov",
-        "developer_options_desc" to "Živé využitie CPU, RAM, GPU a siete aplikáciou VIVI Music DE.",
+        "developer_options_desc" to "Heap JVM, podrobné záznamy prehrávania a spustenia a skryté tlačidlo APK.",
         "developer_options_enabled" to "Možnosti pre vývojárov povolené",
         "developer_section" to "Vývojár",
         "device_paired_desc" to "Váš telefón je teraz pripojený a synchronizovaný",

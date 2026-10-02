@@ -263,7 +263,7 @@ internal fun strings_in(): Map<String, String> =
         "dev_unlocked_open" to "Buka",
         "dev_unlocked_title" to "Opsi pengembang diaktifkan",
         "developer_options" to "Opsi pengembang",
-        "developer_options_desc" to "Penggunaan CPU, RAM, GPU, dan jaringan VIVI Music DE secara langsung.",
+        "developer_options_desc" to "Heap JVM, log pemutaran dan startup yang terperinci, dan tombol APK yang disembunyikan.",
         "developer_options_enabled" to "Opsi pengembang aktif",
         "developer_section" to "Pengembang",
         "device_paired_desc" to "Ponsel Anda sekarang terhubung dan tersinkronisasi",

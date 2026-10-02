@@ -263,7 +263,7 @@ internal fun strings_lt(): Map<String, String> =
         "dev_unlocked_open" to "Atidaryti",
         "dev_unlocked_title" to "Kūrėjo parinktys įjungtos",
         "developer_options" to "Kūrėjo parinktys",
-        "developer_options_desc" to "Tiesioginis VIVI Music DE procesoriaus, RAM, GPU ir tinklo naudojimas.",
+        "developer_options_desc" to "JVM krūva, išsamūs atkūrimo ir paleidimo žurnalai ir paslėptas APK mygtukas.",
         "developer_options_enabled" to "Kūrėjo parinktys įjungtos",
         "developer_section" to "Kūrėjas",
         "device_paired_desc" to "Jūsų telefonas dabar prijungtas ir sinchronizuotas",

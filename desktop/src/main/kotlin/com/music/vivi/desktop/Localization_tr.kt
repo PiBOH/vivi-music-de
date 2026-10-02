@@ -263,7 +263,7 @@ internal fun strings_tr(): Map<String, String> =
         "dev_unlocked_open" to "Aç",
         "dev_unlocked_title" to "Geliştirici seçenekleri etkinleştirildi",
         "developer_options" to "Geliştirici seçenekleri",
-        "developer_options_desc" to "VIVI Music DE'nin canlı CPU, RAM, GPU ve ağ kullanımı.",
+        "developer_options_desc" to "JVM yığını, ayrıntılı oynatma ve başlangıç günlükleri ve gizli APK düğmesi.",
         "developer_options_enabled" to "Geliştirici seçenekleri etkin",
         "developer_section" to "GELİŞTİRİCİ",
         "device_paired_desc" to "Telefonunuz artık bağlı ve senkronize edildi",

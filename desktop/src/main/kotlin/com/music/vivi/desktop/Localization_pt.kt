@@ -263,7 +263,7 @@ internal fun strings_pt(): Map<String, String> =
         "dev_unlocked_open" to "Abrir",
         "dev_unlocked_title" to "Opções de programador ativadas",
         "developer_options" to "Opções de programador",
-        "developer_options_desc" to "Utilização em direto de CPU, RAM, GPU e rede do VIVI Music DE.",
+        "developer_options_desc" to "Heap da JVM, registos detalhados de reprodução e arranque e o botão APK oculto.",
         "developer_options_enabled" to "Opções de programador ativadas",
         "developer_section" to "Desenvolvedor",
         "device_paired_desc" to "Seu telefone agora está conectado e sincronizado",

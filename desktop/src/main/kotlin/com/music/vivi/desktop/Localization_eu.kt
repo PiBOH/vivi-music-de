@@ -263,7 +263,7 @@ internal fun strings_eu(): Map<String, String> =
         "dev_unlocked_open" to "Ireki",
         "dev_unlocked_title" to "Garatzaile-aukerak gaituta",
         "developer_options" to "Garatzaile-aukerak",
-        "developer_options_desc" to "VIVI Music DE-ren CPU, RAM, GPU eta sarearen erabilera zuzenean.",
+        "developer_options_desc" to "JVM heap-a, erreprodukzio eta abio erregistro xeheak, eta ezkutatutako APK botoia.",
         "developer_options_enabled" to "Garatzaile-aukerak gaituta",
         "developer_section" to "Garatzailea",
         "device_paired_desc" to "Zure telefonoa orain konektatuta eta sinkronizatuta dago",

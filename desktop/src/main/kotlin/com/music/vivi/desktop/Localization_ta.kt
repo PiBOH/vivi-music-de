@@ -263,7 +263,7 @@ internal fun strings_ta(): Map<String, String> =
         "dev_unlocked_open" to "திற",
         "dev_unlocked_title" to "டெவலப்பர் விருப்பங்கள் இயக்கப்பட்டன",
         "developer_options" to "டெவலப்பர் விருப்பங்கள்",
-        "developer_options_desc" to "VIVI Music DE இன் நேரடி CPU, RAM, GPU மற்றும் பிணையப் பயன்பாடு.",
+        "developer_options_desc" to "JVM ஹீப், விரிவான பிளேபேக் மற்றும் தொடக்கப் பதிவுகள், மறைக்கப்பட்ட APK பொத்தான்.",
         "developer_options_enabled" to "டெவலப்பர் விருப்பங்கள் இயக்கப்பட்டுள்ளன",
         "developer_section" to "டெவலப்பர்",
         "device_paired_desc" to "உங்கள் மொபைல் இப்போது இணைக்கப்பட்டு ஒத்திசைக்கப்பட்டது",

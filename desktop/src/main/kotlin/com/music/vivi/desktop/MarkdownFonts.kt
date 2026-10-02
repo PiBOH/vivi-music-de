@@ -21,14 +21,16 @@ import java.io.File
  * font would be wrong (and selecting one would leave the whole UI without
  * letters). They are used only where [MarkdownView] draws text.
  *
- * Emoji are drawn from a font bundled with the app (`fonts/NotoEmoji.ttf`, the
- * monochrome Noto Emoji, SIL OFL 1.1), NOT from the OS font: Windows' Segoe UI
- * Emoji is a colour font (COLR/CBDT) and the renderer drew the outline-poor
- * colour glyphs as tofu, while the monochrome font draws every codepoint as a
- * plain outline the renderer can always paint. The OS emoji font stays only as a
- * fallback for the very few emoji Noto Emoji omits. The symbol/CJK files are
- * read from the OS at startup; a missing file simply means no fallback for that
- * class of character (the renderer then behaves exactly as it did before).
+ * Emoji are drawn from two fonts bundled with the app: a custom subset of Noto
+ * Color Emoji (`fonts/NotoColorEmoji.ttf`, SIL OFL 1.1) that carries the colour
+ * glyphs of the codepoints this app actually uses, and the monochrome Noto Emoji
+ * (`fonts/NotoEmoji.ttf`) behind it for every codepoint the colour subset does
+ * not have. [EmojiCoverage] lists what each one carries, so a character is only
+ * ever asked of a font that can draw it; the earlier arrangement handed an emoji
+ * to a single family, and a codepoint that family lacked came out as the tofu
+ * box. The OS emoji font stays as the last resort. The symbol/CJK files are read
+ * from the OS at startup; a missing file simply means no fallback for that class
+ * of character (the renderer then behaves exactly as it did before).
  */
 internal object MarkdownFonts {
 
@@ -43,6 +45,21 @@ internal object MarkdownFonts {
                 Font("fonts/NotoEmoji.ttf", FontWeight.Normal),
                 Font("fonts/NotoEmoji.ttf", FontWeight.Medium),
                 Font("fonts/NotoEmoji.ttf", FontWeight.Bold),
+            )
+        }.getOrNull()
+    }
+
+    /**
+     * The bundled colour emoji family (Noto Color Emoji, OFL 1.1). Only the
+     * codepoints in [EmojiCoverage.colorEmoji] are ever routed here; the font is
+     * a subset carrying exactly those, so it stays small.
+     */
+    private val bundledColorEmoji: FontFamily? by lazy {
+        runCatching {
+            FontFamily(
+                Font("fonts/NotoColorEmoji.ttf", FontWeight.Normal),
+                Font("fonts/NotoColorEmoji.ttf", FontWeight.Medium),
+                Font("fonts/NotoColorEmoji.ttf", FontWeight.Bold),
             )
         }.getOrNull()
     }
@@ -106,11 +123,21 @@ internal object MarkdownFonts {
     private val symbols: FontFamily? by lazy { load(symbolPaths) }
     private val cjk: FontFamily? by lazy { load(cjkPaths) }
 
-    /** The family that can draw [codePoint], or null when nothing is loaded for it. */
+    /**
+     * The family that can draw [codePoint], or null when nothing is loaded for
+     * it. The two bundled emoji fonts are consulted by their real coverage
+     * ([EmojiCoverage]) rather than by a codepoint range, so an emoji neither of
+     * them carries falls through to the symbol fonts instead of being drawn as
+     * tofu.
+     */
     fun familyFor(codePoint: Int): FontFamily? = when {
-        isEmoji(codePoint) -> bundledEmoji ?: emoji ?: symbols
+        // Variation selectors have no glyph of their own.
+        codePoint in 0xFE00..0xFE0F -> null
+        EmojiCoverage.colorEmoji.contains(codePoint) -> bundledColorEmoji ?: bundledEmoji ?: symbols ?: emoji
+        EmojiCoverage.monochromeEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
         isCjk(codePoint) -> cjk
         isSymbol(codePoint) -> symbols ?: bundledEmoji ?: emoji
+        isEmoji(codePoint) -> symbols ?: bundledEmoji ?: emoji
         else -> null
     }
 

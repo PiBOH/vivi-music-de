@@ -263,7 +263,7 @@ internal fun strings_bg(): Map<String, String> =
         "dev_unlocked_open" to "Отвори",
         "dev_unlocked_title" to "Опциите за разработчици са активирани",
         "developer_options" to "Опции за разработчици",
-        "developer_options_desc" to "Данни на живо за използването на процесора, RAM, GPU и мрежата от VIVI Music DE.",
+        "developer_options_desc" to "Heap на JVM, подробни логове за възпроизвеждане и стартиране и скритият бутон за APK.",
         "developer_options_enabled" to "Опциите за разработчици са активирани",
         "developer_section" to "Разработчик",
         "device_paired_desc" to "Телефонът ви вече е свързан и синхронизиран",

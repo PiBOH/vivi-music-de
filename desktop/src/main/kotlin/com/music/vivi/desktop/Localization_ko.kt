@@ -263,7 +263,7 @@ internal fun strings_ko(): Map<String, String> =
         "dev_unlocked_open" to "열기",
         "dev_unlocked_title" to "개발자 옵션이 활성화됨",
         "developer_options" to "개발자 옵션",
-        "developer_options_desc" to "VIVI Music DE의 실시간 CPU, RAM, GPU 및 네트워크 사용량.",
+        "developer_options_desc" to "JVM 힙, 자세한 재생 및 시작 로그, 숨겨진 APK 버튼.",
         "developer_options_enabled" to "개발자 옵션 활성화됨",
         "developer_section" to "개발자",
         "device_paired_desc" to "휴대폰이 연결되고 동기화되었습니다",

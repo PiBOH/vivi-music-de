@@ -263,7 +263,7 @@ internal fun strings_et(): Map<String, String> =
         "dev_unlocked_open" to "Ava",
         "dev_unlocked_title" to "Arendaja valikud on lubatud",
         "developer_options" to "Arendaja valikud",
-        "developer_options_desc" to "VIVI Music DE reaalajas CPU, RAM, GPU ja võrgu kasutus.",
+        "developer_options_desc" to "JVM-i hunnik, üksikasjalikud taasesituse ja käivituse logid ning peidetud APK-nupp.",
         "developer_options_enabled" to "Arendaja valikud on lubatud",
         "developer_section" to "Arendaja",
         "device_paired_desc" to "Teie telefon on nüüd ühendatud ja sünkroonitud",

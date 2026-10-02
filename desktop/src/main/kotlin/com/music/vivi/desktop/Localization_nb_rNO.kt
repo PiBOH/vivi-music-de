@@ -263,7 +263,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "dev_unlocked_open" to "Åpne",
         "dev_unlocked_title" to "Utvikleralternativer aktivert",
         "developer_options" to "Utvikleralternativer",
-        "developer_options_desc" to "Direkte bruk av CPU, RAM, GPU og nettverk for VIVI Music DE.",
+        "developer_options_desc" to "JVM-heap, detaljerte avspillings- og oppstartslogger og den skjulte APK-knappen.",
         "developer_options_enabled" to "Utvikleralternativer aktivert",
         "developer_section" to "Utvikler",
         "device_paired_desc" to "Telefonen din er nå tilkoblet og synkronisert",

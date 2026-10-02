@@ -263,7 +263,7 @@ internal fun strings_te(): Map<String, String> =
         "dev_unlocked_open" to "తెరవండి",
         "dev_unlocked_title" to "డెవలపర్ ఎంపికలు ప్రారంభించబడ్డాయి",
         "developer_options" to "డెవలపర్ ఎంపికలు",
-        "developer_options_desc" to "VIVI Music DE యొక్క ప్రత్యక్ష CPU, RAM, GPU మరియు నెట్వర్క్ వినియోగం.",
+        "developer_options_desc" to "JVM హీప్, వివరమైన ప్లేబ్యాక్ మరియు స్టార్టప్ లాగ్‌లు, దాచిన APK బటన్.",
         "developer_options_enabled" to "డెవలపర్ ఎంపికలు ప్రారంభించబడ్డాయి",
         "developer_section" to "డెవలపర్",
         "device_paired_desc" to "మీ ఫోన్ ఇప్పుడు కనెక్ట్ చేయబడి సమకాలీకరించబడింది",

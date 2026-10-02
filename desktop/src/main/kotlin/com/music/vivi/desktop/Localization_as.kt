@@ -263,7 +263,7 @@ internal fun strings_as(): Map<String, String> =
         "dev_unlocked_open" to "খোলক",
         "dev_unlocked_title" to "বিকাশকাৰী বিকল্প সক্ষম হৈছে",
         "developer_options" to "বিকাশকাৰী বিকল্প",
-        "developer_options_desc" to "VIVI Music DE ৰ CPU, RAM, GPU আৰু নেটৱৰ্ক ব্যৱহাৰৰ পোনপটীয়া তথ্য।",
+        "developer_options_desc" to "JVM heap, সবিশেষ প্লেবেক আৰু ষ্টাৰ্টআপ লগ, আৰু লুকুৱাই ৰখা APK বুটাম।",
         "developer_options_enabled" to "বিকাশকাৰী বিকল্প সক্ষম",
         "developer_section" to "ডেভেলপাৰ",
         "device_paired_desc" to "আপোনাৰ ফোন এতিয়া সংযুক্ত আৰু সিঙ্ক হৈ আছে",

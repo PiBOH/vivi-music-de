@@ -263,7 +263,7 @@ internal fun strings_hu(): Map<String, String> =
         "dev_unlocked_open" to "Megnyitás",
         "dev_unlocked_title" to "Fejlesztői lehetőségek engedélyezve",
         "developer_options" to "Fejlesztői lehetőségek",
-        "developer_options_desc" to "A VIVI Music DE élő CPU-, RAM-, GPU- és hálózathasználata.",
+        "developer_options_desc" to "JVM heap, részletes lejátszási és indítási naplók, és a rejtett APK gomb.",
         "developer_options_enabled" to "Fejlesztői lehetőségek engedélyezve",
         "developer_section" to "Fejlesztő",
         "device_paired_desc" to "A telefonja most csatlakoztatva és szinkronizálva van",

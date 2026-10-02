@@ -263,7 +263,7 @@ internal fun strings_fa(): Map<String, String> =
         "dev_unlocked_open" to "باز کردن",
         "dev_unlocked_title" to "گزینه‌های توسعه‌دهنده فعال شد",
         "developer_options" to "گزینه‌های توسعه‌دهنده",
-        "developer_options_desc" to "مصرف زنده پردازنده، رم، گرافیک و شبکه VIVI Music DE.",
+        "developer_options_desc" to "حافظه JVM، گزارش‌های دقیق پخش و راه‌اندازی، و دکمه پنهان APK.",
         "developer_options_enabled" to "گزینه‌های توسعه‌دهنده فعال شد",
         "developer_section" to "توسعه‌دهنده",
         "device_paired_desc" to "گوشی شما اکنون متصل و همگام است",

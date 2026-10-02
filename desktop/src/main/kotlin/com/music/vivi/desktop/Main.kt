@@ -5325,7 +5325,6 @@ fun SettingsSystemScreen(
     onOpenDeveloperOptions: () -> Unit,
     onOpenIntro: () -> Unit,
 ) {
-    val devEnabled by DeveloperOptions.enabled.collectAsState()
     val developerUnlocked by DeveloperOptions.unlocked.collectAsState()
 
     // Log export (moved here from Developer options: it belongs under System).
@@ -5341,9 +5340,7 @@ fun SettingsSystemScreen(
                 M3SettingsItem(
                     icon = Icons.Filled.Build,
                     title = { Text(Localization.get(language, "performance_options")) },
-                    description = {
-                        Text(if (devEnabled) Localization.get(language, "performance_options_enabled") else Localization.get(language, "dev_tools_disabled"))
-                    },
+                    description = { Text(Localization.get(language, "performance_options_desc")) },
                     trailing = { SettingsChevron() },
                     onClick = onOpenPerformance,
                 ),
