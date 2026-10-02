@@ -21,9 +21,12 @@ package com.music.vivi.desktop
  */
 internal fun strings_sv(): Map<String, String> =
     mapOf(
-        "performance_options" to "Prestandaalternativ",
+        "spotify_open_browser" to "Oppna i webblasaren",
+        "detailed_startup_logs_desc" to "Skriver starttider per steg till app.log. Endast for felsokning.",
+        "detailed_startup_logs" to "DetailedStartupLogs",
+        "performance_options" to "Lasare for prestandapaverkan",
         "performance_options_desc" to "Live-CPU, RAM, GPU och natverksanvandning for VIVI Music DE.",
-        "performance_options_enabled" to "Prestandaalternativ aktiverade",
+        "performance_options_enabled" to "Lasare for prestandapaverkan aktiverad",
         "advanced" to "Avancerat",
         "developer_options_unlocked" to "Utvecklaralternativ upplasta",
         "jvm_memory" to "JVM-minne",

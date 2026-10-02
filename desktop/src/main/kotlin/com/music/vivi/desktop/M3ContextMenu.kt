@@ -7,9 +7,11 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -57,9 +59,17 @@ val Material3ContextMenuRepresentation = object : ContextMenuRepresentation {
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 3.dp,
                 shadowElevation = 8.dp,
-                modifier = Modifier.widthIn(min = 200.dp),
             ) {
-                Column(Modifier.padding(vertical = 6.dp)) {
+                // IntrinsicSize.Max: the card is as wide as its widest item and
+                // no wider. Without it the rows' `fillMaxWidth` resolved against
+                // the Popup, which spans the window, so the menu came out as wide
+                // as the whole window.
+                Column(
+                    Modifier
+                        .width(IntrinsicSize.Max)
+                        .widthIn(min = 180.dp)
+                        .padding(vertical = 6.dp),
+                ) {
                     items().forEach { item ->
                         Row(
                             Modifier

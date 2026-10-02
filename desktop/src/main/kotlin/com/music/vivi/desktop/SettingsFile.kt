@@ -22,8 +22,9 @@ import java.security.MessageDigest
  * library, the account credentials, the pairing data and the histories), while
  * this file is a **mirror of the options only**: every value the user can
  * configure, with camelCase keys that match the app's own field names (the
- * exceptions are `hide_custom_apk_download_button` and `super_logs_writer`,
- * which have no UI switch on purpose and are edited here by hand).
+ * exception is `hide_custom_apk_download_button`, the one option that still has
+ * no UI switch; `detailedPlaybackLogging` now has a switch in Developer
+ * options).
  *
  * Both directions work:
  *

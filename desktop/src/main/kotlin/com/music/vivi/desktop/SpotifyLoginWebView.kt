@@ -246,7 +246,18 @@ internal object SpotifyLoginWebView {
                 // to read on it.
                 textFill = Color.web("#d0bcff")
             }
-            val header = HBox(10.0, spinner, status, retry).apply {
+            // The way in for an account created with Google, which has no
+            // password to type in the Spotify form: the browser the user
+            // already has is a supported sign-in client, so the Google button
+            // works there, and the cookie that comes out of it is the one this
+            // window's screen asks to paste. Shown only once Google has refused
+            // the page here (see the location listener below).
+            val browserLink = Hyperlink(Localization.get(language, "spotify_open_browser")).apply {
+                isVisible = false
+                isManaged = false
+                textFill = Color.web("#d0bcff")
+            }
+            val header = HBox(10.0, spinner, status, retry, browserLink).apply {
                 padding = Insets(10.0, 14.0, 10.0, 14.0)
                 alignment = Pos.CENTER_LEFT
                 background = Background(BackgroundFill(Color.web("#1f1f2e"), CornerRadii.EMPTY, Insets.EMPTY))
@@ -288,7 +299,18 @@ internal object SpotifyLoginWebView {
                     status.text = Localization.get(language, "spotify_google_blocked")
                     retry.isVisible = true
                     retry.isManaged = true
+                    browserLink.isVisible = true
+                    browserLink.isManaged = true
                 }
+            }
+            browserLink.setOnAction { event ->
+                event.consume()
+                AppLog.click("Spotify sign-in: opened Spotify in the browser after Google blocked the window")
+                openUrl(SpotifyAuth.LOGIN_URL)
+                // What to do once the browser is open: the same instruction the
+                // manual cookie field carries, so the window and the screen say
+                // the same thing.
+                status.text = Localization.get(language, "spotify_cookie_hint")
             }
             retry.setOnAction { event ->
                 event.consume()

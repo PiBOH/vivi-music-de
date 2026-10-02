@@ -11,6 +11,23 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.12-beta] - 2026-10-02
+
+**Completes the 1.54.11 release.** `1.54.11` was published from an earlier commit before the work below landed, so this release carries it. The two real fixes are the missing About entry and the sign-in route for a Spotify account created with Google.
+
+### ✨ Added
+- [DE] **`DetailedStartupLogs`, off by default, and a switch in Developer options.** On, the four per-stage startup timing lines (for example `startup: cached options loaded at +489395ms`) are written to `app.log`; off, `startupStage` writes nothing at all, so the lines are removed rather than shortened. The JSON key is exactly `DetailedStartupLogs`.
+- [DE] **`super_logs_writer` is now the JSON key `detailedPlaybackLogging`.** The option has a switch now, so it left the snake_case exception behind and follows the file's camelCase convention; an old `super_logs_writer` value is ignored and the option falls back to its default, off.
+- [DE] **Every new string has a real translation in all 52 languages.** The published `1.54.11` still carried the English placeholder for the strings it added; the localization audit reports no missing or leaking keys and no wrong-script value now.
+
+### 🔧 Changed
+- [DE] **The live CPU / RAM / GPU / network monitor is now the "Performance impact reader".** It is reachable without any unlock and carries the new name in all 52 languages.
+
+### 🐛 Fixed
+- [DE] **The About entry is back in the settings menu.** The Spotify import row was inserted in the middle of `aboutItems` without extending the index mapping below it, so every row from that point on was keyed to the wrong item and the last one, About, was never rendered at all. The mapping lists all seven rows in order again, so Settings > About is reachable.
+- [DE] **The right-click menu is only as wide as its widest item.** Each Material 3 card sizes to its content (`IntrinsicSize.Max`); without it the rows' `fillMaxWidth` resolved against the Popup, which spans the window, and the menu came out as wide as the whole window.
+- [DE] **A Spotify account created with Google can sign in now (issue #97).** Google refuses to serve its sign-in page inside *any* embedded browser (`disallowed_useragent`), and a JavaFX `WebEngine` has no supported way to change that: the Chrome user agent the window already announces is not enough, because Google also inspects the engine itself. The window now offers a second link once Google blocks, **Open it in your browser**, which opens the same Spotify page in the user's own browser, where the Google button works, and swaps its status line for the `sp_dc` paste instruction the screen behind it already carries. That is the one path that works for the account which has no password because it was created with Google.
+
 ## [6.0.8.5_DE-1.54.11-beta] - 2026-10-02
 
 ### ✨ Added

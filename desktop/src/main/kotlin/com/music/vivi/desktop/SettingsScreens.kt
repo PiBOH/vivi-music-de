@@ -2014,7 +2014,8 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
 fun DeveloperOptionsSection(language: String) {
     val revision = settingsFileRevision()
     var heapMb by remember(revision) { mutableStateOf(DesktopSettings.load().jvmHeapMb) }
-    var detailedLogs by remember(revision) { mutableStateOf(DesktopSettings.load().superLogsWriter) }
+    var detailedLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedPlaybackLogging) }
+    var startupLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedStartupLogs) }
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
 
     val currentLabel = if (heapMb <= 0) {
@@ -2090,13 +2091,31 @@ fun DeveloperOptionsSection(language: String) {
                             checked = detailedLogs,
                             onCheckedChange = { v ->
                                 detailedLogs = v
-                                DesktopSettings.update { it.copy(superLogsWriter = v) }
+                                DesktopSettings.update { it.copy(detailedPlaybackLogging = v) }
                             },
                         )
                     },
                     onClick = {
                         detailedLogs = !detailedLogs
-                        DesktopSettings.update { it.copy(superLogsWriter = detailedLogs) }
+                        DesktopSettings.update { it.copy(detailedPlaybackLogging = detailedLogs) }
+                    },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.History,
+                    title = { Text(Localization.get(language, "detailed_startup_logs")) },
+                    description = { Text(Localization.get(language, "detailed_startup_logs_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = startupLogs,
+                            onCheckedChange = { v ->
+                                startupLogs = v
+                                DesktopSettings.update { it.copy(detailedStartupLogs = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        startupLogs = !startupLogs
+                        DesktopSettings.update { it.copy(detailedStartupLogs = startupLogs) }
                     },
                 ),
                 M3SettingsItem(

@@ -40,8 +40,8 @@ import kotlin.math.roundToInt
  * The per-pass lines repeat at the writer's own frequency — roughly one line
  * every 120 ms (about 8/s) through the opening window of every track, and again
  * for every slow pass after that — which is what fills `playback.log` in a
- * normal session. They are now gated on `super_logs_writer` in settings.json
- * (off by default, applied live); the lines that always matter — the priming
+ * normal session. They are now gated on `detailedPlaybackLogging` in
+ * settings.json (off by default, applied live); the lines that always matter, the priming
  * exit, the 10 s device check, the per-track `audio integrity` verdict and
  * every stall / `audio writer stalled` warning — keep going through
  * [AppLog.log].
@@ -50,7 +50,7 @@ import kotlin.math.roundToInt
  * a volatile field read, not a file read.
  */
 private fun writerDetailLog(message: String) {
-    if (DesktopSettings.load().superLogsWriter) AppLog.log("playback", message)
+    if (DesktopSettings.load().detailedPlaybackLogging) AppLog.log("playback", message)
 }
 
 /**

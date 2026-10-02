@@ -360,22 +360,34 @@ data class DesktopSyncState(
      * written to `playback.log`.
      *
      * That detail was added while the Windows gap in #3 was being measured and
-     * it repeats at the writer's own frequency — roughly one line every 120 ms
+     * it repeats at the writer's own frequency, roughly one line every 120 ms
      * (about 8/s) for the first passes of every track and again for every slow
-     * pass after that — which is what fills `playback.log` in a normal session.
-     * It is now behind this option and **off by default**, so a shipped build
-     * writes the summary lines only (the priming exit, the 10 s device check,
-     * the per-track `audio integrity` verdict and every stall/warning still go
-     * through `AppLog.log` unchanged). Turn it on by editing
-     * `~/.vivimusic/settings.json` — the file is applied live, no restart — when
-     * a writer stall has to be measured again.
+     * pass after that, which is what fills `playback.log` in a normal session.
+     * It is off by default, so a shipped build writes the summary lines only
+     * (the priming exit, the 10 s device check, the per-track `audio integrity`
+     * verdict and every stall/warning still go through `AppLog.log` unchanged).
      *
-     * There is deliberately no UI switch for this one: it is an option that only
-     * exists in `settings.json` (see [SettingsFile]), like
-     * [hideCustomApkDownloadButton].
+     * It used to exist only in `settings.json`, under the old key
+     * `super_logs_writer`; it is a switch in Developer options now and the key
+     * is `detailedPlaybackLogging`. The file is applied live, with no restart,
+     * and an old `super_logs_writer` value is ignored (the key is read as
+     * absent, so the option falls back to its default, off).
      */
-    @SerialName("super_logs_writer")
-    val superLogsWriter: Boolean = false,
+    @SerialName("detailedPlaybackLogging")
+    val detailedPlaybackLogging: Boolean = false,
+    /**
+     * The per-stage startup timing lines in `app.log`, for example
+     * `startup: cached options loaded at +489395ms`.
+     *
+     * They exist to answer "which stage of the launch costs what", but on a
+     * normal session they are four lines nobody reads, and they are written at
+     * the very start when the log is otherwise clean. Off by default: with this
+     * off, `startupStage` writes nothing at all, which removes the lines rather
+     * than merely making them shorter. Turn it on from Developer options when a
+     * slow launch has to be measured (the value is read live, no restart).
+     */
+    @SerialName("DetailedStartupLogs")
+    val detailedStartupLogs: Boolean = false,
 )
 
 object DesktopSettings {

@@ -346,6 +346,10 @@ fun main(args: Array<String>) {
     // makes the next launch answer the question instead of guessing at it.
     val startupAt = System.currentTimeMillis()
     fun startupStage(name: String) {
+        // Gated on DetailedStartupLogs (Developer options, off by default): with
+        // it off these four lines are not written at all, so a normal launch has
+        // a clean log.
+        if (!DesktopSettings.load().detailedStartupLogs) return
         AppLog.log("app", "startup: $name at +${System.currentTimeMillis() - startupAt}ms")
     }
 
@@ -5185,7 +5189,7 @@ fun SettingsScreen(
         "wrapped_title" to listOf("wrapped_desc", "wrapped_show_on_home", "wrapped_show_on_home_desc", "wrapped_title"),
         "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
         "desktop_features" to listOf("desktop_features", "desktop_features_desc", "media_keys", "media_keys_desc", "now_playing_widget", "now_playing_widget_desc", "requires_accessibility", "tray_menu", "tray_menu_desc"),
-        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
+        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "detailed_startup_logs", "detailed_startup_logs_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
         "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
     )
 
@@ -5280,8 +5284,12 @@ fun SettingsScreen(
                 ),
             )
         }
-        // Group 4 — system & support (mobile's fourth group).
-        val aboutKeys = listOf("backup_restore", "wrapped_title", "integrations", "desktop_features", "system", "about")
+        // Group 4, system and support (mobile's fourth group). The keys must be
+        // in the SAME order as `aboutItems`: the Spotify import row was inserted
+        // in the middle of the list and the mapping below was not extended, so
+        // every row from that point on was keyed to the wrong item and the last
+        // item (About) was never rendered at all.
+        val aboutKeys = listOf("backup_restore", "wrapped_title", "integrations", "spotify_import", "desktop_features", "system", "about")
         if (!searching || aboutKeys.any { matches(it) }) {
             M3SettingsGroup(
                 title = if (searching) null else Localization.get(language, "about"),
@@ -5289,9 +5297,10 @@ fun SettingsScreen(
                     aboutItems[0].takeIf { !searching || matches("backup_restore") },
                     aboutItems[1].takeIf { !searching || matches("wrapped_title") },
                     aboutItems[2].takeIf { !searching || matches("integrations") },
-                    aboutItems[3].takeIf { !searching || matches("desktop_features") },
-                    aboutItems[4].takeIf { !searching || matches("system") },
-                    aboutItems[5].takeIf { !searching || matches("about") },
+                    aboutItems[3].takeIf { !searching || matches("spotify_import") },
+                    aboutItems[4].takeIf { !searching || matches("desktop_features") },
+                    aboutItems[5].takeIf { !searching || matches("system") },
+                    aboutItems[6].takeIf { !searching || matches("about") },
                 ),
             )
         }
