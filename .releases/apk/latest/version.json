@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.5",
+  "versionCode": 143,
+  "channel": "beta",
+  "title": "v6.0.8.5_DE-1.54.13: colour emoji font, changelog bullets, link-only cursor, System descriptions",
+  "builtAt": "2026-10-02T19:44:08Z",
+  "commit": "c6f0dc2571d99091fc66072046c86c9f8b1cad39",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31628510,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30110052,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31628510,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
