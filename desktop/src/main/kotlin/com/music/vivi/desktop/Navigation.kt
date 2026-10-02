@@ -54,6 +54,11 @@ sealed interface Screen {
     data object SettingsCommits : Screen
     data object SettingsAbout : Screen
     data object SettingsContributors : Screen
+
+    /** The live performance monitor (was called "Developer options"). */
+    data object SettingsPerformance : Screen
+
+    /** The locked Developer options screen (seven taps on the version code). */
     data object SettingsDeveloper : Screen
     data object SettingsSystem : Screen
     data object SettingsIntro : Screen

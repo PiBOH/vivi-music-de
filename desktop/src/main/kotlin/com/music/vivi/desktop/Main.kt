@@ -1,6 +1,7 @@
 package com.music.vivi.desktop
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
@@ -309,6 +310,11 @@ fun main(args: Array<String>) {
     // frame), fall back to the software renderer before the first Skia layer is
     // created. Must run before application { }.
     configureRenderApi()
+
+    // Apply a heap size chosen in Developer options before anything else grabs
+    // the single-instance lock: when it differs from the current one this starts
+    // a fresh process and exits, so the lock is never held by the dying one.
+    runCatching { JvmMemory.relaunchIfNeeded() }
 
     // A toast / command-line launch can request a section (e.g. --open=updates).
     val openSection = AppCommand.parse(args)
@@ -1545,7 +1551,7 @@ fun WindowScope.App(
     // notification mode (in-app banner vs native system notification).
     var showDevNotification by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        DeveloperOptions.unlocked.collect {
+        DeveloperOptions.unlockedEvent.collect {
             val title = Localization.get(language, "dev_unlocked_title")
             val desc = Localization.get(language, "dev_unlocked_desc")
             if (DesktopSettings.load().notificationMode == "native") {
@@ -2291,7 +2297,11 @@ fun WindowScope.App(
     // size the mobile UI has at 75% (0.75x), keeping the relative presets.
     val baseDensity = LocalDensity.current
     CompositionLocalProvider(
-        LocalDensity provides Density(baseDensity.density * densityScale * DENSITY_CALIBRATION, baseDensity.fontScale)
+        LocalDensity provides Density(baseDensity.density * densityScale * DENSITY_CALIBRATION, baseDensity.fontScale),
+        // The right-click menu is Compose Desktop's own flat popup; the Material 3
+        // representation replaces it everywhere so every context menu (text
+        // selection and ContextMenuArea alike) matches the app.
+        LocalContextMenuRepresentation provides Material3ContextMenuRepresentation,
     ) {
     CompositionLocalProvider(
         LocalPlayback provides PlaybackContext(
@@ -3191,16 +3201,21 @@ fun WindowScope.App(
                         language = language,
                         onBack = goBack,
                     )
-                    is Screen.SettingsDeveloper -> SettingsDeveloperScreen(
+                    is Screen.SettingsPerformance -> SettingsPerformanceScreen(
                         language = language,
                         onBack = goBack,
                         syncManager = syncManager,
+                    )
+                    is Screen.SettingsDeveloper -> SettingsDeveloperOptionsScreen(
+                        language = language,
+                        onBack = goBack,
                     )
                     is Screen.SettingsSystem -> SettingsSystemScreen(
                         language = language,
                         onBack = goBack,
                         showIntroSplash = showIntroSplash,
-                        onOpenDeveloper = { navigate(Screen.SettingsDeveloper) },
+                        onOpenPerformance = { navigate(Screen.SettingsPerformance) },
+                        onOpenDeveloperOptions = { navigate(Screen.SettingsDeveloper) },
                         onOpenIntro = { navigate(Screen.SettingsIntro) },
                     )
                     is Screen.SettingsIntro -> SettingsIntroScreen(
@@ -5101,7 +5116,7 @@ fun SettingsScreen(
         M3SettingsItem(
             icon = Icons.Filled.Build,
             title = { Text(Localization.get(language, "system")) },
-            description = { Text(if (devEnabled) Localization.get(language, "developer_options_enabled") else Localization.get(language, "dev_tools_disabled")) },
+            description = { Text(if (devEnabled) Localization.get(language, "performance_options_enabled") else Localization.get(language, "dev_tools_disabled")) },
             trailing = { SettingsChevron() },
             onClick = { onOpen(Screen.SettingsSystem) },
         ),
@@ -5144,7 +5159,7 @@ fun SettingsScreen(
         "account" to listOf("clear_session", "logout", "login", "login_google", "login_manual_title", "logged_in_as", "not_logged_in", "account", "cookie_label", "visitor_data_label", "data_sync_id_label"),
         "device_sync" to listOf("connection_method", "method_relay", "method_lan", "relay_server", "lan_sync", "connect", "generate_code", "regenerate_pair_code", "code_expires_in", "code_hint", "lan_hint", "pair", "unpair", "scan_qr", "connected", "disconnected", "status", "download_mobile_apk", "how_to_connect", "waiting_for_pairing"),
         "content" to listOf("content", "content_country", "content_language", "system_default"),
-        "ai_lyrics_translation" to listOf("ai_api_key", "ai_base_url", "ai_deepl_formality", "ai_deepl_formality_default", "ai_deepl_formality_less", "ai_deepl_formality_more", "ai_lyrics_translation", "ai_model", "ai_provider", "ai_target_language", "ai_translation_literal", "ai_translation_mode", "ai_translation_transcribed", "not_set", "ai_setup_guide"),
+        "ai_lyrics_translation" to listOf("ai_api_key", "ai_base_url", "ai_deepl_formality", "ai_deepl_formality_default", "ai_deepl_formality_less", "ai_deepl_formality_more", "ai_lyrics_translation", "ai_model", "ai_provider", "ai_target_language", "ai_translation_literal", "ai_translation_mode", "ai_translation_transcribed", "not_set", "ai_setup_guide", "ai_custom_model", "ai_training_note"),
         "lyrics" to listOf(
             "lyrics", "lyrics_line_spacing", "lyrics_text_size", "synced_lyrics", "synced_lyrics_desc", "lyrics_focus",
             // Advanced lyrics (mobile port): animation styles, display options,
@@ -5170,7 +5185,7 @@ fun SettingsScreen(
         "wrapped_title" to listOf("wrapped_desc", "wrapped_show_on_home", "wrapped_show_on_home_desc", "wrapped_title"),
         "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
         "desktop_features" to listOf("desktop_features", "desktop_features_desc", "media_keys", "media_keys_desc", "now_playing_widget", "now_playing_widget_desc", "requires_accessibility", "tray_menu", "tray_menu_desc"),
-        "system" to listOf("system", "developer_options", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "developer_options_enabled", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
+        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
         "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
     )
 
@@ -5297,10 +5312,12 @@ fun SettingsSystemScreen(
     language: String,
     onBack: () -> Unit,
     showIntroSplash: Boolean,
-    onOpenDeveloper: () -> Unit,
+    onOpenPerformance: () -> Unit,
+    onOpenDeveloperOptions: () -> Unit,
     onOpenIntro: () -> Unit,
 ) {
     val devEnabled by DeveloperOptions.enabled.collectAsState()
+    val developerUnlocked by DeveloperOptions.unlocked.collectAsState()
 
     // Log export (moved here from Developer options: it belongs under System).
     var logExporting by remember { mutableStateOf(false) }
@@ -5314,12 +5331,12 @@ fun SettingsSystemScreen(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.Build,
-                    title = { Text(Localization.get(language, "developer_options")) },
+                    title = { Text(Localization.get(language, "performance_options")) },
                     description = {
-                        Text(if (devEnabled) Localization.get(language, "developer_options_enabled") else Localization.get(language, "dev_tools_disabled"))
+                        Text(if (devEnabled) Localization.get(language, "performance_options_enabled") else Localization.get(language, "dev_tools_disabled"))
                     },
                     trailing = { SettingsChevron() },
-                    onClick = onOpenDeveloper,
+                    onClick = onOpenPerformance,
                 ),
                 M3SettingsItem(
                     icon = Icons.Filled.Movie,
@@ -5339,6 +5356,25 @@ fun SettingsSystemScreen(
                 ),
             ),
         )
+
+        // Advanced: Developer options is hidden here until the version code in
+        // About is tapped seven times. A section of its own (not a row in the
+        // group above) so the unlock is the only way it can appear.
+        if (developerUnlocked) {
+            Spacer(Modifier.height(16.dp))
+            M3SettingsGroup(
+                title = Localization.get(language, "advanced"),
+                items = listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Build,
+                        title = { Text(Localization.get(language, "developer_options")) },
+                        description = { Text(Localization.get(language, "developer_options_desc")) },
+                        trailing = { SettingsChevron() },
+                        onClick = onOpenDeveloperOptions,
+                    ),
+                ),
+            )
+        }
 
         Spacer(Modifier.height(16.dp))
 
@@ -6570,7 +6606,7 @@ private const val GITHUB_MARK_PATH =
 fun AboutSection(language: String, onOpenContributors: () -> Unit) {
     val firstLaunchDate = remember { DesktopSettings.load().firstLaunchDate }
     var versionCodeTaps by remember { mutableStateOf(0) }
-    val devEnabled by DeveloperOptions.enabled.collectAsState()
+    val devUnlocked by DeveloperOptions.unlocked.collectAsState()
     val authorImage = remember { loadResourceImage("author.png") }
 
     Column(
@@ -6639,18 +6675,18 @@ fun AboutSection(language: String, onOpenContributors: () -> Unit) {
         title = Localization.get(language, "version_code"),
         description = AppInfo.VERSION_CODE.toString(),
         onClick = {
-            if (!devEnabled) {
+            if (!devUnlocked) {
                 versionCodeTaps++
                 if (versionCodeTaps >= 7) {
-                    DeveloperOptions.setEnabled(true)
+                    DeveloperOptions.setUnlocked(true)
                     versionCodeTaps = 0
                 }
             }
         },
     )
     Text(
-        if (devEnabled) {
-            Localization.get(language, "developer_options_enabled")
+        if (devUnlocked) {
+            Localization.get(language, "developer_options_unlocked")
         } else if (versionCodeTaps > 0) {
             Localization.get(language, "tap_version_code_hint") + " (${7 - versionCodeTaps})"
         } else {

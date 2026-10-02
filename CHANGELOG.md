@@ -11,6 +11,20 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.11-beta] - 2026-10-02
+
+### ✨ Added
+- [DE] **A real Developer options screen, unlocked by tapping the version code seven times.** It appears under Settings > System > Advanced and holds the options that normally have no switch: the JVM heap (a picker from 1 GB to 16 GB, default 2 GB, applied on the next start by a one-time relaunch with the matching `-Xmx`), `DetailedPlaybackLogging` (the old `super_logs_writer`, now a toggle) and `hide_custom_apk_download_button`. The seven-tap no longer turns the performance monitor on by itself: it unlocks this screen.
+- [DE] **A custom model field in the AI translation screen.** The model picker now ends with a `Custom` entry that opens a text field, exactly like the mobile app, so any model id can be typed even when the provider list does not offer it. The OpenRouter list also gains `apodex/apodex-1.1-mini:free` and `qwen/qwen3.8-27b:free`, with a note that some free models may use your lyrics as training data.
+- [DE] **The AI translation screen is rebuilt as grouped Material 3 cards.** Provider, keys/model, mode and target language now render in the same card groups the mobile screen uses.
+
+### 🔧 Changed
+- [DE] **The old "Developer options" screen is now "Performance options".** It shows the same live CPU / RAM / GPU / network monitor, is reachable without any unlock, and is called Performance options everywhere from now on.
+
+### 🐛 Fixed
+- [DE] **The changelog heading emoji are drawn, not boxed.** The operating-system emoji fonts (Segoe UI Emoji, Apple Color Emoji) carry their emoji as colour glyphs that the desktop renderer drew as tofu, which is why only the BMP `✨ Added` came out and every astral emoji (`🐛 Fixed`, `🔧 Changed`, `📝 Commits`) did not. A monochrome Noto Emoji is now bundled and used for every emoji codepoint, so each one is a plain outline the renderer can always paint; the OS emoji font stays only as a fallback for the few codepoints Noto Emoji omits.
+- [DE] **The right-click menu is Material 3 Expressive.** Compose Desktop's text menu was its own flat popup. A single Material 3 `ContextMenuRepresentation` is installed for the whole window, so every context menu (text selection and `ContextMenuArea`) draws as a rounded, elevated `surfaceContainerHigh` card with Material 3 typography. It only changes how the items are drawn, never which items there are, so the Apple-only and APK-parity entries are untouched.
+
 ## [6.0.8.5_DE-1.54.10-beta] - 2026-10-01
 
 ### ✨ Added

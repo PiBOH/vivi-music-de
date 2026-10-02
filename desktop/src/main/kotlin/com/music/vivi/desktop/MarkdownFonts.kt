@@ -21,11 +21,31 @@ import java.io.File
  * font would be wrong (and selecting one would leave the whole UI without
  * letters). They are used only where [MarkdownView] draws text.
  *
- * Nothing here is bundled with the app: the files are read from the OS at
- * startup, and a missing file simply means no fallback for that class of
- * character (the renderer then behaves exactly as it did before).
+ * Emoji are drawn from a font bundled with the app (`fonts/NotoEmoji.ttf`, the
+ * monochrome Noto Emoji, SIL OFL 1.1), NOT from the OS font: Windows' Segoe UI
+ * Emoji is a colour font (COLR/CBDT) and the renderer drew the outline-poor
+ * colour glyphs as tofu, while the monochrome font draws every codepoint as a
+ * plain outline the renderer can always paint. The OS emoji font stays only as a
+ * fallback for the very few emoji Noto Emoji omits. The symbol/CJK files are
+ * read from the OS at startup; a missing file simply means no fallback for that
+ * class of character (the renderer then behaves exactly as it did before).
  */
 internal object MarkdownFonts {
+
+    /**
+     * The bundled monochrome emoji family. Loaded from the classpath, so it is
+     * always present in the packaged app; `runCatching` keeps a missing or
+     * unreadable resource from taking the changelog down with it.
+     */
+    private val bundledEmoji: FontFamily? by lazy {
+        runCatching {
+            FontFamily(
+                Font("fonts/NotoEmoji.ttf", FontWeight.Normal),
+                Font("fonts/NotoEmoji.ttf", FontWeight.Medium),
+                Font("fonts/NotoEmoji.ttf", FontWeight.Bold),
+            )
+        }.getOrNull()
+    }
 
     private val emojiPaths: List<String>
     private val symbolPaths: List<String>
@@ -88,9 +108,9 @@ internal object MarkdownFonts {
 
     /** The family that can draw [codePoint], or null when nothing is loaded for it. */
     fun familyFor(codePoint: Int): FontFamily? = when {
-        isEmoji(codePoint) -> emoji ?: symbols
+        isEmoji(codePoint) -> bundledEmoji ?: emoji ?: symbols
         isCjk(codePoint) -> cjk
-        isSymbol(codePoint) -> symbols ?: emoji
+        isSymbol(codePoint) -> symbols ?: bundledEmoji ?: emoji
         else -> null
     }
 

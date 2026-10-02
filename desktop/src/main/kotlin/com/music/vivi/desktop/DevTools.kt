@@ -65,8 +65,19 @@ enum class DevToolsProfile { FULL, PERFORMANCE }
  * overlay (main window) and the dedicated window can react to it.
  */
 object DeveloperOptions {
+    /**
+     * The live performance monitor (CPU/RAM/GPU/network). Its screen is now the
+     * "Performance options" screen and is always reachable.
+     */
     private val _enabled = MutableStateFlow(false)
     val enabled: StateFlow<Boolean> = _enabled.asStateFlow()
+
+    /**
+     * The real "Developer options" screen is hidden until this is true, which
+     * only the seven-tap on the About version code sets (System > Advanced).
+     */
+    private val _unlocked = MutableStateFlow(false)
+    val unlocked: StateFlow<Boolean> = _unlocked.asStateFlow()
 
     private val _mode = MutableStateFlow(DevToolsMode.OVERLAY)
     val mode: StateFlow<DevToolsMode> = _mode.asStateFlow()
@@ -84,13 +95,14 @@ object DeveloperOptions {
     private val _logWindowVisible = MutableStateFlow(false)
     val logWindowVisible: StateFlow<Boolean> = _logWindowVisible.asStateFlow()
 
-    /** Emitted when the options transition from disabled to enabled (unlock notification). */
-    private val _unlocked = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val unlocked: SharedFlow<Unit> = _unlocked.asSharedFlow()
+    /** Emitted when the Developer options transition from locked to unlocked (notification). */
+    private val _unlockedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val unlockedEvent: SharedFlow<Unit> = _unlockedEvent.asSharedFlow()
 
     fun load() {
         val s = DesktopSettings.load()
         _enabled.value = s.developerOptions
+        _unlocked.value = s.developerUnlocked
         _mode.value = runCatching { DevToolsMode.valueOf(s.devToolsMode) }.getOrDefault(DevToolsMode.OVERLAY)
         _profile.value = runCatching { DevToolsProfile.valueOf(s.devProfile) }.getOrDefault(DevToolsProfile.FULL)
         _overlayMovable.value = s.devOverlayMovable
@@ -99,11 +111,17 @@ object DeveloperOptions {
     }
 
     fun setEnabled(value: Boolean) {
-        val was = _enabled.value
         _enabled.value = value
         DesktopSettings.update { it.copy(developerOptions = value) }
         if (value) SystemMonitor.start() else SystemMonitor.stop()
-        if (value && !was) _unlocked.tryEmit(Unit)
+    }
+
+    /** Unlocks the Developer options screen (seven-tap on the version code). */
+    fun setUnlocked(value: Boolean) {
+        val was = _unlocked.value
+        _unlocked.value = value
+        DesktopSettings.update { it.copy(developerUnlocked = value) }
+        if (value && !was) _unlockedEvent.tryEmit(Unit)
     }
 
     fun setMode(value: DevToolsMode) {

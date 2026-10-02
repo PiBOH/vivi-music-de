@@ -22,7 +22,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Memory
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Delete
@@ -744,8 +750,14 @@ fun SettingsContributorsScreen(language: String, onBack: () -> Unit) {
 }
 
 @Composable
-fun SettingsDeveloperScreen(language: String, onBack: () -> Unit, syncManager: DesktopSyncManager) {
-    SettingsSubScreen(language, onBack) { DeveloperSection(language, syncManager) }
+fun SettingsPerformanceScreen(language: String, onBack: () -> Unit, syncManager: DesktopSyncManager) {
+    SettingsSubScreen(language, onBack) { PerformanceSection(language, syncManager) }
+}
+
+/** The real Developer options screen, reachable only after the seven-tap unlock. */
+@Composable
+fun SettingsDeveloperOptionsScreen(language: String, onBack: () -> Unit) {
+    SettingsSubScreen(language, onBack) { DeveloperOptionsSection(language) }
 }
 
 @Composable
@@ -1817,9 +1829,9 @@ fun PrivacySection(language: String, isLoggedIn: Boolean, onLogout: () -> Unit) 
     }
 }
 
-/** Developer options: enable/disable the live stats, pick a profile and placement. */
+/** Performance options: enable/disable the live stats, pick a profile and placement. */
 @Composable
-fun DeveloperSection(language: String, syncManager: DesktopSyncManager) {
+fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
     val enabled by DeveloperOptions.enabled.collectAsState()
     val mode by DeveloperOptions.mode.collectAsState()
     val profile by DeveloperOptions.profile.collectAsState()
@@ -1831,12 +1843,12 @@ fun DeveloperSection(language: String, syncManager: DesktopSyncManager) {
 
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp)) {
         Text(
-            Localization.get(language, "developer_options"),
+            Localization.get(language, "performance_options"),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            Localization.get(language, "developer_options_desc"),
+            Localization.get(language, "performance_options_desc"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),
@@ -1859,12 +1871,12 @@ fun DeveloperSection(language: String, syncManager: DesktopSyncManager) {
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(
-                        Localization.get(language, "developer_options"),
+                        Localization.get(language, "performance_options"),
                         style = MaterialTheme.typography.titleMedium,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        Localization.get(language, if (enabled) "developer_options_enabled" else "dev_tools_disabled"),
+                        Localization.get(language, if (enabled) "performance_options_enabled" else "dev_tools_disabled"),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1989,14 +2001,124 @@ fun DeveloperSection(language: String, syncManager: DesktopSyncManager) {
                     }
                 }
             }
-        } else {
-            Text(
-                Localization.get(language, "tap_version_code_hint"),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 12.dp, start = 4.dp),
-            )
         }
+    }
+}
+
+/**
+ * The real Developer options screen (System > Advanced, unlocked by tapping the
+ * version code seven times). It exposes the settings that normally have no UI:
+ * the JVM heap, the detailed playback log and the download-APK button.
+ */
+@Composable
+fun DeveloperOptionsSection(language: String) {
+    val revision = settingsFileRevision()
+    var heapMb by remember(revision) { mutableStateOf(DesktopSettings.load().jvmHeapMb) }
+    var detailedLogs by remember(revision) { mutableStateOf(DesktopSettings.load().superLogsWriter) }
+    var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
+
+    val currentLabel = if (heapMb <= 0) {
+        Localization.get(language, "jvm_memory_default").format(JvmMemory.label(JvmMemory.DEFAULT_MB))
+    } else {
+        JvmMemory.label(heapMb)
+    }
+    val heapOptions = buildList {
+        add("0" to Localization.get(language, "jvm_memory_default").format(JvmMemory.label(JvmMemory.DEFAULT_MB)))
+        JvmMemory.PRESETS_MB.forEach { add(it.toString() to JvmMemory.label(it)) }
+    }
+    val currentMb = JvmMemory.currentMaxMb
+
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp)) {
+        Text(
+            Localization.get(language, "developer_options"),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            Localization.get(language, "developer_options_desc"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 4.dp),
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // JVM heap: applied at the next start (a JVM cannot change -Xmx live).
+        M3SettingsGroup(
+            title = Localization.get(language, "advanced"),
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Memory,
+                    title = { Text(Localization.get(language, "jvm_memory")) },
+                    description = {
+                        Text(
+                            Localization.get(language, "jvm_memory_desc")
+                                .format(JvmMemory.label(currentMb)),
+                        )
+                    },
+                    trailing = {
+                        AiDropdownTrailing(
+                            value = currentLabel,
+                            options = heapOptions,
+                            onSelect = { key ->
+                                val mb = key.toIntOrNull() ?: 0
+                                heapMb = mb
+                                DesktopSettings.update { it.copy(jvmHeapMb = mb) }
+                            },
+                        )
+                    },
+                ),
+            ),
+        )
+
+        Spacer(Modifier.height(8.dp))
+        Text(
+            Localization.get(language, "jvm_memory_restart"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, top = 2.dp, bottom = 8.dp),
+        )
+
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Description,
+                    title = { Text(Localization.get(language, "detailed_playback_logging")) },
+                    description = { Text(Localization.get(language, "detailed_playback_logging_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = detailedLogs,
+                            onCheckedChange = { v ->
+                                detailedLogs = v
+                                DesktopSettings.update { it.copy(superLogsWriter = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        detailedLogs = !detailedLogs
+                        DesktopSettings.update { it.copy(superLogsWriter = detailedLogs) }
+                    },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Download,
+                    title = { Text(Localization.get(language, "hide_custom_apk_download_button")) },
+                    description = { Text(Localization.get(language, "hide_custom_apk_download_button_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = hideApk,
+                            onCheckedChange = { v ->
+                                hideApk = v
+                                DesktopSettings.update { it.copy(hideCustomApkDownloadButton = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        hideApk = !hideApk
+                        DesktopSettings.update { it.copy(hideCustomApkDownloadButton = hideApk) }
+                    },
+                ),
+            ),
+        )
     }
 }
 
@@ -2983,6 +3105,53 @@ fun SettingsDataSaverScreen(
     }
 }
 
+/**
+ * The trailing control of an AI settings row: the current value with a
+ * dropdown arrow, opening the choice list anchored to itself. Rendered through
+ * [M3SettingsItem]/[M3SettingsGroup] so these screens read as grouped Material 3
+ * cards like the mobile one.
+ */
+@Composable
+private fun AiDropdownTrailing(
+    value: String,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            modifier = Modifier.clickable { expanded = true },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Icon(
+                Icons.Filled.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier
+                .width(320.dp)
+                .clip(RoundedCornerShape(18.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            options.forEach { (key, label) ->
+                DropdownMenuItem(
+                    text = { Text(label) },
+                    onClick = { expanded = false; onSelect(key) },
+                )
+            }
+        }
+    }
+}
+
 /** AI lyrics translation settings (provider, keys, model, target language…). */
 @Composable
 fun SettingsAiScreen(
@@ -3020,6 +3189,7 @@ fun SettingsAiScreen(
         "OpenRouter" to listOf(
             "google/gemini-2.5-flash-lite", "google/gemini-2.5-flash", "x-ai/grok-4.1-fast",
             "deepseek/deepseek-v3.1-terminus:exacto", "openai/gpt-4o-mini", "google/gemini-3-flash-preview",
+            "apodex/apodex-1.1-mini:free", "qwen/qwen3.8-27b:free",
         ),
         "OpenAI" to listOf("gpt-4o-mini", "gpt-4o", "gpt-4-turbo"),
         "Claude" to listOf("claude-3-5-haiku-latest", "claude-3-5-sonnet-latest", "claude-3-opus-latest"),
@@ -3034,15 +3204,12 @@ fun SettingsAiScreen(
         "Custom" to emptyList(),
     )
 
-    var providerExpanded by remember { mutableStateOf(false) }
-    var modelExpanded by remember { mutableStateOf(false) }
-    var languageExpanded by remember { mutableStateOf(false) }
-    var modeExpanded by remember { mutableStateOf(false) }
-    var formalityExpanded by remember { mutableStateOf(false) }
     var editingKey by remember { mutableStateOf<String?>(null) }
     var keyInput by remember { mutableStateOf("") }
     var editingBaseUrl by remember { mutableStateOf(false) }
     var baseUrlInput by remember { mutableStateOf("") }
+    var editingModel by remember { mutableStateOf(false) }
+    var modelInput by remember { mutableStateOf("") }
 
     SettingsSubScreen(language, onBack) {
         Text(
@@ -3052,132 +3219,157 @@ fun SettingsAiScreen(
         )
 
         // Provider
-        Text(Localization.get(language, "ai_provider"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
-        Box(Modifier.padding(top = 8.dp)) {
-            OutlinedButton(onClick = { providerExpanded = true }) { Text(aiProvider) }
-            DropdownMenu(expanded = providerExpanded, onDismissRequest = { providerExpanded = false }) {
-                aiProviders.keys.forEach { p ->
-                    DropdownMenuItem(
-                        text = { Text(p) },
-                        onClick = {
-                            providerExpanded = false
+        M3SettingsGroup(
+            title = Localization.get(language, "ai_provider"),
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Explore,
+                    title = { Text(Localization.get(language, "ai_provider")) },
+                    description = { Text(aiProvider) },
+                    trailing = {
+                        AiDropdownTrailing(aiProvider, aiProviders.keys.map { it to it }) { p ->
                             val newBase = if (p == "Custom" || p == "DeepL") "" else (aiProviders[p] ?: "")
                             onAiBaseUrlChange(newBase)
                             onAiProviderChange(p)
                             val models = modelsByProvider[p] ?: emptyList()
                             onAiModelChange(models.firstOrNull() ?: "")
-                        },
-                    )
-                }
-            }
-        }
+                        }
+                    },
+                ),
+            ),
+        )
 
-        // API key
-        Text(Localization.get(language, "ai_api_key"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-        OutlinedButton(onClick = {
-            editingKey = "main"
-            keyInput = aiApiKey
-        }) {
+        Spacer(Modifier.height(18.dp))
+
+        // Keys, base URL and model
+        M3SettingsGroup(
+            title = Localization.get(language, "ai_setup_guide"),
+            items = if (aiProvider == "DeepL") {
+                listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Key,
+                        title = { Text("DeepL " + Localization.get(language, "ai_api_key")) },
+                        description = {
+                            Text(if (deeplApiKey.isNotEmpty()) "•".repeat(minOf(deeplApiKey.length, 8)) else Localization.get(language, "not_set"))
+                        },
+                        onClick = { editingKey = "deepl"; keyInput = deeplApiKey },
+                    ),
+                    M3SettingsItem(
+                        icon = Icons.Filled.Tune,
+                        title = { Text(Localization.get(language, "ai_deepl_formality")) },
+                        trailing = {
+                            AiDropdownTrailing(
+                                value = when (deeplFormality) {
+                                    "more" -> Localization.get(language, "ai_deepl_formality_more")
+                                    "less" -> Localization.get(language, "ai_deepl_formality_less")
+                                    else -> Localization.get(language, "ai_deepl_formality_default")
+                                },
+                                options = listOf(
+                                    "default" to Localization.get(language, "ai_deepl_formality_default"),
+                                    "more" to Localization.get(language, "ai_deepl_formality_more"),
+                                    "less" to Localization.get(language, "ai_deepl_formality_less"),
+                                ),
+                                onSelect = onDeeplFormalityChange,
+                            )
+                        },
+                    ),
+                )
+            } else {
+                listOfNotNull(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Key,
+                        title = { Text(Localization.get(language, "ai_api_key")) },
+                        description = {
+                            Text(if (aiApiKey.isNotEmpty()) "•".repeat(minOf(aiApiKey.length, 8)) else Localization.get(language, "not_set"))
+                        },
+                        onClick = { editingKey = "main"; keyInput = aiApiKey },
+                    ),
+                    M3SettingsItem(
+                        icon = Icons.Filled.Link,
+                        title = { Text(Localization.get(language, "ai_base_url")) },
+                        description = { Text(aiBaseUrl.ifBlank { Localization.get(language, "not_set") }) },
+                        onClick = { editingBaseUrl = true; baseUrlInput = aiBaseUrl },
+                    ),
+                    if (aiProvider != "Custom") {
+                        M3SettingsItem(
+                            icon = Icons.Filled.Tune,
+                            title = { Text(Localization.get(language, "ai_model")) },
+                            description = { Text(aiModel.ifBlank { Localization.get(language, "not_set") }) },
+                            trailing = {
+                                AiDropdownTrailing(
+                                    value = aiModel.substringAfterLast('/').ifBlank { Localization.get(language, "not_set") },
+                                    options = (modelsByProvider[aiProvider] ?: emptyList()).map { it to it } +
+                                        ("__custom__" to Localization.get(language, "ai_custom_model")),
+                                    onSelect = { m ->
+                                        if (m == "__custom__") {
+                                            modelInput = aiModel
+                                            editingModel = true
+                                        } else {
+                                            onAiModelChange(m)
+                                        }
+                                    },
+                                )
+                            },
+                        )
+                    } else {
+                        null
+                    },
+                )
+            },
+        )
+
+        if (aiProvider != "DeepL" && aiProvider != "Custom") {
             Text(
-                if (aiApiKey.isNotEmpty()) "•".repeat(minOf(aiApiKey.length, 8)) else Localization.get(language, "not_set"),
+                Localization.get(language, "ai_training_note"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp, top = 8.dp, end = 6.dp),
             )
         }
 
-        // Base URL
-        Text(Localization.get(language, "ai_base_url"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-        OutlinedButton(onClick = {
-            editingBaseUrl = true
-            baseUrlInput = aiBaseUrl
-        }) {
-            Text(aiBaseUrl.ifBlank { Localization.get(language, "not_set") })
-        }
+        Spacer(Modifier.height(18.dp))
 
-        // Model (hidden for DeepL / Custom)
-        if (aiProvider != "DeepL" && aiProvider != "Custom") {
-            Text(Localization.get(language, "ai_model"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-            Box(Modifier.padding(top = 8.dp)) {
-                OutlinedButton(onClick = { modelExpanded = true }) { Text(aiModel.ifBlank { Localization.get(language, "not_set") }) }
-                DropdownMenu(expanded = modelExpanded, onDismissRequest = { modelExpanded = false }) {
-                    (modelsByProvider[aiProvider] ?: emptyList()).forEach { m ->
-                        DropdownMenuItem(
-                            text = { Text(m) },
-                            onClick = { modelExpanded = false; onAiModelChange(m) },
-                        )
-                    }
+        // Mode and target language
+        M3SettingsGroup(
+            title = Localization.get(language, "ai_translation_mode"),
+            items = buildList {
+                if (aiProvider != "DeepL") {
+                    add(
+                        M3SettingsItem(
+                            icon = Icons.Filled.Translate,
+                            title = { Text(Localization.get(language, "ai_translation_mode")) },
+                            trailing = {
+                                AiDropdownTrailing(
+                                    value = if (translateMode == "Transcribed") {
+                                        Localization.get(language, "ai_translation_transcribed")
+                                    } else {
+                                        Localization.get(language, "ai_translation_literal")
+                                    },
+                                    options = listOf(
+                                        "Literal" to Localization.get(language, "ai_translation_literal"),
+                                        "Transcribed" to Localization.get(language, "ai_translation_transcribed"),
+                                    ),
+                                    onSelect = onTranslateModeChange,
+                                )
+                            },
+                        ),
+                    )
                 }
-            }
-        }
-
-        // Translation mode (not DeepL)
-        if (aiProvider != "DeepL") {
-            Text(Localization.get(language, "ai_translation_mode"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-            Box(Modifier.padding(top = 8.dp)) {
-                OutlinedButton(onClick = { modeExpanded = true }) {
-                    Text(
-                        when (translateMode) {
-                            "Transcribed" -> Localization.get(language, "ai_translation_transcribed")
-                            else -> Localization.get(language, "ai_translation_literal")
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Language,
+                        title = { Text(Localization.get(language, "ai_target_language")) },
+                        trailing = {
+                            AiDropdownTrailing(
+                                value = LanguageCodeToName[translateLanguage] ?: translateLanguage,
+                                options = LanguageCodeToName.toList().sortedBy { it.second }.map { it.first to it.second },
+                                onSelect = onTranslateLanguageChange,
+                            )
                         },
-                    )
-                }
-                DropdownMenu(expanded = modeExpanded, onDismissRequest = { modeExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "ai_translation_literal")) },
-                        onClick = { modeExpanded = false; onTranslateModeChange("Literal") },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "ai_translation_transcribed")) },
-                        onClick = { modeExpanded = false; onTranslateModeChange("Transcribed") },
-                    )
-                }
-            }
-        }
-
-        // DeepL formality
-        if (aiProvider == "DeepL") {
-            Text(Localization.get(language, "ai_deepl_formality"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-            Box(Modifier.padding(top = 8.dp)) {
-                OutlinedButton(onClick = { formalityExpanded = true }) {
-                    Text(
-                        when (deeplFormality) {
-                            "more" -> Localization.get(language, "ai_deepl_formality_more")
-                            "less" -> Localization.get(language, "ai_deepl_formality_less")
-                            else -> Localization.get(language, "ai_deepl_formality_default")
-                        },
-                    )
-                }
-                DropdownMenu(expanded = formalityExpanded, onDismissRequest = { formalityExpanded = false }) {
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "ai_deepl_formality_default")) },
-                        onClick = { formalityExpanded = false; onDeeplFormalityChange("default") },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "ai_deepl_formality_more")) },
-                        onClick = { formalityExpanded = false; onDeeplFormalityChange("more") },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "ai_deepl_formality_less")) },
-                        onClick = { formalityExpanded = false; onDeeplFormalityChange("less") },
-                    )
-                }
-            }
-        }
-
-        // Target language
-        Text(Localization.get(language, "ai_target_language"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-        Box(Modifier.padding(top = 8.dp)) {
-            OutlinedButton(onClick = { languageExpanded = true }) {
-                Text(LanguageCodeToName[translateLanguage] ?: translateLanguage)
-            }
-            DropdownMenu(expanded = languageExpanded, onDismissRequest = { languageExpanded = false }) {
-                LanguageCodeToName.toList().sortedBy { it.second }.forEach { (code, name) ->
-                    DropdownMenuItem(
-                        text = { Text(name) },
-                        onClick = { languageExpanded = false; onTranslateLanguageChange(code) },
-                    )
-                }
-            }
-        }
+                    ),
+                )
+            },
+        )
 
         Spacer(Modifier.height(24.dp))
     }
@@ -3196,7 +3388,10 @@ fun SettingsAiScreen(
             },
             confirmButton = {
                 TextButton(onClick = {
-                    if (which == "main") onAiApiKeyChange(keyInput.trim())
+                    when (which) {
+                        "main" -> onAiApiKeyChange(keyInput.trim())
+                        "deepl" -> onDeeplApiKeyChange(keyInput.trim())
+                    }
                     editingKey = null
                 }) {
                     Text(Localization.get(language, "save"))
@@ -3230,6 +3425,33 @@ fun SettingsAiScreen(
             },
             dismissButton = {
                 TextButton(onClick = { editingBaseUrl = false }) { Text(Localization.get(language, "cancel")) }
+            },
+        )
+    }
+
+    // Custom model dialog (the "Custom" entry in the model dropdown).
+    if (editingModel) {
+        AlertDialog(
+            onDismissRequest = { editingModel = false },
+            title = { Text(Localization.get(language, "ai_custom_model")) },
+            text = {
+                OutlinedTextField(
+                    value = modelInput,
+                    onValueChange = { modelInput = it },
+                    singleLine = true,
+                    placeholder = { Text("vendor/model-id") },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onAiModelChange(modelInput.trim())
+                    editingModel = false
+                }) {
+                    Text(Localization.get(language, "save"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { editingModel = false }) { Text(Localization.get(language, "cancel")) }
             },
         )
     }

@@ -21,6 +21,21 @@ package com.music.vivi.desktop
  */
 internal fun strings_zh_rTW(): Map<String, String> =
     mapOf(
+        "performance_options" to "Performance options",
+        "performance_options_desc" to "Live CPU, RAM, GPU and network usage of VIVI Music DE.",
+        "performance_options_enabled" to "Performance options enabled",
+        "advanced" to "Advanced",
+        "developer_options_unlocked" to "Developer options unlocked",
+        "jvm_memory" to "JVM memory",
+        "jvm_memory_desc" to "Heap the app asks the JVM for. Currently %s.",
+        "jvm_memory_default" to "Default (%s)",
+        "jvm_memory_restart" to "The new heap is applied the next time the app starts.",
+        "detailed_playback_logging" to "DetailedPlaybackLogging",
+        "detailed_playback_logging_desc" to "Writes every playback-writer pass to playback.log. Troubleshooting only.",
+        "hide_custom_apk_download_button" to "Hide APK download button",
+        "hide_custom_apk_download_button_desc" to "Hides the Android APK download buttons on the Devices screen.",
+        "ai_custom_model" to "Custom model",
+        "ai_training_note" to "Note: some free models may use your lyrics as training data. Check the provider's policy.",
         "about" to "關於",
         "accent_amber" to "琥珀色",
         "accent_blue" to "藍色",

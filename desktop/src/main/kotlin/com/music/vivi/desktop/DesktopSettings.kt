@@ -242,7 +242,26 @@ data class DesktopSyncState(
      */
     val expressiveTabTranslucent: Boolean = false,
     val firstLaunchDate: Long = 0L,
+    /**
+     * The live performance monitor (CPU/RAM/GPU/network) shown by the
+     * "Performance options" screen. Named `developerOptions` for backward
+     * compatibility with existing settings.json files; the screen itself is now
+     * always called "Performance options".
+     */
     val developerOptions: Boolean = false,
+    /**
+     * Whether the real "Developer options" screen has been unlocked by tapping
+     * the About version code seven times. It stays hidden (System > Advanced)
+     * until then, so the options it exposes are not reachable by accident.
+     */
+    val developerUnlocked: Boolean = false,
+    /**
+     * Heap the JVM is asked to allocate, in megabytes, chosen from Developer
+     * options. `0` means "use the launcher default" (currently `-Xmx2g` from
+     * build.gradle.kts). A positive value is applied at the next start by
+     * [JvmMemory], which relaunches the app once with the matching `-Xmx`.
+     */
+    val jvmHeapMb: Int = 0,
     val devToolsMode: String = "OVERLAY",
     val devOverlayMovable: Boolean = true,
     val devShowInTitleBar: Boolean = false,

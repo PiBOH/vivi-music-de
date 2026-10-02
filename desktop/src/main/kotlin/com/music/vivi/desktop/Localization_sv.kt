@@ -21,6 +21,21 @@ package com.music.vivi.desktop
  */
 internal fun strings_sv(): Map<String, String> =
     mapOf(
+        "performance_options" to "Prestandaalternativ",
+        "performance_options_desc" to "Live-CPU, RAM, GPU och natverksanvandning for VIVI Music DE.",
+        "performance_options_enabled" to "Prestandaalternativ aktiverade",
+        "advanced" to "Avancerat",
+        "developer_options_unlocked" to "Utvecklaralternativ upplasta",
+        "jvm_memory" to "JVM-minne",
+        "jvm_memory_desc" to "Heap som appen begar. For narvarande %s.",
+        "jvm_memory_default" to "Standard (%s)",
+        "jvm_memory_restart" to "Den nya heapen tillampas nasta gang appen startar.",
+        "detailed_playback_logging" to "DetailedPlaybackLogging",
+        "detailed_playback_logging_desc" to "Skriver varje uppspelningsskrivarpass till playback.log. Endast for felsokning.",
+        "hide_custom_apk_download_button" to "Dolj knappen for APK-nedladdning",
+        "hide_custom_apk_download_button_desc" to "Doljer nedladdningsknapparna for Android-APK pa enhetsskarmen.",
+        "ai_custom_model" to "Anpassad modell",
+        "ai_training_note" to "Obs: vissa gratismodeller kan anvanda dina lattexter som trandata. Kontrollera leverantorens policy.",
         "about" to "Om",
         "accent_amber" to "Bärnsten",
         "accent_blue" to "Blå",

@@ -21,6 +21,21 @@ package com.music.vivi.desktop
  */
 internal fun strings_it(): Map<String, String> =
     mapOf(
+        "performance_options" to "Opzioni prestazioni",
+        "performance_options_desc" to "Uso in tempo reale di CPU, RAM, GPU e rete di VIVI Music DE.",
+        "performance_options_enabled" to "Opzioni prestazioni attive",
+        "advanced" to "Avanzate",
+        "developer_options_unlocked" to "Opzioni sviluppatore sbloccate",
+        "jvm_memory" to "Memoria JVM",
+        "jvm_memory_desc" to "Heap richiesto all'app. Attualmente %s.",
+        "jvm_memory_default" to "Predefinita (%s)",
+        "jvm_memory_restart" to "Il nuovo heap viene applicato al prossimo avvio dell'app.",
+        "detailed_playback_logging" to "DetailedPlaybackLogging",
+        "detailed_playback_logging_desc" to "Scrive ogni passaggio del writer di riproduzione in playback.log. Solo per diagnosi.",
+        "hide_custom_apk_download_button" to "Nascondi il pulsante di download APK",
+        "hide_custom_apk_download_button_desc" to "Nasconde i pulsanti di download dell'APK Android nella schermata Dispositivi.",
+        "ai_custom_model" to "Modello personalizzato",
+        "ai_training_note" to "Nota: alcuni modelli gratuiti potrebbero usare i tuoi testi come dati di addestramento. Controlla la policy del provider.",
         "about" to "Informazioni",
         "accent_amber" to "Ambra",
         "accent_blue" to "Blu",
