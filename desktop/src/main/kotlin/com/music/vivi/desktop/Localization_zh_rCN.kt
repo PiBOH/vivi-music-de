@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_zh_rCN(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "调试与开发者选项",
+        "disable_developer_options" to "关闭开发者选项",
+        "disable_developer_options_desc" to "隐藏此屏幕并重新锁定。在\"关于\"中点击七次版本号即可解锁。",
+        "disable_developer_options_confirm" to "要关闭开发者选项吗？",
         "spotify_open_browser" to "在浏览器中打开",
         "detailed_startup_logs_desc" to "将各阶段启动耗时写入 app.log。仅供故障排查。",
         "detailed_startup_logs" to "DetailedStartupLogs",

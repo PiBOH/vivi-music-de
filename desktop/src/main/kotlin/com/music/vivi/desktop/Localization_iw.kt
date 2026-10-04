@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_iw(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "אפשרויות ניפוי באגים ומפתחים",
+        "disable_developer_options" to "כבה אפשרויות מפתחים",
+        "disable_developer_options_desc" to "מסתיר מסך זה ונעל אותו מחדש. הקש על קוד הגרסה שבע פעמים ב\"אודות\" כדי לבטל את הנעילה.",
+        "disable_developer_options_confirm" to "לכבות את אפשרויות המפתחים?",
         "spotify_open_browser" to "פתח בדפדפן",
         "detailed_startup_logs_desc" to "כותב את זמני העלייה לפי שלב אל app.log. לפתרון תקלות בלבד.",
         "detailed_startup_logs" to "DetailedStartupLogs",

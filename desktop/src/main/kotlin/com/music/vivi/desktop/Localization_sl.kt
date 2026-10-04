@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_sl(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Možnosti razhroščevanja in razvijalca",
+        "disable_developer_options" to "Izklopi možnosti razvijalca",
+        "disable_developer_options_desc" to "Skrije ta zaslon in ga znova zaklene. Za odklep sedemkrat tapni kodo različice v razdelku \"O aplikaciji\".",
+        "disable_developer_options_confirm" to "Izklopim možnosti razvijalca?",
         "spotify_open_browser" to "Odpri v brskalniku",
         "detailed_startup_logs_desc" to "Zapiše čase zagona po stopnjah v app.log. Samo za odpravljanje težav.",
         "detailed_startup_logs" to "DetailedStartupLogs",

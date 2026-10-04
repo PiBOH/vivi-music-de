@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ja(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "デバッグと開発者向けオプション",
+        "disable_developer_options" to "開発者向けオプションをオフにする",
+        "disable_developer_options_desc" to "この画面を非表示にして再びロックします。ロックを解除するには「アプリについて」でバージョンコードを7回タップします。",
+        "disable_developer_options_confirm" to "開発者向けオプションをオフにしますか？",
         "spotify_open_browser" to "ブラウザで開く",
         "detailed_startup_logs_desc" to "段階ごとの起動時間を app.log に書き込みます。トラブルシューティング専用です。",
         "detailed_startup_logs" to "DetailedStartupLogs",

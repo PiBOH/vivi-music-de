@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_th(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "ตัวเลือกดีบักและนักพัฒนา",
+        "disable_developer_options" to "ปิดตัวเลือกนักพัฒนา",
+        "disable_developer_options_desc" to "ซ่อนหน้าจอนี้และล็อกอีกครั้ง แตะรหัสเวอร์ชันเจ็ดครั้งใน \"เกี่ยวกับ\" เพื่อปลดล็อก",
+        "disable_developer_options_confirm" to "ปิดตัวเลือกนักพัฒนา?",
         "spotify_open_browser" to "เปิดในเบราว์เซอร์",
         "detailed_startup_logs_desc" to "เขียนเวลาเริ่มทำงานแต่ละขั้นลงใน app.log สำหรับแก้ปัญหาเท่านั้น",
         "detailed_startup_logs" to "DetailedStartupLogs",

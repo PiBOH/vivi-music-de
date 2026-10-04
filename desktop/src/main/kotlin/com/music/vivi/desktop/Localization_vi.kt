@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_vi(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Tùy chọn gỡ lỗi và nhà phát triển",
+        "disable_developer_options" to "Tắt tùy chọn nhà phát triển",
+        "disable_developer_options_desc" to "Ẩn màn hình này và khóa lại. Nhấn bảy lần vào mã phiên bản trong Giới thiệu để mở khóa.",
+        "disable_developer_options_confirm" to "Tắt tùy chọn nhà phát triển?",
         "spotify_open_browser" to "Mở trong trình duyệt",
         "detailed_startup_logs_desc" to "Ghi thời gian khởi động theo từng giai đoạn vào app.log. Chỉ để khắc phục sự cố.",
         "detailed_startup_logs" to "DetailedStartupLogs",

@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_fil(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Mga option sa debug at developer",
+        "disable_developer_options" to "I-off ang mga option ng developer",
+        "disable_developer_options_desc" to "Itinatago ang screen na ito at ini-lock muli. I-tap ang version code ng pitong beses sa Tungkol para i-unlock.",
+        "disable_developer_options_confirm" to "I-off ang mga option ng developer?",
         "spotify_open_browser" to "Buksan sa browser",
         "detailed_startup_logs_desc" to "Isinulat ang mga oras ng pag-start bawat yugto sa app.log. Para sa troubleshooting lamang.",
         "detailed_startup_logs" to "DetailedStartupLogs",

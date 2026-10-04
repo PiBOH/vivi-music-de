@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_bg(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Опции за отстраняване на грешки и разработчик",
+        "disable_developer_options" to "Изключване на опциите за разработчик",
+        "disable_developer_options_desc" to "Скрива този екран и го заключва отново. Докосни кода на версията седем пъти в \"Относно\", за да го отключиш.",
+        "disable_developer_options_confirm" to "Изключване на опциите за разработчик?",
         "spotify_open_browser" to "Отвори го в браузъра",
         "detailed_startup_logs_desc" to "Записва времената за стартиране по етапи в app.log. Само за диагностика.",
         "detailed_startup_logs" to "DetailedStartupLogs",

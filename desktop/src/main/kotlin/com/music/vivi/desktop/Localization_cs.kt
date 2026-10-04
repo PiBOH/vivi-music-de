@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_cs(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Možnosti ladění a vývojáře",
+        "disable_developer_options" to "Vypnout možnosti vývojáře",
+        "disable_developer_options_desc" to "Skryje tuto obrazovku a znovu ji uzamkne. Klepnutím sedmkrát na kód verze v části \"O aplikaci\" ji odemkneš.",
+        "disable_developer_options_confirm" to "Vypnout možnosti vývojáře?",
         "spotify_open_browser" to "Otevři v prohlížeči",
         "detailed_startup_logs_desc" to "Zapisuje časy spuštění podle fází do app.log. Jen pro diagnostiku.",
         "detailed_startup_logs" to "DetailedStartupLogs",

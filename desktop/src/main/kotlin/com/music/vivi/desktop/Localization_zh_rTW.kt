@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_zh_rTW(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "偵錯與開發人員選項",
+        "disable_developer_options" to "關閉開發人員選項",
+        "disable_developer_options_desc" to "隱藏此畫面並重新鎖定。在「關於」中輕觸七次版本號即可解鎖。",
+        "disable_developer_options_confirm" to "要關閉開發人員選項嗎？",
         "spotify_open_browser" to "在瀏覽器中開啟",
         "detailed_startup_logs_desc" to "將各階段啟動耗時寫入 app.log。僅供疑難排解。",
         "detailed_startup_logs" to "DetailedStartupLogs",

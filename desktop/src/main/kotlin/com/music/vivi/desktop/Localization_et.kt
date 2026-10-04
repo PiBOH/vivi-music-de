@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_et(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Silumis- ja arendaja valikud",
+        "disable_developer_options" to "Lülita arendaja valikud välja",
+        "disable_developer_options_desc" to "Peidab selle ekraani ja lukustab uuesti. Avamiseks puuduta jaotises \"Teave\" versioonikoodi seitse korda.",
+        "disable_developer_options_confirm" to "Kas lülitada arendaja valikud välja?",
         "spotify_open_browser" to "Ava brauseris",
         "detailed_startup_logs_desc" to "Kirjutab käivitumise ajad etappide kaupa faili app.log. Ainult tõrkeotsinguks.",
         "detailed_startup_logs" to "DetailedStartupLogs",

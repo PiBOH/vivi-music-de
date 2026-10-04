@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_uk(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Параметри налагодження та розробника",
+        "disable_developer_options" to "Вимкнути параметри розробника",
+        "disable_developer_options_desc" to "Приховує цей екран і знову блокує його. Натисніть сім разів на код версії в розділі \"Про програму\", щоб розблокувати.",
+        "disable_developer_options_confirm" to "Вимкнути параметри розробника?",
         "spotify_open_browser" to "Відкрити в браузері",
         "detailed_startup_logs_desc" to "Записує час запуску за етапами в app.log. Лише для діагностики.",
         "detailed_startup_logs" to "DetailedStartupLogs",

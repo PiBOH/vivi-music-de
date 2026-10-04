@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ar(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "خيارات التصحيح والمطور",
+        "disable_developer_options" to "إيقاف خيارات المطور",
+        "disable_developer_options_desc" to "يخفي هذه الشاشة ويقفلها مجددًا. اضغط على رمز الإصدار سبع مرات في \"حول\" لإلغاء القفل.",
+        "disable_developer_options_confirm" to "هل تريد إيقاف خيارات المطور؟",
         "spotify_open_browser" to "افتحه في متصفحك",
         "detailed_startup_logs_desc" to "يكتب أوقات بدء التشغيل لكل مرحلة في app.log. للتشخيص فقط.",
         "detailed_startup_logs" to "DetailedStartupLogs",

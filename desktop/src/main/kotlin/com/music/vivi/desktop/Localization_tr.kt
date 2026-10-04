@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_tr(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Hata ayıklama ve geliştirici seçenekleri",
+        "disable_developer_options" to "Geliştirici seçeneklerini kapat",
+        "disable_developer_options_desc" to "Bu ekranı gizler ve yeniden kilitler. Kilidi açmak için Hakkında bölümünde sürüm koduna yedi kez dokun.",
+        "disable_developer_options_confirm" to "Geliştirici seçenekleri kapatılsın mı?",
         "spotify_open_browser" to "Tarayıcıda aç",
         "detailed_startup_logs_desc" to "Aşama bazlı başlatma sürelerini app.log dosyasına yazar. Yalnızca sorun giderme için.",
         "detailed_startup_logs" to "DetailedStartupLogs",

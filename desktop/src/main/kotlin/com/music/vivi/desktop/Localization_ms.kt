@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ms(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Pilihan nyahpepijat dan pembangun",
+        "disable_developer_options" to "Matikan pilihan pembangun",
+        "disable_developer_options_desc" to "Menyembunyikan skrin ini dan menguncinya semula. Ketik kod versi tujuh kali dalam Perihal untuk membukanya.",
+        "disable_developer_options_confirm" to "Matikan pilihan pembangun?",
         "spotify_open_browser" to "Buka dalam pelayar",
         "detailed_startup_logs_desc" to "Menulis masa permulaan setiap peringkat ke app.log. Untuk penyelesaian masalah sahaja.",
         "detailed_startup_logs" to "DetailedStartupLogs",

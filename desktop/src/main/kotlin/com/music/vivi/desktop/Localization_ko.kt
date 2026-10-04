@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ko(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "디버그 및 개발자 옵션",
+        "disable_developer_options" to "개발자 옵션 끄기",
+        "disable_developer_options_desc" to "이 화면을 숨기고 다시 잠급니다. 잠금을 해제하려면 정보에서 버전 코드를 일곱 번 탭하세요.",
+        "disable_developer_options_confirm" to "개발자 옵션을 끌까요?",
         "spotify_open_browser" to "브라우저에서 열기",
         "detailed_startup_logs_desc" to "단계별 시작 시간을 app.log에 기록합니다. 문제 해결 전용입니다.",
         "detailed_startup_logs" to "DetailedStartupLogs",

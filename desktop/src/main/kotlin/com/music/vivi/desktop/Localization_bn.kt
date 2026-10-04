@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_bn(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "ডিবাগ ও ডেভেলপার অপশন",
+        "disable_developer_options" to "ডেভেলপার অপশন বন্ধ করুন",
+        "disable_developer_options_desc" to "এই স্ক্রিনটি লুকায় ও আবার লক করে। আনলক করতে \"সম্পর্কে\"-তে ভার্সন কোডে সাতবার ট্যাপ করুন।",
+        "disable_developer_options_confirm" to "ডেভেলপার অপশন বন্ধ করবেন?",
         "spotify_open_browser" to "ব্রাউজারে খুলুন",
         "detailed_startup_logs_desc" to "পর্যায়ভিত্তিক স্টার্টআপ সময় app.log-এ লেখে। শুধু সমস্যা সমাধানের জন্য।",
         "detailed_startup_logs" to "DetailedStartupLogs",

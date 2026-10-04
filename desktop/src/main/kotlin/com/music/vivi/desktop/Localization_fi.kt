@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_fi(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Virheenkorjaus- ja kehittäjäasetukset",
+        "disable_developer_options" to "Poista kehittäjäasetukset käytöstä",
+        "disable_developer_options_desc" to "Piilottaa tämän näytön ja lukitsee sen uudelleen. Napauta versiokoodia seitsemän kertaa Tietoja-osiossa avataksesi sen.",
+        "disable_developer_options_confirm" to "Poistetaanko kehittäjäasetukset käytöstä?",
         "spotify_open_browser" to "Avaa selaimessa",
         "detailed_startup_logs_desc" to "Kirjoittaa käynnistyksen vaiheajat tiedostoon app.log. Vain vianmääritykseen.",
         "detailed_startup_logs" to "DetailedStartupLogs",

@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_sv(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Felsökning och utvecklaralternativ",
+        "disable_developer_options" to "Stäng av utvecklaralternativ",
+        "disable_developer_options_desc" to "Döljer den här skärmen och låser den igen. Tryck sju gånger på versionskoden i Om för att låsa upp den.",
+        "disable_developer_options_confirm" to "Stäng av utvecklaralternativ?",
         "spotify_open_browser" to "Oppna i webblasaren",
         "detailed_startup_logs_desc" to "Skriver starttider per steg till app.log. Endast for felsokning.",
         "detailed_startup_logs" to "DetailedStartupLogs",

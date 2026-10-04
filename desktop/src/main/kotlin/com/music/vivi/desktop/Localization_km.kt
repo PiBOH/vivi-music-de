@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_km(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "ជម្រើសបំបាត់កំហុស និងអ្នកអភិវឌ្ឍន៍",
+        "disable_developer_options" to "បិទជម្រើសអ្នកអភិវឌ្ឍន៍",
+        "disable_developer_options_desc" to "លាក់អេក្រង់នេះ ហើយចាក់សោវាម្តងទៀត។ ប៉ះកូដកំណែប្រាំពីរដងក្នុង \"អំពី\" ដើម្បីដោះសោ។",
+        "disable_developer_options_confirm" to "បិទជម្រើសអ្នកអភិវឌ្ឍន៍?",
         "spotify_open_browser" to "បើកក្នុងកម្មវិធីរុករក",
         "detailed_startup_logs_desc" to "សរសេរពេលវេលាចាប់ផ្តើមតាមដំណាក់កាលទៅ app.log។ សម្រាប់ការដោះស្រាយបញ្ហាប៉ុណ្ណោះ។",
         "detailed_startup_logs" to "DetailedStartupLogs",

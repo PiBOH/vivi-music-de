@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_lt(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Derinimo ir kūrėjo parinktys",
+        "disable_developer_options" to "Išjungti kūrėjo parinktis",
+        "disable_developer_options_desc" to "Paslepia šį ekraną ir vėl jį užrakina. Norėdamas atrakinti, septynis kartus paliesk versijos kodą skiltyje \"Apie\".",
+        "disable_developer_options_confirm" to "Išjungti kūrėjo parinktis?",
         "spotify_open_browser" to "Atidaryk naršyklėje",
         "detailed_startup_logs_desc" to "Įrašo paleidimo laikus pagal etapus į app.log. Tik trikčių šalinimui.",
         "detailed_startup_logs" to "DetailedStartupLogs",

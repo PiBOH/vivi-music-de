@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_pt_rBR(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Opções de depuração e desenvolvedor",
+        "disable_developer_options" to "Desativar opções do desenvolvedor",
+        "disable_developer_options_desc" to "Oculta esta tela e a bloqueia novamente. Toque sete vezes no código de versão em Sobre para desbloqueá-la.",
+        "disable_developer_options_confirm" to "Desativar as opções do desenvolvedor?",
         "spotify_open_browser" to "Abra no navegador",
         "detailed_startup_logs_desc" to "Escreve os tempos de inicialização por etapa em app.log. Apenas para diagnóstico.",
         "detailed_startup_logs" to "DetailedStartupLogs",

@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_fa(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "گزینه‌های اشکال‌زدایی و توسعه‌دهنده",
+        "disable_developer_options" to "خاموش کردن گزینه‌های توسعه‌دهنده",
+        "disable_developer_options_desc" to "این صفحه را پنهان و دوباره قفل می‌کند. برای باز کردن آن، در «درباره» هفت بار روی کد نسخه بزن.",
+        "disable_developer_options_confirm" to "گزینه‌های توسعه‌دهنده خاموش شود؟",
         "spotify_open_browser" to "آن را در مرورگر باز کن",
         "detailed_startup_logs_desc" to "زمانهای راهاندازی هر مرحله را در app.log مینویسد. فقط برای عیبیابی.",
         "detailed_startup_logs" to "DetailedStartupLogs",

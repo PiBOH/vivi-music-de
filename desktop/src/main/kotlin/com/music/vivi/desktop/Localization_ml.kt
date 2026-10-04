@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ml(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "ഡീബഗ്, ഡെവലപ്പർ ഓപ്ഷനുകൾ",
+        "disable_developer_options" to "ഡെവലപ്പർ ഓപ്ഷനുകൾ ഓഫ് ചെയ്യുക",
+        "disable_developer_options_desc" to "ഈ സ്ക്രീൻ മറയ്ക്കുകയും വീണ്ടും ലോക്ക് ചെയ്യുകയും ചെയ്യും. അൺലോക്ക് ചെയ്യാൻ \"കുറിച്ച്\"-ൽ വേർഷൻ കോഡിൽ ഏഴ് തവണ ടാപ്പ് ചെയ്യുക.",
+        "disable_developer_options_confirm" to "ഡെവലപ്പർ ഓപ്ഷനുകൾ ഓഫ് ചെയ്യണോ?",
         "spotify_open_browser" to "ബ്രൗസറിൽ തുറക്കുക",
         "detailed_startup_logs_desc" to "ഘട്ടം തിരിച്ചുള്ള സ്റ്റാർട്ടപ്പ് സമയങ്ങൾ app.log-ൽ എഴുതുന്നു. പ്രശ്നപരിഹാരത്തിന് മാത്രം.",
         "detailed_startup_logs" to "DetailedStartupLogs",

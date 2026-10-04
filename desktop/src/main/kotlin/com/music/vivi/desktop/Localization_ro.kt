@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ro(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Opțiuni de depanare și dezvoltator",
+        "disable_developer_options" to "Dezactivează opțiunile de dezvoltator",
+        "disable_developer_options_desc" to "Ascunde acest ecran și îl blochează din nou. Atinge de șapte ori codul versiunii în Despre pentru a-l debloca.",
+        "disable_developer_options_confirm" to "Dezactivezi opțiunile de dezvoltator?",
         "spotify_open_browser" to "Deschide-l în browser",
         "detailed_startup_logs_desc" to "Scrie timpii de pornire pe etape în app.log. Doar pentru depanare.",
         "detailed_startup_logs" to "DetailedStartupLogs",

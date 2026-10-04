@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_el(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Επιλογές εντοπισμού σφαλμάτων και προγραμματιστή",
+        "disable_developer_options" to "Απενεργοποίηση επιλογών προγραμματιστή",
+        "disable_developer_options_desc" to "Αποκρύπτει αυτή την οθόνη και την κλειδώνει ξανά. Πατήστε επτά φορές τον κωδικό έκδοσης στις Πληροφορίες για ξεκλείδωμα.",
+        "disable_developer_options_confirm" to "Απενεργοποίηση των επιλογών προγραμματιστή;",
         "spotify_open_browser" to "Άνοιξέ το στο πρόγραμμα περιήγησης",
         "detailed_startup_logs_desc" to "Γράφει τους χρόνους εκκίνησης ανά στάδιο στο app.log. Μόνο για αντιμετώπιση προβλημάτων.",
         "detailed_startup_logs" to "DetailedStartupLogs",

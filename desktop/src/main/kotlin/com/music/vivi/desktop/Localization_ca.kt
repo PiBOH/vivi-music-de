@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ca(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Opcions de depuració i desenvolupador",
+        "disable_developer_options" to "Desactiva les opcions de desenvolupador",
+        "disable_developer_options_desc" to "Amaga aquesta pantalla i torna-la a bloquejar. Toca set vegades el codi de versió a Quant a per desbloquejar-la.",
+        "disable_developer_options_confirm" to "Vols desactivar les opcions de desenvolupador?",
         "spotify_open_browser" to "Obre-ho al navegador",
         "detailed_startup_logs_desc" to "Escriu els temps d'inici per etapa a app.log. Només per a diagnòstic.",
         "detailed_startup_logs" to "DetailedStartupLogs",

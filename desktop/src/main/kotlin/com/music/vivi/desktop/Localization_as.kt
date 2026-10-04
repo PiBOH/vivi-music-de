@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_as(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "ডিবাগ আৰু ডেভেলপাৰ অপচন",
+        "disable_developer_options" to "ডেভেলপাৰ অপচন বন্ধ কৰক",
+        "disable_developer_options_desc" to "এই স্ক্ৰীনটো লুকুৱায় আৰু পুনৰ লক কৰে। আনলক কৰিবলৈ পৰিচয়ত সংস্কৰণ ক'ডটো সাতবাৰ টিপক।",
+        "disable_developer_options_confirm" to "ডেভেলপাৰ অপচন বন্ধ কৰিবনে?",
         "spotify_open_browser" to "ইয়াক আপোনাৰ ব্ৰাউজাৰত খোলক",
         "detailed_startup_logs_desc" to "প্ৰতি পৰ্যায়ৰ আৰম্ভণি সময় app.log-ত লিখে। কেৱল সমস্যা সমাধানৰ বাবে।",
         "detailed_startup_logs" to "DetailedStartupLogs",

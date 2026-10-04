@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_fr(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Options de débogage et développeur",
+        "disable_developer_options" to "Désactiver les options de développeur",
+        "disable_developer_options_desc" to "Masque cet écran et le verrouille à nouveau. Touchez sept fois le code de version dans À propos pour le déverrouiller.",
+        "disable_developer_options_confirm" to "Désactiver les options de développeur ?",
         "spotify_open_browser" to "Ouvre-le dans le navigateur",
         "detailed_startup_logs_desc" to "Écrit les temps de démarrage par étape dans app.log. Pour le dépannage uniquement.",
         "detailed_startup_logs" to "DetailedStartupLogs",

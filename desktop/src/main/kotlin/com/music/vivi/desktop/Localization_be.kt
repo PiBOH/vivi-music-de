@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_be(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Параметры адладкі і распрацоўшчыка",
+        "disable_developer_options" to "Выключыць параметры распрацоўшчыка",
+        "disable_developer_options_desc" to "Хавае гэты экран і зноў блакуе яго. Націсніце сем разоў на код версіі ў раздзеле \"Пра праграму\", каб разблакаваць.",
+        "disable_developer_options_confirm" to "Выключыць параметры распрацоўшчыка?",
         "spotify_open_browser" to "Адкрыйце ў браўзеры",
         "detailed_startup_logs_desc" to "Запісва час запуску па этапах у app.log. Толькі для дыягностыкі.",
         "detailed_startup_logs" to "DetailedStartupLogs",

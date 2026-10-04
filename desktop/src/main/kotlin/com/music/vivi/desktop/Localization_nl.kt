@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_nl(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Foutopsporing en ontwikkelaarsopties",
+        "disable_developer_options" to "Ontwikkelaarsopties uitschakelen",
+        "disable_developer_options_desc" to "Verbergt dit scherm en vergrendelt het opnieuw. Tik zeven keer op de versiecode in Over om het te ontgrendelen.",
+        "disable_developer_options_confirm" to "Ontwikkelaarsopties uitschakelen?",
         "spotify_open_browser" to "Open het in je browser",
         "detailed_startup_logs_desc" to "Schrijft de opstarttijden per fase naar app.log. Alleen voor probleemoplossing.",
         "detailed_startup_logs" to "DetailedStartupLogs",

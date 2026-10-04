@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_te(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "డీబగ్ మరియు డెవలపర్ ఎంపికలు",
+        "disable_developer_options" to "డెవలపర్ ఎంపికలను ఆఫ్ చేయండి",
+        "disable_developer_options_desc" to "ఈ స్క్రీన్‌ను దాచి మళ్లీ లాక్ చేస్తుంది. అన్‌లాక్ చేయడానికి \"గురించి\"లో వెర్షన్ కోడ్‌ను ఏడుసార్లు నొక్కండి.",
+        "disable_developer_options_confirm" to "డెవలపర్ ఎంపికలను ఆఫ్ చేయాలా?",
         "spotify_open_browser" to "బ్రౌజర్‌లో తెరవండి",
         "detailed_startup_logs_desc" to "దశల వారీ ప్రారంభ సమయాలను app.logలో రాస్తుంది. ట్రబుల్షూటింగ్ కోసం మాత్రమే.",
         "detailed_startup_logs" to "DetailedStartupLogs",

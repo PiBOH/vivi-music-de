@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_hu(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Hibakeresési és fejlesztői beállítások",
+        "disable_developer_options" to "Fejlesztői beállítások kikapcsolása",
+        "disable_developer_options_desc" to "Elrejti ezt a képernyőt és újra zárolja. A feloldáshoz érintsd meg hétszer a verziókódot a Névjegy részben.",
+        "disable_developer_options_confirm" to "Kikapcsolod a fejlesztői beállításokat?",
         "spotify_open_browser" to "Nyisd meg a böngészőben",
         "detailed_startup_logs_desc" to "A szakaszonkénti indítási időket az app.log fájlba írja. Csak hibakereséshez.",
         "detailed_startup_logs" to "DetailedStartupLogs",

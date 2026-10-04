@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_ta(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "பிழைத்திருத்தம் மற்றும் உருவாக்குநர் விருப்பங்கள்",
+        "disable_developer_options" to "உருவாக்குநர் விருப்பங்களை அணைக்கவும்",
+        "disable_developer_options_desc" to "இந்தத் திரையை மறைத்து மீண்டும் பூட்டும். திறக்க \"பற்றி\"-இல் பதிப்புக் குறியீட்டை ஏழு முறை தட்டவும்.",
+        "disable_developer_options_confirm" to "உருவாக்குநர் விருப்பங்களை அணைக்கவா?",
         "spotify_open_browser" to "உலாவியில் திறக்கவும்",
         "detailed_startup_logs_desc" to "நிலை வாரியான தொடக்க நேரங்களை app.log-இல் எழுதும். சரிசெய்தலுக்கு மட்டும்.",
         "detailed_startup_logs" to "DetailedStartupLogs",

@@ -757,7 +757,7 @@ fun SettingsPerformanceScreen(language: String, onBack: () -> Unit, syncManager:
 /** The real Developer options screen, reachable only after the seven-tap unlock. */
 @Composable
 fun SettingsDeveloperOptionsScreen(language: String, onBack: () -> Unit) {
-    SettingsSubScreen(language, onBack) { DeveloperOptionsSection(language) }
+    SettingsSubScreen(language, onBack) { DeveloperOptionsSection(language, onDisabled = onBack) }
 }
 
 @Composable
@@ -2011,12 +2011,13 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
  * the JVM heap, the detailed playback log and the download-APK button.
  */
 @Composable
-fun DeveloperOptionsSection(language: String) {
+fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     val revision = settingsFileRevision()
     var heapMb by remember(revision) { mutableStateOf(DesktopSettings.load().jvmHeapMb) }
     var detailedLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedPlaybackLogging) }
     var startupLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedStartupLogs) }
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
+    var confirmDisable by remember { mutableStateOf(false) }
 
     val currentLabel = if (heapMb <= 0) {
         Localization.get(language, "jvm_memory_default").format(JvmMemory.label(JvmMemory.DEFAULT_MB))
@@ -2031,7 +2032,7 @@ fun DeveloperOptionsSection(language: String) {
 
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp)) {
         Text(
-            Localization.get(language, "developer_options"),
+            Localization.get(language, "debug_developer_options"),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )
@@ -2138,6 +2139,46 @@ fun DeveloperOptionsSection(language: String) {
                 ),
             ),
         )
+
+        Spacer(Modifier.height(24.dp))
+
+        // Android-style "turn off developer options": hides this screen and
+        // locks it again, so the seven-tap on the version code is needed to
+        // bring it back.
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Delete,
+                    title = { Text(Localization.get(language, "disable_developer_options")) },
+                    description = { Text(Localization.get(language, "disable_developer_options_desc")) },
+                    onClick = { confirmDisable = true },
+                ),
+            ),
+        )
+
+        if (confirmDisable) {
+            AlertDialog(
+                onDismissRequest = { confirmDisable = false },
+                title = { Text(Localization.get(language, "disable_developer_options_confirm")) },
+                text = { Text(Localization.get(language, "disable_developer_options_desc")) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            confirmDisable = false
+                            DeveloperOptions.setUnlocked(false)
+                            onDisabled()
+                        },
+                    ) {
+                        Text(Localization.get(language, "ok"))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmDisable = false }) {
+                        Text(Localization.get(language, "cancel"))
+                    }
+                },
+            )
+        }
     }
 }
 

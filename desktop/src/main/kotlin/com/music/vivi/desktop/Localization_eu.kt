@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_eu(): Map<String, String> =
     mapOf(
+        "debug_developer_options" to "Arazketa eta garatzaile aukerak",
+        "disable_developer_options" to "Desaktibatu garatzaile aukerak",
+        "disable_developer_options_desc" to "Pantaila hau ezkutatu eta berriro blokeatzen du. Sakatu bertsio-kodea zazpi aldiz Honi buruz atalean desblokeatzeko.",
+        "disable_developer_options_confirm" to "Garatzaile aukerak desaktibatu?",
         "spotify_open_browser" to "Ireki nabigatzailean",
         "detailed_startup_logs_desc" to "Abio-denborak etapa bakoitzeko app.log-era idazten ditu. Diagnostikorako bakarrik.",
         "detailed_startup_logs" to "DetailedStartupLogs",
