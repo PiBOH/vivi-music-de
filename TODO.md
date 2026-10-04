@@ -8,6 +8,9 @@ orientation.
 
 ## Open
 
+### Patch 1.54.14 (4 Oct)
+- [x] **The Debug & Developer Options screen can be turned off again (done 4 Oct, 1.54.14).** The screen is renamed from "Developer options" to **Debug & Developer Options** in all 53 languages, and its last row is **Turn off developer options**: it confirms, then clears the same `developerUnlocked` flag the seven-tap sets, so System > Advanced disappears with the screen and the seven-tap on the About version code is the way back. **Watch:** after turning it off, System must show no Advanced section at all, and the About version code must accept seven taps again.
+
 ### Patch 1.54.13 (2 Oct)
 - [x] **The changelog list, the link cursor and the System descriptions are fixed (done 2 Oct, 1.54.13).** The list flag was inverted between the parser and the renderer (every `-` row drew as `-.`); the pointing hand was set for the whole clickable line; the live monitor row used the "enabled" status as its subtitle and the Developer options row still carried the old CPU/GPU text. **Watch:** a bullet row must show `•`, an ordered row its number, and the hand only over the link.
 - [x] **A custom colour emoji font is bundled (done 2 Oct, 1.54.13).** A subset of Noto Color Emoji (COLR/CPAL, SVG table dropped) carries the 110 codepoints the app uses and `EmojiCoverage.kt` is generated next to it so the renderer only asks a font for a glyph it has. **Open sub-item:** colour rendering of a COLR font could not be verified in this environment (no GUI); if the emoji come out blank, drop the `EmojiCoverage.colorEmoji` branch in `MarkdownFonts.familyFor` to go back to the monochrome font. **Constraint:** the OS emoji font is the last resort only; it is the one that drew tofu before.

@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.14-beta] - 2026-10-04
+
+### ✨ Added
+- [DE] **The Developer options screen is now "Debug & Developer Options", and it can turn itself off again.** The screen carries the new name in all 53 languages, and a new row at its end, **Turn off developer options**, hides it and locks it again exactly like Android's own system developer options: a short confirmation says what will happen, then the unlock flag the seven-tap sets is cleared, so System > Advanced disappears and the seven-tap on the About version code is the only way back. The four new keys (`debug_developer_options`, `disable_developer_options`, `disable_developer_options_desc`, `disable_developer_options_confirm`) are translated in every language, so the localization audit stays clean.
+
 ## [6.0.8.5_DE-1.54.13-beta] - 2026-10-02
 
 ### ✨ Added
