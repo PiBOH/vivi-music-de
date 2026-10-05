@@ -11,6 +11,18 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.15-beta] - 2026-10-05
+
+### ✨ Added
+- [DE] **The Spotify sign-in window is a real Chromium now (JCEF).** The embedded window that gets the `sp_dc` cookie opened a JavaFX `WebEngine`, and Google refuses its own sign-in page inside an engine it recognises as embedded (`disallowed_useragent`, issue #97). The window is backed by JCEF (a complete Chromium Embedded Framework) now, so the page sees the Chromium engine rather than a WebView that claims to be Chrome: it announces a per-OS desktop Chrome user agent and captures `sp_dc` / `sp_key` off CEF's own cookie store, scoped to `https://open.spotify.com`, the same way the old window did off `java.net.CookieManager`. The JavaFX window stays as the fallback for a machine where CEF cannot start. **Constraint:** the CEF natives are about 100 MB and jcefmaven downloads and unpacks them under `~/.vivimusic/cef` the first time the window is opened, so the packaged installers keep their size and the first sign-in is slower. **Unverified in this environment:** whether Chromium passes Google's check where the `WebEngine` did not; no GUI and no account are available here, so the first real attempt has to confirm the sign-in page loads; the blocked-page message and the **Open it in your browser** link stay for the case where Google still refuses.
+
+### 🔧 Changed
+- [DE] **The Debug & Developer Options screen turned off the Android way.** **Turn off developer options** is the first row of the screen now (it used to be the last), and turning it off resets everything the screen exposes in the same step: the JVM heap goes back to the launcher default, both verbose-log switches go off and the APK-download button is hidden again, next to the `developerUnlocked` flag the seven-tap sets. Before, only the flag was cleared and the options kept whatever the user had chosen.
+
+### 🐛 Fixed
+- [DE] **The changelog is no longer letter-spaced.** The bundled emoji font's character map also lists some ordinary ASCII (`U+0020` the space, `U+0023` `#`, `U+002A` `*` and the digits, which are the keycap bases), and the renderer routed every one of those codepoints to that font because it only asked "does the font have this glyph". Inside the emoji font's wide cell they came out spaced: every digit of a version (`1 . 5 4 . 1 1`), every `#97` and, through the space, every word gap in the body read as if it had been tracked out. Everything below `U+00A9` is the app font's business and no longer goes near an emoji fallback.
+- [DE] **The changelog's section-heading emoji are drawn, not blank.** 1.54.13 added a custom colour subset of Noto Color Emoji and routed the emoji codepoints to it, but Skiko does not paint its COLR/CPAL glyphs: `✨ Added` lost its mark entirely and `🔧 Changed` / `🐛 Fixed` fell back to a notdef diamond. The colour family is not used any more (its codepoints go to the monochrome Noto Emoji, which Skia always draws), and the font and its coverage stay bundled so the branch can be switched back once a renderer paints COLR.
+
 ## [6.0.8.5_DE-1.54.14-beta] - 2026-10-04
 
 ### ✨ Added

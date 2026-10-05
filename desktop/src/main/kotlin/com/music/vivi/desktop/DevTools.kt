@@ -124,6 +124,27 @@ object DeveloperOptions {
         if (value && !was) _unlockedEvent.tryEmit(Unit)
     }
 
+    /**
+     * Turns the Developer options off and resets everything the screen exposes
+     * to its default, exactly like Android's own "turn off developer options":
+     * the screen is locked again (seven-tap to return) and, in the same write,
+     * the JVM heap goes back to the launcher default (`0`), both verbose-log
+     * switches go off and the APK-download button is hidden again. A single
+     * update keeps the file consistent for the reader recomposition follows.
+     */
+    fun resetToDefaults() {
+        _unlocked.value = false
+        DesktopSettings.update {
+            it.copy(
+                developerUnlocked = false,
+                jvmHeapMb = 0,
+                detailedPlaybackLogging = false,
+                detailedStartupLogs = false,
+                hideCustomApkDownloadButton = true,
+            )
+        }
+    }
+
     fun setMode(value: DevToolsMode) {
         _mode.value = value
         DesktopSettings.update { it.copy(devToolsMode = value.name) }

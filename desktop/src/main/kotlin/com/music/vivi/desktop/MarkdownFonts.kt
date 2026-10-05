@@ -21,16 +21,19 @@ import java.io.File
  * font would be wrong (and selecting one would leave the whole UI without
  * letters). They are used only where [MarkdownView] draws text.
  *
- * Emoji are drawn from two fonts bundled with the app: a custom subset of Noto
- * Color Emoji (`fonts/NotoColorEmoji.ttf`, SIL OFL 1.1) that carries the colour
- * glyphs of the codepoints this app actually uses, and the monochrome Noto Emoji
- * (`fonts/NotoEmoji.ttf`) behind it for every codepoint the colour subset does
- * not have. [EmojiCoverage] lists what each one carries, so a character is only
- * ever asked of a font that can draw it; the earlier arrangement handed an emoji
- * to a single family, and a codepoint that family lacked came out as the tofu
- * box. The OS emoji font stays as the last resort. The symbol/CJK files are read
- * from the OS at startup; a missing file simply means no fallback for that class
- * of character (the renderer then behaves exactly as it did before).
+ * Emoji are drawn from the bundled monochrome Noto Emoji
+ * (`fonts/NotoEmoji.ttf`, SIL OFL 1.1). [EmojiCoverage] lists the codepoints it
+ * carries, so a character is only ever asked of a family that can draw it. A
+ * custom colour subset of Noto Color Emoji (`fonts/NotoColorEmoji.ttf`) is still
+ * shipped and [EmojiCoverage.colorEmoji] still names its codepoints, but the
+ * family is deliberately NOT used: the subset's glyphs are COLR/CPAL layers that
+ * this Compose/Skiko renderer does not paint, so every emoji routed to it came
+ * out blank or as a notdef diamond (the `✨ Added` heading lost its glyph
+ * entirely). Routing those codepoints to the monochrome font draws them again;
+ * the colour branch is kept so it can be switched back once a renderer paints
+ * COLR. The OS emoji font stays as the last resort. The symbol/CJK files are
+ * read from the OS at startup; a missing file simply means no fallback for that
+ * class of character (the renderer then behaves exactly as it did before).
  */
 internal object MarkdownFonts {
 
@@ -45,21 +48,6 @@ internal object MarkdownFonts {
                 Font("fonts/NotoEmoji.ttf", FontWeight.Normal),
                 Font("fonts/NotoEmoji.ttf", FontWeight.Medium),
                 Font("fonts/NotoEmoji.ttf", FontWeight.Bold),
-            )
-        }.getOrNull()
-    }
-
-    /**
-     * The bundled colour emoji family (Noto Color Emoji, OFL 1.1). Only the
-     * codepoints in [EmojiCoverage.colorEmoji] are ever routed here; the font is
-     * a subset carrying exactly those, so it stays small.
-     */
-    private val bundledColorEmoji: FontFamily? by lazy {
-        runCatching {
-            FontFamily(
-                Font("fonts/NotoColorEmoji.ttf", FontWeight.Normal),
-                Font("fonts/NotoColorEmoji.ttf", FontWeight.Medium),
-                Font("fonts/NotoColorEmoji.ttf", FontWeight.Bold),
             )
         }.getOrNull()
     }
@@ -125,20 +113,34 @@ internal object MarkdownFonts {
 
     /**
      * The family that can draw [codePoint], or null when nothing is loaded for
-     * it. The two bundled emoji fonts are consulted by their real coverage
-     * ([EmojiCoverage]) rather than by a codepoint range, so an emoji neither of
-     * them carries falls through to the symbol fonts instead of being drawn as
+     * it. The bundled emoji font is consulted by its real coverage
+     * ([EmojiCoverage]) rather than by a codepoint range, so an emoji it does
+     * not carry falls through to the symbol fonts instead of being drawn as
      * tofu.
      */
-    fun familyFor(codePoint: Int): FontFamily? = when {
-        // Variation selectors have no glyph of their own.
-        codePoint in 0xFE00..0xFE0F -> null
-        EmojiCoverage.colorEmoji.contains(codePoint) -> bundledColorEmoji ?: bundledEmoji ?: symbols ?: emoji
-        EmojiCoverage.monochromeEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
-        isCjk(codePoint) -> cjk
-        isSymbol(codePoint) -> symbols ?: bundledEmoji ?: emoji
-        isEmoji(codePoint) -> symbols ?: bundledEmoji ?: emoji
-        else -> null
+    fun familyFor(codePoint: Int): FontFamily? {
+        // Everything below '©' is ordinary text: letters, digits, the space,
+        // '#', '*', punctuation. The bundled emoji font's cmap also lists some
+        // of those (`0x20`, `0x23`, `0x2A`, `0x30`..`0x39`, the keycap bases),
+        // and routing them to an emoji family drew them inside its wide cell:
+        // every digit of `1.54.11`, every `#97` and, through the space, every
+        // word gap in the changelog came out letter-spaced. They are always the
+        // app font's business, so nothing at or below ASCII is ever handed to a
+        // fallback.
+        if (codePoint < 0xA9) return null
+        return when {
+            // Variation selectors have no glyph of their own.
+            codePoint in 0xFE00..0xFE0F -> null
+            // Both coverage sets go to the monochrome font on purpose: the colour
+            // family's COLR glyphs are not painted by this renderer (see the
+            // class comment).
+            EmojiCoverage.colorEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
+            EmojiCoverage.monochromeEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
+            isCjk(codePoint) -> cjk
+            isSymbol(codePoint) -> symbols ?: bundledEmoji ?: emoji
+            isEmoji(codePoint) -> symbols ?: bundledEmoji ?: emoji
+            else -> null
+        }
     }
 
     /**

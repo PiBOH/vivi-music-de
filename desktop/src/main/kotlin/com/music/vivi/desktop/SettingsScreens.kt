@@ -2045,6 +2045,23 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
 
         Spacer(Modifier.height(16.dp))
 
+        // Android-style "turn off developer options" sits first, exactly like
+        // Android's own developer-options screen: it hides this screen, locks it
+        // again and puts every option below back to its default, so the seven-tap
+        // on the version code is the only way back.
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Delete,
+                    title = { Text(Localization.get(language, "disable_developer_options")) },
+                    description = { Text(Localization.get(language, "disable_developer_options_desc")) },
+                    onClick = { confirmDisable = true },
+                ),
+            ),
+        )
+
+        Spacer(Modifier.height(24.dp))
+
         // JVM heap: applied at the next start (a JVM cannot change -Xmx live).
         M3SettingsGroup(
             title = Localization.get(language, "advanced"),
@@ -2140,22 +2157,6 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
             ),
         )
 
-        Spacer(Modifier.height(24.dp))
-
-        // Android-style "turn off developer options": hides this screen and
-        // locks it again, so the seven-tap on the version code is needed to
-        // bring it back.
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.Delete,
-                    title = { Text(Localization.get(language, "disable_developer_options")) },
-                    description = { Text(Localization.get(language, "disable_developer_options_desc")) },
-                    onClick = { confirmDisable = true },
-                ),
-            ),
-        )
-
         if (confirmDisable) {
             AlertDialog(
                 onDismissRequest = { confirmDisable = false },
@@ -2165,7 +2166,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     TextButton(
                         onClick = {
                             confirmDisable = false
-                            DeveloperOptions.setUnlocked(false)
+                            DeveloperOptions.resetToDefaults()
                             onDisabled()
                         },
                     ) {

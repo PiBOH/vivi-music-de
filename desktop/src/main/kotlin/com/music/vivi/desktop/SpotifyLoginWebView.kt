@@ -64,7 +64,7 @@ internal object SpotifyLoginWebView {
      * the same reason: the WebView's default UA is not a browser Spotify
      * supports, while a desktopping one is.
      */
-    private val userAgent: String = when (Platform.os) {
+    internal val userAgent: String = when (Platform.os) {
         DesktopOs.WINDOWS -> "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         DesktopOs.MACOS -> "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
         DesktopOs.LINUX -> "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
@@ -157,10 +157,14 @@ internal object SpotifyLoginWebView {
     @Volatile private var unavailable = false
     @Volatile private var delivered = false
 
-    /** False once a window could not be created: the screen then offers the paste fallback. */
-    val isUnavailable: Boolean get() = unavailable
+    /**
+     * False once neither window can be created: the screen then offers the paste
+     * fallback. JCEF is the preferred window, so this is only true when it and
+     * the JavaFX fallback have both failed ([SpotifyLoginJcef]).
+     */
+    val isUnavailable: Boolean get() = unavailable && SpotifyLoginJcef.isUnavailable
 
-    fun isWindowOpen(): Boolean = windowOpen
+    fun isWindowOpen(): Boolean = windowOpen || SpotifyLoginJcef.isWindowOpen()
 
     /**
      * Opens the sign-in window and calls [onCaptured] once — with the cookies the
@@ -168,6 +172,11 @@ internal object SpotifyLoginWebView {
      * signing in. Returns false when no window could be created at all.
      */
     fun open(language: String, onCaptured: (Capture?) -> Unit): Boolean {
+        // JCEF first: a real Chromium is far likelier to pass Google's
+        // embedded-browser check than the JavaFX WebEngine, which Google refuses
+        // outright (issue #97). The JavaFX window below stays as the fallback
+        // for a machine where CEF cannot start. See [SpotifyLoginJcef].
+        if (SpotifyLoginJcef.open(language, onCaptured)) return true
         if (unavailable || windowOpen) return !unavailable
         return try {
             if (CookieHandler.getDefault() !is CookieManager) {

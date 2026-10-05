@@ -214,6 +214,13 @@ dependencies {
     implementation("org.openjfx:javafx-media:$javafxVersion:$javafxClassifier")
     implementation("org.openjfx:javafx-web:$javafxVersion:$javafxClassifier")
 
+    // JCEF (a real Chromium) for the Spotify sign-in window, so the page sees the
+    // Chromium engine and not a WebView it can flag as embedded (issue #97). Only
+    // the small Java layer is a build dependency: the ~100 MB of natives are
+    // downloaded and unpacked under ~/.vivimusic/cef the first time the window is
+    // opened, so the packaged installers stay the size they were.
+    implementation("me.friwi:jcefmaven:152.0.6")
+
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.client.content.negotiation)
@@ -326,6 +333,13 @@ compose.desktop {
             // run after the flag: zero `Pause Full`, the 30 s event becomes a
             // bounded 2.9-9.9 ms young pause that the 8 s PCM queue absorbs.
             "-XX:+ExplicitGCInvokesConcurrent",
+            // JCEF (the Chromium sign-in window) needs reflective access to AWT
+            // internals on JDK 16+; the macOS packages need the three lwawt ones,
+            // and they are harmless where the package does not exist. See
+            // https://github.com/jcefmaven/jcefmaven ("To run on JDK 16 or later").
+            "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED",
+            "--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED",
         )
 
         nativeDistributions {
