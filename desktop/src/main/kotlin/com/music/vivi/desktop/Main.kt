@@ -546,29 +546,7 @@ fun main(args: Array<String>) {
     Window(
         onCloseRequest = {
             runCatching { HistoryStore.flush() }
-            runCatching {
-                awtWindowRef[0]?.let { w ->
-                    val maximized = (w.extendedState and java.awt.Frame.MAXIMIZED_BOTH) != 0
-                    // Save the RESTORE bounds, not the maximized ones: while
-                    // maximized, `w.bounds` spans the whole screen including
-                    // the taskbar area. Persisting that and re-applying it as a
-                    // normal placement on the next start makes the window open
-                    // sitting over/under the taskbar (with an auto-hide bar the
-                    // window even stays above it). When maximized, fall back to
-                    // the restore bounds kept by the maximize handler; when
-                    // floating, save the actual bounds.
-                    val b = (if (maximized) preMaximizeBounds else null) ?: w.bounds
-                    DesktopSettings.update {
-                        it.copy(
-                            windowMaximized = maximized,
-                            windowX = b.x,
-                            windowY = b.y,
-                            windowWidth = b.width,
-                            windowHeight = b.height,
-                        )
-                    }
-                }
-            }
+            awtWindowRef[0]?.let { persistWindowGeometry(it, preMaximizeBounds) }
             exitApplication()
         },
         title = windowTitle,
@@ -617,7 +595,15 @@ fun main(args: Array<String>) {
                 }
             }
             val listener = object : java.awt.event.WindowAdapter() {
-                override fun windowOpened(e: java.awt.event.WindowEvent) = recordWindowState("opened")
+                override fun windowOpened(e: java.awt.event.WindowEvent) {
+                    recordWindowState("opened")
+                    // Compose applies its own default placement when the window
+                    // is shown, which can land after the restore effect; the
+                    // saved placement is re-asserted once the window is up.
+                    runCatching { applySavedWindowGeometry(frameWindow) }
+                    recordWindowState("restored")
+                }
+
                 override fun windowStateChanged(e: java.awt.event.WindowEvent) = recordWindowState("state-changed")
             }
             frameWindow.addWindowListener(listener)
@@ -634,42 +620,13 @@ fun main(args: Array<String>) {
 
         // Restore the last placement with the OS APIs: OS maximize respects the
         // taskbar and the Windows DPI scaling, unlike Compose's placement which
-        // can oversize an undecorated window. Floating bounds are clamped to the
-        // usable screen area so a stale/multi-DPI save can never leave the
-        // window unreachable.
+        // can oversize an undecorated window. See [applySavedWindowGeometry].
         LaunchedEffect(Unit) {
-            val saved = DesktopSettings.load()
             // A saved fullscreen state is applied by LaunchedEffect(isFullscreen)
             // below (it also fires on first composition), via the OS API so the
             // auto-hide taskbar stays reachable on hover instead of being
             // covered by an oversized Compose placement.
-            if (!saved.isFullscreen) {
-                runCatching {
-                    if (saved.windowMaximized) {
-                        frameWindow.extendedState = java.awt.Frame.MAXIMIZED_BOTH
-                    } else if (saved.windowWidth > 0 && saved.windowHeight > 0) {
-                        // Use the work area of the monitor the window was last
-                        // on (not just the primary one), so a window saved on a
-                        // secondary screen is restored there and never clamped
-                        // onto the primary monitor.
-                        val usable = runCatching {
-                            val ge = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
-                            ge.screenDevices
-                                .map { it.defaultConfiguration.bounds }
-                                .firstOrNull { r ->
-                                    saved.windowX >= r.x && saved.windowX < r.x + r.width &&
-                                        saved.windowY >= r.y && saved.windowY < r.y + r.height
-                                }
-                                ?.let { r -> java.awt.Rectangle(r.x, r.y, r.width, r.height) }
-                        }.getOrNull() ?: java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
-                        val w = saved.windowWidth.coerceIn(400, usable.width)
-                        val h = saved.windowHeight.coerceIn(300, usable.height)
-                        val x = saved.windowX.coerceIn(usable.x, usable.x + usable.width - w)
-                        val y = saved.windowY.coerceIn(usable.y, usable.y + usable.height - h)
-                        frameWindow.setBounds(x, y, w, h)
-                    }
-                }
-            }
+            runCatching { applySavedWindowGeometry(frameWindow) }
         }
 
         DisposableEffect(frameWindow) {
@@ -863,13 +820,103 @@ fun main(args: Array<String>) {
                                 }
                             }
                         },
-                        onClose = ::exitApplication,
+                        // The tray's Quit (and every other in-app exit) leaves
+                        // through here, not through the close request, so the
+                        // placement is persisted first: quitting from the tray
+                        // used to lose a window's size and position.
+                        onClose = {
+                            awtWindowRef[0]?.let { persistWindowGeometry(it, preMaximizeBounds) }
+                            exitApplication()
+                        },
                     )
                 }
             }
         }
     }
     }
+}
+
+/**
+ * Persists the placement the window is leaving at.
+ *
+ * The RESTORE bounds are saved, not the maximized ones: while maximized,
+ * `frame.bounds` spans the whole screen including the taskbar area, and
+ * re-applying that as a normal placement on the next start makes the window open
+ * over/under the taskbar. When maximized, the bounds kept by [applySavedWindowGeometry]'s
+ * caller are used. An iconified frame is skipped entirely: a minimized window
+ * reports a parked rectangle (`-32000,-32000 160x28`), which would be restored
+ * as the placement.
+ */
+private fun persistWindowGeometry(frame: java.awt.Frame, preMaximizeBounds: java.awt.Rectangle?) {
+    runCatching {
+        val maximized = (frame.extendedState and java.awt.Frame.MAXIMIZED_BOTH) != 0
+        val iconified = (frame.extendedState and java.awt.Frame.ICONIFIED) != 0
+        val b = (if (maximized) preMaximizeBounds else null) ?: frame.bounds
+        if (iconified || (!maximized && (b.width < 200 || b.height < 200))) return
+        DesktopSettings.update {
+            it.copy(
+                windowMaximized = maximized,
+                windowX = b.x,
+                windowY = b.y,
+                windowWidth = b.width,
+                windowHeight = b.height,
+            )
+        }
+    }
+}
+
+/**
+ * Applies the saved window placement with the OS APIs.
+ *
+ * OS maximize respects the taskbar and the display scaling, unlike Compose's
+ * placement on an undecorated window (which can oversize past the screen edge).
+ *
+ * The saved floating size is only ever clamped against a screen the environment
+ * reports as *real*. Every session up to 1.54.16 opened at exactly 526x478,
+ * which was the saved size (1207x1017) clamped into a 526x478 rectangle that
+ * `maximumWindowBounds` reported before the window was shown: the clamp then both
+ * shrank and moved a perfectly valid placement, which is why the window never
+ * came back where it was left. A target smaller than any real display is
+ * therefore ignored and the saved size is used as it is.
+ */
+private fun applySavedWindowGeometry(frame: java.awt.Frame) {
+    val saved = DesktopSettings.load()
+    if (saved.isFullscreen) return
+    if (saved.windowMaximized) {
+        runCatching { frame.extendedState = java.awt.Frame.MAXIMIZED_BOTH }
+        return
+    }
+    if (saved.windowWidth <= 0 || saved.windowHeight <= 0) return
+
+    val screens = runCatching {
+        java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
+            .screenDevices.map { it.defaultConfiguration.bounds }
+    }.getOrDefault(emptyList())
+    val union = screens.reduceOrNull { a, b -> a.union(b) }
+    // Prefer the screen the window was last on (so one saved on a secondary
+    // display returns there); the largest one when the saved point is on none
+    // of them (that monitor is gone).
+    val target = screens.filter { it.contains(saved.windowX, saved.windowY) }
+        .maxByOrNull { it.width.toLong() * it.height }
+        ?: screens.maxByOrNull { it.width.toLong() * it.height }
+    val usable = (target ?: union)?.takeIf { it.width >= 800 && it.height >= 600 }
+
+    var w = saved.windowWidth
+    var h = saved.windowHeight
+    var x = saved.windowX
+    var y = saved.windowY
+    if (usable != null) {
+        w = saved.windowWidth.coerceIn(400, usable.width)
+        h = saved.windowHeight.coerceIn(300, usable.height)
+        x = saved.windowX.coerceIn(usable.x, usable.x + usable.width - w)
+        y = saved.windowY.coerceIn(usable.y, usable.y + usable.height - h)
+    }
+    runCatching { frame.setBounds(x, y, w, h) }
+    AppLog.log(
+        "window",
+        "restore: saved=${saved.windowWidth}x${saved.windowHeight}@${saved.windowX},${saved.windowY} " +
+            "usable=${usable?.let { "${it.width}x${it.height}@${it.x},${it.y}" } ?: "none"} applied=${w}x${h}@${x},${y}",
+    )
 }
 
 /** Maps a toast/command-line section id to the screen it should open. */
