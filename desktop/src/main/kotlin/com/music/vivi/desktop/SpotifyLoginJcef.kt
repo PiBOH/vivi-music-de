@@ -18,6 +18,8 @@ import java.awt.FlowLayout
 import java.awt.Font
 import java.io.File
 import java.net.URI
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 import javax.swing.JButton
@@ -240,19 +242,22 @@ internal object SpotifyLoginJcef {
      * The `sp_dc` / `sp_key` pair CEF would send to the web player right now, or
      * null while there is no session yet.
      *
-     * `visitUrlCookies` delivers the store asynchronously on the CEF UI thread,
-     * so the pair is captured inside the visitor and delivered on the same
-     * callback; the poll thread only kicks the visit off.
+     * `visitUrlCookies` delivers the store asynchronously on the CEF UI thread
+     * and returns before the visitor runs, so reading the captured values right
+     * after the call would almost always see nothing. The visitor counts the
+     * visit down instead and this waits for it (bounded, so a store with no
+     * cookies cannot hang the poll).
      */
     private fun capture(): SpotifyLoginWebView.Capture? {
         val manager = runCatching { CefCookieManager.getGlobalManager() }.getOrNull() ?: return null
         val spDc = AtomicReference<String?>()
         val spKey = AtomicReference("")
+        val done = CountDownLatch(1)
         val visited = runCatching {
             manager.visitUrlCookies(
                 "$SPOTIFY_ORIGIN/",
                 true,
-                CefCookieVisitor { cookie, _, _, _ ->
+                CefCookieVisitor { cookie, count, total, _ ->
                     val domain = cookie.domain?.removePrefix(".")?.lowercase()
                     if (domain == "spotify.com" || domain?.endsWith(".spotify.com") == true) {
                         when (cookie.name?.lowercase()) {
@@ -260,11 +265,13 @@ internal object SpotifyLoginJcef {
                             "sp_key" -> spKey.set(cookie.value.orEmpty())
                         }
                     }
+                    if (total <= 0 || count >= total) done.countDown()
                     false // keep visiting; returning true would delete the cookie
                 },
             )
         }.getOrDefault(false)
         if (!visited) return null
+        runCatching { done.await(500, TimeUnit.MILLISECONDS) }
         val dc = spDc.get()?.takeIf { it.isNotBlank() } ?: return null
         return SpotifyLoginWebView.Capture(dc, spKey.get())
     }
