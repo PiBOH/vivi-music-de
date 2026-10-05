@@ -11,6 +11,15 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.16-beta] - 2026-10-05
+
+### 🔧 Changed
+- [DE] **The Spotify sign-in window remembers its size and shows what it is doing.** Its size and position are saved on close and restored on the next opening (`spotifyLoginWindowWidth/Height/X/Y` in `settings.json`), for the JCEF window and the JavaFX fallback alike, and a progress bar sits in its header: it carries the real jcefmaven download/extract percentage while the CEF natives are prepared (about 100 MB on the first try, which used to look like a hang) and turns into an indeterminate bar while a page loads.
+
+### 🐛 Fixed
+- [DE] **The Retry and Open it in your browser buttons are no longer clipped.** The status line was a single-line label, and the long "Google blocked" sentence pushed the two buttons out of the header, where they came out cut in half and unusable. The status wraps over two lines now and the buttons live on their own row under it, so neither can be swallowed by the text.
+- [DE] **The JCEF sign-in can actually complete.** CEF delivers a cookie visit asynchronously on its own thread, and the capture read the store after the call had already returned, so it almost always saw nothing and the window never closed itself. Each visit is awaited now (bounded), the scoped visit is backed by a full-store one filtered to `spotify.com`, every finished page load is logged (`JCEF page loaded (…)`) so a window that does not capture can be told from one that never loaded, and a CEF that cannot start falls back to the JavaFX window in the same attempt instead of on the user's next press.
+
 ## [6.0.8.5_DE-1.54.15-beta] - 2026-10-05
 
 ### ✨ Added
