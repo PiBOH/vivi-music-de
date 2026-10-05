@@ -11,6 +11,12 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.5_DE-1.54.17-beta] - 2026-10-05
+
+### 🐛 Fixed
+- [DE] **The main window remembers its size and position again.** The placement was saved correctly (`1207x1017@621,58` in `settings.json`) but the restore clamped it into the rectangle `maximumWindowBounds` reports before the window is shown, and that rectangle came back bogus (`526x478@621,597`): the clamp then both shrank and moved a perfectly valid placement, and every logged session opened at exactly that size. The saved floating bounds are clamped only against a screen the environment reports as *real* (at least 800x600) now; a bogus or smaller one is ignored and the saved size is used as it is. The restore is also re-asserted once the window is actually shown, and the decision is logged (`restore: saved=… usable=… applied=…` in `window.log`) so the next session shows exactly what was applied.
+- [DE] **Quitting from the tray keeps the window's placement too.** The tray's Quit called `exitApplication` directly and never ran the close request that persists the geometry, so a session ended from the tray reopened at the previous size and position. Both exit paths persist it now, and a minimized window's parked bounds (`-32000,-32000 160x28`) are no longer written, which would otherwise be restored as the window's placement.
+
 ## [6.0.8.5_DE-1.54.16-beta] - 2026-10-05
 
 ### 🔧 Changed
