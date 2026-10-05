@@ -283,10 +283,14 @@ internal object SpotifyLoginWebView {
                 VBox.setVgrow(browser, Priority.ALWAYS)
             }
             stage.title = "VIVI Music DE — ${Localization.get(language, "spotify_open_login")}"
-            stage.scene = Scene(root, 980.0, 760.0)
+            val savedWindow = DesktopSettings.load()
+            val sceneWidth = savedWindow.spotifyLoginWindowWidth.takeIf { it >= 480 }?.toDouble() ?: 980.0
+            val sceneHeight = savedWindow.spotifyLoginWindowHeight.takeIf { it >= 400 }?.toDouble() ?: 760.0
+            stage.scene = Scene(root, sceneWidth, sceneHeight)
             stage.setOnCloseRequest {
                 // Closed without finishing: hand back whatever is there (null
                 // when nothing is), so the screen can drop its spinner.
+                saveWindowSize(stage)
                 windowOpen = false
                 deliver(capture(), callback)
             }
@@ -371,7 +375,10 @@ internal object SpotifyLoginWebView {
                             "sign-in captured sp_dc (sp_key ${if (captured.spKey.isBlank()) "absent" else "present"})",
                         )
                         deliver(captured, callback)
-                        FxPlatform.runLater { stage.close() }
+                        FxPlatform.runLater {
+                            saveWindowSize(stage)
+                            stage.close()
+                        }
                         break
                     }
                     Thread.sleep(1000)
@@ -382,6 +389,20 @@ internal object SpotifyLoginWebView {
             unavailable = true
             AppLog.log("spotify", "the sign-in window could not be created: $t")
             deliver(null, callback)
+        }
+    }
+
+    /**
+     * Remembers the window's size, mirroring the JCEF window, so a sign-in
+     * through this one restores the size the user left it at too.
+     */
+    private fun saveWindowSize(stage: Stage) {
+        if (stage.width < 480.0 || stage.height < 400.0) return
+        DesktopSettings.update {
+            it.copy(
+                spotifyLoginWindowWidth = stage.width.toInt(),
+                spotifyLoginWindowHeight = stage.height.toInt(),
+            )
         }
     }
 

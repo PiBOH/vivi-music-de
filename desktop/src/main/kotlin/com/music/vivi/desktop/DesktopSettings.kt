@@ -266,6 +266,15 @@ data class DesktopSyncState(
     val devOverlayMovable: Boolean = true,
     val devShowInTitleBar: Boolean = false,
     val devProfile: String = "FULL",
+    /**
+     * Size and position of the Spotify sign-in window, remembered between
+     * openings. `0` width/height means "use the built-in size", and a negative
+     * x/y means "centre it".
+     */
+    val spotifyLoginWindowWidth: Int = 0,
+    val spotifyLoginWindowHeight: Int = 0,
+    val spotifyLoginWindowX: Int = -1,
+    val spotifyLoginWindowY: Int = -1,
     val updateCheckIntervalHours: Int = 24,
     /** Update source: "fork" (PiBOH/vivi-music-de, default) or "original" (vivizzz007/vivi-music). */
     val updateSource: String = "fork",
