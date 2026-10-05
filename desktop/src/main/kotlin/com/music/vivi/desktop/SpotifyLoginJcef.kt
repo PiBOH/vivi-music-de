@@ -303,7 +303,13 @@ internal object SpotifyLoginJcef {
             windowOpen = false
             unavailable = true
             AppLog.log("spotify", "the JCEF sign-in window could not be created: $t")
-            deliver(null, callback)
+            // Take the empty frame down before the JavaFX fallback opens, so a
+            // failure here does not leave two sign-in windows on screen.
+            SwingUtilities.invokeLater {
+                frame.isVisible = false
+                frame.dispose()
+            }
+            SpotifyLoginWebView.open(language, callback)
         }
     }
 
