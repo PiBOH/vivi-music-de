@@ -157,13 +157,20 @@ import kotlin.math.roundToInt
  * user left it on instead of always starting from the queue.
  */
 private enum class M3ETab(val key: String) {
-    NONE("none"),
     QUEUE("queue"),
     LYRICS("lyrics"),
     HISTORY("history"),
     ;
 
     companion object {
+        /**
+         * There is no "closed" tab any more. There used to be a `NONE` state that
+         * the panel's own back control set: it hid the panel *and the tab strip
+         * with it*, so the queue/lyrics/history panel could not be brought back at
+         * all without relaunching the app (reported). The panel is always there
+         * now, and a stored `"none"` from an older build opens on the queue, which
+         * is what [M3ETab.QUEUE]'s fallback here is for.
+         */
         fun fromKey(key: String): M3ETab = entries.firstOrNull { it.key == key } ?: QUEUE
     }
 }
@@ -405,8 +412,9 @@ private fun M3EPlayerContent(
     onToggleAutoPlayNext: (Boolean) -> Unit = {},
 ) {
     var activeTab by remember { mutableStateOf(M3ETab.fromKey(DesktopSettings.load().expressivePlayerTab)) }
-    // Every tab change (including closing the panel) is stored, so reopening the
-    // player — or restarting VIVI — lands on the same tab.
+    // Every tab change is stored, so reopening the player — or restarting VIVI —
+    // lands on the same section (queue, lyrics or history). The tab is never
+    // closed: the panel is part of the expressive player.
     fun selectTab(tab: M3ETab) {
         activeTab = tab
         DesktopSettings.update { it.copy(expressivePlayerTab = tab.key) }
@@ -754,8 +762,10 @@ private fun M3EPlayerContent(
                 }
             }
 
-            // Right Side Panel: Displayed when activeTab != M3ETab.NONE
-            if (activeTab != M3ETab.NONE) {
+            // Right Side Panel: queue / lyrics / history, always shown. It used to
+            // be wrapped in `if (activeTab != NONE)`, which took the tab strip down
+            // with the panel, leaving no way to open it again.
+            run {
 
                 // Right Column: Apple Up Next Queue, Lyrics, or History panel taking full remaining width/height
                 Box(
@@ -810,7 +820,13 @@ private fun M3EPlayerContent(
                                 ),
                                 onSeek = onSeek,
                                 onTogglePlay = onTogglePlay,
-                                onBack = { selectTab(M3ETab.NONE) },
+                                // No back inside the panel: the tab strip below is
+                                // how you move between sections, and a control that
+                                // emptied the panel (and with it the strip) is the
+                                // "the tab disappeared and I cannot get it back"
+                                // report. The player itself still closes with the
+                                // chevron at the top-left.
+                                onBack = null,
                             )
                             // The lyrics options, reachable from the lyrics panel
                             // itself (the expressive player has no lyric buttons).
@@ -877,7 +893,7 @@ private fun M3EPlayerContent(
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(if (activeTab == M3ETab.QUEUE) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                                    .clickable { selectTab(if (activeTab == M3ETab.QUEUE) M3ETab.NONE else M3ETab.QUEUE) },
+                                    .clickable { selectTab(M3ETab.QUEUE) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
@@ -894,7 +910,7 @@ private fun M3EPlayerContent(
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(if (activeTab == M3ETab.LYRICS) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                                    .clickable { selectTab(if (activeTab == M3ETab.LYRICS) M3ETab.NONE else M3ETab.LYRICS) },
+                                    .clickable { selectTab(M3ETab.LYRICS) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
@@ -911,7 +927,7 @@ private fun M3EPlayerContent(
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(if (activeTab == M3ETab.HISTORY) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                                    .clickable { selectTab(if (activeTab == M3ETab.HISTORY) M3ETab.NONE else M3ETab.HISTORY) },
+                                    .clickable { selectTab(M3ETab.HISTORY) },
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
@@ -2217,7 +2233,8 @@ fun LyricsScreen(
     translate: LyricsTranslator.Config? = null,
     onSeek: (Long) -> Unit = {},
     onTogglePlay: () -> Unit = {},
-    onBack: () -> Unit,
+    /** Null hides the back control: the expressive player's panel has no back. */
+    onBack: (() -> Unit)? = null,
 ) {
     // A caller that passes its own size/spacing (the lyrics screens do, from the
     // live settings sliders) wins over the display object; a caller that only
@@ -2278,7 +2295,7 @@ fun LyricsScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
+        onBack?.let { back -> BackButton(language, back) }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(Localization.get(language, "lyrics"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             // Thumbnail play/pause (port of the mobile advanced-lyrics control).

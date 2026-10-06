@@ -206,6 +206,11 @@ private fun SpotifyConnectSection(
     windowUnavailable: Boolean,
     onShowManual: () -> Unit,
 ) {
+    // What the sign-in window is doing while it gets ready, drawn right under
+    // the button that opened it. It used to be a bar in the window's own header,
+    // which is not where the user is looking when the first run spends a while
+    // downloading and unpacking Chromium.
+    val preparing by SpotifyLoginProgress.value.collectAsState()
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             SpotifyIcon,
@@ -235,6 +240,27 @@ private fun SpotifyConnectSection(
             Spacer(Modifier.width(10.dp))
         }
         Text(Localization.get(language, "spotify_open_login"))
+    }
+
+    preparing?.let { percent ->
+        Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+            if (percent < 0f) {
+                // Working, with no number to show (CEF reports no progress for a
+                // page load): a moving bar instead of a stuck 0 %.
+                LinearProgressIndicator(Modifier.fillMaxWidth())
+            } else {
+                LinearProgressIndicator(
+                    progress = { (percent / 100f).coerceIn(0f, 1f) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    "${percent.toInt().coerceIn(0, 100)}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
     }
 
     // The cookie paste is always one click away, not only after a window has

@@ -2018,6 +2018,10 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var startupLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedStartupLogs) }
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
     var confirmDisable by remember { mutableStateOf(false) }
+    // A heap size the user has just picked and that is waiting for the "restart
+    // now or later" answer. The value is stored the moment it is picked either
+    // way, so "later" is a real choice and not a way to lose the setting.
+    var pendingHeap by remember { mutableStateOf<Int?>(null) }
 
     val currentLabel = if (heapMb <= 0) {
         Localization.get(language, "jvm_memory_default").format(JvmMemory.label(JvmMemory.DEFAULT_MB))
@@ -2048,13 +2052,22 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
         // Android-style "turn off developer options" sits first, exactly like
         // Android's own developer-options screen: it hides this screen, locks it
         // again and puts every option below back to its default, so the seven-tap
-        // on the version code is the only way back.
+        // on the version code is the only way back. Android turns them off with a
+        // switch, so this is a switch too — it reads as the state of the thing
+        // rather than as a row that opens a question. Turning it off still asks
+        // once, because it resets every option below.
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.Delete,
                     title = { Text(Localization.get(language, "disable_developer_options")) },
                     description = { Text(Localization.get(language, "disable_developer_options_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = true,
+                            onCheckedChange = { on -> if (!on) confirmDisable = true },
+                        )
+                    },
                     onClick = { confirmDisable = true },
                 ),
             ),
@@ -2082,7 +2095,12 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                             onSelect = { key ->
                                 val mb = key.toIntOrNull() ?: 0
                                 heapMb = mb
+                                // Stored at once, and then the app offers to apply
+                                // it: the heap is a JVM start-up option, so it can
+                                // only come from a restart, and the user has to be
+                                // told that rather than have the app close on them.
                                 DesktopSettings.update { it.copy(jvmHeapMb = mb) }
+                                pendingHeap = mb
                             },
                         )
                     },
@@ -2100,10 +2118,17 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
 
         M3SettingsGroup(
             items = listOf(
+                // `detailed_playback_logging` and `detailed_startup_logs` hold a
+                // raw setting identifier in all 52 languages (the literal text
+                // "DetailedPlaybackLogging"), which is what the radical
+                // translation sweep found: the two rows were labelled with a name
+                // no user should ever read. The
+                // descriptions beside them WERE translated everywhere, so the row
+                // shows that text and nothing else, instead of shipping 104 new
+                // strings.
                 M3SettingsItem(
                     icon = Icons.Filled.Description,
-                    title = { Text(Localization.get(language, "detailed_playback_logging")) },
-                    description = { Text(Localization.get(language, "detailed_playback_logging_desc")) },
+                    title = { Text(Localization.get(language, "detailed_playback_logging_desc")) },
                     trailing = {
                         Switch(
                             checked = detailedLogs,
@@ -2120,8 +2145,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                 ),
                 M3SettingsItem(
                     icon = Icons.Filled.History,
-                    title = { Text(Localization.get(language, "detailed_startup_logs")) },
-                    description = { Text(Localization.get(language, "detailed_startup_logs_desc")) },
+                    title = { Text(Localization.get(language, "detailed_startup_logs_desc")) },
                     trailing = {
                         Switch(
                             checked = startupLogs,
@@ -2156,6 +2180,41 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                 ),
             ),
         )
+
+        pendingHeap?.let { mb ->
+            AlertDialog(
+                onDismissRequest = { pendingHeap = null },
+                title = { Text(Localization.get(language, "restart_required_title")) },
+                text = {
+                    Text(
+                        if (mb <= 0) {
+                            Localization.get(language, "jvm_memory_default")
+                                .format(JvmMemory.label(JvmMemory.DEFAULT_MB))
+                        } else {
+                            JvmMemory.label(mb)
+                        } + ". " + Localization.get(language, "restart_required"),
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            pendingHeap = null
+                            // The restart re-runs the app's own runtime with the
+                            // new heap; if that process dies immediately the app
+                            // stays up and `app.log` says why.
+                            JvmMemory.restartNow(mb)
+                        },
+                    ) {
+                        Text(Localization.get(language, "restart_now"))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { pendingHeap = null }) {
+                        Text(Localization.get(language, "later"))
+                    }
+                },
+            )
+        }
 
         if (confirmDisable) {
             AlertDialog(

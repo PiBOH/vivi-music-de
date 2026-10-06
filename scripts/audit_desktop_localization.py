@@ -69,6 +69,39 @@ TECHNICAL_KEYS = {
     "ai_api_key", "ai_base_url", "ai_deepl_formality_default",
 }
 
+# Letters that belong to one language's alphabet and to no other in the list,
+# with every language that legitimately uses them. A value in language X that
+# carries a letter whose set does not contain X is a translation pasted under the
+# wrong language tag: this is the "a language showed up in place of another"
+# case that the script check cannot see (they are all Latin).
+# Letters shared by several languages of the list (c, s, z with any accent,
+# ae, oe, aa) are deliberately absent: they cannot tell two languages apart.
+SIGNATURE_LETTERS = {}
+for _chars, _langs in [
+    ("\u00df", {"de"}),
+    ("\u0105\u0119", {"pl", "lt"}),
+    ("\u0142\u0144\u015b\u017a\u017c", {"pl"}),
+    ("\u011f\u0131\u015f\u0219", {"tr", "az", "ro"}),
+    ("\u0159\u011b\u016f", {"cs"}),
+    ("\u013a\u013e\u0155", {"sk"}),
+    ("\u0151\u0171", {"hu"}),
+    ("\u0103\u021b", {"ro", "vi"}),
+    ("\u0111", {"hr", "bs", "vi"}),
+    ("\u0259", {"az"}),
+    ("\u0117\u012f\u0173", {"lt"}),
+    ("\u00f5", {"et", "pt", "vi"}),
+    ("\u00f1", {"es", "eu", "fil"}),
+    ("\u00e3", {"pt", "vi"}),
+    ("\u0153\u00ff\u00fb", {"fr"}),
+    ("\u01a1\u01b0\u1ea1\u1ec7\u1ed1\u1ea7\u1ebf\u1ed9\u1ee5\u1eed\u1eef\u1ea9\u1ead\u1eaf\u1eb1\u1eb7\u1eb5\u1ebb\u1ebd\u1eb9\u1ec9\u1ecb\u1ecd\u1ecf\u1ed7\u1ed5\u1edb\u1edd\u1ee3\u1edf\u1ee1\u1ef3\u1ef5\u1ef7\u1ef9", {"vi"}),
+]:
+    # Union, never assignment: several of these letters belong to more than one
+    # language (\u00f5 to Estonian and Portuguese, \u0111 to Croatian, Bosnian and
+    # Vietnamese), and overwriting would report one of them as "the other
+    # language" in its own text.
+    for _ch in _chars:
+        SIGNATURE_LETTERS.setdefault(_ch, set()).update(_langs)
+
 # Which scripts a language may use. A value written in a script the language
 # does not use means a translation was pasted under the wrong language tag.
 SCRIPT_RANGES = [
@@ -175,6 +208,71 @@ def requested_keys():
     return keys
 
 
+# The endonym each language code must be listed under in the picker. A code
+# paired with another language's name is "a language in place of another" at the
+# very top of the UI: the user picks "Polski" and gets Czech.
+EXPECTED_ENDONYMS = {
+    "en": "English", "az": "Az\u0259rbaycan dili", "bs": "Bosanski", "ca": "Catal\u00e0",
+    "cs": "\u010ce\u0161tina", "de": "Deutsch", "et": "Eesti", "es": "Espa\u00f1ol",
+    "eu": "Euskara", "fil": "Filipino", "fr": "Fran\u00e7ais", "hr": "Hrvatski",
+    "id": "Bahasa Indonesia", "it": "Italiano", "lt": "Lietuvi\u0173", "hu": "Magyar",
+    "ms": "Bahasa Melayu", "nl": "Nederlands", "nb": "Norsk bokm\u00e5l", "pl": "Polski",
+    "pt": "Portugu\u00eas", "ro": "Rom\u00e2n\u0103", "sk": "Sloven\u010dina", "sl": "Sloven\u0161\u010dina",
+    "sr": "\u0421\u0440\u043f\u0441\u043a\u0438", "fi": "Suomi", "sv": "Svenska", "vi": "Ti\u1ebfng Vi\u1ec7t",
+    "tr": "T\u00fcrk\u00e7e", "el": "\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac", "be": "\u0411\u0435\u043b\u0430\u0440\u0443\u0441\u043a\u0430\u044f",
+    "bg": "\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438", "ru": "\u0420\u0443\u0441\u0441\u043a\u0438\u0439", "uk": "\u0423\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430",
+    "ar": "\u0627\u0644\u0639\u0631\u0628\u064a\u0629", "hi": "\u0939\u093f\u0928\u094d\u0926\u0940", "as": "\u0985\u09b8\u09ae\u09c0\u09af\u09bc\u09be",
+    "bn": "\u09ac\u09be\u0982\u09b2\u09be", "pa": "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40", "ta": "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd",
+    "te": "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41", "ml": "\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02", "th": "\u0e44\u0e17\u0e22",
+    "km": "\u1781\u17d2\u1798\u17c2\u179a", "ko": "\ud55c\uad6d\uc5b4", "zh-rCN": "\u7b80\u4f53\u4e2d\u6587",
+    "zh-rTW": "\u7e41\u9ad4\u4e2d\u6587", "ja": "\u65e5\u672c\u8a9e",
+}
+
+
+def picker_mismatches():
+    """AppLanguage(code, name) pairs whose name is not that language's own name."""
+    text = read(os.path.join(DESKTOP, "Languages.kt"))
+    out = []
+    for code, name in re.findall(r'AppLanguage\("([^"]+)",\s*"([^"]+)"\)', text):
+        expected = EXPECTED_ENDONYMS.get(code)
+        if expected is None:
+            out.append("Languages.kt: '%s' is not a known language code (name '%s')" % (code, name))
+        elif expected != name:
+            out.append("Languages.kt: '%s' is named '%s', expected '%s'" % (code, name, expected))
+    for code in sorted(set(EXPECTED_ENDONYMS) - set(re.findall(r'AppLanguage\("([^"]+)"', text))):
+        out.append("Languages.kt: no picker entry for '%s'" % code)
+    return out
+
+
+def table_mismatches(lang_of):
+    """A language code served by another language's table."""
+    out = []
+    for lang, fn in sorted(lang_of.items()):
+        expected = "strings_" + lang.replace("-", "_")
+        if fn != expected:
+            out.append("%s: served by %s(), expected %s()" % (lang, fn, expected))
+    return out
+
+
+def foreign_letters(lang, entries):
+    """Values carrying a letter that belongs to some other language's alphabet."""
+    out = []
+    for key, value in entries.items():
+        own = set()
+        foreign = set()
+        for ch in value:
+            langs = SIGNATURE_LETTERS.get(ch)
+            if not langs:
+                continue
+            if lang in langs:
+                own |= langs
+            else:
+                foreign |= langs
+        if foreign and not own and len(foreign) == 1:
+            out.append("%s: %s -> %s" % (lang, key, value))
+    return out
+
+
 def scripts_in(value):
     found = set()
     for ch in value:
@@ -190,6 +288,16 @@ def main():
     errors = []
     wrong_script = []
     english_left = []
+    misplaced = []
+    # A language served by another language's table, and a picker entry named
+    # after a different language: both are "a language in place of another"
+    # before a single string is even rendered.
+    lang_of = dict(re.findall(
+        r'"([^"]+)" to \{?\s*(strings_\w+)\(\)',
+        read(os.path.join(DESKTOP, "Localization.kt")),
+    ))
+    errors.extend(table_mismatches(lang_of))
+    errors.extend(picker_mismatches())
 
     for key in sorted(requested_keys()):
         if key not in en:
@@ -223,6 +331,8 @@ def main():
                 continue
             if en.get(key) == value and len(value.split()) >= 2:
                 english_left.append("%s: %s -> %s" % (lang, key, value))
+        # Letters of another language, in this language's table.
+        misplaced.extend(foreign_letters(lang, entries))
 
     print("Languages: %d   English keys: %d" % (len(tables) - 1, len(en)))
     print("Missing / leaking keys: %d" % len(errors))
@@ -231,6 +341,9 @@ def main():
     print("Values in a script the language does not use: %d" % len(wrong_script))
     for line in wrong_script[:40]:
         print("  " + line)
+    print("Values carrying another language's letters: %d" % len(misplaced))
+    for line in misplaced[:60]:
+        print("  " + line)
     print("English text left in a language map: %d" % len(english_left))
     print("  (brand and technical strings excluded; %d of them are brands)"% len(BRAND_KEYS))
     per_key = {}
@@ -238,7 +351,7 @@ def main():
         per_key.setdefault(line.split(": ")[1], []).append(line.split(": ")[0])
     for key, langs in sorted(per_key.items(), key=lambda kv: -len(kv[1]))[:30]:
         print("    %-32s %2d language(s): %s" % (key, len(langs), ", ".join(langs[:6]) + ("…" if len(langs) > 6 else "")))
-    return 1 if (errors or wrong_script) else 0
+    return 1 if (errors or wrong_script or misplaced) else 0
 
 
 if __name__ == "__main__":

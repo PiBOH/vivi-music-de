@@ -4347,13 +4347,17 @@ fun Sidebar(
 
             Spacer(Modifier.height(8.dp))
 
-            // User Account Row (Pinned Bottom Active-Pill)
-            val settingsSelected = current == Screen.Settings
+            // User Account Row (Pinned Bottom Active-Pill). It opens the
+            // Account screen directly: the row IS the account (name, avatar),
+            // so landing on the General list made the user click twice for the
+            // thing they had just clicked. The gear in the rail is the way to
+            // the General list.
+            val settingsSelected = current == Screen.Settings || current == Screen.SettingsAccount
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .clickable { onSelect(Screen.Settings) },
+                    .clickable { onSelect(Screen.SettingsAccount) },
                 color = if (settingsSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
             ) {
                 Row(

@@ -17,6 +17,9 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.web.WebView
 import javafx.stage.Stage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.net.CookieHandler
 import java.net.CookieManager
 import java.net.HttpCookie
@@ -185,6 +188,10 @@ internal object SpotifyLoginWebView {
             dropStaleSpotifyCookies()
             windowOpen = true
             delivered = false
+            // This window never prepares anything (no download, no engine to
+            // unpack): the bar the import screen draws under the button belongs
+            // to [SpotifyLoginJcef]'s first run only.
+            SpotifyLoginProgress.publish(null)
             JavaFxToolkit.ensureStarted()
             FxPlatform.runLater { createWindow(language, onCaptured) }
             true
@@ -455,4 +462,28 @@ internal object SpotifyLoginWebView {
 
     private fun HttpCookie.isSpotifyCookie(): Boolean =
         domain?.removePrefix(".")?.lowercase()?.endsWith("spotify.com") == true
+}
+
+/**
+ * What the Spotify sign-in window is doing while it gets ready, published for the
+ * main window to draw.
+ *
+ * The percentage used to live in the sign-in window's own header, where it sat
+ * next to the message and pushed the two ways out around the row. The screen the
+ * user is actually looking at is the one they pressed **Sign in to Spotify** on,
+ * so the bar belongs under that button (`SettingsSpotifyImportScreen`), where it
+ * also reads as "the button is doing something".
+ *
+ * - `null`: nothing is being prepared, and the bar is hidden.
+ * - a negative value: work with no percentage to show (CEF's page load, which it
+ *   reports no progress for).
+ * - `0f..100f`: the real preparation percentage.
+ */
+internal object SpotifyLoginProgress {
+    private val _value = MutableStateFlow<Float?>(null)
+    val value: StateFlow<Float?> = _value.asStateFlow()
+
+    fun publish(percent: Float?) {
+        _value.value = percent
+    }
 }
