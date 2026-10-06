@@ -126,7 +126,19 @@ object JvmMemory {
         runCatching { Thread.sleep(2500) }
         if (!child.isAlive) {
             val code = runCatching { child.exitValue() }.getOrDefault(-1)
-            AppLog.log("app", "jvm heap: the restarted app exited at once (code $code), staying on ${currentMaxMb} MB")
+            // The lock was given up so the new process could take it, and this one
+            // is still here, so it has to hold it again: running on without it
+            // would let a second launch start beside this one instead of being
+            // handed over, and two instances share settings.json. (When the other
+            // process is still alive the re-acquire fails, which is the correct
+            // answer: that one owns the lock.)
+            val reacquired = SingleInstance.acquire()
+            AppLog.log(
+                "app",
+                "jvm heap: the restarted app exited at once (code $code), staying on ${currentMaxMb} MB" +
+                    if (reacquired) " (single-instance lock taken again)"
+                    else " (another instance holds the single-instance lock now)",
+            )
             return false
         }
         AppLog.log("app", "jvm heap: restarting with -Xmx${targetMb}m (was ${currentMaxMb} MB, $reason)")
