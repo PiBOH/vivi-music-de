@@ -297,12 +297,26 @@ val CountryCodeToName: Map<String, String> = mapOf(
 )
 
 /**
- * Resolve the innerTube locale from the saved content language/country. Blank
- * values fall back to the OS default (like the Android app's "system" default).
+ * Resolve the innerTube locale from the saved content language/country.
+ *
+ * The content language is its own setting, so when the user picked one it wins.
+ * Blank means "follow" and it used to follow the **OS** locale, which is how an
+ * English build showed the account's own playlists in the language of Windows
+ * (the sidebar listed "Liked Music" as "Musica che ti piace" and "Episodes for
+ * Later" as "Puntate per dopo", a mix that reads like a bug). [appLanguage] is
+ * the language of the app itself and is what a blank content language follows
+ * now; only when *that* is blank too (the language picker has not run yet) does
+ * the OS locale apply, and English is the last resort.
  */
-fun resolveYouTubeLocale(contentLanguage: String, contentCountry: String): YouTubeLocale {
+fun resolveYouTubeLocale(
+    contentLanguage: String,
+    contentCountry: String,
+    appLanguage: String,
+): YouTubeLocale {
     val system = java.util.Locale.getDefault()
-    val hl = contentLanguage.ifBlank { system.language.ifBlank { "en" } }
+    val hl = contentLanguage.ifBlank {
+        appLanguage.ifBlank { system.language.ifBlank { "en" } }
+    }
     val gl = contentCountry.ifBlank { system.country.ifBlank { "US" } }
     return YouTubeLocale(gl = gl, hl = hl)
 }
@@ -738,10 +752,24 @@ fun SettingsUpdatesScreen(
 }
 
 @Composable
-fun SettingsAboutScreen(language: String, onBack: () -> Unit, onOpenContributors: () -> Unit) {
+fun SettingsAboutScreen(
+    language: String,
+    onBack: () -> Unit,
+    onOpenContributors: () -> Unit,
+    onOpenLicense: () -> Unit,
+) {
     SettingsSubScreen(language, onBack) {
-        AboutSection(language = language, onOpenContributors = onOpenContributors)
+        AboutSection(
+            language = language,
+            onOpenContributors = onOpenContributors,
+            onOpenLicense = onOpenLicense,
+        )
     }
+}
+
+@Composable
+fun SettingsLicenseScreen(language: String, onBack: () -> Unit) {
+    SettingsSubScreen(language, onBack) { LicenseSection(language) }
 }
 
 @Composable

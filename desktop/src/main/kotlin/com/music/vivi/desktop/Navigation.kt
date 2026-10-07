@@ -54,6 +54,7 @@ sealed interface Screen {
     data object SettingsCommits : Screen
     data object SettingsAbout : Screen
     data object SettingsContributors : Screen
+    data object SettingsLicense : Screen
 
     /** The live performance monitor (was called "Developer options"). */
     data object SettingsPerformance : Screen

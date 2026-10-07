@@ -61,13 +61,27 @@ object LoginWebView {
 
     fun isWindowOpen(): Boolean = windowOpen
 
-    /** Starts JavaFX once, then creates the embedded login Stage. */
-    fun openEmbedded(language: String, onCaptured: (Capture?) -> Unit): Boolean {
+    /**
+     * Starts JavaFX once, then creates the embedded login Stage.
+     *
+     * [resetFirst] drops every YouTube/Google cookie the previous attempt left in
+     * the shared cookie store **before** the window loads (see [clearSession]).
+     * The login screen sets it on an attempt that follows a failure: a stale
+     * half-session in that store is what makes the capture come back without
+     * `LOGIN_INFO` (E1033 in ERRORS.md), and signing in from a clean store is
+     * exactly the "clear the cache and it works" the reports describe.
+     */
+    fun openEmbedded(
+        language: String,
+        resetFirst: Boolean = false,
+        onCaptured: (Capture?) -> Unit,
+    ): Boolean {
         if (unavailable || windowOpen) return !unavailable
         return try {
             if (CookieHandler.getDefault() !is CookieManager) {
                 CookieHandler.setDefault(CookieManager())
             }
+            if (resetFirst) clearSession()
             windowOpen = true
             delivered = false
             ensureFxStarted()
@@ -93,6 +107,42 @@ object LoginWebView {
      * for why one process has exactly one place that starts it.
      */
     private fun ensureFxStarted() = JavaFxToolkit.ensureStarted()
+
+    /**
+     * Removes every YouTube/Google cookie from the shared store, so the next
+     * sign-in starts from nothing instead of from a half-finished session.
+     *
+     * This is the programmatic form of the workaround every E1033 report ends
+     * with ("I cleared the cache and it works"): the store is a JVM-wide
+     * [CookieManager], so a session that was captured *before* a real sign-in
+     * (or one whose `LOGIN_INFO` never arrived) sits there and is re-read by the
+     * next attempt. Only the two sign-in domains are touched, so nothing else in
+     * the process (the Spotify window keeps its own store) is affected.
+     *
+     * @return how many cookies were dropped.
+     */
+    fun clearSession(): Int {
+        val manager = CookieHandler.getDefault() as? CookieManager ?: return 0
+        val store = manager.cookieStore
+        val doomed = runCatching {
+            store.cookies.filter { cookie ->
+                val domain = cookie.domain.removePrefix(".")
+                domain.endsWith("youtube.com") || domain.endsWith("google.com")
+            }
+        }.getOrDefault(emptyList())
+        var removed = 0
+        doomed.forEach { cookie ->
+            // The store removes by the cookie itself (the URI only has to be a
+            // valid one for the two sign-in hosts); the scheme is safe to assume
+            // because every session cookie here is secure.
+            val uri = runCatching {
+                URI("https://" + cookie.domain.removePrefix(".") + cookie.path.ifBlank { "/" })
+            }.getOrNull() ?: return@forEach
+            if (runCatching { store.remove(uri, cookie) }.getOrDefault(false)) removed++
+        }
+        logDebug("fresh sign-in: dropped $removed of ${doomed.size} YouTube/Google cookie(s)")
+        return removed
+    }
 
     private fun deliver(cookie: String?, dataSyncId: String?, visitorData: String?, callback: (Capture?) -> Unit) {
         if (delivered) return
@@ -125,15 +175,20 @@ object LoginWebView {
                 background = Background(BackgroundFill(Color.web("#1f1f2e"), CornerRadii.EMPTY, Insets.EMPTY))
             }
             // The numbered steps sit on a light bar: dark text on light, and
-            // selectable so they can be copied.
-            val steps = VBox(6.0).apply {
-                padding = Insets(10.0, 14.0, 6.0, 14.0)
-                background = Background(BackgroundFill(Color.web("#f3eef9"), CornerRadii.EMPTY, Insets.EMPTY))
-                children.addAll(
-                    selectableText("1. " + Localization.get(language, "login_step1"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
-                    selectableText("2. " + Localization.get(language, "login_step2"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
-                    selectableText("3. " + Localization.get(language, "login_step3"), Color.web("#1c1b1f"), 13.0, Color.web("#f3eef9")),
-                )
+            // selectable so they can be copied. They were three full-width rows
+            // at 13px, which pushed the page itself down by a fifth of the
+            // window; they are the same three sentences in ONE compact line now,
+            // at a size that reads as a hint rather than as a heading (the user
+            // reads them once and then wants the page).
+            val steps = selectableText(
+                listOf("login_step1", "login_step2", "login_step3")
+                    .mapIndexed { index, key -> "${index + 1}. ${Localization.get(language, key)}" }
+                    .joinToString("   ·   "),
+                Color.web("#1c1b1f"),
+                11.5,
+                Color.web("#f3eef9"),
+            ).apply {
+                padding = Insets(4.0, 14.0, 4.0, 14.0)
             }
             val browser = WebView().apply {
                 prefWidth = 1000.0
@@ -360,21 +415,46 @@ object LoginWebView {
         if (hasSession) {
             logDebug("captured ${cookies.size} cookies: $names | missing critical: $missing | scoped=${scopedNames.size}")
         }
-        // Backfill: keep critical auth cookies the scoped lookup did not
-        // return (store quirks), without duplicating names.
-        val backfillNames = setOf(
-            "SAPISID", "__Secure-1PAPISID", "__Secure-3PAPISID",
-            "SID", "__Secure-1PSID", "__Secure-3PSID",
-            "HSID", "SSID", "APISID", "LOGIN_INFO",
+        // Backfill: EVERY cookie of the store the scoped lookup did not return,
+        // the auth-critical ones first, without duplicating a name.
+        //
+        // This used to be a ten-name whitelist, and the user's own
+        // `~/.vivimusic/login-debug.log` is the measurement that says why that is
+        // not enough: the scoped lookup answered `scoped=1` (one single cookie)
+        // while the store held 28 cookies for the two sign-in domains. The header
+        // that reached the API was therefore that one cookie plus whichever of
+        // the ten the whitelist happened to name, and every other session cookie
+        // was dropped in silence - including `LOGIN_INFO`, whose absence is
+        // exactly what answers 401 ("the captured session has no LOGIN_INFO
+        // cookie", E1033) while the same cookies pasted by hand work. The whole
+        // set is therefore sent, and the couple of cookies scoped to a sibling
+        // Google host travel with it on purpose: an unexpected cookie is ignored
+        // by the API, whereas a dropped session cookie costs the login.
+        val criticalFirst = listOf(
+            "SAPISID", "__Secure-1PAPISID", "__Secure-3PAPISID", "APISID",
+            "SID", "__Secure-1PSID", "__Secure-3PSID", "HSID", "SSID", "LOGIN_INFO",
         )
         val backfill = byName.values
-            .filter { it.name in backfillNames && it.name !in scopedNames }
+            .filter { it.name !in scopedNames }
+            .sortedWith(
+                compareBy(
+                    { cookie ->
+                        val rank = criticalFirst.indexOf(cookie.name)
+                        if (rank == -1) criticalFirst.size else rank
+                    },
+                    { it.name },
+                ),
+            )
             .joinToString("; ") { "${it.name}=${it.value}" }
         val header = when {
             !hasSession -> null
-            scopedHeader == null -> byName.values.joinToString("; ") { "${it.name}=${it.value}" }
+            scopedHeader == null -> backfill
             backfill.isEmpty() -> scopedHeader
             else -> "$scopedHeader; $backfill"
+        }
+        if (header != null) {
+            val sent = header.split(";").count { it.isNotBlank() }
+            logDebug("session header: $sent cookie(s) sent ($scopedNames.size via the scoped lookup)")
         }
         return SessionCapture(
             header = header,

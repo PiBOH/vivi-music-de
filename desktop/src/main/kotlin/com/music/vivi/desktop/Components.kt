@@ -549,6 +549,15 @@ fun ErrorBox(language: String, message: String?) {
         SelectionContainer {
             Text("${Localization.get(language, "error")}: $message", color = MaterialTheme.colorScheme.error)
         }
+        // And where to read what it means: a VIVI error carries a code (E1033,
+        // SPOT-005, 1009), and the code is only useful if the user can look it
+        // up. Same pointer the error dialogs carry.
+        Text(
+            "ERRORS.md · ${Localization.get(language, "website")}: $ERROR_PAGE_URL",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.align(Alignment.BottomStart),
+        )
     }
 }
 

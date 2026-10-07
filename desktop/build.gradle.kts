@@ -43,6 +43,9 @@ tasks.processResources {
     from(rootProject.file("version.txt"))
     from(rootProject.file("CHANGELOG.md"))
     from(rootProject.file("contributorsde.json"))
+    // The licence, so About → Licence can show it with no network at all (the
+    // live copy is fetched from the repository, exactly like the contributors).
+    from(rootProject.file("LICENSE"))
     // The vector brand mark: the master lives with the other brand assets in
     // `icons/` (next to logo_vmde.png), and the app reads it from the classpath
     // as `images/logo_vmde.svg`. Copied rather than committed a second time so
@@ -379,7 +382,12 @@ compose.desktop {
             vendor = "PiBOH"
 
             windows {
-                menuGroup = "VIVI Music"
+                // The Start Menu folder: the SAME name the Inno Setup installer
+                // uses (DefaultGroupName in installer/windows/VIVIMusic.iss). It
+                // used to say "VIVI Music" here, so an install made with the MSI
+                // put the app under one name and an install made with the .exe
+                // under another.
+                menuGroup = "VIVI Music DE"
                 // Machine-wide install into Program Files (requires admin/UAC).
                 perUserInstall = false
                 installationPath = "C:/Program Files/VIVIMusic"

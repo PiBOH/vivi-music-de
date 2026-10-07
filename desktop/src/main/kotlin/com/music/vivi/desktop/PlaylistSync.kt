@@ -291,7 +291,22 @@ object PlaylistSync {
             _status.value = Status(Phase.FAILED, message = "not signed in")
             return
         }
+        // Imported playlists ([SpotifyImport], ids under `SPOT`) never travel to
+        // the account: an import is a local mirror by design, and pushing one
+        // would create a playlist on YouTube Music that the user never asked for
+        // (the app's own "Import from Spotify" promise). Only their *liked songs*
+        // go to the account, and those go as likes, not as a playlist.
+        val imported = PlaylistStore.active.filter { it.accountPlaylistId() == null }
+            .filter { isImportedPlaylist(it.id) }
+        if (imported.isNotEmpty()) {
+            AppLog.log(
+                "playlists",
+                "upload ($trigger): ${imported.size} imported playlist(s) kept local on purpose: " +
+                    imported.joinToString { "'${it.name}'" },
+            )
+        }
         val pending = PlaylistStore.active.filter { it.accountPlaylistId() == null }
+            .filterNot { isImportedPlaylist(it.id) }
         if (pending.isEmpty()) {
             AppLog.log("playlists", "upload ($trigger): every local playlist is already on the account")
             run(trigger) { pull(trigger) }

@@ -46,8 +46,10 @@
 ; and the whole wizard follows the choice. For the other languages the wizard
 ; chrome stays English — there is no translation to load — while everything THIS
 ; installer authors does follow the selection: the task and Run descriptions are
-; `{cm:...}` lookups into Inno's own (already translated) tables, plus the one
-; [CustomMessages] entry below.
+; `{cm:...}` lookups into Inno's own (already translated) tables, plus the
+; [CustomMessages] entries below. Inno's *standard* messages are reached through
+; SetupMessage(msg…): `{cm:…}` only knows [CustomMessages] and fails at run time
+; on anything else (that is what broke the uninstaller; see RemovedAllText).
 ;
 ; Which translations exist depends on the compiler: Inno Setup 6 has 27 of
 ; them, 7 added four more. Both CI and the machine this is developed on compile
@@ -119,6 +121,13 @@ DisableDirPage=no
 UsePreviousAppDir=yes
 UsePreviousTasks=yes
 UsePreviousLanguage=yes
+; NOT the Start Menu folder. Inno reuses the group name recorded by the
+; previous install of the same AppId, and the earlier installers of this app
+; (and the jpackage MSI) used "VIVI Music": an upgrade therefore kept the OLD
+; name, which is why the same app appeared under "VIVI Music" on one machine
+; and "VIVI Music DE" on another. With the group page disabled, saying no here
+; is what keeps the name at DefaultGroupName on every install and upgrade.
+UsePreviousGroup=no
 AllowNoIcons=yes
 ; The installer's own log in %TEMP%: the app ships a log exporter, so a failed
 ; install should be diagnosable the same way.
@@ -560,6 +569,50 @@ begin
   LastInstallLine := '';
 end;
 
+// "<app> was successfully removed from your computer."
+//
+// UninstalledAll lives in Inno's own [Messages] table, not in [CustomMessages],
+// so `{cm:UninstalledAll}` cannot find it: the uninstaller dies with
+// "Internal error: Unknown custom message name "UninstalledAll" in "cm"
+// constant" the moment this box is built (reported with a screenshot on
+// 1.54.18). It is read the way a standard message has to be read, and %1 is
+// filled in with FmtMessage, which is also what makes the sentence follow the
+// language the setup was run in.
+function RemovedAllText(): String;
+begin
+  Result := FmtMessage(SetupMessage(msgUninstalledAll), ['{#AppName}']);
+end;
+
+// Removes a Start Menu folder an older installer left under another name.
+//
+// The jpackage MSI, and the first versions of this installer, put the shortcuts
+// in a "VIVI Music" folder; this one uses "VIVI Music DE" (DefaultGroupName) and
+// keeps it on every upgrade (UsePreviousGroup=no). The leftovers of the other
+// name would otherwise sit next to the new entry forever. Only a folder that
+// really holds this app's shortcut is touched, and the removal is written to the
+// install log, so a folder that is not ours is left alone.
+procedure RemoveStaleStartMenuGroup();
+var
+  Roots: TArrayOfString;
+  I: Integer;
+  Folder: String;
+begin
+  SetArrayLength(Roots, 2);
+  Roots[0] := ExpandConstant('{commonprograms}');
+  Roots[1] := ExpandConstant('{userprograms}');
+  for I := 0 to GetArrayLength(Roots) - 1 do begin
+    Folder := Roots[I] + '\VIVI Music';
+    if DirExists(Folder) then begin
+      if FileExists(Folder + '\VIVIMusic.lnk') or FileExists(Folder + '\VIVI Music.lnk') then begin
+        if DelTree(Folder, True, True, True) then
+          AddInstallLine('Removed the old Start Menu folder: ' + Folder)
+        else
+          AddInstallLine('Could not remove the old Start Menu folder: ' + Folder);
+      end;
+    end;
+  end;
+end;
+
 procedure CreateUninstallDetailsMemo();
 begin
   if UninstallDetailsMemo <> nil then Exit;
@@ -915,7 +968,10 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then
-    UninstallExistingMsi();
+    UninstallExistingMsi()
+  else if CurStep = ssPostInstall then
+    // After the files are in place, so the new Start Menu entry exists first.
+    RemoveStaleStartMenuGroup();
 end;
 
 procedure CurPageChanged(CurPageID: Integer);
@@ -973,18 +1029,18 @@ begin
     end;
   end
   else if CurUninstallStep = usPostUninstall then begin
-    { Both sentences below are Inno's own, so they follow the selected language;
-      the two paths need no translating. }
+    { The first sentence below is Inno's own, so it follows the selected
+      language; the two paths need no translating. }
     KeptPaths := GetEnv('USERPROFILE') + '\.vivimusic\backups' + #13#10 +
                  GetEnv('USERPROFILE') + '\.vivimusic\device-sync.json';
     if UninstallCleanupOk then
       MsgBox(
-        ExpandConstant('{cm:UninstalledAll,{#AppName}}') + #13#10 + #13#10 +
+        RemovedAllText() + #13#10 + #13#10 +
         ExpandConstant('{cm:UninstallKept}') + #13#10 + KeptPaths,
         mbInformation, MB_OK)
     else
       MsgBox(
-        ExpandConstant('{cm:UninstalledAll,{#AppName}}') + #13#10 + #13#10 +
+        RemovedAllText() + #13#10 + #13#10 +
         'The cache cleanup could not be completed, so your data was left untouched at:' + #13#10 +
         GetEnv('USERPROFILE') + '\.vivimusic' + #13#10 + #13#10 +
         'Log: ' + UninstallLogPath(),

@@ -1,12 +1,17 @@
 package com.music.vivi.desktop
 
 import java.awt.BorderLayout
+import java.awt.Cursor
+import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.net.URI
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.atomic.AtomicBoolean
@@ -16,6 +21,15 @@ import javax.swing.JPanel
 import javax.swing.JScrollPane
 import javax.swing.JTextArea
 import javax.swing.SwingUtilities
+
+/**
+ * Where every error this app can show is written down: `ERRORS.md` in the
+ * repository and the same table on the website, searchable by code. The error
+ * dialogs point here, because a code on its own (E1033, 1009, SPOT-005) tells
+ * the user nothing until they can look it up: `ERRORS.md` carries the codes and
+ * what to do about them.
+ */
+const val ERROR_PAGE_URL: String = "https://piboh.github.io/vivi-music-de/errors.html"
 
 /**
  * Installs a global uncaught-exception handler that shows a dialog with both a
@@ -151,6 +165,9 @@ private fun showErrorDialog(throwable: Throwable) {
         val panel = JPanel(BorderLayout(0, 8))
         panel.add(JLabel(shortMessage(throwable)), BorderLayout.NORTH)
         panel.add(scroll, BorderLayout.CENTER)
+        // Under the stack trace: where to read what the code means. The whole
+        // label is a link, so a single click opens the errors page.
+        panel.add(errorHintLabel(), BorderLayout.SOUTH)
 
         val options = arrayOf("Copy error", "OK")
         val choice = JOptionPane.showOptionDialog(
@@ -171,6 +188,23 @@ private fun showErrorDialog(throwable: Throwable) {
         }
     }
     if (SwingUtilities.isEventDispatchThread()) run() else SwingUtilities.invokeLater(run)
+}
+
+/** "Look the code up here" line: `ERRORS.md` in the repository, or the errors
+ *  page on the website, which is the same table and searchable. */
+private fun errorHintLabel(): JLabel = JLabel(
+    "<html>Every error has a code, and every code is explained in <b>ERRORS.md</b> " +
+        "(repository) or on the errors page: <a href=\"$ERROR_PAGE_URL\">$ERROR_PAGE_URL</a></html>",
+).apply {
+    cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    toolTipText = ERROR_PAGE_URL
+    addMouseListener(
+        object : MouseAdapter() {
+            override fun mouseClicked(e: MouseEvent) {
+                runCatching { Desktop.getDesktop().browse(URI(ERROR_PAGE_URL)) }
+            }
+        },
+    )
 }
 
 private fun shortMessage(t: Throwable): String =

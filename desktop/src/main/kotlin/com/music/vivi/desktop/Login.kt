@@ -83,6 +83,13 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
     var error by remember { mutableStateOf<String?>(null) }
     var savingCookie by remember { mutableStateOf(false) }
     var waitingForWindow by remember { mutableStateOf(false) }
+    // An attempt that follows a failure starts from an empty cookie store: a
+    // stale half-session is what makes the capture come back without
+    // LOGIN_INFO (E1033), and signing in with the old cookies still in place is
+    // what kept the error coming back. "Sign in with Google" after a failure is
+    // therefore a fresh sign-in, which is the fix every report found by hand
+    // ("I cleared the cache and it worked").
+    var freshSession by remember { mutableStateOf(false) }
 
     fun refreshAccount() {
         isLoggedIn = LoginManager.isLoggedIn()
@@ -148,7 +155,10 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
                         error = null
                         status = null
                         waitingForWindow = true
-                        val opened = LoginWebView.openEmbedded(language) { captured ->
+                        val opened = LoginWebView.openEmbedded(
+                            language,
+                            resetFirst = freshSession,
+                        ) { captured ->
                             waitingForWindow = false
                             if (captured?.cookie != null) {
                                 // Auto-captured session: validate + persist exactly
@@ -164,6 +174,7 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
                                             )
                                         }
                                         status = "${Localization.get(language, "logged_in_as")}: ${account.name}"
+                                        freshSession = false
                                         refreshAccount()
                                         onLoggedIn()
                                     } catch (e: Exception) {
@@ -173,6 +184,8 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
                                         dataSyncId = captured.dataSyncId.orEmpty()
                                         visitorData = captured.visitorData.orEmpty()
                                         manualOpen = true
+                                        // The next window starts from a clean store.
+                                        freshSession = true
                                         error = e.message ?: (e::class.simpleName ?: "error")
                                     } finally {
                                         savingCookie = false
@@ -206,7 +219,17 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
         }
         error?.let {
             // Selectable so a failed login (e.g. the E-code detail) can be copied for a report.
-            SelectionContainer { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
+            SelectionContainer {
+                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+            }
+            // And where the code is explained: the message carries one (E1033,
+            // E1029, E1030) and it is only useful if it can be looked up.
+            Text(
+                "ERRORS.md · ${Localization.get(language, "website")}: $ERROR_PAGE_URL",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
 
         // Embedded window unavailable → offer the browser fallback right here.

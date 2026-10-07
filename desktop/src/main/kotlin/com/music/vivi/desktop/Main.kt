@@ -373,7 +373,11 @@ fun main(args: Array<String>) {
     // restart.
     val settingsRevision = settingsFileRevision()
 
-    YouTube.locale = resolveYouTubeLocale(initialSettings.contentLanguage, initialSettings.contentCountry)
+    YouTube.locale = resolveYouTubeLocale(
+        initialSettings.contentLanguage,
+        initialSettings.contentCountry,
+        initialSettings.language,
+    )
 
     // The shared Compose strings (the text-selection context menu above all)
     // localise from the platform locale, not from the app's own table: on an
@@ -388,7 +392,7 @@ fun main(args: Array<String>) {
         runCatching { ContentFilters.load() }
         runCatching { DeveloperOptions.load() }
         val current = DesktopSettings.load()
-        YouTube.locale = resolveYouTubeLocale(current.contentLanguage, current.contentCountry)
+        YouTube.locale = resolveYouTubeLocale(current.contentLanguage, current.contentCountry, current.language)
         // A language change made in the app (or in the file) has to reach the
         // platform locale too, so the right-click menu follows it.
         Languages.applyJvmLocale(current.language)
@@ -710,6 +714,11 @@ fun main(args: Array<String>) {
                         DesktopSettings.update {
                             it.copy(language = selected, languageSeq = it.languageSeq + 1)
                         }
+                        // The account's own names (playlists, auto playlists) follow
+                        // the app language when the content language is "system":
+                        // a language change has to reach the client at once.
+                        val s = DesktopSettings.load()
+                        YouTube.locale = resolveYouTubeLocale(s.contentLanguage, s.contentCountry, selected)
                     }
                     else -> App(
                         language = language,
@@ -718,6 +727,11 @@ fun main(args: Array<String>) {
                             DesktopSettings.update {
                                 it.copy(language = selected, languageSeq = it.languageSeq + 1)
                             }
+                            // See the LanguageSelectionScreen branch above: the
+                            // content language follows the app language when it is
+                            // left on "system".
+                            val s = DesktopSettings.load()
+                            YouTube.locale = resolveYouTubeLocale(s.contentLanguage, s.contentCountry, selected)
                         },
                         font = selectedFont,
                         onFontChange = { f ->
@@ -3129,12 +3143,12 @@ fun WindowScope.App(
                         onContentLanguageChange = { code ->
                             contentLanguage = code
                             DesktopSettings.update { it.copy(contentLanguage = code) }
-                            YouTube.locale = resolveYouTubeLocale(contentLanguage, contentCountry)
+                            YouTube.locale = resolveYouTubeLocale(contentLanguage, contentCountry, language)
                         },
                         onContentCountryChange = { code ->
                             contentCountry = code
                             DesktopSettings.update { it.copy(contentCountry = code) }
-                            YouTube.locale = resolveYouTubeLocale(contentLanguage, contentCountry)
+                            YouTube.locale = resolveYouTubeLocale(contentLanguage, contentCountry, language)
                         },
                         hideExplicit = hideExplicit,
                         hideVideoSongs = hideVideoSongs,
@@ -3247,8 +3261,13 @@ fun WindowScope.App(
                         language = language,
                         onBack = goBack,
                         onOpenContributors = { navigate(Screen.SettingsContributors) },
+                        onOpenLicense = { navigate(Screen.SettingsLicense) },
                     )
                     is Screen.SettingsContributors -> SettingsContributorsScreen(
+                        language = language,
+                        onBack = goBack,
+                    )
+                    is Screen.SettingsLicense -> SettingsLicenseScreen(
                         language = language,
                         onBack = goBack,
                     )
@@ -6660,7 +6679,11 @@ private const val GITHUB_MARK_PATH =
     "M12,2A10,10 0,0 0,2 12c0,4.42 2.87,8.17 6.84,9.5c0.5,0.08 0.66,-0.23 0.66,-0.5c0,-0.23 0,-0.86 0,-1.69c-2.77,0.6 -3.36,-1.34 -3.36,-1.34c-0.46,-1.16 -1.11,-1.47 -1.11,-1.47c-0.91,-0.62 0.07,-0.6 0.07,-0.6c1,0.07 1.53,1.03 1.53,1.03c0.87,1.52 2.34,1.07 2.91,0.83c0.09,-0.65 0.35,-1.09 0.63,-1.34c-2.22,-0.25 -4.55,-1.11 -4.55,-4.92c0,-1.11 0.38,-2 1.03,-2.71c-0.1,-0.25 -0.45,-1.29 0.1,-2.64c0,0 0.84,-0.27 2.75,1.02c0.79,-0.22 1.65,-0.33 2.5,-0.33c0.85,0 1.71,0.11 2.5,0.33c1.91,-1.29 2.75,-1.02 2.75,-1.02c0.55,1.35 0.2,2.39 0.1,2.64c0.65,0.71 1.03,1.6 1.03,2.71c0,3.82 -2.34,4.66 -4.57,4.91c0.36,0.31 0.69,0.92 0.69,1.85c0,1.34 0,2.42 0,2.74c0,0.27 0.16,0.59 0.67,0.5C19.14,20.16 22,16.42 22,12A10,10 0,0 0,12 2Z"
 
 @Composable
-fun AboutSection(language: String, onOpenContributors: () -> Unit) {
+fun AboutSection(
+    language: String,
+    onOpenContributors: () -> Unit,
+    onOpenLicense: () -> Unit,
+) {
     val firstLaunchDate = remember { DesktopSettings.load().firstLaunchDate }
     var versionCodeTaps by remember { mutableStateOf(0) }
     val devUnlocked by DeveloperOptions.unlocked.collectAsState()
@@ -6753,10 +6776,13 @@ fun AboutSection(language: String, onOpenContributors: () -> Unit) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(vertical = 4.dp),
     )
+    // Opens the licence INSIDE the app (see [LicenseSection]); it used to jump
+    // straight to the repository, which is a browser tab and, on a machine with
+    // no browser association, nothing at all.
     AboutInfoRow(
         icon = Icons.Filled.Description,
         title = Localization.get(language, "license"),
-        onClick = { openUrl("https://github.com/PiBOH/vivi-music-de/blob/vivi-music-de/LICENSE") },
+        onClick = onOpenLicense,
     )
 }
 
@@ -6780,6 +6806,89 @@ fun ContributorsSection(language: String) {
     contributors.forEach { contributor ->
         ContributorRow(contributor)
     }
+}
+
+// ---------------------------------------------------------------------------
+// Licence (About -> Licence): read LIVE from the repository (`LICENSE` on the
+// `vivi-music-de` branch) every time the screen opens, exactly like the
+// contributor list, so an edit to the licence (the special exception for the
+// musixmatch module is part of it) is visible without an app update. The
+// bundled classpath copy is only the offline fallback.
+// ---------------------------------------------------------------------------
+
+private const val LICENSE_RAW_URL: String =
+    "https://raw.githubusercontent.com/PiBOH/vivi-music-de/vivi-music-de/LICENSE"
+
+private const val LICENSE_BLOB_URL: String =
+    "https://github.com/PiBOH/vivi-music-de/blob/vivi-music-de/LICENSE"
+
+/**
+ * The licence bundled as a classpath resource (the shipped copy, from the
+ * repository root `LICENSE`): what the screen shows when the repository cannot
+ * be reached. Empty when the resource is missing, and the screen then says so.
+ */
+private fun loadLicense(): String = runCatching {
+    AppInfo::class.java.getResourceAsStream("/LICENSE")?.use { stream ->
+        stream.readBytes().decodeToString()
+    }.orEmpty()
+}.getOrDefault("")
+
+/**
+ * Fetches the licence currently in the repository (raw.githubusercontent.com,
+ * branch `vivi-music-de`). Empty string when offline/unreachable, in which case
+ * the caller keeps the bundled copy.
+ */
+private fun fetchLicenseFromGitHub(): String = runCatching {
+    val conn = URI(LICENSE_RAW_URL).toURL().openConnection() as java.net.HttpURLConnection
+    try {
+        conn.connectTimeout = 8000
+        conn.readTimeout = 8000
+        conn.setRequestProperty("User-Agent", "VIVI-Music-DE/${AppInfo.FULL_VERSION}")
+        if (conn.responseCode == 200) {
+            conn.inputStream.use { input -> input.readBytes().decodeToString() }
+        } else {
+            ""
+        }
+    } finally {
+        conn.disconnect()
+    }
+}.getOrDefault("")
+
+/**
+ * Dedicated Licence sub-screen (Settings → About → Licence). Live text on every
+ * open, bundled copy offline, and the repository entry at the bottom for the
+ * reader who wants the file in its own page with the blame and the history.
+ */
+@Composable
+fun LicenseSection(language: String) {
+    var text by remember { mutableStateOf(loadLicense()) }
+    LaunchedEffect(Unit) {
+        val fresh = withContext(Dispatchers.IO) { fetchLicenseFromGitHub() }
+        if (fresh.isNotBlank()) text = fresh
+    }
+    AboutSectionHeader(Localization.get(language, "license"))
+    if (text.isBlank()) {
+        // No bundled copy and no network: say it instead of showing nothing.
+        Text(
+            Localization.get(language, "library_empty"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        SelectionContainer {
+            Text(
+                text,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            )
+        }
+    }
+    AboutInfoRow(
+        icon = GithubIcon,
+        title = Localization.get(language, "github_repository"),
+        onClick = { openUrl(LICENSE_BLOB_URL) },
+    )
 }
 
 @Composable

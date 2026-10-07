@@ -452,19 +452,34 @@ fun PlaylistScreen(
                     ),
                 )
                 Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
-                    Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = { onShuffleAll(page!!.songs) }) {
-                        Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                // An account playlist can be genuinely empty (an auto playlist
+                // like "Episodes for Later" before anything is saved to it): the
+                // header then says so in the API's own words and the screen used
+                // to draw nothing under two buttons that could do nothing. Say it
+                // once and keep the buttons out of the way (same wording the
+                // local playlist screen uses).
+                if (playlistSongs.isEmpty()) {
+                    Text(
+                        Localization.get(language, "empty_playlist"),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                } else {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
                         Spacer(Modifier.width(8.dp))
-                        Text(Localization.get(language, "shuffle_all"))
+                        OutlinedButton(onClick = { onShuffleAll(page!!.songs) }) {
+                            Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(Localization.get(language, "shuffle_all"))
+                        }
                     }
-                }
-                Spacer(Modifier.height(8.dp))
-                LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                    items(page!!.songs, key = { it.id }) { song ->
-                        SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
+                    Spacer(Modifier.height(8.dp))
+                    LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
+                        items(page!!.songs, key = { it.id }) { song ->
+                            SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
+                        }
                     }
                 }
             }

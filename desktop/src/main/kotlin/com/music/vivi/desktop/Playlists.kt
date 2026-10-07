@@ -57,6 +57,16 @@ import java.io.File
 private const val MIRROR_PREFIX = "yt-"
 
 /**
+ * The id prefix of a playlist an import owns ([SpotifyImport]): the account's own
+ * source id behind `SPOT`. Such a playlist is written on this machine only and
+ * is never pushed to YouTube Music by the sync (see [PlaylistSync.uploadMissing]).
+ */
+private const val IMPORT_PREFIX = "SPOT"
+
+/** True when a local playlist id belongs to an import ([IMPORT_PREFIX]). */
+internal fun isImportedPlaylist(id: String): Boolean = id.startsWith(IMPORT_PREFIX)
+
+/**
  * The account's playlist id behind a local playlist, in whichever of the two
  * forms it is stored: a playlist mirrored **from** the account carries it in its
  * id (`yt-<id>`), one created here and pushed up carries it in
@@ -128,6 +138,11 @@ object PlaylistStore {
         // entries that are the same account playlist, so it is a no-op once the
         // store is clean.
         repairDuplicates()
+        // An import that matched nothing used to leave a playlist with no songs
+        // behind, and an empty row in the sidebar reads as a second "Liked Songs"
+        // next to the account's own "Liked Music" (see the same cleanup in
+        // [SpotifyImport.importLikedSongs]).
+        retireEmptyImports()
     }
 
     /** Active (non-deleted) playlists, most recently updated first. */
@@ -447,6 +462,30 @@ object PlaylistStore {
         }
         _all.value = all
         persist()
+    }
+
+    /**
+     * Tombstones the imported playlists ([IMPORT_PREFIX]) that hold no songs.
+     *
+     * Nothing can be lost: the entry is empty. A playlist the *user* created is
+     * never touched, however empty it is: an empty "New playlist" is a normal
+     * thing to have, an empty imported row is not.
+     */
+    fun retireEmptyImports() {
+        val empty = _all.value.filterNot { it.deleted }
+            .filter { it.id.startsWith(IMPORT_PREFIX) && it.songs.isEmpty() }
+        if (empty.isEmpty()) return
+        val now = System.currentTimeMillis()
+        val ids = empty.map { it.id }.toSet()
+        _all.value = _all.value.map { p ->
+            if (p.id in ids) p.copy(deleted = true, updatedAt = now) else p
+        }
+        persist()
+        AppLog.log(
+            "playlists",
+            "retired ${empty.size} empty imported playlist(s): " +
+                empty.joinToString { "'${it.name}' (${it.id})" },
+        )
     }
 
     /** Full state (active + recent tombstones) for the sync snapshot. */

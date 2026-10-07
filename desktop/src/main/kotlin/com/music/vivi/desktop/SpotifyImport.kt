@@ -52,6 +52,15 @@ import java.util.concurrent.atomic.AtomicInteger
  * through [PlaylistSync]: the account action is the explicit, confirmed one in
  * the Account screen, and creating a playlist on the user's YouTube Music
  * account is exactly the side effect an import must not have.
+ *
+ * The one exception is **Liked Songs**, which is what the user asked for: when
+ * a session is signed in, the matched tracks are *liked on YouTube Music*
+ * ([YouTube.likeVideo]) instead of landing in a local playlist, so they show up
+ * in the account's own `LM` list ("Liked Music") and on every other device. A
+ * local playlist is written only for the tracks the account would not take (or
+ * for all of them when nobody is signed in), and it is named
+ * "Liked Songs (Spotify)" so it can never be mistaken for the account's
+ * "Liked Music".
  */
 object SpotifyImport {
     private val json = sharedJsonPretty
@@ -108,6 +117,15 @@ object SpotifyImport {
 
     /** The source id the UI uses for the Liked Songs row. */
     const val LIKED_SOURCE: String = "liked"
+
+    /**
+     * The stable local id and the name of the Liked Songs fallback playlist: the
+     * tracks the account would not take, or every match when nobody is signed in.
+     * The name carries the source, because "Liked Songs" next to the account's
+     * "Liked Music" read as the same list twice (and it is not).
+     */
+    const val LIKED_LOCAL_ID: String = "SPOTLIKEDSONGS"
+    const val LIKED_LOCAL_NAME: String = "Liked Songs (Spotify)"
 
     /**
      * The page the sign-in window opens, and the page the manual fallback links
@@ -332,16 +350,20 @@ object SpotifyImport {
                     processed++
                     _progress.update { Progress(data.name, 0, data.tracks.size) }
                     val matched = if (data.tracks.isEmpty()) emptyList() else matchTracks(data)
-                    PlaylistStore.upsert(
-                        id = localId(data.spotifyId),
-                        name = data.name,
-                        songs = matched,
-                    )
-                    AppLog.log(
-                        "spotify",
-                        "'${data.name}': ${matched.size} of ${data.tracks.size} track(s) " +
-                            "matched and written to the local playlist",
-                    )
+                    if (source == LIKED_SOURCE) {
+                        importLikedSongs(data, matched)
+                    } else {
+                        PlaylistStore.upsert(
+                            id = localId(data.spotifyId),
+                            name = data.name,
+                            songs = matched,
+                        )
+                        AppLog.log(
+                            "spotify",
+                            "'${data.name}': ${matched.size} of ${data.tracks.size} track(s) " +
+                                "matched and written to the local playlist",
+                        )
+                    }
                     _progress.update {
                         Progress(data.name, matched.size, data.tracks.size, finished = true)
                     }
@@ -355,6 +377,69 @@ object SpotifyImport {
             } finally {
                 if (_progress.value?.finished != true) _progress.update { null }
             }
+        }
+    }
+
+    /**
+     * Writes the Liked Songs import where it belongs.
+     *
+     * **Signed in:** every matched track is liked on the account, so it joins
+     * the account's own liked list (visible as "Liked Music" here and in the
+     * YouTube Music app and on the phone): nothing about it stays behind on this
+     * machine. The tracks the account rejected (a video that cannot be rated, a
+     * dropped request) are kept in a local "Liked Songs (Spotify)" playlist, so
+     * a partial run loses nothing; a run that liked everything retires that
+     * playlist if an earlier import left one.
+     *
+     * **Signed out:** there is no account to like anything on, so the whole match
+     * set goes to the local playlist. Either way an empty result writes nothing,
+     * which is what left the phantom "Liked Songs" row in the sidebar.
+     */
+    private suspend fun importLikedSongs(data: Source, matched: List<SyncedSong>) {
+        if (matched.isEmpty()) {
+            AppLog.log(
+                "spotify",
+                "'${data.name}': nothing matched of ${data.tracks.size} track(s), nothing written",
+            )
+            return
+        }
+        if (!LoginManager.isLoggedIn()) {
+            PlaylistStore.upsert(id = LIKED_LOCAL_ID, name = LIKED_LOCAL_NAME, songs = matched)
+            AppLog.log(
+                "spotify",
+                "'${data.name}': ${matched.size} of ${data.tracks.size} track(s) matched and " +
+                    "written to the local playlist '$LIKED_LOCAL_NAME' (not signed in)",
+            )
+            return
+        }
+        val gate = Semaphore(4)
+        val notLiked = java.util.Collections.synchronizedList(mutableListOf<SyncedSong>())
+        coroutineScope {
+            matched.map { song ->
+                async {
+                    gate.withPermit {
+                        if (YouTube.likeVideo(song.id, true).isSuccess) Unit else notLiked.add(song)
+                    }
+                }
+            }.awaitAll()
+        }
+        val liked = matched.size - notLiked.size
+        AppLog.log(
+            "spotify",
+            "'${data.name}': $liked of ${data.tracks.size} track(s) liked on YouTube Music" +
+                if (notLiked.isEmpty()) " (nothing kept locally)"
+                else ", ${notLiked.size} kept in the local playlist '$LIKED_LOCAL_NAME'",
+        )
+        if (notLiked.isEmpty()) {
+            // The account holds the whole list now: retire the local copy an
+            // earlier import (or this feature's first version) left behind.
+            PlaylistStore.delete(LIKED_LOCAL_ID)
+        } else {
+            PlaylistStore.upsert(
+                id = LIKED_LOCAL_ID,
+                name = LIKED_LOCAL_NAME,
+                songs = notLiked.toList(),
+            )
         }
     }
 
