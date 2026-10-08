@@ -11,6 +11,9 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+### 🐛 Fixed
+- [DE] **The sign-in window now waits for `LOGIN_INFO` instead of reading the cookie store once.** The user's `~/.vivimusic/login-debug.log` holds both outcomes of the same code path, seven seconds after the same visit: at `2026-10-08T16:52` the visit to `www.youtube.com` produced the cookie and the flow delivered a completed session, while at `2026-10-08T16:45` it came back with 35 cookies and no `LOGIN_INFO`, so the window handed over a **partial** session (which the log names: `delivering PARTIAL session, missing critical: [LOGIN_INFO]`), the account validation answered 401 and the app showed the `E1033` from issue #101 again. One fixed `Thread.sleep(7_000)` after one visit was deciding it. The visit is now made up to twice and the store is polled for up to 15 s after each one, stopping the moment the cookie appears and the log naming each visit (`after www.youtube.com (visit 1/2): N cookies, missing=[...]`), so a fast success is still fast and a slow one is no longer a coin toss. **Watch:** a successful sign-in must end with `after www.youtube.com (visit 1/2)` followed by `delivering completed session`, and a failure must name how many visits were tried before the partial hand-over. **Open sub-item:** the login window needs a display and a real Google account, so this is a log-driven fix that compiles and is reasoned from the two entries above; only a real sign-in confirms it.
+
 ## [6.0.8.5_DE-1.54.21-beta] - 2026-10-08
 
 ### 🐛 Fixed

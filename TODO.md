@@ -8,6 +8,9 @@ orientation.
 
 ## Open
 
+### Unreleased
+- [ ] **The sign-in window's `LOGIN_INFO` chase (code written 8 Oct, not in a build yet).** The user's `login-debug.log` shows the same path succeeding at 16:52 and failing at 16:45, and the difference was a single fixed 7 s wait: the visit to `www.youtube.com` is made up to twice now and the store is polled for 15 s after each, so the window stops giving up on a cookie that is a second late. **Watch:** a success must log `after www.youtube.com (visit 1/2)` then `delivering completed session`, and a failure must say how many visits it tried. **Open sub-item:** cannot be tested here (needs a display and a real account): this is the highest-value thing to retry on the machine.
+
 ### Patch 1.54.21 (8 Oct)
 - [x] **The `HTTP 403` / `giving up after 3 attempts` playback failure (done 8 Oct, 1.54.21).** The user's `20261007-205734/playback.log` showed `stream ready` then a 403 on every track, with `c=WEB_CREATOR` in the failing URLs: the chain ended in clients that need a PoToken, which a desktop cannot mint, so their URLs are a guaranteed 403. The chain is PoToken-free now (`filterNot { it.useWebPoTokens }` enforces it) and `VISIONOS` leads it because the probe measured it answering while the old first client produced nothing. **Watch:** `:desktop:streamResolveProbe` must report a `2xx` candidate for every track, and a day when the free identities are refused must end in `resolution failed, rotating guest and retrying`, never in a web URL. **Open sub-item:** the probe proves the URLs are playable from this machine, not that the app plays them; a real track from that log has to play.
 - [x] **The chat window's close button and `Ctrl+Shift+C` (done 8 Oct, 1.54.21).** The window opens from the room and from the shortcut and can be put away both ways. **Watch:** the shortcut toggles it from anywhere in the app.

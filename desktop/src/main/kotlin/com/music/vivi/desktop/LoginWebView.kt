@@ -37,6 +37,17 @@ object LoginWebView {
 
     private val debugLog = File(System.getProperty("user.home"), ".vivimusic/login-debug.log")
 
+    /**
+     * How the missing `LOGIN_INFO` is chased: the www.youtube.com visit is made
+     * up to [LOGIN_INFO_VISITS] times, and after each one the cookie store is
+     * polled for [LOGIN_INFO_POLL_MS] instead of being read once. Both numbers
+     * are bounded on purpose: the whole capture runs under a 120 s deadline, and
+     * a sign-in the user is watching cannot hang on a cookie that may never
+     * come.
+     */
+    private const val LOGIN_INFO_VISITS = 2
+    private const val LOGIN_INFO_POLL_MS = 15_000L
+
     private fun logDebug(msg: String) {
         runCatching {
             debugLog.parentFile?.mkdirs()
@@ -273,11 +284,45 @@ object LoginWebView {
                     if (cap.hasSession && "LOGIN_INFO" in cap.missing && !loginInfoPass) {
                         loginInfoPass = true
                         logDebug("LOGIN_INFO missing — visiting www.youtube.com to complete the session")
-                        FxPlatform.runLater { browser.engine.load("https://www.youtube.com/") }
-                        Thread.sleep(7_000)
-                        val after = capture()
-                        logDebug("after www.youtube.com: ${after.names.size} cookies, missing=${after.missing}")
-                        if ("LOGIN_INFO" !in after.missing) {
+                        // Poll for the cookie instead of reading the store once
+                        // after a fixed wait. Whether the visit lands on the
+                        // signed-in youtube.com property is not a fixed amount of
+                        // time, and the user's own log holds both sides of that
+                        // coin, seven seconds after the visit either way:
+                        // 2026-10-08T16:52 caught LOGIN_INFO on the first visit
+                        // and delivered a completed session, while
+                        // 2026-10-08T16:45 came back with 35 cookies and no
+                        // LOGIN_INFO, handed the partial session over and answered
+                        // 401 (`E1033`). Polling costs nothing when the cookie
+                        // appears at once and waits for the rest when it does not,
+                        // and the second visit covers the case where the first one
+                        // simply did not land.
+                        var after: SessionCapture? = null
+                        var completed = false
+                        for (pass in 1..LOGIN_INFO_VISITS) {
+                            FxPlatform.runLater {
+                                if (pass == 1) browser.engine.load("https://www.youtube.com/")
+                                else browser.engine.reload()
+                            }
+                            val pollUntil = System.currentTimeMillis() + LOGIN_INFO_POLL_MS
+                            while (System.currentTimeMillis() < pollUntil && windowOpen && !delivered) {
+                                Thread.sleep(1_000)
+                                val now = capture()
+                                after = now
+                                if ("LOGIN_INFO" !in now.missing) {
+                                    completed = true
+                                    break
+                                }
+                            }
+                            val seen = after
+                            logDebug(
+                                "after www.youtube.com (visit $pass/$LOGIN_INFO_VISITS): " +
+                                    "${seen?.names?.size ?: 0} cookies, missing=${seen?.missing}"
+                            )
+                            if (completed) break
+                        }
+                        val seen = after
+                        if (completed && seen != null) {
                             FxPlatform.runLater { browser.engine.load("https://music.youtube.com/") }
                             Thread.sleep(4_000)
                             val ids = extractPageIds(browser)
@@ -287,11 +332,14 @@ object LoginWebView {
                                     "dataSyncId=${if (ids.first != null) "ok" else "MISSING"}, " +
                                     "visitorData=${if (ids.second != null) "ok" else "MISSING"}"
                             )
-                            deliver(finalCap.header ?: after.header, ids.first, ids.second, callback)
+                            deliver(finalCap.header ?: seen.header, ids.first, ids.second, callback)
                             FxPlatform.runLater { stage.close() }
                             break
                         }
-                        logDebug("LOGIN_INFO still absent after www.youtube.com — handing over what we have")
+                        logDebug(
+                            "LOGIN_INFO still absent after $LOGIN_INFO_VISITS www.youtube.com visit(s) — " +
+                                "handing over what we have"
+                        )
                     }
                     // Fallback: a session existed but the critical set never
                     // completed (either the pass above ran, or the 60 s mark was
