@@ -589,9 +589,16 @@ class ListenTogetherClient(
         send(LtMessage(LtMessageTypes.TRANSFER_HOST, json.encodeToJsonElement(LtTransferHost.serializer(), LtTransferHost(newHostId))))
     }
 
-    fun sendChat(text: String) {
+    /**
+     * Sends a chat message, optionally quoting an earlier one. The relay speaks
+     * the same `chat` frame as the mobile client and the quote travels in the
+     * `reply_to` field, so a reply written here is shown as a reply on Android
+     * (and vice versa).
+     */
+    fun sendChat(text: String, replyTo: LtRepliedMessage? = null) {
         if (text.isBlank()) return
-        send(LtMessage(LtMessageTypes.CHAT, json.encodeToJsonElement(LtChat.serializer(), LtChat(text.trim()))))
+        val payload = LtChat(text.trim(), replyTo)
+        send(LtMessage(LtMessageTypes.CHAT, json.encodeToJsonElement(LtChat.serializer(), payload)))
     }
 
     fun requestSync() {
@@ -717,7 +724,12 @@ class ListenTogetherClient(
                         rejectJoin(r.userId, "Blocked")
                         return@let
                     }
-                    _pendingJoinRequests.value = _pendingJoinRequests.value + r
+                    // One entry per user: a repeated request (a retry, a rejoin)
+                    // appended a second row with the same `userId`, and the join
+                    // request list is keyed by it, so the second copy took the
+                    // whole app down with `Key "…" was already used`.
+                    _pendingJoinRequests.value =
+                        _pendingJoinRequests.value.filter { it.userId != r.userId } + r
                     scope.launch { _events.emit(LtEvent.JoinRequest(r.userId, r.username)) }
                 }
             }
@@ -743,7 +755,17 @@ class ListenTogetherClient(
 
             LtMessageTypes.USER_JOINED -> {
                 p?.let { json.decodeFromJsonElement<LtUserJoined>(it) }?.let { u ->
-                    _roomState.value = _roomState.value?.let { it.copy(users = it.users + LtUserInfo(u.userId, u.username)) }
+                    // Replacing rather than appending: a user who joins twice
+                    // (a reconnect the host did not see as one) used to get two
+                    // rows with the same `userId`, and the user list is keyed by
+                    // `userId`, so Compose refused the duplicate key and crashed
+                    // the app while the room was open.
+                    _roomState.value = _roomState.value?.let { state ->
+                        state.copy(
+                            users = state.users.filter { x -> x.userId != u.userId } +
+                                LtUserInfo(u.userId, u.username),
+                        )
+                    }
                     scope.launch { _events.emit(LtEvent.UserJoined(u.userId, u.username)) }
                 }
             }
@@ -824,7 +846,11 @@ class ListenTogetherClient(
             LtMessageTypes.RECONNECTED -> {
                 p?.let { json.decodeFromJsonElement<LtReconnected>(it) }?.let { r ->
                     _userId.value = r.userId
-                    _roomState.value = r.state
+                    // The state comes from the network, so its user list is
+                    // deduplicated here as well: it is keyed by `userId` when
+                    // drawn, and a repeated entry is a crash, not a cosmetic
+                    // problem.
+                    _roomState.value = r.state.copy(users = r.state.users.distinctBy { it.userId })
                     _role.value = if (r.isHost) LtRoomRole.HOST else LtRoomRole.GUEST
                     username = r.state.users.firstOrNull { it.userId == r.userId }?.username ?: username
                     saveSession()
@@ -834,7 +860,18 @@ class ListenTogetherClient(
 
             LtMessageTypes.CHAT -> {
                 p?.let { json.decodeFromJsonElement<LtChatMessage>(it) }?.let { c ->
-                    _chatMessages.value = (_chatMessages.value + c).takeLast(200)
+                    val messages = _chatMessages.value
+                    // The chat list is keyed by timestamp + author + text, so a
+                    // message that arrives twice is a duplicate key and crashes
+                    // the room. Identical messages from the same author in the
+                    // same millisecond are indistinguishable anyway, so the
+                    // second copy is dropped instead of drawn.
+                    val duplicate = messages.any {
+                        it.timestamp == c.timestamp && it.userId == c.userId && it.message == c.message
+                    }
+                    if (!duplicate) {
+                        _chatMessages.value = (messages + c).takeLast(200)
+                    }
                     scope.launch { _events.emit(LtEvent.Chat(c)) }
                 }
             }
@@ -842,7 +879,10 @@ class ListenTogetherClient(
             LtMessageTypes.SUGGESTION_RECEIVED -> {
                 p?.let { json.decodeFromJsonElement<LtSuggestionReceived>(it) }?.let { s ->
                     if (s.fromUsername !in _blockedUsernames.value) {
-                        _pendingSuggestions.value = _pendingSuggestions.value + s
+                        // One entry per suggestion id, for the same reason as
+                        // above: the suggestion list is keyed by it.
+                        _pendingSuggestions.value =
+                            _pendingSuggestions.value.filter { it.suggestionId != s.suggestionId } + s
                         scope.launch { _events.emit(LtEvent.SuggestionReceived(s)) }
                     }
                 }
@@ -1196,7 +1236,27 @@ class ListenTogetherManager(private val player: PlayerController) {
                 }
             }
 
-            is LtEvent.Chat -> Unit
+            is LtEvent.Chat -> {
+                // Chat lives in its own window, which may be closed while the
+                // user listens: a message from someone else is then a real
+                // notification. It goes through [DesktopNotifier] so it honours
+                // the notification-mode setting (native OS toast vs in-app
+                // banner) and lands in the notification history like every
+                // other notice. Own messages and messages read in an open
+                // window are not notified, and the badge on the Chat button
+                // counts everything unread.
+                val mine = event.message.userId == userId.value
+                val read = ListenTogetherChatWindow.visible.value
+                if (!mine && !read) {
+                    ListenTogetherChatWindow.bumpUnread()
+                    val quote = event.message.replyTo?.let { "↪ ${it.message}\n" }.orEmpty()
+                    DesktopNotifier.notify(
+                        title = event.message.username,
+                        message = quote + event.message.message,
+                        section = "listen_together",
+                    )
+                }
+            }
             is LtEvent.Error -> Unit
             else -> Unit
         }
@@ -1511,7 +1571,7 @@ class ListenTogetherManager(private val player: PlayerController) {
     fun transferHost(newHostId: String) = client.transferHost(newHostId)
     fun blockUser(username: String) = client.blockUser(username)
     fun unblockUser(username: String) = client.unblockUser(username)
-    fun sendChatMessage(message: String) = client.sendChat(message)
+    fun sendChatMessage(message: String, replyTo: LtRepliedMessage? = null) = client.sendChat(message, replyTo)
     fun requestSync() = client.requestSync()
     fun suggestTrack(track: LtTrackInfo) = client.suggestTrack(track)
     fun approveSuggestion(suggestionId: String) = client.approveSuggestion(suggestionId)

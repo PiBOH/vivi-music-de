@@ -1202,6 +1202,19 @@ ENGLISH = {
     "mouse_back_forward_desc": "Use the mouse thumb buttons (X1 / X2) to go back and forward in VIVI Music DE",
     "output_device": "Audio output device",
     "refresh": "Refresh",
+    # First-run screen: the two support links of the community step. Both are
+    # brand names and read the same in every language on purpose (see
+    # desktop_extra_translations_94 and the audit's BRAND_KEYS), exactly like
+    # `telegram_channel` and the GitHub row next to them.
+    "support_upi": "UPI",
+    "support_buy_me_a_coffee": "Buy Me a Coffee",
+    # The Listen Together chat window (batch 95). The window is a desktop-only
+    # feature: the APK has a chat panel but no strings of its own for these, so
+    # they are authored in desktop_extra_translations_95 rather than mapped onto
+    # an Android resource.
+    "lt_no_messages": "No messages yet",
+    "lt_reply": "Reply",
+    "lt_send_message": "Send message",
 }
 
 # Desktop-only translations (keys with no Android source string) plus gap-fills
@@ -1873,12 +1886,14 @@ from desktop_extra_translations_90 import EXTRA_TRANSLATIONS as _EXTRA_90
 from desktop_extra_translations_91 import EXTRA_TRANSLATIONS as _EXTRA_91
 from desktop_extra_translations_92 import EXTRA_TRANSLATIONS as _EXTRA_92
 from desktop_extra_translations_93 import EXTRA_TRANSLATIONS as _EXTRA_93
+from desktop_extra_translations_94 import EXTRA_TRANSLATIONS as _EXTRA_94
+from desktop_extra_translations_95 import EXTRA_TRANSLATIONS as _EXTRA_95
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93, _EXTRA_94, _EXTRA_95):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 

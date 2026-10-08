@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -1311,8 +1312,6 @@ fun ContentSection(
     lyricsProviders: List<String> = emptyList(),
     onLyricsProvidersChange: (List<String>) -> Unit = {},
 ) {
-    var languageExpanded by remember { mutableStateOf(false) }
-    var countryExpanded by remember { mutableStateOf(false) }
     // The effective order: what the user saved, then whatever the resolver knows
     // that the saved list does not mention (a provider added by an update shows
     // up instead of disappearing).
@@ -1324,43 +1323,45 @@ fun ContentSection(
 
     Text(Localization.get(language, "content"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
 
-    Text(Localization.get(language, "content_language"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-    Box(Modifier.padding(top = 8.dp)) {
-        OutlinedButton(onClick = { languageExpanded = true }) {
-            Text(LanguageCodeToName[contentLanguage] ?: Localization.get(language, "system_default"))
-        }
-        DropdownMenu(expanded = languageExpanded, onDismissRequest = { languageExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text(Localization.get(language, "system_default")) },
-                onClick = { languageExpanded = false; onContentLanguageChange("") },
-            )
-            LanguageCodeToName.forEach { (code, name) ->
-                DropdownMenuItem(
-                    text = { Text(name) },
-                    onClick = { languageExpanded = false; onContentLanguageChange(code) },
-                )
-            }
-        }
-    }
+    // Language and region are the same kind of choice ("yours, or the system's"),
+    // so they are two cards of the same shape instead of two loose buttons
+    // sitting under two loose headings. Each card's own row opens the list
+    // inline, which is what the mobile Content screen does with its dialogs, and
+    // the row shows the current pick on its trailing side so the answer is
+    // readable without opening anything.
+    //
+    // `system_default` is the first entry of both lists: a blank code means
+    // "follow" and is what the resolver in `resolveYouTubeLocale` expects.
+    val systemDefault = Localization.get(language, "system_default")
+    Text(
+        Localization.get(language, "content_language"),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+    )
+    M3SettingsDropdownCard(
+        icon = Icons.Filled.Language,
+        title = Localization.get(language, "content_language"),
+        value = LanguageCodeToName[contentLanguage] ?: systemDefault,
+        options = listOf("" to systemDefault) +
+            LanguageCodeToName.map { (code, name) -> code to name },
+        onSelect = onContentLanguageChange,
+    )
 
-    Text(Localization.get(language, "content_country"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-    Box(Modifier.padding(top = 8.dp)) {
-        OutlinedButton(onClick = { countryExpanded = true }) {
-            Text(CountryCodeToName[contentCountry] ?: Localization.get(language, "system_default"))
-        }
-        DropdownMenu(expanded = countryExpanded, onDismissRequest = { countryExpanded = false }) {
-            DropdownMenuItem(
-                text = { Text(Localization.get(language, "system_default")) },
-                onClick = { countryExpanded = false; onContentCountryChange("") },
-            )
-            CountryCodeToName.forEach { (code, name) ->
-                DropdownMenuItem(
-                    text = { Text(name) },
-                    onClick = { countryExpanded = false; onContentCountryChange(code) },
-                )
-            }
-        }
-    }
+    Text(
+        Localization.get(language, "content_country"),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
+    )
+    M3SettingsDropdownCard(
+        icon = Icons.Filled.Public,
+        title = Localization.get(language, "content_country"),
+        value = CountryCodeToName[contentCountry] ?: systemDefault,
+        options = listOf("" to systemDefault) +
+            CountryCodeToName.map { (code, name) -> code to name },
+        onSelect = onContentCountryChange,
+    )
 
     // --- Filters (the mobile Content screen's own rows) --------------------
     M3SettingsGroup(
@@ -1833,7 +1834,11 @@ fun PrivacySection(language: String, isLoggedIn: Boolean, onLogout: () -> Unit) 
 
     Button(
         onClick = {
-            UpdateDownloader.deleteAll()
+            // The same installers the Updates counter counts: the ones of the
+            // version that is already installed. The installer of a downloaded,
+            // not yet installed update is not touched, because the button next
+            // to this one is what runs it.
+            UpdateState.deleteAllInstallers()
             installersCleared = true
         },
         modifier = Modifier.padding(top = 12.dp),

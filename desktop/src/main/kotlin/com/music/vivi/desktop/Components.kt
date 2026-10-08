@@ -914,11 +914,15 @@ fun ViviSlider(
  * there are more, which is what makes "Mood & genres" and the "made for you"
  * playlists look like they only hold the few entries that fit. This puts the
  * Spotify desktop home rows' own affordance over the row: a round arrow at each
- * end, the one in a direction that still has content active and the other one
- * dimmed, each press moving the row about a page.
+ * end, each press moving the row about a page.
  *
- * A row that already fits shows no arrows at all — an arrow that cannot do
- * anything is worse than no arrow.
+ * An arrow that cannot do anything is worse than no arrow, so each one is drawn
+ * only while ITS OWN direction has something to scroll to. The row at its start
+ * has no left arrow, the row at its end has no right arrow, and a row that
+ * already fits has neither: they are absent, not dimmed. Showing a dead, faded
+ * arrow on the side the row cannot move towards was the remaining half of the
+ * old behaviour (both arrows used to appear as soon as either direction could
+ * move).
  *
  * `language` is only there for the two tooltips, so the buttons are named the
  * way every other icon button in the app is (see the tooltip rule in
@@ -949,27 +953,27 @@ fun HorizontalCarousel(
         // it scrolls or the window is resized, not on every recomposition.
         val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
         val canGoForward by remember { derivedStateOf { state.canScrollForward } }
-        if (canGoBackward || canGoForward) {
-            // The `align` modifier has to sit on a direct child of THIS Box. It
-            // used to be handed to `CarouselArrow` and applied to the `Surface`
-            // inside `Tooltip`, whose own internal Box consumed it: both arrows
-            // then fell back to the Box's default top-start position, and since
-            // the forward one is drawn last it covered the backward one. That is
-            // why only one arrow ever showed, on the left. Wrapping each arrow in
-            // its own aligned Box fixes the placement.
+        // The `align` modifier has to sit on a direct child of THIS Box. It
+        // used to be handed to `CarouselArrow` and applied to the `Surface`
+        // inside `Tooltip`, whose own internal Box consumed it: both arrows
+        // then fell back to the Box's default top-start position, and since
+        // the forward one is drawn last it covered the backward one. That is
+        // why only one arrow ever showed, on the left. Wrapping each arrow in
+        // its own aligned Box fixes the placement.
+        if (canGoBackward) {
             Box(Modifier.align(Alignment.CenterStart)) {
                 CarouselArrow(
                     language = language,
                     forward = false,
-                    enabled = canGoBackward,
                     onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
                 )
             }
+        }
+        if (canGoForward) {
             Box(Modifier.align(Alignment.CenterEnd)) {
                 CarouselArrow(
                     language = language,
                     forward = true,
-                    enabled = canGoForward,
                     onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
                 )
             }
@@ -989,18 +993,16 @@ private fun carouselPage(state: LazyListState): Float =
 private fun CarouselArrow(
     language: String,
     forward: Boolean,
-    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     Tooltip(Localization.get(language, if (forward) "next" else "previous")) {
         Surface(
             onClick = onClick,
-            enabled = enabled,
             shape = CircleShape,
             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.92f),
             contentColor = MaterialTheme.colorScheme.onSurface,
             shadowElevation = 3.dp,
-            modifier = Modifier.size(34.dp).alpha(if (enabled) 1f else 0.35f),
+            modifier = Modifier.size(34.dp),
         ) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Icon(

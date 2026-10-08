@@ -78,6 +78,26 @@ object UpdateDownloader {
     }
 
     /**
+     * The installers that belong to a build the user is actually running, i.e.
+     * the installers whose file name carries [installedVersion]
+     * (`VIVIMusic-6.0.8.5_DE-1.54.19-setup.exe`).
+     *
+     * This is what the "downloaded installers" counter counts. A freshly
+     * downloaded installer is for the NEXT version, which is not installed yet,
+     * so counting it would claim an install that never happened; only after the
+     * user runs it does the app come up as that version and the file start to
+     * count. The files stay where they are either way, so the installer that is
+     * about to be run is never deleted underneath the user.
+     */
+    fun installedInstallers(installedVersion: String): List<File> =
+        downloadedInstallers().filter { it.name.contains(installedVersion) }
+
+    /** Deletes exactly [files], the ones the counter counts. */
+    fun deleteFiles(files: List<File>) {
+        files.forEach { it.delete() }
+    }
+
+    /**
      * The already-downloaded installer for [fileName], if present — and, when
      * [expectedSizeBytes] is known, only if it is complete. A file whose size
      * does not match the release asset is a truncated download and must never

@@ -186,6 +186,11 @@ private fun M3SettingsItemRow(
  * A settings row that opens an inline dropdown anchored to the row itself
  * (click the row → the menu appears under the row, not at the window corner).
  * Used for single-choice options that on mobile are sub-screens or dialogs.
+ *
+ * Note that it is NOT one of the `items` of [M3SettingsGroup]: it is a
+ * composable, not an item value, so it is placed between groups (see
+ * `AppearanceScreens`). A screen that wants the choice in the group's own card
+ * uses [M3SettingsDropdownCard] instead.
  */
 @Composable
 fun M3SettingsDropdownItem(
@@ -198,8 +203,71 @@ fun M3SettingsDropdownItem(
     description: String? = null,
     menuWidth: Dp = 280.dp,
 ) {
-    var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier.fillMaxWidth()) {
+        M3SettingsDropdownRow(
+            icon = icon,
+            title = title,
+            value = value,
+            options = options,
+            onSelect = onSelect,
+            description = description,
+            menuWidth = menuWidth,
+        )
+    }
+}
+
+/**
+ * The same dropdown choice, in the shape of the group cards: one rounded card
+ * holding the row. The Content screen offers two choices side by side (the
+ * language and the region of the catalogue), and two buttons under two loose
+ * headings used to be how that read; as cards they sit in the same visual system
+ * as every other setting while keeping the inline dropdown (which is what the
+ * mobile screen's dialogs do in a different shape).
+ */
+@Composable
+fun M3SettingsDropdownCard(
+    icon: ImageVector?,
+    title: String,
+    value: String,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    menuWidth: Dp = 320.dp,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        M3SettingsDropdownRow(
+            icon = icon,
+            title = title,
+            value = value,
+            options = options,
+            onSelect = onSelect,
+            description = description,
+            menuWidth = menuWidth,
+        )
+    }
+}
+
+/** The row plus its inline menu, shared by the two entry points above. */
+@Composable
+private fun M3SettingsDropdownRow(
+    icon: ImageVector?,
+    title: String,
+    value: String,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit,
+    description: String?,
+    menuWidth: Dp,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Box(Modifier.fillMaxWidth()) {
         M3SettingsItemRow(
             item = M3SettingsItem(
                 icon = icon,

@@ -403,6 +403,21 @@ private val spotifyShapes = Shapes(
     medium = RoundedCornerShape(8.dp),
     large = RoundedCornerShape(8.dp),
     extraLarge = RoundedCornerShape(8.dp),
+)/**
+ * Material 3 Expressive shape scale: the same roles as [Shapes], with the
+ * larger, rounder corners the expressive style uses (a card or a sheet reads as
+ * a softer object than the plain Material 3 scale's 4/8/12/16 dp). Components
+ * that take their shape from the theme follow it; the ones that pass their own
+ * `RoundedCornerShape` are deliberately left as they are, because their radius
+ * was a design decision at the call site (the settings cards, for example, sit
+ * at 24 dp).
+ */
+private val expressiveShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 /**
@@ -514,10 +529,33 @@ fun AppTheme(
             )
         }
     }
+    // Material 3 Expressive, in the parts the app can actually reach.
+    //
+    // The library's own expressive entry point, `MaterialExpressiveTheme` (and
+    // the `LocalUsingExpressiveTheme` flag it sets, which makes the Material 3
+    // components pick their expressive shape and motion), is declared `internal`
+    // in the Compose 1.8.2 this app compiles against: calling it is a compile
+    // error, checked against the shipped bytecode. `ExpressiveNavigationBar` is
+    // the one public piece and it is a phone bottom bar, which this app does not
+    // have (its navigation is a rail). So the expressive pass is made where the
+    // app owns the decision, which is also where it is visible:
+    //
+    //  * the SHAPE scale is [expressiveShapes] (8/12/16/20/28 dp) instead of the
+    //    plain Material 3 scale (4/8/12/16/28), which is what makes elevations
+    //    and sheets read as softer objects;
+    //  * the MOTION is the expressive emphasized curve
+    //    (`Animations.emphasizedDecelerate`) plus the spring the panels already
+    //    used, rather than `FastOutSlowInEasing`;
+    //  * the settings groups are cards with tonal icon containers, the
+    //    expressive list shape (`M3Settings.kt`, `StorageSection`,
+    //    `ContentSection`).
+    //
+    // Spotify mode keeps its own flat 8 dp shape scale: there the point is to
+    // look like Spotify, not like Material.
     MaterialTheme(
         colorScheme = effective,
         typography = typography,
-        shapes = if (spotify) spotifyShapes else Shapes(),
+        shapes = if (spotify) spotifyShapes else expressiveShapes,
     ) {
         // Material3's MaterialTheme does NOT set LocalContentColor, so any Text
         // without an explicit color would fall back to the default (black) and

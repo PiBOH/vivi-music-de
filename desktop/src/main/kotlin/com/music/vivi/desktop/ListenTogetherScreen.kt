@@ -1,6 +1,7 @@
 package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Reply
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -81,7 +84,6 @@ fun ListenTogetherScreen(
     var syncVolume by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().listenTogetherSyncVolume) }
     var error by remember { mutableStateOf<String?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
-    var chatInput by remember { mutableStateOf("") }
     var suggestInput by remember { mutableStateOf("") }
     var copied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -156,8 +158,6 @@ fun ListenTogetherScreen(
                 busy = busy,
                 error = error,
                 notice = notice,
-                chatInput = chatInput,
-                onChatInput = { chatInput = it },
                 suggestInput = suggestInput,
                 onSuggestInput = { suggestInput = it },
                 autoApprove = autoApprove,
@@ -182,10 +182,6 @@ fun ListenTogetherScreen(
                 onKick = { manager.kickUser(it) },
                 onTransferHost = { manager.transferHost(it) },
                 onBlock = { manager.blockUser(it) },
-                onSendChat = {
-                    manager.sendChatMessage(chatInput)
-                    chatInput = ""
-                },
                 onRequestSync = { manager.requestSync() },
                 onSuggest = {
                     val vid = extractVideoId(suggestInput)
@@ -223,7 +219,7 @@ fun ListenTogetherScreen(
 }
 
 @Composable
-private fun ConnectionBadge(state: LtConnectionState, language: String) {
+internal fun ConnectionBadge(state: LtConnectionState, language: String) {
     val (label, color) = when (state) {
         LtConnectionState.CONNECTED -> Localization.get(language, "connected") to MaterialTheme.colorScheme.primary
         LtConnectionState.CONNECTING -> Localization.get(language, "lt_connecting") to MaterialTheme.colorScheme.tertiary
@@ -324,8 +320,6 @@ private fun InRoom(
     busy: Boolean,
     error: String?,
     notice: String?,
-    chatInput: String,
-    onChatInput: (String) -> Unit,
     suggestInput: String,
     onSuggestInput: (String) -> Unit,
     autoApprove: Boolean,
@@ -339,7 +333,6 @@ private fun InRoom(
     onKick: (String) -> Unit,
     onTransferHost: (String) -> Unit,
     onBlock: (String) -> Unit,
-    onSendChat: () -> Unit,
     onRequestSync: () -> Unit,
     onSuggest: () -> Unit,
     onApproveSuggestion: (String) -> Unit,
@@ -347,6 +340,18 @@ private fun InRoom(
     onLeave: () -> Unit,
     onReconnect: () -> Unit,
 ) {
+    // Every row below is keyed by the identity of the thing it shows, and a
+    // repeated key is a hard crash in Compose ("Key \"...\" was already used"),
+    // not a warning: that is how a duplicated room entry took the whole app
+    // down. ListenTogether already stores one entry per user (see USER_JOINED),
+    // and this is the second line of defence, for a duplicate that reaches the
+    // screen through any other path.
+    val users = remember(room.users) { room.users.distinctBy { it.userId } }
+    val joins = remember(pendingJoin) { pendingJoin.distinctBy { it.userId } }
+    val suggestions = remember(pendingSuggestions) { pendingSuggestions.distinctBy { it.suggestionId } }
+    val chat = remember(messages) {
+        messages.distinctBy { "${it.timestamp}-${it.userId}-${it.message}" }
+    }
     Column(Modifier.fillMaxSize()) {
     Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
         Column(Modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -361,7 +366,7 @@ private fun InRoom(
                 TextButton(onClick = onCopy) { Text(if (copied) Localization.get(language, "copied_to_clipboard") else Localization.get(language, "lt_copy_code")) }
             }
             Text(
-                Localization.get(language, "connected_users") + " (${room.users.size})",
+                Localization.get(language, "connected_users") + " (${users.size})",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
@@ -399,7 +404,7 @@ private fun InRoom(
             )
             Spacer(Modifier.height(4.dp))
         }
-        items(room.users, key = { it.userId }) { user ->
+        items(users, key = { it.userId }) { user ->
             val isMe = user.userId == myUserId
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 4.dp),
@@ -432,7 +437,7 @@ private fun InRoom(
                 Spacer(Modifier.height(8.dp))
                 Text(Localization.get(language, "lt_join_requests"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
             }
-            items(pendingJoin, key = { "req-${it.userId}" }) { req ->
+            items(joins, key = { "req-${it.userId}" }) { req ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("${req.username} " + Localization.get(language, "connect"), modifier = Modifier.weight(1f))
                     TextButton(onClick = { onApproveJoin(req.userId) }) { Text("✓") }
@@ -453,7 +458,7 @@ private fun InRoom(
                     Text(Localization.get(language, "lt_no_suggestions"), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
-                items(pendingSuggestions, key = { it.suggestionId }) { s ->
+                items(suggestions, key = { it.suggestionId }) { s ->
                     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(s.trackInfo.title, style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -508,41 +513,65 @@ private fun InRoom(
         }
 
         // --- Chat ---
+        // The conversation itself lives in its own window (Telegram-style
+        // bubbles, quotes in replies, and notifications that honour the
+        // notification mode while the window is closed). The room keeps only
+        // the door and the unread count, so the player stays the focus here.
         item(key = "chat_header") {
             Spacer(Modifier.height(12.dp))
-            Text(Localization.get(language, "comments"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-        }
-        items(messages, key = { "${it.timestamp}-${it.userId}-${it.message}" }) { m ->
-            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    m.username,
-                    style = MaterialTheme.typography.labelMedium,
+                    Localization.get(language, "comments"),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                 )
-                m.replyTo?.let { reply ->
-                    Text(
-                        "↪ ${reply.username}: ${reply.message}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                val unread = ListenTogetherChatWindow.unread.value
+                if (unread > 0) {
+                    Spacer(Modifier.width(8.dp))
+                    Badge { Text(unread.toString()) }
                 }
-                Text(m.message, style = MaterialTheme.typography.bodyMedium)
             }
         }
-    }
-
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(
-            value = chatInput,
-            onValueChange = onChatInput,
-            placeholder = { Text(Localization.get(language, "comments")) },
-            singleLine = true,
-            modifier = Modifier.weight(1f),
-        )
-        Spacer(Modifier.width(8.dp))
-        Button(onClick = onSendChat) { Text("➤") }
+        item(key = "chat_open") {
+            val last = chat.lastOrNull()
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+                    .clickable { ListenTogetherChatWindow.open() },
+            ) {
+                Row(
+                    Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Reply,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            last?.let { "${it.username}: ${it.message}" }
+                                ?: Localization.get(language, "lt_no_messages"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            Localization.get(language, "comments"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    SettingsChevron()
+                }
+            }
+        }
     }
     }
 }

@@ -552,8 +552,17 @@ private fun AnnotatedString.Builder.appendInline(
                 continue
             }
         }
-        // Plain character.
-        withStyle(style) { append(text[i]) }
-        i++
+        // Plain character. A whole code point is taken at once, so a span
+        // boundary never falls between the two halves of a surrogate pair. It
+        // used to append one UTF-16 unit at a time, which sliced every emoji
+        // from the supplementary plane (U+1F000 and up, i.e. `🐛`, `🔧`, `📝`,
+        // `📌`, `🌍`) down the middle: the two halves became two layout runs and
+        // the pair no longer matched any glyph, so those headings came out as
+        // the "question mark in a rhombus" while `✨` (U+2728, one unit) was
+        // drawn normally.
+        val codePoint = text.codePointAt(i)
+        val codePointChars = Character.charCount(codePoint)
+        withStyle(style) { append(text, i, i + codePointChars) }
+        i += codePointChars
     }
 }

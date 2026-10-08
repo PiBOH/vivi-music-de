@@ -100,6 +100,7 @@ import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.outlined.NewReleases
@@ -697,29 +698,50 @@ fun main(args: Array<String>) {
             // one-shot, and re-reading its option would replay it over the UI
             // every time settings.json is edited.
             var showIntro by remember { mutableStateOf(DesktopSettings.load().showIntroSplash) }
+            // The first-run flow is shown while no language has been chosen yet,
+            // i.e. on a fresh install, and it stays up until the user finishes it
+            // even though its first step already saves the language: without this
+            // flag the app would appear in the middle of its own welcome. A
+            // restart after quitting halfway skips the flow, which is right, the
+            // install is no longer new.
+            var firstRun by remember { mutableStateOf(language.isBlank()) }
+            // What the crossfade is between. It used to be just the splash flag,
+            // which cannot express three stages.
+            val stage = when {
+                showIntro -> "intro"
+                firstRun -> "first_run"
+                else -> "app"
+            }
             Crossfade(
-                targetState = showIntro,
+                targetState = stage,
                 animationSpec = if (DesktopSettings.load().animationsEnabled) tween(400) else tween(0),
                 label = "intro",
-            ) { intro ->
-                when {
-                    intro -> IntroSplash(
+            ) { current ->
+                when (current) {
+                    "intro" -> IntroSplash(
                         language = language,
                         style = DesktopSettings.load().introStyle,
                         background = DesktopSettings.load().introBackground,
                         onFinished = { showIntro = false },
                     )
-                    language.isBlank() -> LanguageSelectionScreen { selected ->
-                        language = selected
-                        DesktopSettings.update {
-                            it.copy(language = selected, languageSeq = it.languageSeq + 1)
-                        }
-                        // The account's own names (playlists, auto playlists) follow
-                        // the app language when the content language is "system":
-                        // a language change has to reach the client at once.
-                        val s = DesktopSettings.load()
-                        YouTube.locale = resolveYouTubeLocale(s.contentLanguage, s.contentCountry, selected)
-                    }
+                    "first_run" -> FirstRunFlow(
+                        // English until a language is picked, which is also what
+                        // the flow's own first step offers.
+                        language = language.ifBlank { "en" },
+                        onLanguageSelected = { selected ->
+                            language = selected
+                            DesktopSettings.update {
+                                it.copy(language = selected, languageSeq = it.languageSeq + 1)
+                            }
+                            // The account's own names (playlists, auto playlists)
+                            // follow the app language when the content language is
+                            // "system": a language change has to reach the client
+                            // at once.
+                            val s = DesktopSettings.load()
+                            YouTube.locale = resolveYouTubeLocale(s.contentLanguage, s.contentCountry, selected)
+                        },
+                        onFinish = { firstRun = false },
+                    )
                     else -> App(
                         language = language,
                         onLanguageChange = { selected ->
@@ -2377,6 +2399,25 @@ fun WindowScope.App(
             pendingSeekFraction = player.pendingSeekFraction,
         )
     ) {
+    // Frameless window: the whole window is the drag surface, emitted BEFORE the
+    // interface so it sits behind it. Compose stops hit testing at the frontmost
+    // layer (checked by `:desktop:framelessHitTestCheck`), so this only ever sees
+    // a press where nothing interactive is in front of it: the empty parts of the
+    // sidebar, the window background, the gaps of the top bars. A button, a list,
+    // a song row or the window controls keep their own clicks and drags.
+    //
+    // It is behind on purpose. `WindowDraggableArea` starts moving the window on
+    // the pointer DOWN (it does not wait for a drag gesture and does not consume
+    // the event, both verified in the shipped bytecode), so a surface placed in
+    // front would start a window move on every button click in the app and nudge
+    // the window with the smallest jitter.
+    //
+    // This is what the classic layout was missing: only the Spotify header had a
+    // draggable area, so with that header hidden (and on every non-Spotify
+    // screen) there was no way to move the window at all.
+    if (!nativeTitleBar) {
+        WindowDraggableArea(Modifier.fillMaxSize()) {}
+    }
     Row(
         Modifier
             .fillMaxSize()
@@ -3756,6 +3797,33 @@ fun WindowScope.App(
                 LiveLogWindowContent(
                     language = language,
                     onClose = { DeveloperOptions.setLogWindowVisible(false) },
+                )
+            }
+        }
+    }
+
+    // Listen Together chat in a dedicated window. A conversation deserves its
+    // own window the same way the live log does, and keeping it out of the room
+    // screen is what lets the user browse the library while the room keeps
+    // playing. Emitted here, at the top of the composition, so it survives
+    // leaving the room screen; the manager keeps feeding it either way.
+    if (ListenTogetherChatWindow.visible.value) {
+        Window(
+            onCloseRequest = { ListenTogetherChatWindow.close() },
+            title = "VIVI Music DE - Listen Together Chat",
+        ) {
+            AppTheme(
+                mode = themeMode,
+                accent = accent,
+                pureBlack = pureBlack,
+                font = font,
+                spotify = spotifyLayout,
+                accentIntensity = accentIntensity,
+                customFontPath = customFontPath,
+            ) {
+                ListenTogetherChatWindowContent(
+                    language = language,
+                    manager = listenTogetherManager,
                 )
             }
         }
@@ -5254,7 +5322,17 @@ fun SettingsScreen(
         ),
         "privacy" to listOf("clear_search_history", "pause_listen_history", "pause_search_history", "privacy", "privacy_desc"),
         "data_saver" to listOf("data_saver", "data_saver_desc", "data_saver_turns_off_header", "data_saver_album_canvas", "data_saver_player_canvas", "data_saver_artist_video", "data_saver_artist_bg_video", "data_saver_high_quality_images"),
-        "storage" to listOf("storage", "cache_size", "clear_cache", "cache_cleared", "delete_installers", "installers_deleted"),
+        "storage" to listOf(
+            "storage",
+            "cache_size",
+            "clear_cache",
+            "cache_cleared",
+            "delete_installers",
+            "installers_deleted",
+            // Both cards of the screen are searchable, including the installer
+            // one: it is the row a user looks for when the disk is filling up.
+            "installers_downloaded",
+        ),
         "backup_restore" to listOf("action_backup", "action_restore", "auto_backup", "automatic_backup_desc", "backup_desc", "backup_restore", "backup_restore_desc", "backups_empty", "delete_backup_confirm", "restore_backup_confirm", "restore_desc", "restore_failed", "restore_success", "restore_success_title", "stored_backups"),
         "wrapped_title" to listOf("wrapped_desc", "wrapped_show_on_home", "wrapped_show_on_home_desc", "wrapped_title"),
         "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
@@ -6120,75 +6198,6 @@ fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
                 )
             }
         }
-    }
-}
-
-@Composable
-fun LanguageSelectionScreen(
-    language: String = "en",
-    onSelect: (String) -> Unit,
-) {
-    var selected by remember { mutableStateOf("en") }
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(32.dp))
-        val welcomeDensity = LocalDensity.current.density
-        val logo = remember(welcomeDensity) { loadLogo(96, welcomeDensity) }
-        if (logo != null) {
-            Image(
-                bitmap = logo,
-                contentDescription = "VIVI Music DE",
-                filterQuality = FilterQuality.High,
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(24.dp)),
-            )
-        }
-        Spacer(Modifier.height(20.dp))
-        Text(
-            Localization.get(language, "welcome_title"),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            Localization.get(language, "welcome_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-        )
-        Spacer(Modifier.height(24.dp))
-        M3SettingsGroup(
-            items = Languages.all.map { lang ->
-                M3SettingsItem(
-                    icon = null,
-                    title = { Text(lang.name) },
-                    trailing = {
-                        if (selected == lang.code) {
-                            Icon(
-                                Icons.Filled.Check,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    },
-                    onClick = { selected = lang.code },
-                )
-            },
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = { onSelect(selected) },
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-        ) {
-            Text(Localization.get(language, "continue"))
-        }
-        Spacer(Modifier.height(32.dp))
     }
 }
 
@@ -7405,35 +7414,114 @@ private fun audioQualityLabel(language: String, quality: String): String = when 
 private fun dirSize(dir: File): Long =
     dir.walkBottomUp().filter { it.isFile }.sumOf { it.length() }
 
+/**
+ * Storage: how much disk the app's own files take, and the buttons that free it.
+ *
+ * Ported from the mobile Storage screen, which is a set of cards (a group title
+ * over a card of rows) rather than the two loose lines and a button that stood
+ * here. The port keeps the structure and drops the mobile's sliders: those set
+ * an image-cache and a song-cache ceiling that only exist on Android
+ * (`MaxImageCacheSizeKey` / `MaxSongCacheSizeKey` and the two Coil / player
+ * caches), so showing them on the desktop would be a control wired to nothing.
+ * What the desktop really keeps on disk is what is listed here: the extractor
+ * cache (audio, plus the lyrics inside it) and the downloaded installers, both
+ * of which can be removed from this screen.
+ */
 @Composable
 fun StorageSection(language: String) {
     val scope = rememberCoroutineScope()
     val cacheDir = remember { File(System.getProperty("user.home"), ".vivimusic/cache") }
-    var sizeText by remember { mutableStateOf<String?>(null) }
+    val updatesDir = remember { UpdateDownloader.updatesDir }
+    var cacheSize by remember { mutableStateOf<Long?>(null) }
+    var installerSize by remember { mutableStateOf<Long?>(null) }
+    var cleared by remember { mutableStateOf(false) }
+    var installersDeleted by remember { mutableStateOf(false) }
 
+    // Both sizes are measured off the main thread (a cache holds thousands of
+    // files) and re-measured after every clear, so the numbers follow the
+    // buttons instead of going stale.
     fun refresh() {
         scope.launch {
-            sizeText = withContext(Dispatchers.IO) { formatBytes(dirSize(cacheDir)) }
+            cacheSize = withContext(Dispatchers.IO) { dirSize(cacheDir) }
+            // Only the installers the update counter counts, so what this row
+            // shows is exactly what its button deletes: the installer of a
+            // downloaded, not yet installed update is not included and is not
+            // removed (see UpdateState.deleteAllInstallers).
+            installerSize = withContext(Dispatchers.IO) {
+                UpdateDownloader.installedInstallers(AppInfo.FULL_VERSION).sumOf { it.length() }
+            }
         }
     }
 
     LaunchedEffect(Unit) { refresh() }
 
     Text(Localization.get(language, "storage"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-    Text(
-        "${Localization.get(language, "cache_size")}: ${sizeText ?: "…"}",
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(top = 8.dp),
+
+    // Two cards, as on mobile: what takes the space, then the button that frees
+    // it. The size is the row's trailing value rather than part of its title, so
+    // the numbers line up in one column down the card.
+    M3SettingsGroup(
+        title = Localization.get(language, "cache_size"),
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Storage,
+                title = { Text(Localization.get(language, "cache_size")) },
+                description = { Text(Localization.get(language, "privacy_desc")) },
+                trailing = { Text(cacheSize?.let { formatBytes(it) } ?: "…") },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.DiscFull,
+                title = { Text(Localization.get(language, "clear_cache")) },
+                onClick = {
+                    scope.launch {
+                        withContext(Dispatchers.IO) { cacheDir.listFiles()?.forEach { it.deleteRecursively() } }
+                        cleared = true
+                        cacheSize = withContext(Dispatchers.IO) { dirSize(cacheDir) }
+                    }
+                },
+            ),
+        ),
     )
-    Button(
-        onClick = {
-            scope.launch {
-                withContext(Dispatchers.IO) { cacheDir.listFiles()?.forEach { it.deleteRecursively() } }
-                sizeText = withContext(Dispatchers.IO) { formatBytes(dirSize(cacheDir)) }
-            }
-        },
-        modifier = Modifier.padding(top = 8.dp),
-    ) { Text(Localization.get(language, "clear_cache")) }
+
+    M3SettingsGroup(
+        title = Localization.get(language, "installers_downloaded"),
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Download,
+                title = { Text(Localization.get(language, "installers_downloaded")) },
+                trailing = { Text(installerSize?.let { formatBytes(it) } ?: "…") },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.Delete,
+                title = { Text(Localization.get(language, "delete_installers")) },
+                onClick = {
+                    UpdateState.deleteAllInstallers()
+                    installersDeleted = true
+                    refresh()
+                },
+            ),
+        ),
+    )
+
+    // The confirmations live below the cards rather than in a dialog: on the
+    // mobile screen these actions ask first (they are irreversible), and the
+    // desktop does the same by showing what happened where the user is looking.
+    if (cleared) {
+        Text(
+            Localization.get(language, "cache_cleared"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 12.dp, start = 6.dp),
+        )
+    }
+    if (installersDeleted) {
+        Text(
+            Localization.get(language, "installers_deleted"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 12.dp, start = 6.dp),
+        )
+    }
 }
 
 /** JSON codec for persisting the queue between sessions. */

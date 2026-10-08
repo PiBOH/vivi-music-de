@@ -42,8 +42,19 @@ object UpdateState {
     private val _downloadedFile = MutableStateFlow<File?>(null)
     val downloadedFile: StateFlow<File?> = _downloadedFile.asStateFlow()
 
-    private val _installerCount = MutableStateFlow(UpdateDownloader.downloadedInstallers().size)
+    private val _installerCount = MutableStateFlow(countInstallers())
     val installerCount: StateFlow<Int> = _installerCount.asStateFlow()
+
+    /**
+     * How many installers count: only the ones for the version that is already
+     * installed and running (see [UpdateDownloader.installedInstallers]). The
+     * installer for an update the user has downloaded but not run yet is not
+     * one of them: nothing has been installed, so nothing is counted. Once that
+     * installer is run, the app starts up as the new version and the file
+     * counts from then on.
+     */
+    private fun countInstallers(): Int =
+        UpdateDownloader.installedInstallers(AppInfo.FULL_VERSION).size
 
     /**
      * Re-derives the on-disk installer for the currently available version (or
@@ -58,7 +69,7 @@ object UpdateState {
         _downloadedFile.value = asset?.let {
             UpdateDownloader.downloadedInstaller(it.fileName, it.sizeBytes)
         }
-        _installerCount.value = UpdateDownloader.downloadedInstallers().size
+        _installerCount.value = countInstallers()
     }
 
     /** Downloads [asset], reporting progress through [progress]; null on error. */
@@ -71,7 +82,10 @@ object UpdateState {
                 asset.sizeBytes,
             ) { p -> _progress.value = p }
             _downloadedFile.value = file
-            _installerCount.value = UpdateDownloader.downloadedInstallers().size
+            // Deliberately NOT counted yet: this is the installer for an update
+            // that has been downloaded, not installed. `syncWithStatus` and the
+            // next launch recompute the count from what is on disk.
+            _installerCount.value = countInstallers()
             AppLog.log(
                 "cache",
                 "update installer ready: ${file.name} (${file.length()} bytes)",
@@ -87,9 +101,15 @@ object UpdateState {
         }
     }
 
+    /**
+     * Deletes the counted installers (the ones of the installed version). The
+     * installer of a pending update is left alone: it is what the user is about
+     * to run, and deleting it would break the update button that sits right
+     * next to this one.
+     */
     fun deleteAllInstallers() {
-        UpdateDownloader.deleteAll()
+        UpdateDownloader.deleteFiles(UpdateDownloader.installedInstallers(AppInfo.FULL_VERSION))
         _downloadedFile.value = null
-        _installerCount.value = 0
+        _installerCount.value = countInstallers()
     }
 }

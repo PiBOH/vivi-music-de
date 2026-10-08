@@ -37,6 +37,16 @@ object AppLog {
     private const val MAX_LINES = 4000
     private const val MAX_FILE_BYTES = 2L * 1024 * 1024 // 2 MB cap before trimming
 
+    /**
+     * How long a run's logs are kept. A session folder is the trace of one
+     * launch, which is useful while a problem is being chased and clutter
+     * afterwards, and the app is launched for years: without this the logs tree
+     * grows without a bound (the folder count here was already climbing by the
+     * hour during normal use). Seven days keeps a full week of history, which
+     * covers "it broke a few days ago" support requests.
+     */
+    private const val LOG_MAX_AGE_MS = 7L * 24L * 60L * 60L * 1000L
+
     /** Every category that must always have a file in the session folder, even when empty. */
     private val KNOWN_CATEGORIES = listOf(
         "actions", "browse", "cache", "gc", "lyrics", "nav", "playback", "playlists", "queue",
@@ -46,9 +56,11 @@ object AppLog {
     private val vivimusicDir: File
         get() = File(System.getProperty("user.home"), ".vivimusic")
 
+    /** `~/.vivimusic/logs`, the parent of every session folder. */
+    private val logsRoot: File = File(vivimusicDir, "logs")
+
     /** Session folder created at startup: `~/.vivimusic/logs/<yyyyMMdd-HHmmss>/`. */
     private val sessionDir: File = run {
-        val logsRoot = File(File(System.getProperty("user.home"), ".vivimusic"), "logs")
         logsRoot.mkdirs()
         val stamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss"))
         File(logsRoot, stamp).apply { mkdirs() }
@@ -85,6 +97,7 @@ object AppLog {
 
     init {
         vivimusicDir.mkdirs()
+        pruneOldLogs()
         // Migrate the legacy flat actions.log into this session's folder so
         // the old diagnostics are not lost (and the root stays clean).
         val legacy = File(vivimusicDir, "actions.log")
@@ -105,6 +118,58 @@ object AppLog {
                 }
             }
         }
+    }
+
+    /**
+     * Deletes everything older than [LOG_MAX_AGE_MS]: the session folders of
+     * past runs, and any loose `.log` file in `~/.vivimusic/` (the legacy flat
+     * `actions.log`, `login-debug.log`). The crash dump is a `.log` file in the
+     * same place and goes too, and that is intentional: the dump of a crash is
+     * also written inside the session folder it happened in
+     * (`crash_<session>.log`), so the newest days of crash evidence are still
+     * there while nothing accumulates forever.
+     *
+     * The session being written right now is never touched, whatever its
+     * timestamp says: deleting a folder that a live download or a log line is
+     * appending to would lose exactly the run the user is in.
+     *
+     * Called once, at startup: "automatically" for a long-running app means on
+     * every launch, which is also when the cost is invisible (nothing else is
+     * running yet).
+     */
+    fun pruneOldLogs(now: Long = System.currentTimeMillis()) {
+        runCatching {
+            val sessionFolders = logsRoot.listFiles()?.filter { it.isDirectory }.orEmpty()
+            val looseFiles = vivimusicDir.listFiles()?.filter { it.isFile }.orEmpty()
+            staleLogs(now, sessionFolders, looseFiles, sessionDir.name).forEach { target ->
+                if (target.isDirectory) target.listFiles()?.forEach { it.delete() }
+                target.delete()
+            }
+        }
+    }
+
+    /**
+     * Which of the candidates [pruneOldLogs] deletes: the session folders of old
+     * runs (never the one being written) and the loose files that aged out.
+     *
+     * The `.log` test is part of the rule, not of the caller: `~/.vivimusic`
+     * also holds `settings.json`, `playlists.json`, `history.json`, and the
+     * prune must never be one edit away from deleting the user's library. Pure
+     * and separate from the file system, so the rule can be checked on its own
+     * (see `:desktop:localDataMaintenanceCheck`) instead of by watching a real
+     * logs directory.
+     */
+    internal fun staleLogs(
+        now: Long,
+        sessionFolders: List<File>,
+        looseFiles: List<File>,
+        currentSessionName: String,
+    ): List<File> {
+        val cutoff = now - LOG_MAX_AGE_MS
+        return sessionFolders.filter { it.isDirectory && it.name != currentSessionName && it.lastModified() < cutoff } +
+            looseFiles.filter {
+                it.isFile && it.extension.equals("log", ignoreCase = true) && it.lastModified() < cutoff
+            }
     }
 
     /** Appends a diagnostic line with a category tag, e.g. `log("playback", "seek to 42s")`. */

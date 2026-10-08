@@ -2,7 +2,8 @@ package com.music.vivi.desktop
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -61,6 +62,16 @@ object Animations {
     fun ms(base: Long): Long = ms(base.toInt()).toLong()
 
     /**
+     * Material 3 Expressive "emphasized decelerate": the curve the expressive
+     * motion system uses for anything arriving on screen. It leaves the start
+     * quickly and settles slowly, which is what makes a panel feel like it
+     * belongs to the finger that pulled it. Plain Material 3 used
+     * `FastOutSlowInEasing` here, whose slow start is the part the expressive
+     * style replaced.
+     */
+    val emphasizedDecelerate: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+
+    /**
      * Material-expressive spring for the panels: a light overshoot on the way
      * in and no bounce on the way out. [damping] < 1 makes it expressive.
      */
@@ -93,7 +104,7 @@ object Animations {
     fun panelExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else shrinkHorizontally(
-            animationSpec = tween(ms(180), easing = FastOutSlowInEasing),
+            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Start,
         ) + fadeOut(animationSpec = tween(ms(140)))
 
@@ -112,10 +123,10 @@ object Animations {
     fun playerExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else slideOutVertically(
-            animationSpec = tween(ms(180), easing = FastOutSlowInEasing),
+            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
             targetOffsetY = { it / 8 },
         ) + fadeOut(animationSpec = tween(ms(160))) + shrinkVertically(
-            animationSpec = tween(ms(180), easing = FastOutSlowInEasing),
+            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Bottom,
         )
 
@@ -137,7 +148,7 @@ object Animations {
     fun sectionExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else shrinkVertically(
-            animationSpec = tween(ms(150), easing = FastOutSlowInEasing),
+            animationSpec = tween(ms(150), easing = emphasizedDecelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Top,
         ) + fadeOut(animationSpec = tween(ms(120)))
 

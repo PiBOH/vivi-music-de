@@ -10,39 +10,68 @@ import java.io.File
  *
  * The app draws every string with its own font (`AppFonts`), and those fonts
  * carry an alphabet, not the whole of Unicode: an emoji in a changelog heading
- * (`✨ Added`, `🐛 Fixed`, ...) or a stray symbol in a bullet (`→`, `⋮`, `⠿`)
- * has no glyph there, and Compose Desktop does not fall back to a second font on
- * its own: the character comes out as the "tofu" box the changelog was reported
- * to show. This resolves those characters to the operating system's own emoji /
- * symbol / CJK fonts and hands the renderer a single-character span for each.
+ * (`✨ Added`, `🐛 Fixed`, `🔧 Changed`, `📝 Commits`) or a stray symbol in a
+ * bullet has no glyph there, and Compose Desktop does not fall back to a second
+ * font on its own. The character then comes out as the font's `.notdef`, which
+ * in this app's face is a question mark inside a rhombus: that is exactly what
+ * was reported next to Fixed, Changed and Commits, while Added showed, because
+ * its codepoint happened to be covered. This resolves those characters to a
+ * family that really has them and hands the renderer a single-character span per
+ * codepoint.
  *
  * It is deliberately NOT part of `AppFonts` / the font picker: these families
  * cover a handful of codepoints, not a text face, so offering them as an app
- * font would be wrong (and selecting one would leave the whole UI without
- * letters). They are used only where [MarkdownView] draws text.
+ * font would be wrong (selecting one would leave the whole UI without letters).
+ * They are used only where [MarkdownView] draws text.
  *
- * Emoji are drawn from the bundled monochrome Noto Emoji
- * (`fonts/NotoEmoji.ttf`, SIL OFL 1.1). [EmojiCoverage] lists the codepoints it
- * carries, so a character is only ever asked of a family that can draw it. A
- * custom colour subset of Noto Color Emoji (`fonts/NotoColorEmoji.ttf`) is still
- * shipped and [EmojiCoverage.colorEmoji] still names its codepoints, but the
- * family is deliberately NOT used: the subset's glyphs are COLR/CPAL layers that
- * this Compose/Skiko renderer does not paint, so every emoji routed to it came
- * out blank or as a notdef diamond (the `✨ Added` heading lost its glyph
- * entirely). Routing those codepoints to the monochrome font draws them again;
- * the colour branch is kept so it can be switched back once a renderer paints
- * COLR. The OS emoji font stays as the last resort. The symbol/CJK files are
- * read from the OS at startup; a missing file simply means no fallback for that
- * class of character (the renderer then behaves exactly as it did before).
+ * The emoji come from two bundled fonts, in this order:
+ *
+ *  1. the COLOUR face, `fonts/TwemojiColorEmoji.ttf` (Twemoji Mozilla, COLRv0
+ *     layers over the Twemoji artwork). Measured with the Skiko rasteriser this
+ *     app renders through: it paints every emoji listed for it in
+ *     [EmojiCoverage.colorEmoji], colour included. The Noto Color Emoji subset
+ *     that sat here before carried a COLR table this renderer painted as
+ *     nothing at all, so its emoji came out blank, and the code then routed the
+ *     same codepoints to the monochrome font to make them visible again. A full
+ *     Noto Color Emoji was measured too: its COLRv1 glyphs are not painted by
+ *     this renderer either, which is why the bundled colour face is COLRv0.
+ *  2. the MONOCHROME face, `fonts/NotoEmoji.ttf` (SIL OFL 1.1), for every
+ *     codepoint the colour face does not have. A live changelog can use an emoji
+ *     from a newer Unicode version than the bundled colour font, and a
+ *     monochrome glyph is still a glyph: it is never allowed to fall through to
+ *     a face without it.
+ *
+ * [EmojiCoverage] lists what each bundled font carries, read from the fonts'
+ * own `cmap` by `scripts/build_desktop_emoji_coverage.py`, so a character is
+ * only ever asked of a family that can draw it. The OS emoji / symbol / CJK
+ * fonts stay as the last resort for everything the bundled pair does not have,
+ * including the codepoints newer than both; a missing OS file simply means no
+ * fallback for that class of character (the renderer then behaves exactly as it
+ * did before).
  */
 internal object MarkdownFonts {
 
     /**
-     * The bundled monochrome emoji family. Loaded from the classpath, so it is
+     * The bundled COLOUR emoji family. Loaded from the classpath, so it is
      * always present in the packaged app; `runCatching` keeps a missing or
-     * unreadable resource from taking the changelog down with it.
+     * unreadable resource from taking the changelog down with it (the
+     * monochrome family below then takes over).
      */
-    private val bundledEmoji: FontFamily? by lazy {
+    private val colorEmoji: FontFamily? by lazy {
+        runCatching {
+            FontFamily(
+                Font("fonts/TwemojiColorEmoji.ttf", FontWeight.Normal),
+                Font("fonts/TwemojiColorEmoji.ttf", FontWeight.Medium),
+                Font("fonts/TwemojiColorEmoji.ttf", FontWeight.Bold),
+            )
+        }.getOrNull()
+    }
+
+    /**
+     * The bundled monochrome emoji family, the fallback for every codepoint the
+     * colour face does not have.
+     */
+    private val monochromeEmoji: FontFamily? by lazy {
         runCatching {
             FontFamily(
                 Font("fonts/NotoEmoji.ttf", FontWeight.Normal),
@@ -113,32 +142,38 @@ internal object MarkdownFonts {
 
     /**
      * The family that can draw [codePoint], or null when nothing is loaded for
-     * it. The bundled emoji font is consulted by its real coverage
-     * ([EmojiCoverage]) rather than by a codepoint range, so an emoji it does
-     * not carry falls through to the symbol fonts instead of being drawn as
-     * tofu.
+     * it. Both bundled emoji fonts are consulted by their real coverage
+     * ([EmojiCoverage]) rather than by a codepoint range, so a character is
+     * never asked of a font that does not carry it: that is what produced the
+     * tofu box, and it is the reason the emoji ranges note the bundled fonts
+     * BEFORE the OS symbol font.
      */
     fun familyFor(codePoint: Int): FontFamily? {
         // Everything below '©' is ordinary text: letters, digits, the space,
-        // '#', '*', punctuation. The bundled emoji font's cmap also lists some
-        // of those (`0x20`, `0x23`, `0x2A`, `0x30`..`0x39`, the keycap bases),
-        // and routing them to an emoji family drew them inside its wide cell:
-        // every digit of `1.54.11`, every `#97` and, through the space, every
-        // word gap in the changelog came out letter-spaced. They are always the
-        // app font's business, so nothing at or below ASCII is ever handed to a
-        // fallback.
+        // '#', '*', punctuation. The bundled emoji fonts also map some of those
+        // (as keycap bases), and routing them to an emoji family drew them
+        // inside its wide cell: every digit of `1.54.11`, every `#97` and,
+        // through the space, every word gap in the changelog came out
+        // letter-spaced. They are always the app font's business, so nothing at
+        // or below ASCII is ever handed to a fallback.
         if (codePoint < 0xA9) return null
         return when {
             // Variation selectors have no glyph of their own.
             codePoint in 0xFE00..0xFE0F -> null
-            // Both coverage sets go to the monochrome font on purpose: the colour
-            // family's COLR glyphs are not painted by this renderer (see the
-            // class comment).
-            EmojiCoverage.colorEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
-            EmojiCoverage.monochromeEmoji.contains(codePoint) -> bundledEmoji ?: symbols ?: emoji
+            // Colour first: the bundled COLRv0 face paints these, so a heading
+            // emoji comes out in colour instead of monochrome.
+            EmojiCoverage.colorEmoji.contains(codePoint) ->
+                colorEmoji ?: monochromeEmoji ?: emoji ?: symbols
+            // Then the monochrome face, for everything the colour one lacks.
+            EmojiCoverage.monochromeEmoji.contains(codePoint) ->
+                monochromeEmoji ?: emoji ?: symbols
             isCjk(codePoint) -> cjk
-            isSymbol(codePoint) -> symbols ?: bundledEmoji ?: emoji
-            isEmoji(codePoint) -> symbols ?: bundledEmoji ?: emoji
+            isSymbol(codePoint) -> symbols ?: monochromeEmoji ?: emoji
+            // An emoji from neither bundled font (a live changelog newer than
+            // the shipped fonts): the OS emoji face has the widest coverage, so
+            // it is asked before the symbol font, which would answer with its
+            // own notdef for an emoji it does not have.
+            isEmoji(codePoint) -> emoji ?: monochromeEmoji ?: symbols
             else -> null
         }
     }

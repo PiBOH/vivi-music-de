@@ -896,3 +896,172 @@ grep -rn "audio device stall\|cushion low\|starved\|writer stalled\|sample-table
 # the cushion every start actually got, and whether it was the target
 grep -rho "primed: device started with [0-9]*ms" logs/*/playback.log | sort | uniq -c
 ```
+
+## 11. Desktop UI work: how it is verified (headless checks)
+
+There is no GUI and no display in the agent environment, and most of the desktop
+edition is UI. "It compiles" therefore proves very little, and a claim about a
+screen that has not been rendered is a claim that has not been checked. The
+desktop module carries five **manual** Gradle checks that render the real
+composables into an off-screen `androidx.compose.ui.ImageComposeScene` (no
+window, no GPU) and look at the pixels or at the state they produce:
+
+| task | what it proves |
+| --- | --- |
+| `:desktop:changelogEmojiCheck` | every changelog emoji is drawn, in colour, on every path: `markdownInline` on its own, a line of emoji plus text, and the seven real `### 🐛 Fixed` style headings through `MarkdownView` |
+| `:desktop:framelessHitTestCheck` | the frameless window's drag surface, which sits BEHIND the interface, is hit only where nothing interactive is in front of it, so a button keeps its own clicks |
+| `:desktop:localDataMaintenanceCheck` | the log pruning rule: only logs older than seven days, never the session being written, never a data file |
+| `:desktop:firstRunRenderCheck` | the first-run screen composes and paints at 600x480, 1024x768 and 1600x900 |
+| `:desktop:chatWindowRenderCheck` | the Listen Together chat list: an empty conversation draws its empty state, a conversation draws its bubbles, and a bubble that quotes another one draws strictly more than the same message without the quote |
+
+They live in `desktop/src/test/kotlin/com/music/vivi/desktop/`, write their PNGs
+under `.ignore/`, are registered at the end of `desktop/build.gradle.kts`, and
+are deliberately **not** part of `check`: they are pixel and layout checks, need
+no test framework, and are run by hand (usually right after the change that
+motivated them). Each one exits non-zero with a list of failures.
+
+> **Rule**: when you change something one of these checks covers, run it and
+> paste its verdict into the CHANGELOG entry. When you add a piece of UI that
+> cannot be verified any other way, add a check to that list rather than
+> claiming it works.
+
+Two facts these checks depend on, both verified against the shipped bytecode of
+Compose 1.8.2, because guessing them produces a bug the other way round:
+
+1. `WindowDraggableArea` calls `DragHandler.onDragStarted()` on the pointer
+   DOWN, waits for no drag gesture and never consumes the event. Any surface it
+   covers therefore starts a window move on a press, so it must be placed BEHIND
+   the interface, never in front.
+2. Compose stops hit testing at the frontmost layer: a `clickable` in front
+   receives the press and the layer behind it receives nothing. That is what
+   makes the drag surface safe, and `framelessHitTestCheck` measures it rather
+   than assuming it.
+
+## 12. The changelog emoji and the bundled colour font (do not swap it back)
+
+The About screen renders `CHANGELOG.md` with the app's own Markdown renderer, and
+those headings start with an emoji (`🐛 Fixed`, `🔧 Changed`, `📝 Commits`,
+`✨ Added`, `🗑️ Removed`, `📌 Notes`, `🌍 Translations`).
+
+- **The colour font is `fonts/TwemojiColorEmoji.ttf`** (Twemoji Mozilla 0.7.0,
+  COLRv0, 1.47 MB). It is bundled because the app font has no emoji and Compose
+  Desktop does not fall back to a second font by itself: without it the emoji are
+  drawn as `.notdef`, which in this app's face is the question mark inside a
+  rhombus that was reported. `fonts/NotoEmoji.ttf` stays as the monochrome
+  fallback for the codepoints the colour face does not carry, and the OS emoji
+  face is the last resort.
+- **Do not replace the colour font with Noto Color Emoji.** Both the 165 KB
+  subset that used to ship and the full 25 MB COLRv1 build paint NOTHING through
+  this renderer (`0 ink`, measured with a Skiko rasteriser), which is worse than
+  monochrome. Twemoji paints every emoji in `EmojiCoverage.colorEmoji`.
+- **`EmojiCoverage.kt` is generated, never edited by hand:**
+  `python3 scripts/build_desktop_emoji_coverage.py` reads both bundled fonts'
+  own `cmap` and rewrites the list; `--check` exits 1 when it is stale. A font
+  swap without a regeneration is a bug.
+- **A span boundary must never fall inside a surrogate pair.** The tofu was
+  `markdownInline` appending one UTF-16 code unit per span, splitting every
+  supplementary-plane emoji (`U+1F000` and up) in half, which is why `✨`
+  (`U+2728`, one unit) was the only one that rendered. The plain-character
+  branch consumes whole code points; keep it that way.
+- **Grey emoji are not a bug.** `🔧` and `🗑️` are grey artwork in Twemoji
+  itself, so the check compares ink against the family the codepoint resolves to
+  instead of demanding chromatic pixels. A check that requires colour of them
+  fails on correct output.
+
+## 13. Desktop local data: installers and logs
+
+Two rules about `~/.vivimusic/` that are easy to get wrong, and the checks that
+keep them right.
+
+**The update counter counts installs, not downloads.** Only installers whose file
+name carries the version the app is currently running
+(`VIVIMusic-6.0.8.5_DE-1.54.20-setup.exe`) count, because an installer that has
+been downloaded but not run is the installer for the NEXT version. Both the
+counter and the "delete installers" button (on the Updates screen and on
+Storage) work on that set, so the number and the button can never disagree, and
+the installer of a pending update is never deleted underneath the user.
+`UpdateDownloader.installedInstallers(installedVersion)` is the single place that
+decides this.
+
+**Logs older than seven days are deleted at startup.** `~/.vivimusic/logs/`
+holds one session folder per launch plus the loose `.log` files in
+`~/.vivimusic/` (`actions.log`, `login-debug.log`, `crash.log`); everything older
+than seven days goes, the session being written never does, and no data file
+(`settings.json`, `playlists.json`, `history.json`, `device-sync.json`, …) is
+ever deleted. The rule is the pure function `AppLog.staleLogs`, so it can be
+checked without touching the real directory, and the `.log` test is part of the
+rule rather than of its caller for exactly that reason.
+
+## 14. First run, support links and Material 3 Expressive
+
+**The first-run flow** (`desktop/src/main/kotlin/com/music/vivi/desktop/FirstRun.kt`)
+is shown only on a fresh install, i.e. while no language has been chosen yet,
+and is not re-openable from Settings. Its three steps mirror the mobile
+`WelcomeActivity`: welcome (with a searchable language picker), community and
+support, desktop features. `Main.kt` keeps it on screen with its own flag
+because step one already saves the language: without that flag the app appears in
+the middle of its own welcome.
+
+**The two support links are the mobile developer's own**, by request, and are to
+be kept exactly as the mobile welcome screen has them: `UPI`
+(`upi://pay?pa=vividhpashokan@axl&pn=Vividh P Ashokan`) and Buy Me a Coffee
+(`https://ko-fi.com/vividhpashokan`). The repository and channel links are the DE
+ones (`github.com/PiBOH/vivi-music-de`, `t.me/vivimusicde`). The labels
+`support_upi` and `support_buy_me_a_coffee` are BRAND names, identical in every
+language on purpose, authored in `scripts/desktop_extra_translations_94.py` and
+listed in the audit's `BRAND_KEYS` beside `telegram_channel`.
+
+**Material 3 Expressive** is reached where the app owns the decision, because the
+library's own entry point is not usable here: `MaterialExpressiveTheme` and the
+flag it sets are `internal` in the Compose 1.8.2 this app compiles against
+(calling it is a compile error) and `ExpressiveNavigationBar` is a phone bottom
+bar. So the expressive pass is the shape scale (`expressiveShapes`, 8/12/16/20/28
+dp), the motion (`Animations.emphasizedDecelerate`, plus the expressive spring
+the panels already used) and the card settings groups with tonal icon containers
+(`M3Settings.kt`, `StorageSection`, `ContentSection`). Spotify mode keeps its
+flat 8 dp scale on purpose.
+## 15. The Listen Together chat window (its own window, replies, notifications)
+
+**The chat is a top-level window, not a panel of the room screen**
+(`desktop/src/main/kotlin/com/music/vivi/desktop/ListenTogetherChatWindow.kt`).
+`ListenTogetherScreen` keeps only a Chat card that shows the last line and the
+unread count and opens the window, while `Main.kt` emits the window beside the
+live-log window, so it survives leaving the room screen: the manager keeps
+feeding it either way. Do not move the conversation back inside the room screen,
+which is the shape this replaces (clipped to the room's own scroll, and gone the
+moment the user browses the library).
+
+**Visibility cannot live in the screen's composition** for the same reason, so it
+lives in the `ListenTogetherChatWindow` object: `visible` (read by the client's
+event loop to decide whether an incoming message still deserves a notification,
+and by the room screen for its Chat card) and `unread` (reset by `open()`). The
+window is deliberately not persisted: a window that reopens itself on every
+launch is worse than one the user opens on purpose.
+
+**A reply travels the wire, it is not a local decoration.** The reply model
+already existed (`LtChat.replyTo` / `reply_to`, `LtRepliedMessage`, and
+`LtChatMessage.replyTo`); `sendChat` / `sendChatMessage` now take it, so a quote
+written on the desktop arrives as a quote on Android and the other way round.
+Keep those field names: they are the protocol shared with
+`app/src/main/kotlin/com/music/vivi/listentogether/`.
+
+**A message from another user while the window is closed is a notification**,
+dispatched through `DesktopNotifier.notify(...)` from the manager's event loop
+(not from the screen), so it fires even while the user browses the library. That
+is what makes it follow the notification-type setting, native OS toast or the
+main window's in-app banner, and it lands in the notification history like every
+other notice. Own messages are never notified, and neither is a message the open
+window is already showing.
+
+**Date separators are formatted, not translated.** "Today" / "Yesterday" would
+have cost two more strings in each of the 52 languages for no gain, so the
+separator is the full date in the app language's own locale
+(`Languages.jvmLocale`): "8 ott 2026" in Italian, "Oct 8, 2026" in English.
+
+**Where the three strings come from.** `lt_no_messages`, `lt_reply` and
+`lt_send_message` are authored in `scripts/desktop_extra_translations_95.py` and
+were inserted into all 53 `Localization_*.kt` files in alphabetical position,
+CRLF preserved. Do not run `scripts/generate_desktop_localization.py` casually:
+it rebuilds the tables from the Android resources and drops the hand-edited
+translations this fork carries.
+

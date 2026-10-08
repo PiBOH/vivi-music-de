@@ -408,3 +408,100 @@ compose.desktop {
         }
     }
 }
+
+/**
+ * Headless check of the changelog emoji:
+ *
+ *     ./gradlew :desktop:changelogEmojiCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ChangelogEmojiRenderCheck.kt`.
+ * It renders the changelog headings and the emoji on their own through the real
+ * Markdown path into an off-screen `ImageComposeScene` (no window, no GPU) and
+ * counts ink and chromatic pixels, which tells "drawn in colour" apart from
+ * "drawn by the wrong, glyph-less font" and from "not drawn at all". It is a
+ * manual check, not part of `check` (it needs no test framework, writes PNGs
+ * under .ignore/ and is about pixels, not assertions).
+ */
+tasks.register<JavaExec>("changelogEmojiCheck") {
+    group = "verification"
+    description = "Renders the changelog emoji headlessly and reports ink and colour"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ChangelogEmojiRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the frameless window's drag surface:
+ *
+ *     ./gradlew :desktop:framelessHitTestCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/FramelessHitTestCheck.kt`.
+ * `WindowDraggableArea` begins moving the window on the pointer down (verified
+ * in the shipped bytecode), so where the drag surface is hit matters: behind the
+ * interface means "only over empty space", in front would mean "every button
+ * click nudges the window". The check renders both stacks off screen and counts
+ * which layer received the press.
+ */
+tasks.register<JavaExec>("framelessHitTestCheck") {
+    group = "verification"
+    description = "Checks that the frameless window's drag surface only takes presses over empty space"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.FramelessHitTestCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the automatic deletion of old logs:
+ *
+ *     ./gradlew :desktop:localDataMaintenanceCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LogPruneCheck.kt`. It runs
+ * the real pruning rule (`AppLog.staleLogs`) against files in a temporary
+ * directory and asserts which ones it selects: only logs older than seven days,
+ * never the session being written and never a data file.
+ */
+tasks.register<JavaExec>("localDataMaintenanceCheck") {
+    group = "verification"
+    description = "Checks that only logs older than seven days are deleted automatically"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LogPruneCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless smoke check of the first-run screen:
+ *
+ *     ./gradlew :desktop:firstRunRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/FirstRunRenderCheck.kt`. It
+ * renders `FirstRunFlow` off screen at the app's minimum window size and at a
+ * large one, which is the only screen a fresh install shows before the app and
+ * therefore the one that cannot be allowed to crash or to draw nothing.
+ */
+tasks.register<JavaExec>("firstRunRenderCheck") {
+    group = "verification"
+    description = "Renders the first-run flow headlessly and checks that it paints"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.FirstRunRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the Listen Together chat list:
+ *
+ *     ./gradlew :desktop:chatWindowRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ChatWindowRenderCheck.kt`.
+ * The chat is a `Window`, so the conversation was split into
+ * `ListenTogetherChatList`, which this renders off screen: an empty conversation
+ * must draw its empty state, a conversation must draw its bubbles, and a bubble
+ * that quotes another one must draw strictly more than the same message without
+ * the quote, which is what proves the quote reaches the screen.
+ */
+tasks.register<JavaExec>("chatWindowRenderCheck") {
+    group = "verification"
+    description = "Renders the Listen Together chat list headlessly and checks the quoted reply"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ChatWindowRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

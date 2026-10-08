@@ -55,6 +55,10 @@ BRAND_KEYS = {
     "lyrics_style_none",
     # Discord's own feature name, kept as-is upstream.
     "discord_presence",
+    # The first-run screen's two support links: UPI is the payment rail's own
+    # name and Buy Me a Coffee is the service's, so both read the same in every
+    # language. Supplied by desktop_extra_translations_94.
+    "support_upi", "support_buy_me_a_coffee",
     # The window/app title; "desktop" is the same loanword everywhere it is
     # not already translated, and the product name never changes.
     "header",
