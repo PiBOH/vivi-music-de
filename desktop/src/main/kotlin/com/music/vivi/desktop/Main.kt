@@ -194,6 +194,7 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
@@ -1532,6 +1533,15 @@ fun WindowScope.App(
             }
             event.isCtrlPressed && event.key == Key.Z -> { undo(); true }
             event.isCtrlPressed && event.key == Key.Y -> { redo(); true }
+            // Listen Together chat: the same toggle from anywhere in the app, so
+            // the conversation does not need the room screen to be open (the
+            // window outlives it on purpose). Ctrl+Shift+C, which nothing else
+            // here claims: Ctrl+C is plain copy and Ctrl+Shift+C is not used by
+            // the app's own shortcut set.
+            event.isCtrlPressed && event.isShiftPressed && event.key == Key.C -> {
+                ListenTogetherChatWindow.toggle()
+                true
+            }
             else -> false
         }
     }
@@ -3824,6 +3834,7 @@ fun WindowScope.App(
                 ListenTogetherChatWindowContent(
                     language = language,
                     manager = listenTogetherManager,
+                    onClose = { ListenTogetherChatWindow.close() },
                 )
             }
         }

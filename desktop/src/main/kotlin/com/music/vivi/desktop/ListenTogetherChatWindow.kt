@@ -101,6 +101,11 @@ object ListenTogetherChatWindow {
         _visible.value = false
     }
 
+    /** What the keyboard shortcut does: the same button, twice. */
+    fun toggle() {
+        if (_visible.value) close() else open()
+    }
+
     /** Called for every message from another user while the window is closed. */
     fun bumpUnread() {
         _unread.value += 1
@@ -128,6 +133,7 @@ private sealed interface ChatRow {
 fun ListenTogetherChatWindowContent(
     language: String,
     manager: ListenTogetherManager,
+    onClose: () -> Unit,
 ) {
     val room by manager.roomState.collectAsState()
     val messages by manager.chatMessages.collectAsState()
@@ -175,6 +181,17 @@ fun ListenTogetherChatWindowContent(
                 }
             }
             ConnectionBadge(connection, language)
+            Spacer(Modifier.width(4.dp))
+            // An explicit close control, next to the one the window decoration
+            // already has: the window is opened from the room and from a
+            // keyboard shortcut, so it has to be as easy to put away as it is
+            // to bring up (the shortcut toggles it too).
+            IconButton(onClick = onClose) {
+                Icon(
+                    Icons.Filled.Close,
+                    contentDescription = Localization.get(language, "close"),
+                )
+            }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 

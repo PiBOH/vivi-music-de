@@ -47,9 +47,6 @@ object StreamResolver {
      *  known — used to give the seek slider a correct range immediately. */
     data class ResolvedStream(val url: String, val userAgent: String, val durationMs: Long? = null)
 
-    /** Fast, PoToken-free main client (same as the mobile app). */
-    private val MAIN_CLIENT: YouTubeClient = YouTubeClient.ANDROID_VR_1_43_32
-
     /**
      * Content-aware client ordering, ported from the mobile app (upstream
      * 6.0.6 `ContentAwareFallbackStrategy`): the fallback chain is picked from
@@ -58,20 +55,41 @@ object StreamResolver {
     private val fallbackStrategy = com.music.innertube.strategy.ContentAwareFallbackStrategy()
 
     /**
-     * Clients that stream without a PoToken are the only ones usable on
-     * desktop (we cannot generate one). WEB_REMIX is allowed as a last
-     * resort: its URLs are n-deobfuscated and validated by the downloader,
-     * exactly like the mobile app does for web clients.
+     * The client chain, in order. **Every entry has to be PoToken-free**, and
+     * the `filterNot` is the enforcement of that rule, not decoration.
+     *
+     * A web client (`useWebPoTokens`) signs a URL that googlevideo only serves
+     * when the request carries a PoToken, which needs a WebView: the phone has
+     * one, this app does not. So a web client's URL is not "less reliable" on
+     * the desktop, it is **guaranteed 403**, and having one in the chain is
+     * worse than having nothing there: the resolver reports a candidate, the
+     * player spends a play attempt on it, the retry re-resolves through the same
+     * chain and gets the same dead URL, and three attempts later the track is
+     * skipped with `giving up after 3 attempts: HTTP 403 downloading audio`
+     * (`~/.vivimusic/logs/20261007-205734/playback.log` shows exactly that, with
+     * `c=WEB_CREATOR` in every failing URL). With the web clients gone that day
+     * ends with **no candidate at all**, which is the case the retry path already
+     * handles correctly (rotate the guest identity and resolve again).
+     *
+     * `VISIONOS` leads because it was measured, not because it looks modern:
+     * `./gradlew :desktop:streamResolveProbe` resolves real tracks and fetches the
+     * first bytes of every candidate with that candidate's own User-Agent, and
+     * VISIONOS answered `206` for all five probe tracks while the chain's old
+     * first client (`ANDROID_VR_1_43_32`) produced no URL at all. The rest are
+     * the other PoToken-free identities the client table defines, most reliable
+     * first, so a track that is flagged for one identity still plays through
+     * another.
      */
-    private val FALLBACK_CLIENTS: List<YouTubeClient> = listOf(
+    private val CLIENT_CHAIN: List<YouTubeClient> = listOf(
         YouTubeClient.VISIONOS,
         YouTubeClient.ANDROID_VR_1_65_10,
+        YouTubeClient.IPADOS,
+        YouTubeClient.IOS,
         YouTubeClient.ANDROID_VR_1_43_32,
-        YouTubeClient.TVHTML5,
-        YouTubeClient.TVHTML5_SIMPLY_EMBEDDED_PLAYER,
         YouTubeClient.ANDROID_CREATOR,
-        YouTubeClient.WEB_CREATOR,
-    )
+        YouTubeClient.MWEB,
+        YouTubeClient.TVHTML5_SIMPLY_EMBEDDED_PLAYER,
+    ).filterNot { it.useWebPoTokens }
 
     /**
      * Short-lived in-memory cache of resolved stream URLs, so starting the
@@ -197,7 +215,7 @@ object StreamResolver {
         var signatureTimestamp: Int? = null
         var signatureFetched = false
 
-        for (ytClient in listOf(MAIN_CLIENT) + FALLBACK_CLIENTS) {
+        for (ytClient in CLIENT_CHAIN) {
             if (ytClient.useSignatureTimestamp && !signatureFetched) {
                 signatureTimestamp = withContext(Dispatchers.IO) {
                     runCatching { NewPipeExtractor.getSignatureTimestamp(videoId).getOrNull() }.getOrNull()

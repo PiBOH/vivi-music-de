@@ -505,3 +505,22 @@ tasks.register<JavaExec>("chatWindowRenderCheck") {
     mainClass.set("com.music.vivi.desktop.ChatWindowRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+
+/**
+ * Network probe for the "HTTP 403 downloading audio" playback failure:
+ *
+ *     ./gradlew :desktop:streamResolveProbe [--args="videoId videoId"]
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/StreamResolveProbe.kt`. It
+ * runs the real resolver and fetches the first bytes of every candidate URL with
+ * that candidate's own User-Agent, printing the client each URL came from and
+ * the HTTP status, which is what tells "the chain is refused" apart from "the
+ * chain is fine but the wrong candidate was used". Needs the network.
+ */
+tasks.register<JavaExec>("streamResolveProbe") {
+    group = "verification"
+    description = "Resolves real audio stream URLs and reports which candidates answer 403"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.StreamResolveProbe")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

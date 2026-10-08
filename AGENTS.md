@@ -1065,3 +1065,40 @@ CRLF preserved. Do not run `scripts/generate_desktop_localization.py` casually:
 it rebuilds the tables from the Android resources and drops the hand-edited
 translations this fork carries.
 
+
+## 16. Playback: the client chain and the 403 rule (never put a web client back)
+
+**A web client cannot play on the desktop.** Every `YouTubeClient` flagged
+`useWebPoTokens` (`WEB_REMIX`, `WEB_CREATOR`, `TVHTML5`, `TVHTML5_SIMPLY`) signs a
+googlevideo URL that is only served when the request carries a PoToken, and a
+PoToken has to be minted by a WebView: the phone has one, this app does not. Such
+a URL is not a weaker fallback, it is a guaranteed 403, and having one in the
+chain is worse than having an empty chain: the resolver reports a candidate, the
+player spends one of its three attempts on it, the retry re-resolves through the
+same chain and gets the same dead URL, and the track ends in `giving up after 3
+attempts: HTTP 403 downloading audio`, which is verbatim the failure in
+`~/.vivimusic/logs/20261007-205734/playback.log` (every failing URL carries
+`c=WEB_CREATOR`).
+
+**The rule**, in `desktop/src/main/kotlin/com/music/vivi/desktop/player/StreamResolver.kt`:
+`CLIENT_CHAIN` holds PoToken-free identities only and ends with
+`filterNot { it.useWebPoTokens }`, which is the enforcement of the rule and not
+decoration, so a future edit cannot quietly reintroduce one. When that chain is
+refused the result must be **no candidate at all**, because that is the case
+`PlayerController` already answers correctly (rotate the guest identity and
+resolve again). Never "help" it by adding a web client as a last resort.
+
+`VISIONOS` leads the chain because it was measured answering while the client that used to lead it
+(`ANDROID_VR_1_43_32`) returned no URL for any probe track. The order is a
+measurement, not a style: re-measure before changing it.
+
+**How it is measured:** `./gradlew :desktop:streamResolveProbe` (needs the
+network, `verification` group, `desktop/src/test/kotlin/com/music/vivi/desktop/StreamResolveProbe.kt`).
+It runs the real resolver for real tracks and fetches the first 256 KB of every
+candidate URL with that candidate's own User-Agent, printing the client each URL
+came from and the HTTP status, which tells "the chain is refused" (no candidate,
+or every candidate 403) apart from "the chain is fine but the wrong candidate was
+used" (some candidate 2xx). It also signs one track with `WEB_CREATOR` as a
+control, and that control is how the rule above was established instead of
+assumed. A `206` is a success: the probe fetches a range, not the whole file.
+**Watch:** every track the probe resolves must show at least one 2xx candidate.

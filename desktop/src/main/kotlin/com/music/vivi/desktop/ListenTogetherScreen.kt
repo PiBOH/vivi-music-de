@@ -563,7 +563,10 @@ private fun InRoom(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            Localization.get(language, "comments"),
+                            // The shortcut is written on the row that opens the
+                            // window, because a keyboard shortcut nobody knows
+                            // about is a shortcut nobody uses.
+                            Localization.get(language, "comments") + "  ·  Ctrl+Shift+C",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

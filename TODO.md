@@ -8,6 +8,9 @@ orientation.
 
 ## Open
 
+### Patch 1.54.21 (8 Oct)
+- [x] **The `HTTP 403` / `giving up after 3 attempts` playback failure (done 8 Oct, 1.54.21).** The user's `20261007-205734/playback.log` showed `stream ready` then a 403 on every track, with `c=WEB_CREATOR` in the failing URLs: the chain ended in clients that need a PoToken, which a desktop cannot mint, so their URLs are a guaranteed 403. The chain is PoToken-free now (`filterNot { it.useWebPoTokens }` enforces it) and `VISIONOS` leads it because the probe measured it answering while the old first client produced nothing. **Watch:** `:desktop:streamResolveProbe` must report a `2xx` candidate for every track, and a day when the free identities are refused must end in `resolution failed, rotating guest and retrying`, never in a web URL. **Open sub-item:** the probe proves the URLs are playable from this machine, not that the app plays them; a real track from that log has to play.
+- [x] **The chat window's close button and `Ctrl+Shift+C` (done 8 Oct, 1.54.21).** The window opens from the room and from the shortcut and can be put away both ways. **Watch:** the shortcut toggles it from anywhere in the app.
 ### Patch 1.54.20 (8 Oct)
 - [x] **The mobile Storage screen, as cards (done 8 Oct, 1.54.20).** Two cards: the cache (size and clear) and the downloaded installers (size and delete), with the privacy note. The mobile sliders are deliberately not ported (their ceilings exist only on Android). **Watch:** the installer card and the Updates counter must agree.
 - [x] **Content language and content region are cards (done 8 Oct, 1.54.20).** Same card shape as every other setting, current choice on the trailing side, list inline, `system_default` first. **Verified:** `:desktop:compileKotlin` clean; no GUI here, so layout is compile-verified.
