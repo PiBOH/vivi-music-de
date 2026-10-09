@@ -68,6 +68,39 @@ class PlayerController {
     /** Whether to automatically play the next queued track when one ends. */
     @Volatile var autoPlayNext: Boolean = true
 
+    // ------------------------------------------------------------------
+    // Listen Together: the host owns the transport
+    // ------------------------------------------------------------------
+
+    /**
+     * When true, transport commands that come from THIS user are ignored: the
+     * user is a guest in a Listen Together room and only the host may play,
+     * pause, seek or change tracks (the mobile app locks exactly the same
+     * controls). Actions the host sends over the wire are applied through
+     * [asRemote], so the sync itself is never blocked by this.
+     */
+    @Volatile var userControlLocked: Boolean = false
+
+    private val remoteDepth = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** True while the local user may not drive playback (see [userControlLocked]). */
+    private val userLocked: Boolean
+        get() = userControlLocked && remoteDepth.get() == 0
+
+    /**
+     * Runs [block] as an authoritative (remote) action that ignores the local
+     * control lock. Used by the Listen Together manager when it applies what the
+     * host commanded.
+     */
+    fun <T> asRemote(block: () -> T): T {
+        remoteDepth.incrementAndGet()
+        try {
+            return block()
+        } finally {
+            remoteDepth.decrementAndGet()
+        }
+    }
+
     /**
      * "Auto load more songs": when the queue reaches its end, fetch
      * related/radio tracks for the last song and keep the music going instead
@@ -262,6 +295,7 @@ class PlayerController {
     private var pendingStartFraction: Float? = null
 
     fun play(track: NowPlaying) {
+        if (userLocked) return
         AppLog.log("playback", "play: '${track.title}' [${track.videoId}]")
         resetShuffleForNewQueue()
         lastLocalPlayIntentAt = System.currentTimeMillis()
@@ -273,6 +307,7 @@ class PlayerController {
     }
 
     fun playAll(tracks: List<NowPlaying>, startIndex: Int = 0) {
+        if (userLocked) return
         if (tracks.isEmpty()) return
         AppLog.log("playback", "playAll: ${tracks.size} tracks, start at $startIndex ('${tracks[startIndex].title}') ")
         resetShuffleForNewQueue()
@@ -345,6 +380,7 @@ class PlayerController {
 
     /** Appends a track to the queue; if nothing is playing, starts it. */
     fun addToQueue(track: NowPlaying) {
+        if (userLocked) return
         val s = _state.value
         AppLog.log("queue", "addToQueue: '${track.title}' [${track.videoId}]")
         if (s.current == null) {
@@ -356,6 +392,7 @@ class PlayerController {
 
     /** Appends a list of tracks to the queue; if nothing is playing, starts them. */
     fun addAllToQueue(tracks: List<NowPlaying>) {
+        if (userLocked) return
         val s = _state.value
         AppLog.log("queue", "addAllToQueue: ${tracks.size} tracks")
         if (s.current == null) {
@@ -383,6 +420,7 @@ class PlayerController {
      * queue is empty, starts the track instead.
      */
     fun insertNext(track: NowPlaying) {
+        if (userLocked) return
         val s = _state.value
         if (s.current == null) {
             play(track)
@@ -465,6 +503,7 @@ class PlayerController {
     }
 
     fun next() {
+        if (userLocked) return
         val s = _state.value
         if (s.queue.isEmpty()) return
         AppLog.log("playback", "next (index ${s.index + 1} of ${s.queue.size})")
@@ -482,6 +521,7 @@ class PlayerController {
     }
 
     fun previous() {
+        if (userLocked) return
         val s = _state.value
         if (s.queue.isEmpty()) return
         AppLog.log("playback", "previous (index ${s.index - 1})")
@@ -495,6 +535,7 @@ class PlayerController {
     }
 
     fun skipTo(index: Int) {
+        if (userLocked) return
         val s = _state.value
         if (index in s.queue.indices) {
             AppLog.log("queue", "skipTo: index $index")
@@ -505,6 +546,7 @@ class PlayerController {
     }
 
     fun removeAt(index: Int) {
+        if (userLocked) return
         val s = _state.value
         if (index !in s.queue.indices) return
         AppLog.log("queue", "removeAt: index $index")
@@ -526,6 +568,7 @@ class PlayerController {
     }
 
     fun clearQueue() {
+        if (userLocked) return
         val s = _state.value
         AppLog.log("queue", "clearQueue (${s.queue.size} tracks)")
         playToken++
@@ -541,6 +584,7 @@ class PlayerController {
      * keeping the currently playing track selected.
      */
     fun reorder(newQueue: List<NowPlaying>) {
+        if (userLocked) return
         val s = _state.value
         if (newQueue.size != s.queue.size) return
         val currentId = s.current?.videoId
@@ -549,6 +593,7 @@ class PlayerController {
     }
 
     fun toggle() {
+        if (userLocked) return
         val s = _state.value
         if (s.current == null) return
         AppLog.log("playback", if (s.isPlaying) "pause" else "play toggle")
@@ -591,6 +636,7 @@ class PlayerController {
     }
 
     fun seekTo(ms: Long) {
+        if (userLocked) return
         AppLog.log("playback", "seek to ${ms}ms")
         // A local scrub during the fade window cancels the overlap.
         abortCrossfade()

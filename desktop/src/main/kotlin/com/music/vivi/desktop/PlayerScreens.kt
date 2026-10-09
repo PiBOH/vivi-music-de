@@ -570,7 +570,10 @@ private fun M3EPlayerContent(
                                 if (durationMs > 0) onSeek(seekValue.toLong())
                                 else onSeek((seekValue * 1000).toLong())
                             },
-                            enabled = true,
+                            // Listen Together guest: the host owns the transport,
+                            // so the seek bar is inert and drawn as disabled (the
+                            // mobile app disables the same slider).
+                            enabled = !ListenTogetherGate.locked.value,
                             valueRange = 0f..sliderMax.toFloat(),
                             style = sliderStyle,
                             bufferedFraction = playbackBufferedFraction(),
@@ -1462,7 +1465,7 @@ private fun PlayerControlPanel(
             if (durationMs > 0) onSeek(seekValue.toLong())
             else onSeek((seekValue * 1000).toLong())
         },
-        enabled = true,
+        enabled = !ListenTogetherGate.locked.value,
         valueRange = 0f..sliderMax.toFloat(),
         style = sliderStyle,
         bufferedFraction = playbackBufferedFraction(),
@@ -3000,7 +3003,7 @@ fun ClassicDesktopMiniPlayer(
                                     else onSeek((seekValue * 1000).toLong())
                                     isSeeking = false
                                 },
-                                enabled = true,
+                                enabled = !ListenTogetherGate.locked.value,
                                 valueRange = 0f..sliderMax.toFloat(),
                                 style = sliderStyle,
                                 bufferedFraction = playbackBufferedFraction(),

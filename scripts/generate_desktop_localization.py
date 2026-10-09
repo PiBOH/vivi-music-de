@@ -378,6 +378,9 @@ MAPPING = {
     "lt_reconnecting": "Reconnecting…",
     "lt_kicked": "You were kicked from the room",
     "lt_copy_code": "Copy code",
+    "lt_copy_failed": "Copy failed - please try again",
+    "lt_copy_link": "Copy link",
+    "lt_guest_note": "The host controls playback in this room",
     "lt_auto_approve": "Auto-approve join requests",
     "lt_buffering": "Buffering",
     "lt_sync_volume": "Sync volume",
@@ -1135,6 +1138,12 @@ ENGLISH = {
     "spotify_connected_as": "Connected as %s",
     "spotify_cookie_hint": "Sign in to open.spotify.com in your browser, then copy the sp_dc cookie. sp_key is optional.",
     "spotify_open_login": "Sign in to Spotify",
+    # The three-step guide of the Spotify sign-in card, mirroring the Google
+    # sign-in screen's own steps. Desktop-only, supplied by
+    # desktop_extra_translations_96.
+    "spotify_step1": "A window opens directly on Spotify's sign-in page",
+    "spotify_step2": "Sign in with your Spotify account (email and password, or Google)",
+    "spotify_step3": "When the page lands back on Spotify, the sign-in is detected automatically: the window closes by itself and the session is saved",
     # Google refuses to serve its sign-in page inside an embedded browser
     # (`disallowed_useragent`), so a Spotify profile created with Google can
     # never be reached from the sign-in window. The window says so and points
@@ -1888,12 +1897,13 @@ from desktop_extra_translations_92 import EXTRA_TRANSLATIONS as _EXTRA_92
 from desktop_extra_translations_93 import EXTRA_TRANSLATIONS as _EXTRA_93
 from desktop_extra_translations_94 import EXTRA_TRANSLATIONS as _EXTRA_94
 from desktop_extra_translations_95 import EXTRA_TRANSLATIONS as _EXTRA_95
+from desktop_extra_translations_96 import EXTRA_TRANSLATIONS as _EXTRA_96
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93, _EXTRA_94, _EXTRA_95):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93, _EXTRA_94, _EXTRA_95, _EXTRA_96):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 

@@ -788,12 +788,6 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
 /** Human-readable density label (e.g. "110%") for a scale value. */
 private fun densityLabel(scale: Float): String = "${(scale * 100).roundToInt()}%"
 
-/** Density scale presets (fractional; 1f = 100%). */
-private val DENSITY_PRESETS = listOf(
-    2.0f, 1.8f, 1.5f, 1.4f, 1.3f, 1.25f, 1.2f, 1.1f,
-    1f, 0.85f, 0.75f, 0.65f, 0.55f,
-)
-
 /** Grid cell width presets in dp (small / medium / large). */
 private val GRID_PRESETS = listOf(140 to "grid_small", 160 to "grid_medium", 200 to "grid_large", 240 to "grid_xlarge")
 

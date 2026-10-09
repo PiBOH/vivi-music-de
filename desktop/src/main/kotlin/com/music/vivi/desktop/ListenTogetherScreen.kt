@@ -86,6 +86,8 @@ fun ListenTogetherScreen(
     var notice by remember { mutableStateOf<String?>(null) }
     var suggestInput by remember { mutableStateOf("") }
     var copied by remember { mutableStateOf(false) }
+    var copiedFailed by remember { mutableStateOf(false) }
+    var linkCopied by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(manager) {
@@ -171,11 +173,27 @@ fun ListenTogetherScreen(
                     DesktopSettings.update { s -> s.copy(listenTogetherSyncVolume = it) }
                 },
                 copied = copied,
+                copiedFailed = copiedFailed,
+                linkCopied = linkCopied,
                 onCopy = {
-                    val cb = java.awt.Toolkit.getDefaultToolkit().systemClipboard
-                    cb.setContents(java.awt.datatransfer.StringSelection(r.roomCode), null)
-                    copied = true
-                    scope.launch { kotlinx.coroutines.delay(1500); copied = false }
+                    // A best-effort write with retries: a bare `setContents` can
+                    // fail while another process holds the clipboard, and the old
+                    // code said "copied" anyway (the "copy does nothing" report).
+                    val ok = copyToClipboard(r.roomCode)
+                    copied = ok
+                    copiedFailed = !ok
+                    if (ok) DesktopSnackbar.show(Localization.get(language, "copied_to_clipboard"))
+                    scope.launch {
+                        kotlinx.coroutines.delay(1800)
+                        copied = false
+                        copiedFailed = false
+                    }
+                },
+                onCopyLink = {
+                    val ok = copyToClipboard("https://vivimusic-listen-together.onrender.com/listen?code=${r.roomCode}")
+                    linkCopied = ok
+                    if (ok) DesktopSnackbar.show(Localization.get(language, "copied_to_clipboard"))
+                    scope.launch { kotlinx.coroutines.delay(1800); linkCopied = false }
                 },
                 onApproveJoin = { manager.approveJoin(it) },
                 onRejectJoin = { manager.rejectJoin(it) },
@@ -327,7 +345,10 @@ private fun InRoom(
     syncVolume: Boolean,
     onSyncVolume: (Boolean) -> Unit,
     copied: Boolean,
+    copiedFailed: Boolean,
+    linkCopied: Boolean,
     onCopy: () -> Unit,
+    onCopyLink: () -> Unit,
     onApproveJoin: (String) -> Unit,
     onRejectJoin: (String) -> Unit,
     onKick: (String) -> Unit,
@@ -363,7 +384,22 @@ private fun InRoom(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
-                TextButton(onClick = onCopy) { Text(if (copied) Localization.get(language, "copied_to_clipboard") else Localization.get(language, "lt_copy_code")) }
+            }
+            // The two ways out of the room, side by side like on the phone:
+            // the short code to read aloud and the invite link to send.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onCopy) {
+                    Text(
+                        when {
+                            copied -> Localization.get(language, "copied_to_clipboard")
+                            copiedFailed -> Localization.get(language, "lt_copy_failed")
+                            else -> Localization.get(language, "lt_copy_code")
+                        },
+                    )
+                }
+                TextButton(onClick = onCopyLink) {
+                    Text(if (linkCopied) Localization.get(language, "copied_to_clipboard") else Localization.get(language, "lt_copy_link"))
+                }
             }
             Text(
                 Localization.get(language, "connected_users") + " (${users.size})",
@@ -406,6 +442,10 @@ private fun InRoom(
         }
         items(users, key = { it.userId }) { user ->
             val isMe = user.userId == myUserId
+            // The crown follows the ROOM's host, never a per-user flag that may
+            // have been captured before a host transfer: that is what left the
+            // crown on the old host after "transfer host".
+            val userIsHost = user.userId == room.hostId
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -420,7 +460,7 @@ private fun InRoom(
                 if (!user.isConnected) {
                     Text("(${Localization.get(language, "disconnected")})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                if (user.isHost) {
+                if (userIsHost) {
                     Text("👑", style = MaterialTheme.typography.bodyMedium)
                 } else if (isHost) {
                     TextButton(onClick = { onTransferHost(user.userId) }) { Text(Localization.get(language, "lt_transfer_host"), style = MaterialTheme.typography.labelSmall) }
@@ -503,6 +543,16 @@ private fun InRoom(
                     Text(Localization.get(language, "lt_sync_volume"), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                     Switch(checked = syncVolume, onCheckedChange = onSyncVolume)
                 }
+            }
+            // A guest's own transport controls are inert (the host owns
+            // playback, like on the phone): say so instead of leaving every
+            // player looking broken.
+            if (!isHost) {
+                Text(
+                    Localization.get(language, "lt_guest_note"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

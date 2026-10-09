@@ -180,10 +180,26 @@ object SongActions {
     private const val TOMBSTONE_TTL_MS = 90L * 24 * 60 * 60 * 1000
 }
 
-fun copyToClipboard(text: String) {
-    runCatching {
-        Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+/**
+ * Puts [text] on the system clipboard, retrying briefly.
+ *
+ * A single attempt is not enough on Windows: the clipboard is a shared, locked
+ * resource, and `setContents` throws `IllegalStateException: cannot open system
+ * clipboard` whenever another process happens to hold it. The old silent
+ * `runCatching` swallowed that and the caller cheerfully said "copied", which is
+ * the "I press copy and nothing lands on the clipboard" report. Returns whether
+ * the text really got there.
+ */
+fun copyToClipboard(text: String): Boolean {
+    repeat(5) { attempt ->
+        val ok = runCatching {
+            Toolkit.getDefaultToolkit().systemClipboard.setContents(StringSelection(text), null)
+            true
+        }.getOrDefault(false)
+        if (ok) return true
+        if (attempt < 4) runCatching { Thread.sleep(60L) }
     }
+    return false
 }
 
 /** "⋮" context menu for a song: like, library, add-to-playlist, queue and share. */
@@ -273,6 +289,34 @@ fun SongMenu(
                     onClick = {
                         expanded = false
                         onAddToQueue()
+                    },
+                )
+            }
+            // "Suggest to the host": offered only while this user is a GUEST in
+            // a Listen Together room. The host owns the queue, so the action has
+            // no meaning for them, and outside a room it has nowhere to go,
+            // exactly the condition the mobile song menu uses.
+            val inRoom by ListenTogetherGate.inRoom
+            val isHostRole by ListenTogetherGate.isHost
+            if (inRoom && !isHostRole) {
+                DropdownMenuItem(
+                    text = { Text(Localization.get(language, "lt_suggest")) },
+                    leadingIcon = {
+                        Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                    },
+                    onClick = {
+                        expanded = false
+                        ListenTogetherBridge.manager?.suggestTrack(
+                            LtTrackInfo(
+                                id = song.id,
+                                title = song.title,
+                                artist = song.artists.joinToString(", ") { it.name },
+                                album = song.album?.name,
+                                duration = (song.duration ?: 0) * 1000L,
+                                thumbnail = song.thumbnail,
+                            ),
+                        )
+                        DesktopSnackbar.show(Localization.get(language, "lt_suggest"))
                     },
                 )
             }

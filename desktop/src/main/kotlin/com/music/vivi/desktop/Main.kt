@@ -175,6 +175,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -341,6 +342,11 @@ fun main(args: Array<String>) {
     // (`gc.log`) so an exported session can tell "the JVM was stopped" apart
     // from "the process was not scheduled".
     runCatching { GcMonitor.start() }
+    // Native notifications, warmed in the background: the AUMID registration
+    // compiles C# inline and the toast session needs a PowerShell process, so
+    // both are paid for at startup instead of on the first notification (which
+    // is what made native toasts show up late, see [WindowsToast]).
+    runCatching { WindowsToast.prewarm() }
 
     // Startup timing. The launch path is long — JVM, Skiko, the string tables,
     // the settings/mixer/file loads — so "it takes 20 seconds" cannot be acted
@@ -1732,7 +1738,12 @@ fun WindowScope.App(
 
     // ---- Listen Together (shared rooms over the relay) ----
     val listenTogetherManager = remember { ListenTogetherManager(player) }
-    LaunchedEffect(listenTogetherManager) { listenTogetherManager.initialize() }
+    LaunchedEffect(listenTogetherManager) {
+        listenTogetherManager.initialize()
+        // Published so a song's "⋮" menu (far from the room screen) can offer
+        // the guest-only "Suggest to the host" action.
+        ListenTogetherBridge.manager = listenTogetherManager
+    }
 
     // Echo guards: when we apply a remote volume, we must not push the
     // resulting local change straight back to the peer.
@@ -2393,8 +2404,19 @@ fun WindowScope.App(
     // preset would look oversized next to the phone; scale 100% down to the
     // size the mobile UI has at 75% (0.75x), keeping the relative presets.
     val baseDensity = LocalDensity.current
+    // The window's width before any density scaling: what the user sees when
+    // they say "the window got very small". The density steps down (and the two
+    // panels compress) from it, and the stored setting is never rewritten, so a
+    // resized-back window restores the user's own choice exactly.
+    // `LocalWindowInfo.containerSize` is the live content size in raw pixels and
+    // recomposes on every resize, so the layout follows the dragged edge.
+    val windowWidthPx = LocalWindowInfo.current.containerSize.width
+    val unscaledWindowWidthDp = if (windowWidthPx > 0) windowWidthPx / baseDensity.density else 1280f
+    val effectiveDensityScale = effectiveDensityScale(densityScale, unscaledWindowWidthDp)
+    val narrowSidebar = unscaledWindowWidthDp < SIDEBAR_AUTO_COLLAPSE_DP
+    val narrowRightPanel = unscaledWindowWidthDp < RIGHT_PANEL_AUTO_HIDE_DP
     CompositionLocalProvider(
-        LocalDensity provides Density(baseDensity.density * densityScale * DENSITY_CALIBRATION, baseDensity.fontScale),
+        LocalDensity provides Density(baseDensity.density * effectiveDensityScale * DENSITY_CALIBRATION, baseDensity.fontScale),
         // The right-click menu is Compose Desktop's own flat popup; the Material 3
         // representation replaces it everywhere so every context menu (text
         // selection and ContextMenuArea alike) matches the app.
@@ -2457,7 +2479,7 @@ fun WindowScope.App(
                         hideHistory = pauseListenHistory,
                         language = language,
                         current = current,
-                        collapsed = sidebarCollapsed,
+                        collapsed = sidebarCollapsed || narrowSidebar,
                         showTitleHeader = false,
                         userName = displayUserName,
                         userHandle = displayUserHandle,
@@ -2481,7 +2503,7 @@ fun WindowScope.App(
                     hideHistory = pauseListenHistory,
                     language = language,
                     current = current,
-                    collapsed = sidebarCollapsed,
+                    collapsed = sidebarCollapsed || narrowSidebar,
                     userName = displayUserName,
                     userHandle = displayUserHandle,
                     isLoggedIn = isLoggedIn,
@@ -3654,7 +3676,9 @@ fun WindowScope.App(
         // transition at all: it is a panel like the sidebar, so it takes the
         // same expand/shrink (which the master switch can turn off).
         AnimatedVisibility(
-            visible = showRightSidebar && spotifyLayout && current != Screen.Player,
+            // A narrow window gives the panel away to the content instead of
+            // squeezing it: it comes back as soon as the window has room.
+            visible = showRightSidebar && spotifyLayout && current != Screen.Player && !narrowRightPanel,
             enter = Animations.panelEnter(),
             exit = Animations.panelExit(),
         ) {

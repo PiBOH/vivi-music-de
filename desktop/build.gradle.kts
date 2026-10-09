@@ -478,6 +478,26 @@ tasks.register<JavaExec>("localDataMaintenanceCheck") {
  * large one, which is the only screen a fresh install shows before the app and
  * therefore the one that cannot be allowed to crash or to draw nothing.
  */
+/**
+ * Headless check of the Listen Together reply envelope:
+ *
+ *     ./gradlew :desktop:ltReplyCodecCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LtReplyCodecCheck.kt`. The
+ * relay carries no field for a quote, so the Android client embeds it in the
+ * message text as `<ZWSP>[RPLY:<base64(author|message)>]<ZWSP>` and strips it on
+ * receive. This check builds the envelope and reads it back, and asserts the
+ * mobile's own byte layout (marker, closing marker, base64 body of
+ * `author|message`), so a reply written here is a reply there and vice versa.
+ */
+tasks.register<JavaExec>("ltReplyCodecCheck") {
+    group = "verification"
+    description = "Checks the Listen Together reply envelope against the mobile wire format"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LtReplyCodecCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("firstRunRenderCheck") {
     group = "verification"
     description = "Renders the first-run flow headlessly and checks that it paints"

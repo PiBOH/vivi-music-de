@@ -49,6 +49,24 @@ object WindowsToast {
         }
     }
 
+    /**
+     * Warms everything the first toast needs (the AUMID shortcut registration,
+     * which compiles C# inline, and the long-lived PowerShell session), so the
+     * user's first real notification is not the one that pays for it.
+     *
+     * Called once at startup, on a background thread: the app never waits for it.
+     */
+    fun prewarm() {
+        if (!isAvailable()) return
+        Thread {
+            runCatching { ensureRegistered() }
+                .onFailure { log("prewarm: registration failed: $it") }
+            runCatching { session.ensureStarted() }
+                .onFailure { log("prewarm: session failed: $it") }
+            log("prewarm: done (session=${session.isRunning()})")
+        }.apply { isDaemon = true; name = "VIVI-Toast-Warm" }.start()
+    }
+
     /** Shows a native toast with [title] and [message], opening [section] on click. */
     fun show(title: String, message: String, section: String?) {
         log("show: isAvailable=${isAvailable()} os=$os appExe=$appExe title=\"$title\" section=$section")
@@ -57,10 +75,150 @@ object WindowsToast {
             runCatching {
                 ensureRegistered()
                 val logo = extractLogo()
-                val ok = runPowerShell(toastScript(title, message, section, logo))
-                log("show: toast powershell result=$ok")
+                // The toast itself is one command on the already-running
+                // PowerShell session: no process spawn and no inline C#
+                // compilation on the notification path, which is what made a
+                // toast arrive seconds after the event that caused it.
+                val ok = session.run(toastCommand(title, message, section, logo))
+                if (!ok) {
+                    log("show: session unavailable, falling back to a one-shot powershell")
+                    log("show: toast powershell result=${runPowerShell(toastScript(title, message, section, logo))}")
+                } else {
+                    log("show: toast result=$ok")
+                }
             }.onFailure { log("show: exception=$it") }
         }.apply { isDaemon = true; name = "VIVI-Toast" }.start()
+    }
+
+    /**
+     * One long-lived `powershell.exe` that reads commands from its stdin.
+     *
+     * Every toast used to start a fresh PowerShell process (and load the WinRT
+     * toast types again): a process start plus a cold type resolution is 1-4
+     * seconds, which is exactly the "native notifications arrive late" report.
+     * Keeping one session alive removes both costs: a toast becomes a single
+     * line written to a pipe.
+     */
+    private class PowerShellSession {
+        private val lock = Any()
+        private var process: Process? = null
+        private var writer: java.io.BufferedWriter? = null
+        private var reader: java.io.BufferedReader? = null
+        private var hookInstalled = false
+
+        fun isRunning(): Boolean = process?.isAlive == true
+
+        fun ensureStarted(): Boolean = synchronized(lock) {
+            val alive = process?.isAlive == true
+            if (alive && writer != null && reader != null) return true
+            close()
+            return runCatching {
+                val pb = ProcessBuilder(
+                    "powershell.exe", "-NoProfile", "-NonInteractive",
+                    "-ExecutionPolicy", "Bypass", "-Command", "-",
+                )
+                pb.redirectErrorStream(true)
+                val p = pb.start()
+                process = p
+                writer = p.outputStream.bufferedWriter(Charsets.UTF_8)
+                reader = p.inputStream.bufferedReader(Charsets.UTF_8)
+                // Keep the transcript clean: only our own markers are read back.
+                writer?.apply {
+                    write("\$ProgressPreference = 'SilentlyContinue'\n")
+                    flush()
+                }
+                if (!hookInstalled) {
+                    hookInstalled = true
+                    runCatching {
+                        Runtime.getRuntime().addShutdownHook(
+                            Thread { runCatching { close() } },
+                        )
+                    }
+                }
+                true
+            }.getOrElse {
+                log("session: could not start powershell: $it")
+                close()
+                false
+            }
+        }
+
+        /**
+         * Runs [script] on the session and waits for its completion marker.
+         * Returns false when the session is unavailable or the command failed
+         * (the caller then falls back to a one-shot process).
+         */
+        fun run(script: String): Boolean = synchronized(lock) {
+            if (!ensureStarted()) return false
+            val w = writer ?: return false
+            val r = reader ?: return false
+            return runCatching {
+                w.write(script)
+                w.write("\n")
+                w.flush()
+                // The wrapped command always prints exactly one marker line, so
+                // reading to it is bounded; a dead process returns null and the
+                // loop ends instead of hanging.
+                val deadline = System.currentTimeMillis() + 20_000L
+                while (System.currentTimeMillis() < deadline) {
+                    val line = r.readLine() ?: break
+                    if (line.startsWith(DONE_OK)) return true
+                    if (line.startsWith(DONE_ERR)) {
+                        log("session: command failed: ${line.removePrefix(DONE_ERR).trim()}")
+                        return false
+                    }
+                }
+                log("session: timed out waiting for the marker")
+                false
+            }.getOrElse {
+                log("session: run failed: $it")
+                close()
+                false
+            }
+        }
+
+        fun close() {
+            runCatching { writer?.close() }
+            runCatching { reader?.close() }
+            runCatching { process?.destroy() }
+            writer = null
+            reader = null
+            process = null
+        }
+    }
+
+    private val session = PowerShellSession()
+
+    private const val DONE_OK = "VIVI-TOAST-OK"
+    private const val DONE_ERR = "VIVI-TOAST-ERR"
+
+    /**
+     * The toast, as one line meant for the live session: the XML is base64 so no
+     * quoting or newline in a title can break the command, and the whole thing is
+     * wrapped so the session always receives exactly one marker line back.
+     */
+    private fun toastCommand(title: String, message: String, section: String?, logo: File?): String {
+        val launch = section?.let { "--open=$it" } ?: "--open="
+        val logoElement = logo?.let {
+            val uri = "file:///" + it.absolutePath.replace('\\', '/').removePrefix("/")
+            "<image placement=\"appLogoOverride\" src=\"$uri\" hint-crop=\"circle\"/>"
+        } ?: ""
+        val xml = "<toast activationType=\"foreground\" launch=\"$launch\" duration=\"short\">" +
+            "<visual><binding template=\"ToastGeneric\">" +
+            "<text>${escapeXml(title)}</text><text>${escapeXml(message)}</text>$logoElement" +
+            "</binding></visual></toast>"
+        val encoded = Base64.getEncoder().encodeToString(xml.toByteArray(Charsets.UTF_8))
+        val body = "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; " +
+            "[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null; " +
+            "[Windows.UI.Notifications.ToastNotification, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null; " +
+            "\$xmlText = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('$encoded')); " +
+            "\$doc = New-Object Windows.Data.Xml.Dom.XmlDocument; " +
+            "\$doc.LoadXml(\$xmlText); " +
+            "\$toast = New-Object Windows.UI.Notifications.ToastNotification \$doc; " +
+            "\$toast.Tag = [guid]::NewGuid().ToString('N').Substring(0,16); " +
+            "\$toast.Group = 'VIVIMusicDE'; " +
+            "[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('$AUMID').Show(\$toast)"
+        return "try { $body; Write-Output '$DONE_OK' } catch { Write-Output ('$DONE_ERR ' + \$_.Exception.Message) }"
     }
 
     /** Registers the AUMID shortcut once per process (idempotent). */

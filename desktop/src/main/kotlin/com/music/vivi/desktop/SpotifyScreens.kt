@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -211,116 +212,164 @@ private fun SpotifyConnectSection(
     // which is not where the user is looking when the first run spends a while
     // downloading and unpacking Chromium.
     val preparing by SpotifyLoginProgress.value.collectAsState()
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            SpotifyIcon,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(26.dp),
-        )
-        Spacer(Modifier.width(10.dp))
-        Text(
-            Localization.get(language, "spotify_not_connected"),
-            style = MaterialTheme.typography.titleMedium,
-        )
-    }
 
-    // The button is the whole connect step: it opens the sign-in window, which
-    // hands the cookie back on its own (see SpotifyLoginWebView).
-    Button(
-        onClick = onOpenWindow,
-        enabled = !loading,
-        modifier = Modifier.padding(top = 12.dp),
-    ) {
-        if (loading) {
-            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-            Spacer(Modifier.width(10.dp))
-        } else {
-            Icon(SpotifyIcon, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(10.dp))
-        }
-        Text(Localization.get(language, "spotify_open_login"))
-    }
-
-    preparing?.let { percent ->
-        Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-            if (percent < 0f) {
-                // Working, with no number to show (CEF reports no progress for a
-                // page load): a moving bar instead of a stuck 0 %.
-                LinearProgressIndicator(Modifier.fillMaxWidth())
-            } else {
-                LinearProgressIndicator(
-                    progress = { (percent / 100f).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth(),
+    // ------------------------------------------------------------- window path
+    // Same shape as the Google sign-in screen next door: a title, a short guide,
+    // and one button that starts the flow. The two screens are the same decision
+    // for the user, so they read the same way.
+    Card(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    SpotifyIcon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(26.dp),
                 )
+                Spacer(Modifier.width(10.dp))
                 Text(
-                    "${percent.toInt().coerceIn(0, 100)}%",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp),
+                    Localization.get(language, "spotify_open_login"),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                 )
+            }
+            Text(
+                Localization.get(language, "spotify_not_connected"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+            listOf("spotify_step1", "spotify_step2", "spotify_step3").forEach { key ->
+                Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Top) {
+                    Text("• ", color = MaterialTheme.colorScheme.primary)
+                    Text(
+                        Localization.get(language, key),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            // The button is the whole connect step: it opens the sign-in window,
+            // which hands the cookie back on its own (see SpotifyLoginWebView).
+            Button(
+                onClick = onOpenWindow,
+                enabled = !loading,
+                modifier = Modifier.padding(top = 12.dp),
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(10.dp))
+                } else {
+                    Icon(SpotifyIcon, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(10.dp))
+                }
+                Text(Localization.get(language, "spotify_open_login"))
+            }
+
+            preparing?.let { percent ->
+                Column(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                    if (percent < 0f) {
+                        // Working, with no number to show (CEF reports no progress
+                        // for a page load): a moving bar instead of a stuck 0 %.
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                    } else {
+                        LinearProgressIndicator(
+                            progress = { (percent / 100f).coerceIn(0f, 1f) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        Text(
+                            "${percent.toInt().coerceIn(0, 100)}%",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
             }
         }
     }
 
-    // The cookie paste is always one click away, not only after a window has
-    // failed, so a window that cannot finish the sign-in is never a dead end.
-    if (!manualFallback) {
-        TextButton(onClick = onShowManual, modifier = Modifier.padding(top = 2.dp)) {
-            Text(Localization.get(language, "login_manual_title"))
-        }
-        return
-    }
+    // -------------------------------------------------------- manual cookie path
+    // Always one click away, not only after a window has failed, so a window
+    // that cannot finish the sign-in is never a dead end. Collapsible like the
+    // Google screen's manual card.
+    Card(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Row(
+                Modifier.fillMaxWidth().clickable { if (manualFallback) onShowManual() },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    Localization.get(language, "login_manual_title"),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    Localization.get(language, if (manualFallback) "login_hide" else "login_show"),
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
 
-    // Why the fields are here at all — but only when the window really cannot
-    // be created, since the same block also opens on request.
-    if (windowUnavailable) {
-        Text(
-            Localization.get(language, "login_webview_unavailable"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 10.dp),
-        )
-    }
-    OutlinedButton(
-        onClick = { openUrl(SpotifyImport.loginUrl()) },
-        modifier = Modifier.padding(top = 8.dp),
-    ) {
-        Text(Localization.get(language, "spotify_open_login"))
-    }
-    // The two fields are labelled with the cookie names themselves: `sp_dc` and
-    // `sp_key` are Spotify's identifiers, not words, so there is nothing to
-    // translate and no key to keep in 51 tables.
-    OutlinedTextField(
-        value = spDc,
-        onValueChange = onSpDcChange,
-        label = { Text("sp_dc") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-    )
-    OutlinedTextField(
-        value = spKey,
-        onValueChange = onSpKeyChange,
-        label = { Text("sp_key") },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-    )
-    Text(
-        Localization.get(language, "spotify_cookie_hint"),
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 6.dp),
-    )
-    Row(
-        Modifier.padding(top = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Button(onClick = onConnect, enabled = spDc.isNotBlank() && !loading) {
-            Text(Localization.get(language, "connect"))
-        }
-        if (loading) {
-            Spacer(Modifier.width(12.dp))
-            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+            if (!manualFallback) {
+                TextButton(onClick = onShowManual) {
+                    Text(Localization.get(language, "login_show"))
+                }
+                return@Column
+            }
+
+            // Why the fields are here at all, but only when the window really
+            // cannot be created, since the same block also opens on request.
+            if (windowUnavailable) {
+                Text(
+                    Localization.get(language, "login_webview_unavailable"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+            }
+            OutlinedButton(
+                onClick = { openUrl(SpotifyImport.loginUrl()) },
+                modifier = Modifier.padding(top = 8.dp),
+            ) {
+                Text(Localization.get(language, "spotify_open_login"))
+            }
+            Text(
+                Localization.get(language, "spotify_cookie_hint"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+            // The two fields are labelled with the cookie names themselves:
+            // `sp_dc` and `sp_key` are Spotify's identifiers, not words, so there
+            // is nothing to translate and no key to keep in 52 tables.
+            OutlinedTextField(
+                value = spDc,
+                onValueChange = onSpDcChange,
+                label = { Text("sp_dc") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            )
+            OutlinedTextField(
+                value = spKey,
+                onValueChange = onSpKeyChange,
+                label = { Text("sp_key") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            )
+            Row(
+                Modifier.padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // The same "Log in" the Google screen uses for its manual path.
+                Button(onClick = onConnect, enabled = spDc.isNotBlank() && !loading) {
+                    Text(if (loading) Localization.get(language, "logging_in") else Localization.get(language, "login"))
+                }
+                if (loading) {
+                    Spacer(Modifier.width(12.dp))
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                }
+            }
         }
     }
 }

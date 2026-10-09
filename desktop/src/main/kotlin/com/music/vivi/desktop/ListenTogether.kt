@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -318,6 +320,93 @@ sealed class LtEvent {
 data class LtLogEntry(val level: String, val message: String, val detail: String? = null)
 
 // ---------------------------------------------------------------------------
+// Embedded replies ("universal reply fix", the mobile wire format)
+// ---------------------------------------------------------------------------
+
+/**
+ * The public relay only forwards the chat text: there is no field on the wire
+ * for a quote. The Android client therefore embeds the reply inside the message
+ * itself as `\u200B[RPLY:<base64(username|message)>]\u200B` and strips it again on
+ * receive. Replying here without the same envelope is what showed the phone's
+ * replies as literal `[RPLY:…]` text in this client, and made this client's
+ * replies arrive on the phone as plain messages. Both halves live here.
+ */
+/** A chat message split into its text and its (possibly embedded) quote. */
+data class LtReplySplit(val message: String, val replyTo: LtRepliedMessage?)
+
+object LtReplyCodec {
+    private const val PREFIX = "\u200B[RPLY:"
+    private const val SUFFIX = "]\u200B"
+
+    /** Wraps [message] with the quoted [replyTo], in the mobile's exact format. */
+    fun encode(message: String, replyTo: LtRepliedMessage?): String {
+        if (replyTo == null) return message
+        val metadata = "${replyTo.username}|${replyTo.message}"
+        val encoded = java.util.Base64.getEncoder().encodeToString(metadata.toByteArray(Charsets.UTF_8))
+        return PREFIX + encoded + SUFFIX + message
+    }
+
+    /**
+     * Reads the embedded quote out of [message]. Returns the message unchanged
+     * when there is none, or when the envelope is malformed (the raw text is
+     * better than dropping the message).
+     */
+    fun decode(message: String, fallback: LtRepliedMessage?): LtReplySplit {
+        if (!message.startsWith(PREFIX)) return LtReplySplit(message, fallback)
+        return runCatching {
+            val end = message.indexOf(SUFFIX)
+            if (end < 0) return LtReplySplit(message, fallback)
+            val encoded = message.substring(PREFIX.length, end)
+            val decoded = String(java.util.Base64.getDecoder().decode(encoded), Charsets.UTF_8)
+            val parts = decoded.split("|", limit = 2)
+            if (parts.size != 2) return LtReplySplit(message, fallback)
+            LtReplySplit(message.substring(end + SUFFIX.length), LtRepliedMessage(parts[0], parts[1]))
+        }.getOrElse { LtReplySplit(message, fallback) }
+    }
+}
+
+/**
+ * Live "who owns the transport" state, readable from any composable without
+ * threading the manager down.
+ *
+ * The room screen, the song menus and every player read this: while the user is
+ * a GUEST in a room the host owns the transport, so the seek bars and the
+ * play/pause/skip controls are inert (exactly like the mobile app). The state
+ * is snapshot state, so a composable that reads it re-renders when the role
+ * changes.
+ */
+object ListenTogetherGate {
+    private val _inRoom = mutableStateOf(false)
+    val inRoom: State<Boolean> = _inRoom
+
+    private val _isHost = mutableStateOf(false)
+    val isHost: State<Boolean> = _isHost
+
+    /** True while inside a room without being its host. */
+    private val _locked = mutableStateOf(false)
+    val locked: State<Boolean> = _locked
+
+    val lockedNow: Boolean get() = _locked.value
+
+    fun update(inRoom: Boolean, isHost: Boolean) {
+        _inRoom.value = inRoom
+        _isHost.value = isHost
+        _locked.value = inRoom && !isHost
+    }
+}
+
+/**
+ * The running manager, published once at startup so pieces far from the room
+ * screen (a song's "⋮" menu, for instance) can offer the guest-only actions
+ * without every call site taking the manager as a parameter. Null until the main
+ * window has built it.
+ */
+object ListenTogetherBridge {
+    @Volatile
+    var manager: ListenTogetherManager? = null
+}
+
+// ---------------------------------------------------------------------------
 // Client
 // ---------------------------------------------------------------------------
 
@@ -402,6 +491,17 @@ class ListenTogetherClient(
     private fun log(level: String, message: String, detail: String? = null) {
         _logs.value = (_logs.value + LtLogEntry(level, message, detail)).takeLast(200)
     }
+
+    /**
+     * Re-derives every user's `isHost` from the room's `hostId`.
+     *
+     * The server's own flags are not reliably carried in every frame (a
+     * `host_changed` used to move `hostId` alone), so after a host transfer the
+     * crown stayed on the old host and the user list contradicted the room state.
+     * The `hostId` is the single source of truth here.
+     */
+    private fun withHostFlag(state: LtRoomState): LtRoomState =
+        state.copy(users = state.users.map { it.copy(isHost = it.userId == state.hostId) })
 
     /** Public log sink so the manager can mirror its own events into the UI log. */
     fun addLog(level: String, message: String, detail: String? = null) {
@@ -574,6 +674,10 @@ class ListenTogetherClient(
 
     fun approveJoin(userId: String) {
         send(LtMessage(LtMessageTypes.APPROVE_JOIN, json.encodeToJsonElement(LtApproveJoin.serializer(), LtApproveJoin(userId))))
+        // An approved user must leave the "requests" list at once. Waiting for
+        // the server's `user_joined` left the approved person drawn among the
+        // ones still waiting to be approved.
+        _pendingJoinRequests.value = _pendingJoinRequests.value.filter { it.userId != userId }
     }
 
     fun rejectJoin(userId: String, reason: String? = null) {
@@ -597,7 +701,10 @@ class ListenTogetherClient(
      */
     fun sendChat(text: String, replyTo: LtRepliedMessage? = null) {
         if (text.isBlank()) return
-        val payload = LtChat(text.trim(), replyTo)
+        // The quote is embedded in the text (mobile wire format) AND sent in the
+        // `reply_to` field: the relay only forwards the text, so the envelope is
+        // what makes the reply come back quoted on the phone.
+        val payload = LtChat(LtReplyCodec.encode(text.trim(), replyTo), replyTo)
         send(LtMessage(LtMessageTypes.CHAT, json.encodeToJsonElement(LtChat.serializer(), payload)))
     }
 
@@ -684,6 +791,29 @@ class ListenTogetherClient(
         _logs.value = emptyList()
     }
 
+    /**
+     * One incoming chat frame: strips the embedded quote (mobile envelope) and
+     * appends the message.
+     */
+    private fun handleChat(payload: JsonElement?) {
+        val c = payload?.let { runCatching { json.decodeFromJsonElement<LtChatMessage>(it) }.getOrNull() } ?: return
+        val split = LtReplyCodec.decode(c.message, c.replyTo)
+        val message = c.copy(message = split.message, replyTo = split.replyTo)
+        val messages = _chatMessages.value
+        // The chat list is keyed by timestamp + author + text, so a message that
+        // arrives twice is a duplicate key and crashes the room. Identical
+        // messages from the same author in the same millisecond are
+        // indistinguishable anyway, so the second copy is dropped instead of
+        // drawn.
+        val duplicate = messages.any {
+            it.timestamp == message.timestamp && it.userId == message.userId && it.message == message.message
+        }
+        if (!duplicate) {
+            _chatMessages.value = (messages + message).takeLast(200)
+        }
+        scope.launch { _events.emit(LtEvent.Chat(message)) }
+    }
+
     private fun send(msg: LtMessage) {
         val text = json.encodeToString(LtMessage.serializer(), msg)
         val ws = socket
@@ -697,6 +827,10 @@ class ListenTogetherClient(
 
     private fun handle(text: String) {
         val msg = try { json.decodeFromString(LtMessage.serializer(), text) } catch (e: Exception) { return }
+        if (msg.type == LtMessageTypes.CHAT) {
+            handleChat(msg.payload)
+            return
+        }
         val p = msg.payload
         when (msg.type) {
             LtMessageTypes.PONG -> Unit
@@ -708,10 +842,12 @@ class ListenTogetherClient(
                     _role.value = LtRoomRole.HOST
                     sessionToken = c.sessionToken
                     storedRoomCode = c.roomCode
-                    _roomState.value = LtRoomState(
-                        c.roomCode,
-                        c.userId,
-                        listOf(LtUserInfo(c.userId, username, isHost = true)),
+                    _roomState.value = withHostFlag(
+                        LtRoomState(
+                            c.roomCode,
+                            c.userId,
+                            listOf(LtUserInfo(c.userId, username, isHost = true)),
+                        ),
                     )
                     saveSession()
                     scope.launch { _events.emit(LtEvent.RoomCreated(c.roomCode, c.userId)) }
@@ -722,6 +858,19 @@ class ListenTogetherClient(
                 p?.let { json.decodeFromJsonElement<LtJoinRequest>(it) }?.let { r ->
                     if (r.username in _blockedUsernames.value) {
                         rejectJoin(r.userId, "Blocked")
+                        return@let
+                    }
+                    // "Auto approve join requests": the setting existed and was
+                    // shown in the room, but nothing ever read it, so the switch
+                    // did exactly nothing and every guest waited for a tap. The
+                    // host's own approval is what the setting promises.
+                    if (DesktopSettings.load().listenTogetherAutoApproval) {
+                        log("INFO", "Auto-approved ${r.username}")
+                        approveJoin(r.userId)
+                        // No local `UserJoined` is emitted here: the relay sends
+                        // its own the moment the guest is really in, and emitting
+                        // a second one re-broadcast the track for a user who was
+                        // not in yet.
                         return@let
                     }
                     // One entry per user: a repeated request (a retry, a rejoin)
@@ -741,7 +890,7 @@ class ListenTogetherClient(
                     _role.value = LtRoomRole.GUEST
                     sessionToken = c.sessionToken
                     storedRoomCode = c.roomCode
-                    _roomState.value = c.state
+                    _roomState.value = withHostFlag(c.state)
                     saveSession()
                     scope.launch { _events.emit(LtEvent.JoinApproved(c.roomCode, c.state)) }
                 }
@@ -755,15 +904,19 @@ class ListenTogetherClient(
 
             LtMessageTypes.USER_JOINED -> {
                 p?.let { json.decodeFromJsonElement<LtUserJoined>(it) }?.let { u ->
+                    // Whoever joined is no longer "waiting to be approved".
+                    _pendingJoinRequests.value = _pendingJoinRequests.value.filter { it.userId != u.userId }
                     // Replacing rather than appending: a user who joins twice
                     // (a reconnect the host did not see as one) used to get two
                     // rows with the same `userId`, and the user list is keyed by
                     // `userId`, so Compose refused the duplicate key and crashed
                     // the app while the room was open.
                     _roomState.value = _roomState.value?.let { state ->
-                        state.copy(
-                            users = state.users.filter { x -> x.userId != u.userId } +
-                                LtUserInfo(u.userId, u.username),
+                        withHostFlag(
+                            state.copy(
+                                users = state.users.filter { x -> x.userId != u.userId } +
+                                    LtUserInfo(u.userId, u.username),
+                            ),
                         )
                     }
                     scope.launch { _events.emit(LtEvent.UserJoined(u.userId, u.username)) }
@@ -824,7 +977,9 @@ class ListenTogetherClient(
 
             LtMessageTypes.HOST_CHANGED -> {
                 p?.let { json.decodeFromJsonElement<LtHostChanged>(it) }?.let { h ->
-                    _roomState.value = _roomState.value?.let { it.copy(hostId = h.newHostId) }
+                    // Move the host AND re-flag the users: the crown has to
+                    // follow the new host, on every client.
+                    _roomState.value = _roomState.value?.let { withHostFlag(it.copy(hostId = h.newHostId)) }
                     val me = _userId.value
                     _role.value = if (me == h.newHostId) LtRoomRole.HOST else LtRoomRole.GUEST
                     saveSession()
@@ -850,29 +1005,11 @@ class ListenTogetherClient(
                     // deduplicated here as well: it is keyed by `userId` when
                     // drawn, and a repeated entry is a crash, not a cosmetic
                     // problem.
-                    _roomState.value = r.state.copy(users = r.state.users.distinctBy { it.userId })
+                    _roomState.value = withHostFlag(r.state.copy(users = r.state.users.distinctBy { it.userId }))
                     _role.value = if (r.isHost) LtRoomRole.HOST else LtRoomRole.GUEST
                     username = r.state.users.firstOrNull { it.userId == r.userId }?.username ?: username
                     saveSession()
                     scope.launch { _events.emit(LtEvent.Reconnected(r.roomCode, r.isHost, r.state)) }
-                }
-            }
-
-            LtMessageTypes.CHAT -> {
-                p?.let { json.decodeFromJsonElement<LtChatMessage>(it) }?.let { c ->
-                    val messages = _chatMessages.value
-                    // The chat list is keyed by timestamp + author + text, so a
-                    // message that arrives twice is a duplicate key and crashes
-                    // the room. Identical messages from the same author in the
-                    // same millisecond are indistinguishable anyway, so the
-                    // second copy is dropped instead of drawn.
-                    val duplicate = messages.any {
-                        it.timestamp == c.timestamp && it.userId == c.userId && it.message == c.message
-                    }
-                    if (!duplicate) {
-                        _chatMessages.value = (messages + c).takeLast(200)
-                    }
-                    scope.launch { _events.emit(LtEvent.Chat(c)) }
                 }
             }
 
@@ -986,6 +1123,14 @@ class ListenTogetherManager(private val player: PlayerController) {
         }
         scope.launch {
             client.role.collect { newRole ->
+                // The host owns the transport: as a guest this user's own play /
+                // pause / seek / skip controls are inert (the server refuses the
+                // actions anyway, but the UI must not look like it works either).
+                // The mobile app locks the same controls, here and in every
+                // player, from one shared state.
+                val locked = newRole == LtRoomRole.GUEST
+                player.userControlLocked = locked
+                ListenTogetherGate.update(inRoom = newRole != LtRoomRole.NONE, isHost = newRole == LtRoomRole.HOST)
                 when (newRole) {
                     LtRoomRole.HOST -> {
                         startHostObservation()
@@ -1216,9 +1361,11 @@ class ListenTogetherManager(private val player: PlayerController) {
             }
 
             is LtEvent.SuggestionApproved -> {
-                // Host approved a guest suggestion: server inserts it next.
+                // Host approved a guest suggestion: the server inserts it next on
+                // the host, and this side mirrors the "play next" (remote action,
+                // so a guest's own lock does not swallow it).
                 val track = event.suggestion.trackInfo
-                player.insertNext(track.toNowPlaying())
+                player.asRemote { player.insertNext(track.toNowPlaying()) }
             }
 
             is LtEvent.HostChanged -> {
@@ -1349,15 +1496,19 @@ class ListenTogetherManager(private val player: PlayerController) {
                     }
                 }
 
-                LtPlaybackActions.SKIP_NEXT -> player.next()
-                LtPlaybackActions.SKIP_PREV -> player.previous()
+                // These are the HOST's actions arriving over the wire, so they
+                // run as remote (they bypass the guest's own control lock).
+                LtPlaybackActions.SKIP_NEXT -> player.asRemote { player.next() }
+                LtPlaybackActions.SKIP_PREV -> player.asRemote { player.previous() }
 
                 LtPlaybackActions.QUEUE_ADD -> {
                     action.trackInfo?.let { track ->
-                        if (action.insertNext == true) {
-                            player.insertNext(track.toNowPlaying())
-                        } else {
-                            player.addToQueue(track.toNowPlaying())
+                        player.asRemote {
+                            if (action.insertNext == true) {
+                                player.insertNext(track.toNowPlaying())
+                            } else {
+                                player.addToQueue(track.toNowPlaying())
+                            }
                         }
                     }
                 }
@@ -1367,11 +1518,11 @@ class ListenTogetherManager(private val player: PlayerController) {
                     if (!removeId.isNullOrEmpty()) {
                         val q = player.state.value.queue
                         val idx = q.indexOfFirst { it.videoId == removeId }
-                        if (idx >= 0) player.removeAt(idx)
+                        if (idx >= 0) player.asRemote { player.removeAt(idx) }
                     }
                 }
 
-                LtPlaybackActions.QUEUE_CLEAR -> player.clearQueue()
+                LtPlaybackActions.QUEUE_CLEAR -> player.asRemote { player.clearQueue() }
 
                 LtPlaybackActions.SYNC_QUEUE -> {
                     val queue = action.queue
@@ -1434,7 +1585,7 @@ class ListenTogetherManager(private val player: PlayerController) {
                     if (queue.isNotEmpty()) {
                         player.restoreQueue(queue.map { it.toNowPlaying() }, 0)
                     } else {
-                        player.clearQueue()
+                        player.asRemote { player.clearQueue() }
                     }
                 }
                 player.seekRemote(0, false, 0L)
@@ -1580,6 +1731,8 @@ class ListenTogetherManager(private val player: PlayerController) {
     fun clearLogs() = client.clearLogs()
 
     private fun cleanup() {
+        player.userControlLocked = false
+        ListenTogetherGate.update(inRoom = false, isHost = false)
         if (isSyncing) isSyncing = false
         bufferingTrackId = null
         pendingSyncState = null
