@@ -60,8 +60,6 @@ object LtRoomRenderCheck {
                 onAvatar = {},
                 roomCode = "",
                 onRoomCode = {},
-                server = "wss://relay.example",
-                onServer = {},
                 autoApprove = false,
                 onAutoApprove = {},
                 syncVolume = true,
@@ -198,8 +196,6 @@ object LtRoomRenderCheck {
             onSyncVolume = {},
             smartResync = true,
             onSmartResync = {},
-            server = "wss://relay.example",
-            onServer = {},
             blockedUsers = emptySet(),
             onUnblock = {},
             logs = emptyList(),
@@ -219,8 +215,6 @@ object LtRoomRenderCheck {
             onApproveSuggestion = {},
             onRejectSuggestion = {},
             onLeave = {},
-            onReconnect = {},
-            onDisconnect = {},
         )
     }
 

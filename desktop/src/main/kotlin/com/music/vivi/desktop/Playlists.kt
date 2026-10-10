@@ -814,9 +814,11 @@ fun LocalPlaylistScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 4.dp),
                 )
+                // A local playlist may hold the same track twice; see `withOccurrences`.
+                val songKeys = remember(localSongs) { localSongs.map { it.id }.withOccurrences() }
                 LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                    itemsIndexed(localSongs, key = { _, song -> song.id }) { _, song ->
-                        ReorderableItem(state = reorderableState, key = song.id) {
+                    itemsIndexed(localSongs, key = { i, _ -> songKeys[i] }) { i, song ->
+                        ReorderableItem(state = reorderableState, key = songKeys[i]) {
                             Row(
                                 Modifier.fillMaxWidth().clickable { onPlay(song) }.padding(vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,

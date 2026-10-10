@@ -1,5 +1,6 @@
 package com.music.vivi.desktop
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -70,6 +71,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -158,6 +160,11 @@ internal fun LtAvatar(
                 bitmap = bitmap,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                // The pictures are 512x512 and are drawn at 36 to 46 dp. The
+                // default filter samples them without mipmaps, which is what made
+                // a reduced face look pixelated; High is trilinear, so the small
+                // circle is a smooth reduction of the big file.
+                filterQuality = FilterQuality.High,
                 modifier = Modifier.fillMaxSize().clip(CircleShape),
             )
             // Index 0, and the fallback for a picture that could not be read.
@@ -331,9 +338,12 @@ fun ListenTogetherScreen(
         LtConnectionCard(
             language = language,
             state = connectionState,
+            server = serverInput,
+            onServer = {
+                serverInput = it
+                DesktopSettings.update { s -> s.copy(listenTogetherServerUrl = it) }
+            },
             onConnect = { manager.connect() },
-            onDisconnect = { manager.disconnect() },
-            onReconnect = { manager.forceReconnect() },
         )
         Spacer(Modifier.height(16.dp))
 
@@ -347,11 +357,6 @@ fun ListenTogetherScreen(
                 onAvatar = ::saveAvatar,
                 roomCode = roomCodeInput,
                 onRoomCode = { if (it.length <= 8) roomCodeInput = it.uppercase() },
-                server = serverInput,
-                onServer = {
-                    serverInput = it
-                    DesktopSettings.update { s -> s.copy(listenTogetherServerUrl = it) }
-                },
                 autoApprove = autoApprove,
                 onAutoApprove = {
                     autoApprove = it
@@ -416,11 +421,6 @@ fun ListenTogetherScreen(
                 onSmartResync = {
                     smartResync = it
                     DesktopSettings.update { s -> s.copy(listenTogetherSmartResync = it) }
-                },
-                server = serverInput,
-                onServer = {
-                    serverInput = it
-                    DesktopSettings.update { s -> s.copy(listenTogetherServerUrl = it) }
                 },
                 blockedUsers = blockedUsers,
                 onUnblock = { manager.unblockUser(it) },
@@ -490,8 +490,6 @@ fun ListenTogetherScreen(
                 onApproveSuggestion = { manager.approveSuggestion(it) },
                 onRejectSuggestion = { manager.rejectSuggestion(it) },
                 onLeave = { manager.leaveRoom() },
-                onReconnect = { manager.forceReconnect() },
-                onDisconnect = { manager.disconnect() },
             )
         }
         Spacer(Modifier.height(32.dp))
@@ -558,15 +556,31 @@ internal fun LtHeader(language: String) {
     }
 }
 
-/** Connection state + the three ways to act on it, as one expressive card. */
+/**
+ * Connection state and the relay it talks to, as one expressive card.
+ *
+ * The relay row lives here now: it was the first row of the settings section at
+ * the bottom, at the far end of the screen from the connection it describes, and
+ * the two said the same thing in two places. The card names the server and shows
+ * its address under the name, with the phone's picker behind Choose server.
+ *
+ * The Disconnect and Reconnect buttons that used to sit on the right are gone,
+ * from this card and from the room's own action row: the client reconnects on
+ * its own when the socket drops, so the pair only invited a press that the
+ * status line was already reporting. Connect stays, for the state where there is
+ * nothing to drop.
+ */
 @Composable
 internal fun LtConnectionCard(
     language: String,
     state: LtConnectionState,
+    server: String,
+    onServer: (String) -> Unit,
     onConnect: () -> Unit,
-    onDisconnect: () -> Unit,
-    onReconnect: () -> Unit,
 ) {
+    var serverMenu by remember { mutableStateOf(false) }
+    var customServerOpen by remember { mutableStateOf(false) }
+    var customServer by remember(server) { mutableStateOf(server) }
     val (label, color) = when (state) {
         LtConnectionState.CONNECTED -> Localization.get(language, "connected") to MaterialTheme.colorScheme.primary
         LtConnectionState.CONNECTING -> Localization.get(language, "lt_connecting") to MaterialTheme.colorScheme.tertiary
@@ -574,32 +588,92 @@ internal fun LtConnectionCard(
         LtConnectionState.DISCONNECTED, LtConnectionState.ERROR ->
             Localization.get(language, "disconnected") to MaterialTheme.colorScheme.error
     }
+    val address = server.ifBlank { LT_SERVERS.first().url }
+    val serverName = LT_SERVERS.firstOrNull { it.url == address }?.name
+        ?: Localization.get(language, "lt_custom_server")
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            Modifier.fillMaxWidth().padding(14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            Box(Modifier.size(10.dp).background(color, CircleShape))
-            Column(Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.titleSmall, color = color)
-                Text(
-                    Localization.get(language, "relay_server"),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            when (state) {
-                LtConnectionState.CONNECTED, LtConnectionState.CONNECTING, LtConnectionState.RECONNECTING -> {
-                    OutlinedButton(onClick = onDisconnect) { Text(Localization.get(language, "disconnect")) }
-                    OutlinedButton(onClick = onReconnect) { Text(Localization.get(language, "lt_reconnect")) }
+        Column(Modifier.fillMaxWidth().padding(14.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(Modifier.size(10.dp).background(color, CircleShape))
+                Column(Modifier.weight(1f)) {
+                    Text(label, style = MaterialTheme.typography.titleSmall, color = color)
+                    Text(
+                        serverName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        address,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
-                LtConnectionState.DISCONNECTED, LtConnectionState.ERROR -> {
+                TextButton(onClick = { serverMenu = true }) {
+                    Text(Localization.get(language, "lt_choose_server"))
+                }
+                DropdownMenu(expanded = serverMenu, onDismissRequest = { serverMenu = false }) {
+                    LT_SERVERS.forEach { known ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(known.name)
+                                    Text(
+                                        "${known.location} · ${known.operator}",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                            onClick = {
+                                serverMenu = false
+                                onServer(known.url)
+                            },
+                        )
+                    }
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text(Localization.get(language, "lt_custom_server")) },
+                        onClick = {
+                            serverMenu = false
+                            customServerOpen = true
+                        },
+                    )
+                }
+                if (state == LtConnectionState.DISCONNECTED || state == LtConnectionState.ERROR) {
                     Button(onClick = onConnect) { Text(Localization.get(language, "connect")) }
+                }
+            }
+            if (customServerOpen) {
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = customServer,
+                    onValueChange = { customServer = it },
+                    label = { Text(Localization.get(language, "relay_server")) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = {
+                            onServer(customServer.trim())
+                            customServerOpen = false
+                        },
+                        enabled = customServer.isNotBlank(),
+                    ) { Text(Localization.get(language, "lt_use_custom_server")) }
+                    TextButton(onClick = { customServerOpen = false }) {
+                        Text(Localization.get(language, "close"))
+                    }
                 }
             }
         }
@@ -659,10 +733,7 @@ internal fun LtSettingsSection(
     username: String,
     onUsername: ((String) -> Unit)?,
     avatarIndex: Int,
-    onAvatar: (Int) -> Unit,
-    server: String,
-    onServer: (String) -> Unit,
-    autoApprove: Boolean,
+    onAvatar: (Int) -> Unit,    autoApprove: Boolean,
     autoApproveEnabled: Boolean,
     onAutoApprove: (Boolean) -> Unit,
     syncVolume: Boolean,
@@ -672,14 +743,12 @@ internal fun LtSettingsSection(
     onSmartResync: (Boolean) -> Unit,
     blockedUsers: Set<String>,
     onUnblock: (String) -> Unit,
+
     logs: List<LtLogEntry>,
     onClearLogs: () -> Unit,
 ) {
     var showBlocked by remember { mutableStateOf(false) }
     var showLogs by remember { mutableStateOf(false) }
-    var serverMenu by remember { mutableStateOf(false) }
-    var customServerOpen by remember { mutableStateOf(false) }
-    var customServer by remember(server) { mutableStateOf(server) }
 
     Text(
         Localization.get(language, "settings"),
@@ -736,81 +805,8 @@ internal fun LtSettingsSection(
                 )
             }
 
-            HorizontalDivider(Modifier.padding(vertical = 14.dp))
-
-            // --- the relay: the phone's picker, plus a custom address ----------
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Filled.Sync,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(18.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(Localization.get(language, "lt_server_url"), style = MaterialTheme.typography.bodyMedium)
-                    Text(
-                        server.ifBlank { LT_SERVERS.first().url },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                TextButton(onClick = { serverMenu = true }) {
-                    Text(Localization.get(language, "lt_choose_server"))
-                }
-                DropdownMenu(expanded = serverMenu, onDismissRequest = { serverMenu = false }) {
-                    LT_SERVERS.forEach { known ->
-                        DropdownMenuItem(
-                            text = {
-                                Column {
-                                    Text(known.name)
-                                    Text(
-                                        "${known.location} · ${known.operator}",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                            onClick = {
-                                serverMenu = false
-                                onServer(known.url)
-                            },
-                        )
-                    }
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = { Text(Localization.get(language, "lt_custom_server")) },
-                        onClick = {
-                            serverMenu = false
-                            customServerOpen = true
-                        },
-                    )
-                }
-            }
-            if (customServerOpen) {
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = customServer,
-                    onValueChange = { customServer = it },
-                    label = { Text(Localization.get(language, "relay_server")) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(
-                        onClick = {
-                            onServer(customServer.trim())
-                            customServerOpen = false
-                        },
-                        enabled = customServer.isNotBlank(),
-                    ) { Text(Localization.get(language, "lt_use_custom_server")) }
-                    TextButton(onClick = { customServerOpen = false }) {
-                        Text(Localization.get(language, "close"))
-                    }
-                }
-            }
+            // The relay was the first row here; it moved to the top of the
+            // screen, into the connection card it describes (one place, not two).
 
             HorizontalDivider(Modifier.padding(vertical = 14.dp))
 
@@ -1015,8 +1011,6 @@ internal fun LtLobby(
     onAvatar: (Int) -> Unit,
     roomCode: String,
     onRoomCode: (String) -> Unit,
-    server: String,
-    onServer: (String) -> Unit,
     autoApprove: Boolean,
     onAutoApprove: (Boolean) -> Unit,
     syncVolume: Boolean,
@@ -1107,8 +1101,6 @@ internal fun LtLobby(
         onUsername = onUsername,
         avatarIndex = avatarIndex,
         onAvatar = onAvatar,
-        server = server,
-        onServer = onServer,
         autoApprove = autoApprove,
         autoApproveEnabled = true,
         onAutoApprove = onAutoApprove,
@@ -1158,8 +1150,6 @@ internal fun LtInRoom(
     onSyncVolume: (Boolean) -> Unit,
     smartResync: Boolean,
     onSmartResync: (Boolean) -> Unit,
-    server: String,
-    onServer: (String) -> Unit,
     blockedUsers: Set<String>,
     onUnblock: (String) -> Unit,
     logs: List<LtLogEntry>,
@@ -1179,8 +1169,6 @@ internal fun LtInRoom(
     onApproveSuggestion: (String) -> Unit,
     onRejectSuggestion: (String) -> Unit,
     onLeave: () -> Unit,
-    onReconnect: () -> Unit,
-    onDisconnect: () -> Unit,
 ) {
     val users = remember(room.users) { room.users.distinctBy { it.userId } }
     val joins = remember(pendingJoin) { pendingJoin.distinctBy { it.userId } }
@@ -1190,8 +1178,15 @@ internal fun LtInRoom(
     }
 
     // --- the room code, as the phone's hero card -----------------------------
+    // The card used to be a solid accent block (primaryContainer) holding both
+    // the code and the two copy buttons, so the buttons and the container were
+    // the same colour and neither the code nor the labels stood out. It wears
+    // the Copy code button's own shape now: a surface with a one-pixel accent
+    // border, the code in the accent colour and every label on the surface, so
+    // the code is the one thing the eye lands on.
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)),
         shape = RoundedCornerShape(28.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1202,13 +1197,13 @@ internal fun LtInRoom(
             Text(
                 Localization.get(language, "room_code"),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 room.roomCode,
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = MaterialTheme.colorScheme.primary,
             )
             Spacer(Modifier.height(10.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -1234,18 +1229,18 @@ internal fun LtInRoom(
                 Text(
                     Localization.get(language, "connected_users") + " (${users.size})",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (buffering.isNotEmpty()) {
                     CircularProgressIndicator(
                         Modifier.size(12.dp),
                         strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                     Text(
                         Localization.get(language, "lt_buffering") + " (${buffering.size})",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -1452,6 +1447,15 @@ internal fun LtInRoom(
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
     )
+    // How a suggestion is made, said once for both roles: from a song's own
+    // menu, or by pasting a link into the field below. The two halves are
+    // already-translated strings (the song menu's own entry and the field's
+    // placeholder), so the hint costs no new translation.
+    Text(
+        "⋮ " + Localization.get(language, "lt_suggest") + " · " + Localization.get(language, "lt_suggest_placeholder"),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Spacer(Modifier.height(8.dp))
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -1526,8 +1530,6 @@ internal fun LtInRoom(
         OutlinedButton(onClick = onRequestSync, enabled = !busy) {
             Text(Localization.get(language, "lt_request_sync"))
         }
-        OutlinedButton(onClick = onReconnect) { Text(Localization.get(language, "lt_reconnect")) }
-        OutlinedButton(onClick = onDisconnect) { Text(Localization.get(language, "disconnect")) }
         Button(onClick = onLeave) { Text(Localization.get(language, "leave_room")) }
     }
 
@@ -1587,8 +1589,6 @@ internal fun LtInRoom(
         onUsername = null,
         avatarIndex = avatarIndex,
         onAvatar = onAvatar,
-        server = server,
-        onServer = onServer,
         autoApprove = autoApprove,
         autoApproveEnabled = isHost,
         onAutoApprove = onAutoApprove,

@@ -1877,14 +1877,16 @@ fun AppleUpNextQueueScreen(
                 )
             }
         } else {
+            // A queue may hold the same track twice; see `withOccurrences`.
+            val queueKeys = remember(localQueue.toList()) { localQueue.map { it.videoId }.withOccurrences() }
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                itemsIndexed(localQueue, key = { _, item -> item.videoId }) { i, item ->
+                itemsIndexed(localQueue, key = { i, _ -> queueKeys[i] }) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
-                    ReorderableItem(state = reorderableState, key = item.videoId) {
+                    ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         Column(
                             Modifier
                                 .fillMaxWidth()
@@ -2119,10 +2121,12 @@ fun QueueScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
+            // A queue may hold the same track twice; see `withOccurrences`.
+            val queueKeys = remember(localQueue.toList()) { localQueue.map { it.videoId }.withOccurrences() }
             LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                itemsIndexed(localQueue, key = { _, item -> item.videoId }) { i, item ->
+                itemsIndexed(localQueue, key = { i, _ -> queueKeys[i] }) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
-                    ReorderableItem(state = reorderableState, key = item.videoId) {
+                    ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         // Swipe gestures: swipe right to play, swipe left to remove.
                         var dragX by remember { mutableStateOf(0f) }
                         val density = LocalDensity.current

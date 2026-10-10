@@ -1015,3 +1015,22 @@ private fun CarouselArrow(
         }
     }
 }
+
+/**
+ * Unique `LazyColumn` keys for a list that may hold the same id twice.
+ *
+ * A queue and a local playlist both accept the same track again - adding it
+ * twice is a normal thing to do - and a repeated key is a hard crash in Compose
+ * ("Key ... was already used"), not a warning: that is how a track added twice
+ * took the whole app down. Each key is the id plus how many times it has already
+ * appeared, which is unique AND keeps following the same entry while the list is
+ * reordered with a drag (an id used once gets `#0` and never moves).
+ */
+internal fun List<String>.withOccurrences(): List<String> {
+    val seen = HashMap<String, Int>()
+    return map { id ->
+        val n = seen.getOrDefault(id, 0)
+        seen[id] = n + 1
+        "$id#$n"
+    }
+}
