@@ -3,6 +3,7 @@ package com.music.vivi.desktop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URI
@@ -54,7 +55,68 @@ object LyricsTranslator {
     /** `videoId|language|mode` -> translated lines (kept for the session). */
     private val cache = ConcurrentHashMap<String, List<String>>()
 
+    /**
+     * The same translations, on disk, so a track played again (or after a
+     * restart) is not translated a second time. It used to be memory only, which
+     * meant every session paid the provider again for every track the user had
+     * already listened to — and a translation is a paid request, so re-asking for
+     * the same lyrics is exactly what a cache is for. Kept apart from
+     * `LyricsCache`'s directory on purpose: the raw lyrics are one kind of data,
+     * the AI's answer to them is another, and Storage lists them separately (which
+     * one to keep, and which to drop, is the user's call).
+     */
+    private val diskDir = File(System.getProperty("user.home"), ".vivimusic/cache/ai-lyrics").apply { mkdirs() }
+
+    /** Folder the Storage screen shows as the AI lyrics cache. */
+    val cacheDir: File get() = diskDir
+
+    /** Bump to make every cached translation stale (the answers are versioned). */
+    private const val DISK_VERSION = 1
+
+    /**
+     * One file per `videoId|language|mode`, the lines separated by NUL. A
+     * separator the text cannot contain keeps the format a plain file: lyrics
+     * lines never carry a NUL, and a line with a newline inside still round-trips.
+     */
+    private fun diskFile(cacheKey: String): File =
+        File(diskDir, cacheKey.replace(Regex("[^A-Za-z0-9._-]"), "_") + ".v$DISK_VERSION.txt")
+
+    private fun readDisk(cacheKey: String, expected: Int): List<String>? {
+        val file = diskFile(cacheKey)
+        if (!file.exists()) return null
+        return runCatching { file.readText().split('\u0000') }
+            .getOrNull()
+            ?.takeIf { it.size == expected }
+    }
+
+    private fun writeDisk(cacheKey: String, lines: List<String>) {
+        runCatching { diskFile(cacheKey).writeText(lines.joinToString("\u0000")) }
+    }
+
+    /** Bytes the AI lyrics cache occupies, for the Storage screen. */
+    fun cacheSizeBytes(): Long = runCatching {
+        diskDir.listFiles()?.sumOf { if (it.isFile) it.length() else 0L } ?: 0L
+    }.getOrDefault(0L)
+
+    /** Drops the in-memory translations; the disk copy is [clearDiskCache]'s. */
     fun clearCache() = cache.clear()
+
+    /**
+     * Empties the AI lyrics cache on disk and in memory.
+     *
+     * @return how many files were removed.
+     */
+    fun clearDiskCache(): Int {
+        cache.clear()
+        var removed = 0
+        runCatching {
+            diskDir.listFiles()?.forEach { file ->
+                if (runCatching { file.delete() }.getOrDefault(false)) removed++
+            }
+        }
+        AppLog.log("lyrics", "AI lyrics cache cleared: $removed file(s)")
+        return removed
+    }
 
     /**
      * Returns one translation per input line, or null when nothing could be
@@ -67,6 +129,12 @@ object LyricsTranslator {
     ): List<String>? {
         if (lines.isEmpty() || !config.usable) return null
         cache[cacheKey]?.let { if (it.size == lines.size) return it }
+        // Disk before the provider: a translation already paid for once is not
+        // asked for again, not even in the next session (see [diskDir]).
+        readDisk(cacheKey, lines.size)?.let { cached ->
+            cache[cacheKey] = cached
+            return cached
+        }
 
         val translated = withContext(Dispatchers.IO) {
             runCatching {
@@ -82,6 +150,7 @@ object LyricsTranslator {
             return null
         }
         cache[cacheKey] = translated
+        writeDisk(cacheKey, translated)
         AppLog.log("lyrics", "translated ${translated.size} lines to '${config.targetLanguage}' via ${config.provider}")
         return translated
     }

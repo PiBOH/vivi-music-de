@@ -185,8 +185,18 @@ fun NowPlayingWidgetWindow(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Tooltip(Localization.get(language, "tooltip_previous")) {
-                        IconButton(onClick = { player.previous() }, modifier = Modifier.size(30.dp)) {
+                    // Listen Together: this widget's transport is the host's
+                    // while this user is a guest, so the three controls are
+                    // drawn grey and inert instead of looking usable (the
+                    // PlayerController lock still answers the keyboard and the
+                    // media keys).
+                    val transportOff = transportLocked()
+                    Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
+                        IconButton(
+                            onClick = { player.previous() },
+                            enabled = !transportOff,
+                            modifier = Modifier.size(30.dp).dimmedWhenLocked(),
+                        ) {
                             Icon(
                                 Icons.Filled.SkipPrevious,
                                 contentDescription = Localization.get(language, "previous"),
@@ -194,24 +204,29 @@ fun NowPlayingWidgetWindow(
                             )
                         }
                     }
-                    Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
+                    Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
                         IconButton(
                             onClick = { player.toggle() },
+                            enabled = !transportOff,
                             modifier = Modifier
                                 .size(34.dp)
                                 .clip(RoundedCornerShape(17.dp))
-                                .background(MaterialTheme.colorScheme.primary),
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f)),
                         ) {
                             Icon(
                                 if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                                tint = MaterialTheme.colorScheme.onPrimary,
+                                tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                 modifier = Modifier.size(20.dp),
                             )
                         }
                     }
-                    Tooltip(Localization.get(language, "tooltip_next")) {
-                        IconButton(onClick = { player.next() }, modifier = Modifier.size(30.dp)) {
+                    Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                        IconButton(
+                            onClick = { player.next() },
+                            enabled = !transportOff,
+                            modifier = Modifier.size(30.dp).dimmedWhenLocked(),
+                        ) {
                             Icon(
                                 Icons.Filled.SkipNext,
                                 contentDescription = Localization.get(language, "next"),

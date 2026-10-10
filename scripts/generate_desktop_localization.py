@@ -739,6 +739,53 @@ MAPPING = {
     "lt_block_user": "permanently_kick_user",
     "lt_settings_desc": "listen_together_settings_desc",
     "lt_smart_resync": "resync",
+    # ------------------------------------------------------------------
+    # The rest of the phone's Listen Together settings screen, ported with it:
+    # username + avatar, the server picker, blocked users, the log viewer and the
+    # user-action dialog. Every one of these IS a mobile resource, so they are
+    # mapped instead of retranslated — `desktop_extra_translations_100` only
+    # repeats the wording where a `values-<lang>` leaves it in English, so no
+    # table ends up without the key.
+    # ------------------------------------------------------------------
+    "lt_username": "listen_together_username",
+    "lt_server_url": "listen_together_server_url",
+    "lt_blocked_users": "listen_together_blocked_users",
+    "lt_no_blocked_users": "listen_together_no_blocked_users",
+    "lt_choose_server": "listen_together_choose_server",
+    "lt_custom_server": "listen_together_custom_server",
+    "lt_use_custom_server": "listen_together_use_custom_server",
+    "lt_view_logs": "listen_together_view_logs",
+    "lt_view_logs_desc": "listen_together_view_logs_desc",
+    "lt_logs": "listen_together_logs",
+    "lt_no_logs": "listen_together_no_logs",
+    # The log viewer's own two buttons. The phone has no such viewer, but it does
+    # ship `Copy` and `Clear` translated in every language, and a dialog button
+    # reading "Copy" is what the shared resource already says — so the keys point
+    # at those two rather than inventing 52 one-word translations by hand.
+    "lt_copy_logs": "copy",
+    "lt_clear_logs": "clear",
+    # Why a restore said no. The phone already distinguishes "the restore failed"
+    # from "the backup is corrupt" in every language, which is exactly the
+    # distinction the desktop was missing when it answered every case with one
+    # sentence (and every *unreadable* case with the same one).
+    "restore_failed_corrupt": "restore_failed_corrupt",
+    "lt_create_room_desc": "listen_together_create_room_desc",
+    "lt_username_locked": "listen_together_cannot_edit_username_in_room",
+    "lt_enter_username": "enter_username",
+    "lt_manage_user": "manage_user",
+    "lt_kick_user": "kick_user",
+    "lt_kick_user_desc": "kick_user_desc",
+    "lt_permanently_kick": "permanently_kick_user",
+    "lt_permanently_kick_desc": "permanently_kick_user_desc",
+    "lt_transfer_ownership": "transfer_ownership",
+    "lt_transfer_ownership_desc": "transfer_ownership_desc",
+    "lt_approve": "approve",
+    "lt_reject": "reject",
+    "lt_unblock": "unblock",
+    "lt_host_label": "host_label",
+    "lt_you_label": "you_label",
+    "lt_waiting_approval": "waiting_for_approval",
+    "lt_pending_suggestions": "pending_suggestions",
 }
 
 # Full desktop English table (source language).
@@ -1239,6 +1286,50 @@ ENGLISH = {
     "lt_no_messages": "No messages yet",
     "lt_reply": "Reply",
     "lt_send_message": "Send message",
+    # ------------------------------------------------------------------
+    # The desktop's own screens. None of these has an Android resource (the
+    # phone has no "Debug & Developer Options", no JVM heap picker and no APK
+    # download button), so the English wording lives here and the translations
+    # in desktop_extra_translations_98. They were written straight into the
+    # generated files by 1.54.11..1.54.24, and one regeneration dropped all of
+    # them from all 53 tables: the guard at the end of this file now refuses to
+    # write a table that loses an English key it had before.
+    # ------------------------------------------------------------------
+    "advanced": "Advanced",
+    "debug_developer_options": "Debug & Developer Options",
+    "developer_options_unlocked": "Developer options unlocked",
+    "disable_developer_options": "Turn off developer options",
+    "disable_developer_options_confirm": "Turn off developer options?",
+    "disable_developer_options_desc": "Hides this screen and locks it again. Tap the version code seven times in About to unlock it.",
+    "jvm_memory": "JVM memory",
+    "jvm_memory_default": "Default (%s)",
+    "jvm_memory_desc": "Heap the app asks the JVM for. Currently %s.",
+    "jvm_memory_restart": "The new heap is applied the next time the app starts.",
+    # The Debug & Developer Options screen's own description. It differs from
+    # the Android resource of the same name, which describes the performance
+    # reader: the desktop uses `performance_options_desc` for that one.
+    "developer_options_desc": "JVM heap, detailed playback and startup logging, and the hidden APK download button.",
+    "performance_options": "Performance impact reader",
+    "performance_options_desc": "Live CPU, RAM, GPU and network usage of VIVI Music DE.",
+    "performance_options_enabled": "Performance impact reader enabled",
+    "detailed_playback_logging": "DetailedPlaybackLogging",
+    "detailed_playback_logging_desc": "Writes every playback-writer pass to playback.log. Troubleshooting only.",
+    "detailed_startup_logs": "DetailedStartupLogs",
+    "detailed_startup_logs_desc": "Writes the per-stage startup timings to app.log. Troubleshooting only.",
+    "hide_custom_apk_download_button": "Hide APK download button",
+    "hide_custom_apk_download_button_desc": "Hides the Android APK download buttons on the Devices screen.",
+    "ai_custom_model": "Custom model",
+    "ai_training_note": "Note: some free models may use your lyrics as training data. Check the provider's policy.",
+    "spotify_open_browser": "Open it in your browser",
+    # ------------------------------------------------------------------
+    # The three caches the Storage screen lists separately (batch 99). One
+    # number for all of them hid both the size and the choice: the AI's
+    # translations are the ones that cost a paid request to rebuild, the audio
+    # is the one that only costs bandwidth, and the lyrics sit between them.
+    # ------------------------------------------------------------------
+    "cache_audio": "Audio cache",
+    "cache_lyrics": "Lyrics cache",
+    "cache_ai_lyrics": "AI lyrics cache",
 }
 
 # Desktop-only translations (keys with no Android source string) plus gap-fills
@@ -1914,12 +2005,17 @@ from desktop_extra_translations_94 import EXTRA_TRANSLATIONS as _EXTRA_94
 from desktop_extra_translations_95 import EXTRA_TRANSLATIONS as _EXTRA_95
 from desktop_extra_translations_96 import EXTRA_TRANSLATIONS as _EXTRA_96
 from desktop_extra_translations_97 import EXTRA_TRANSLATIONS as _EXTRA_97
+from desktop_extra_translations_98 import EXTRA_TRANSLATIONS as _EXTRA_98
+from desktop_extra_translations_99 import EXTRA_TRANSLATIONS as _EXTRA_99
+from desktop_extra_translations_100 import EXTRA_TRANSLATIONS as _EXTRA_100
+from desktop_extra_translations_101 import EXTRA_TRANSLATIONS as _EXTRA_101
+from desktop_extra_translations_102 import EXTRA_TRANSLATIONS as _EXTRA_102
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97, _EXTRA_98, _EXTRA_99, _EXTRA_100, _EXTRA_101, _EXTRA_102):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 
@@ -2189,6 +2285,34 @@ def main():
     def symbol_for(lang):
         """`nb-rNO` -> `strings_nb_rNO`: a valid Kotlin identifier for the tag."""
         return "strings_" + re.sub(r"[^A-Za-z0-9_]", "_", lang)
+
+    # ------------------------------------------------------------------
+    # A regeneration must never LOSE a key.
+    #
+    # 1.54.11 and later wrote the desktop's own screens straight into the
+    # generated files, and none of those keys was in `ENGLISH` or in an Android
+    # resource: one run of this script deleted all of them from all 53 tables
+    # (measured 10 Oct 2026: `English keys 837 -> 815`, the audit's
+    # `Missing / leaking 0` became `6514`, every affected screen showed its raw
+    # snake_case key). They live in `ENGLISH` and
+    # `desktop_extra_translations_98` now; this stops the next one from
+    # disappearing the same way, which is what the key's author cannot see when
+    # a value is added "just for now".
+    # ------------------------------------------------------------------
+    previous_en = os.path.join(OUT_DIR, LANG_FILE_PREFIX + "en.kt")
+    if os.path.exists(previous_en):
+        with open(previous_en, encoding="utf-8") as f:
+            previous_keys = set(re.findall(r'^\s*"([^"]+)" to ', f.read(), re.M))
+        lost = sorted(previous_keys - set(ENGLISH))
+        if lost:
+            raise SystemExit(
+                "Refusing to write: %d English key(s) this table has and neither "
+                "ENGLISH nor an extra-translations batch defines would disappear:\n  %s\n"
+                "Add the English wording to ENGLISH and the translations to a "
+                "desktop_extra_translations_* batch (see desktop_extra_translations_98 "
+                "for the shape), then run this script again."
+                % (len(lost), "\n  ".join(lost))
+            )
 
     # Drop the files of a previous run: a regenerated language must not leave a
     # stale one behind (and the numbered slices of the old layout must go, or

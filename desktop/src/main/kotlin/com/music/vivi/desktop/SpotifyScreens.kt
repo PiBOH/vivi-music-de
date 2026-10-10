@@ -331,12 +331,12 @@ private fun SpotifyConnectSection(
                     modifier = Modifier.padding(top = 10.dp),
                 )
             }
-            OutlinedButton(
-                onClick = { openUrl(SpotifyImport.loginUrl()) },
-                modifier = Modifier.padding(top = 8.dp),
-            ) {
-                Text(Localization.get(language, "spotify_open_login"))
-            }
+            // No second "Sign in to Spotify" here: the card already has the one
+            // button its own path needs, "Log in" under the fields, and a
+            // browser button beside it made the same screen offer the same
+            // decision twice (the card is what you open when the window did not
+            // finish, not another way into it). The cookie hint below says where
+            // the two values come from.
             Text(
                 Localization.get(language, "spotify_cookie_hint"),
                 style = MaterialTheme.typography.bodyMedium,

@@ -371,6 +371,20 @@ fun LyricsV2(
                     var lastUpdateTime = System.currentTimeMillis()
                     
                     while (true) {
+                       // Frames only while the clock is actually running. With the
+                       // player paused — and no seek in flight — this screen was
+                       // recomputing the same line sixty times a second for hours
+                       // on end (see IDLE_LYRICS_TICK_MS): the paused path instead
+                       // idles at a cheap tick and re-baselines on resume.
+                       val paused = !playerConnection.player.isPlaying
+                       val scrubbing = kotlin.math.abs(positionProvider() - playerConnection.player.currentPosition) > 250L
+                       if (paused && !scrubbing) {
+                           delay(IDLE_LYRICS_TICK_MS)
+                           lastPlayerPos = playerConnection.player.currentPosition
+                           lastUpdateTime = System.currentTimeMillis()
+                           currentPosition = positionProvider()
+                           continue
+                       }
                        withFrameMillis {
                             val now = System.currentTimeMillis()
                             val playerPos = playerConnection.player.currentPosition

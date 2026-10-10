@@ -232,6 +232,19 @@ private val LYRICS_FADE_BOTTOM_DP = 160.dp
 private const val LYRICS_STAGGER_DELAY_PER_DISTANCE = 20
 private const val LYRICS_STAGGER_DELAY_MAX_MS = 200
 
+/**
+ * How often the lyrics-advance loop ticks while nothing moves.
+ *
+ * The loop used to sit on the frame clock (or on an 8 ms `delay`) for as long as
+ * the lyrics were on screen, recomputing the same line sixty times a second with
+ * the player paused — and the lyrics screen is exactly where a phone is left
+ * sitting, screen on, doing nothing. That is CPU and battery spent on a picture
+ * that is already correct, and the phone reports it as heat. A paused player
+ * cannot advance a line, so the loop drops to this tick until playback (or a
+ * seek) starts moving the clock again, when it goes straight back to frames.
+ */
+internal const val IDLE_LYRICS_TICK_MS = 250L
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedBoxWithConstraintsScope", "StringFormatInvalid")
 @Composable
@@ -774,10 +787,21 @@ fun Lyrics(
         if (lyricsAnimationStyle == LyricsAnimationStyle.METRO_LYRICS) {
             var lastPlayerPos = playerConnection.player.currentPosition
             var lastUpdateTime = System.currentTimeMillis()
+            // True while the loop is idling because nothing is moving. The first
+            // frame after playback resumes must re-baseline its clock, or the
+            // pause would count as elapsed time and the position would jump.
+            var wasIdle = false
             val hasWordTimings = lines.any { !it.words.isNullOrEmpty() }
             
             while (isActive) {
-                withFrameNanos { _ -> }
+                // See IDLE_LYRICS_TICK_MS: frames while something moves, a cheap
+                // tick while nothing does.
+                if (!playerConnection.player.isPlaying && sliderPositionProvider() == null) {
+                    delay(IDLE_LYRICS_TICK_MS)
+                    wasIdle = true
+                } else {
+                    withFrameNanos { _ -> }
+                }
                 val now = System.currentTimeMillis()
                 val sliderPosition = sliderPositionProvider()
                 isSeeking = sliderPosition != null
@@ -787,10 +811,11 @@ fun Lyrics(
                 } else {
                     val playerPos = playerConnection.player.currentPosition
                     val isPlaying = playerConnection.player.isPlaying
-                    if (playerPos != lastPlayerPos || !isPlaying) {
+                    if (playerPos != lastPlayerPos || !isPlaying || wasIdle) {
                         lastPlayerPos = playerPos
                         lastUpdateTime = now
                     }
+                    wasIdle = false
                     val elapsed = now - lastUpdateTime
                     lastPlayerPos + (if (isPlaying) elapsed else 0L)
                 }
@@ -868,7 +893,11 @@ fun Lyrics(
             }
         } else {
             while (isActive) {
-                delay(8)
+                // 8 ms is a preview pressed against the frame clock; with the
+                // player paused and no seek in flight there is nothing for it to
+                // show (see IDLE_LYRICS_TICK_MS).
+                val moving = playerConnection.player.isPlaying || sliderPositionProvider() != null
+                delay(if (moving) 8L else IDLE_LYRICS_TICK_MS)
                 val sliderPosition = sliderPositionProvider()
                 isSeeking = sliderPosition != null
                 val position = sliderPosition ?: playerConnection.player.currentPosition

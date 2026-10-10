@@ -36,9 +36,20 @@ import androidx.compose.ui.unit.dp
  * One entry of a detail screen's context menu (Album / Artist / Playlist).
  * The label is always a localized string: the menus never print a raw key.
  */
+/**
+ * [enabled] is declared before [onClick] on purpose: it defaults to true, and
+ * the call sites pass the action as a trailing lambda — a parameter bound by
+ * name cannot also take the trailing lambda, so the flag has to come first.
+ */
 class DetailMenuEntry(
     val label: String,
     val icon: ImageVector,
+    /**
+     * False for an entry the current user may not use right now: a Listen
+     * Together guest cannot start a queue or add to it (the host owns it), so
+     * those rows are greyed instead of looking available and doing nothing.
+     */
+    val enabled: Boolean = true,
     val onClick: () -> Unit,
 )
 
@@ -74,6 +85,7 @@ fun DetailMenu(
                 DropdownMenuItem(
                     text = { Text(entry.label) },
                     leadingIcon = { Icon(entry.icon, contentDescription = null) },
+                    enabled = entry.enabled,
                     onClick = {
                         expanded = false
                         entry.onClick()

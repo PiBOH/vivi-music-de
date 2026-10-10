@@ -306,10 +306,11 @@ data class DesktopSyncState(
     val listenTogetherServerUrl: String = "wss://devilmi-vivi-music-listen-together.hf.space",
     /**
      * Listen Together avatar, as the SAME index the mobile app uses (0 = the
-     * username's initial, 1..13 = one of its avatar pictures). Desktops draw
-     * them as emoji instead of the APK's drawables, but the index travels in
-     * `avatar_index` either way, so a room shows each user the avatar they
-     * picked on whichever device they are on.
+     * username's initial, 1..13 = one of its avatar pictures). The pictures are
+     * the APK's own files, bundled under
+     * `desktop/src/main/resources/images/avatars` in that same order (see
+     * `LT_AVATARS`), so the index that travels in `avatar_index` shows the same
+     * face on both devices rather than a stand-in.
      */
     val listenTogetherAvatarIndex: Int = 0,
     /** Auto-approve join requests without asking the host. */

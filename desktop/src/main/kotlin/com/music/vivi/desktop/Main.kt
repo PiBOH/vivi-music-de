@@ -53,6 +53,7 @@ import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.outlined.Radio
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -1123,7 +1124,12 @@ fun WindowScope.App(
             }
         }
     }
-    LaunchedEffect(language, trayMenuEnabled) {
+    // The tray menu is a transport control like any other, so it follows the same
+    // gate: as a Listen Together guest its three rows are greyed and inert, and
+    // the menu is rebuilt the moment the role changes (the effect keys on the
+    // lock, which is snapshot state).
+    val trayTransportLocked by ListenTogetherGate.locked
+    LaunchedEffect(language, trayMenuEnabled, trayTransportLocked) {
         if (trayMenuEnabled) {
             NativeNotifier.configureTray(
                 NativeNotifier.TrayActions(
@@ -1137,6 +1143,7 @@ fun WindowScope.App(
                     labelPrevious = Localization.get(language, "previous"),
                     labelOpen = Localization.get(language, "open_vivi"),
                     labelQuit = Localization.get(language, "quit"),
+                    transportEnabled = !trayTransportLocked,
                 )
             )
         } else {
@@ -5085,13 +5092,14 @@ fun MiniPlayer(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    // Listen Together guest: the transport in this bar is
-                    // inert (the host owns playback), so the lock rides with
-                    // the play button the user is about to press. The controls
-                    // stay enabled on purpose — pressing one answers with the
-                    // reason (PlayerController's lock message) instead of doing
-                    // nothing at all.
-                    if (ListenTogetherGate.locked.value) {
+                    // Listen Together guest: the transport in this bar is the
+                    // host's. The lock rides with the play button the user is
+                    // about to press, and (1.54.24) the controls themselves are
+                    // drawn grey and inert: a play button that looks usable and
+                    // does nothing was the report. The keyboard and media keys
+                    // still answer with the reason, through PlayerController.
+                    val transportOff = transportLocked()
+                    if (transportOff) {
                         Tooltip(Localization.get(language, "lt_guest_note")) {
                             Icon(
                                 Icons.Filled.Lock,
@@ -5102,8 +5110,8 @@ fun MiniPlayer(
                         }
                         Spacer(Modifier.width(6.dp))
                     }
-                    Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
-                        IconButton(onClick = onTogglePlay) {
+                    Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
+                        IconButton(onClick = onTogglePlay, enabled = !transportOff) {
                             if (isLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
@@ -5115,18 +5123,22 @@ fun MiniPlayer(
                                     if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
                                     tint = if (pureBlack) Color.White else LocalContentColor.current,
-                                    modifier = Modifier.size(22.dp),
+                                    modifier = Modifier
+                                        .size(22.dp)
+                                        .alpha(if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                 )
                             }
                         }
                     }
-                    Tooltip(Localization.get(language, "tooltip_next")) {
-                        IconButton(onClick = onNext) {
+                    Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                        IconButton(onClick = onNext, enabled = !transportOff) {
                             Icon(
                                 Icons.Filled.SkipNext,
                                 contentDescription = "Next",
                                 tint = if (pureBlack) Color.White else LocalContentColor.current,
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .alpha(if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             )
                         }
                     }
@@ -7476,26 +7488,53 @@ private fun dirSize(dir: File): Long =
  * an image-cache and a song-cache ceiling that only exist on Android
  * (`MaxImageCacheSizeKey` / `MaxSongCacheSizeKey` and the two Coil / player
  * caches), so showing them on the desktop would be a control wired to nothing.
- * What the desktop really keeps on disk is what is listed here: the extractor
- * cache (audio, plus the lyrics inside it) and the downloaded installers, both
- * of which can be removed from this screen.
+ * What the desktop really keeps on disk is what is listed here, one card per
+ * kind: the audio the extractor cached, the lyrics fetched for it, the AI's
+ * translations of those lyrics, and the downloaded installers. All four can be
+ * removed from this screen, and removing one never touches the others.
  */
 @Composable
 fun StorageSection(language: String) {
     val scope = rememberCoroutineScope()
-    val cacheDir = remember { File(System.getProperty("user.home"), ".vivimusic/cache") }
-    val updatesDir = remember { UpdateDownloader.updatesDir }
-    var cacheSize by remember { mutableStateOf<Long?>(null) }
+    // Three caches, three rows, three buttons (see the note above the section).
+    // The audio one is the extractor's directory MINUS the two lyrics folders:
+    // they live inside it on disk, so counting the whole directory would report
+    // the same bytes three times and "clear audio" would take the lyrics away
+    // with it.
+    val cacheRoot = remember { File(System.getProperty("user.home"), ".vivimusic/cache") }
+    val lyricsDir = remember { File(cacheRoot, "lyrics") }
+    val aiLyricsDir = remember { LyricsTranslator.cacheDir }
+    var audioSize by remember { mutableStateOf<Long?>(null) }
+    var lyricsSize by remember { mutableStateOf<Long?>(null) }
+    var aiLyricsSize by remember { mutableStateOf<Long?>(null) }
     var installerSize by remember { mutableStateOf<Long?>(null) }
-    var cleared by remember { mutableStateOf(false) }
+    var audioCleared by remember { mutableStateOf(false) }
+    var lyricsCleared by remember { mutableStateOf(false) }
+    var aiLyricsCleared by remember { mutableStateOf(false) }
     var installersDeleted by remember { mutableStateOf(false) }
 
-    // Both sizes are measured off the main thread (a cache holds thousands of
+    /** Bytes of [dir] and its subdirectories. */
+    fun sizeOf(dir: File): Long = dirSize(dir)
+
+    /** The extractor cache without the two lyrics folders inside it. */
+    fun audioBytes(): Long = sizeOf(cacheRoot) - sizeOf(lyricsDir) - sizeOf(aiLyricsDir)
+
+    /** Deletes the audio cache and leaves both lyrics caches alone. */
+    fun clearAudio() {
+        cacheRoot.listFiles()?.forEach { child ->
+            if (child != lyricsDir && child != aiLyricsDir) child.deleteRecursively()
+        }
+        LyricsCache.forget()
+    }
+
+    // Every size is measured off the main thread (a cache holds thousands of
     // files) and re-measured after every clear, so the numbers follow the
     // buttons instead of going stale.
     fun refresh() {
         scope.launch {
-            cacheSize = withContext(Dispatchers.IO) { dirSize(cacheDir) }
+            audioSize = withContext(Dispatchers.IO) { audioBytes() }
+            lyricsSize = withContext(Dispatchers.IO) { sizeOf(lyricsDir) }
+            aiLyricsSize = withContext(Dispatchers.IO) { sizeOf(aiLyricsDir) }
             // Only the installers the update counter counts, so what this row
             // shows is exactly what its button deletes: the installer of a
             // downloaded, not yet installed update is not included and is not
@@ -7510,26 +7549,63 @@ fun StorageSection(language: String) {
 
     Text(Localization.get(language, "storage"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
 
-    // Two cards, as on mobile: what takes the space, then the button that frees
-    // it. The size is the row's trailing value rather than part of its title, so
-    // the numbers line up in one column down the card.
+    // One card per kind of cache, as the phone keeps them: the audio streams,
+    // the fetched lyrics, and the AI's translations of them. They are three
+    // different things with three different lifetimes — the translations are the
+    // ones that cost money to rebuild, the audio is the one that only costs
+    // bandwidth — so a single "cache size" row hid both the number and the
+    // choice (which of them to keep, and which to drop, is the user's call).
     M3SettingsGroup(
         title = Localization.get(language, "cache_size"),
         items = listOf(
             M3SettingsItem(
-                icon = Icons.Filled.Storage,
-                title = { Text(Localization.get(language, "cache_size")) },
+                icon = Icons.Filled.GraphicEq,
+                title = { Text(Localization.get(language, "cache_audio")) },
                 description = { Text(Localization.get(language, "privacy_desc")) },
-                trailing = { Text(cacheSize?.let { formatBytes(it) } ?: "…") },
+                trailing = { Text(audioSize?.let { formatBytes(it) } ?: "…") },
             ),
             M3SettingsItem(
                 icon = Icons.Filled.DiscFull,
                 title = { Text(Localization.get(language, "clear_cache")) },
                 onClick = {
                     scope.launch {
-                        withContext(Dispatchers.IO) { cacheDir.listFiles()?.forEach { it.deleteRecursively() } }
-                        cleared = true
-                        cacheSize = withContext(Dispatchers.IO) { dirSize(cacheDir) }
+                        withContext(Dispatchers.IO) { clearAudio() }
+                        audioCleared = true
+                        audioSize = withContext(Dispatchers.IO) { audioBytes() }
+                    }
+                },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.Lyrics,
+                title = { Text(Localization.get(language, "cache_lyrics")) },
+                description = { Text(Localization.get(language, "lyrics")) },
+                trailing = { Text(lyricsSize?.let { formatBytes(it) } ?: "…") },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.Delete,
+                title = { Text(Localization.get(language, "clear_cache")) },
+                onClick = {
+                    scope.launch {
+                        withContext(Dispatchers.IO) { LyricsCache.clearDisk() }
+                        lyricsCleared = true
+                        lyricsSize = withContext(Dispatchers.IO) { sizeOf(lyricsDir) }
+                    }
+                },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.Translate,
+                title = { Text(Localization.get(language, "cache_ai_lyrics")) },
+                description = { Text(Localization.get(language, "ai_lyrics_translation")) },
+                trailing = { Text(aiLyricsSize?.let { formatBytes(it) } ?: "…") },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.Delete,
+                title = { Text(Localization.get(language, "clear_cache")) },
+                onClick = {
+                    scope.launch {
+                        withContext(Dispatchers.IO) { LyricsTranslator.clearDiskCache() }
+                        aiLyricsCleared = true
+                        aiLyricsSize = withContext(Dispatchers.IO) { sizeOf(aiLyricsDir) }
                     }
                 },
             ),
@@ -7559,9 +7635,25 @@ fun StorageSection(language: String) {
     // The confirmations live below the cards rather than in a dialog: on the
     // mobile screen these actions ask first (they are irreversible), and the
     // desktop does the same by showing what happened where the user is looking.
-    if (cleared) {
+    if (audioCleared) {
         Text(
-            Localization.get(language, "cache_cleared"),
+            Localization.get(language, "cache_cleared") + " — " + Localization.get(language, "cache_audio"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 12.dp, start = 6.dp),
+        )
+    }
+    if (lyricsCleared) {
+        Text(
+            Localization.get(language, "cache_cleared") + " — " + Localization.get(language, "cache_lyrics"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(top = 12.dp, start = 6.dp),
+        )
+    }
+    if (aiLyricsCleared) {
+        Text(
+            Localization.get(language, "cache_cleared") + " — " + Localization.get(language, "cache_ai_lyrics"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(top = 12.dp, start = 6.dp),

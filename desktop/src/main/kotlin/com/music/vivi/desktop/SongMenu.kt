@@ -281,11 +281,15 @@ fun SongMenu(
                 )
             }
             if (onAddToQueue != null) {
+                // Listen Together: the queue belongs to the host, so a guest's
+                // row is greyed instead of looking available (PlayerController
+                // refuses the call either way).
                 DropdownMenuItem(
                     text = { Text(Localization.get(language, "add_to_queue")) },
                     leadingIcon = {
                         Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
                     },
+                    enabled = !transportLocked(),
                     onClick = {
                         expanded = false
                         onAddToQueue()

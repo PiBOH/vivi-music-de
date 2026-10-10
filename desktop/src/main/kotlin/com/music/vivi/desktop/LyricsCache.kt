@@ -37,6 +37,35 @@ object LyricsCache {
     }
 
     /**
+     * Drops the in-memory copies. Used when the files behind them were deleted
+     * (the Storage screen's "clear lyrics cache"): without this, the session
+     * keeps serving the text from memory and the button looks like it did
+     * nothing until the app is restarted.
+     */
+    fun forget() = mem.clear()
+
+    /**
+     * Empties the lyrics cache — files and memory.
+     *
+     * @return how many files were removed.
+     */
+    fun clearDisk(): Int {
+        mem.clear()
+        var removed = 0
+        runCatching {
+            dir.listFiles()?.forEach { file ->
+                if (runCatching { file.delete() }.getOrDefault(false)) removed++
+            }
+        }
+        return removed
+    }
+
+    /** Bytes the lyrics cache occupies, for the Storage screen. */
+    fun sizeBytes(): Long = runCatching {
+        dir.listFiles()?.sumOf { if (it.isFile) it.length() else 0L } ?: 0L
+    }.getOrDefault(0L)
+
+    /**
      * The file name carries BOTH a version suffix and the fetch mode
      * (`-s` = synced-first, `-p` = plain/first-answer), so:
      *  - entries written by an older resolver are ignored and re-fetched once;

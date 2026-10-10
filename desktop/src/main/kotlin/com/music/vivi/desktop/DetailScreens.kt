@@ -102,16 +102,16 @@ fun AlbumScreen(
                     thumbnailUrl = album.thumbnail,
                     language = language,
                     menuEntries = listOfNotNull(
-                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow) {
+                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow, enabled = !transportLocked()) {
                             onPlayAll(albumSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle) {
+                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle, enabled = !transportLocked()) {
                             onShuffleAll(albumSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay, enabled = !transportLocked()) {
                             onPlayNext(albumSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic, enabled = !transportLocked()) {
                             onAddAllToQueue(albumSongs)
                         },
                         DetailMenuEntry(Localization.get(language, "add_to_playlist"), Icons.AutoMirrored.Filled.PlaylistAdd) {
@@ -240,12 +240,12 @@ fun ArtistScreen(
                             }
                         } else null,
                         if (artistSongs.isNotEmpty()) {
-                            DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                            DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay, enabled = !transportLocked()) {
                                 onPlayNext(artistSongs)
                             }
                         } else null,
                         if (artistSongs.isNotEmpty()) {
-                            DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                            DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic, enabled = !transportLocked()) {
                                 onAddAllToQueue(artistSongs)
                             }
                         } else null,
@@ -420,16 +420,16 @@ fun PlaylistScreen(
                     thumbnailUrl = playlist.thumbnail,
                     language = language,
                     menuEntries = listOfNotNull(
-                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow) {
+                        DetailMenuEntry(Localization.get(language, "play_all"), Icons.Filled.PlayArrow, enabled = !transportLocked()) {
                             onPlayAll(playlistSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle) {
+                        DetailMenuEntry(Localization.get(language, "shuffle_all"), Icons.Filled.Shuffle, enabled = !transportLocked()) {
                             onShuffleAll(playlistSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay) {
+                        DetailMenuEntry(Localization.get(language, "play_next"), Icons.AutoMirrored.Filled.PlaylistPlay, enabled = !transportLocked()) {
                             onPlayNext(playlistSongs)
                         },
-                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic) {
+                        DetailMenuEntry(Localization.get(language, "add_to_queue"), Icons.AutoMirrored.Filled.QueueMusic, enabled = !transportLocked()) {
                             onAddAllToQueue(playlistSongs)
                         },
                         DetailMenuEntry(Localization.get(language, "add_to_playlist"), Icons.AutoMirrored.Filled.PlaylistAdd) {

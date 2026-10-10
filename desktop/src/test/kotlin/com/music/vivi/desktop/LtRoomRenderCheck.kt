@@ -30,7 +30,8 @@ import java.io.File
  * checks the things that would be visible as broken and that no compiler sees:
  *
  *  * the lobby draws at all, and the avatars draw — index 0 is the username's
- *    initial and index 1 an emoji, and both must paint something;
+ *    initial and index 1 is the phone's own picture, and both must paint
+ *    something;
  *  * the room draws for a host and for a guest, and the two draw DIFFERENTLY:
  *    the host sees the transfer/kick/block controls, the guest the lock notice
  *    and the suggestion box, so identical ink would mean one of the two
@@ -63,6 +64,14 @@ object LtRoomRenderCheck {
                 onServer = {},
                 autoApprove = false,
                 onAutoApprove = {},
+                syncVolume = true,
+                onSyncVolume = {},
+                smartResync = true,
+                onSmartResync = {},
+                blockedUsers = emptySet(),
+                onUnblock = {},
+                logs = emptyList(),
+                onClearLogs = {},
                 busy = false,
                 error = null,
                 onCreate = {},
@@ -95,23 +104,33 @@ object LtRoomRenderCheck {
         val initialPng = render("avatar-initial") {
             Box(Modifier.fillMaxSize()) { LtAvatar(avatarIndex = 0, username = "Ada", size = 80) }
         }
-        val emojiPng = render("avatar-emoji") {
+        val emojiPng = render("avatar-picture") {
             Box(Modifier.fillMaxSize()) { LtAvatar(avatarIndex = 1, username = "Ada", size = 80) }
         }
         val bareInk = ink(barePng)
         println("== avatar (empty)       ink=$bareInk")
         println("== avatar (initial)     ink=${ink(initialPng)}")
-        println("== avatar (emoji)       ink=${ink(emojiPng)}")
+        println("== avatar (picture)     ink=${ink(emojiPng)}")
         if (bareInk <= 0) failures += "the avatar circle itself painted nothing"
         if (probeText > probeEmpty) {
             if (digest(initialPng) == digest(barePng)) {
                 failures += "index 0 drew the same picture as an empty avatar (the initial is missing)"
             }
             if (digest(emojiPng) == digest(barePng)) {
-                failures += "index 1 drew the same picture as an empty avatar (the emoji is missing)"
+                failures += "index 1 drew the same picture as an empty avatar (the mobile image is missing)"
             }
             if (digest(emojiPng) == digest(initialPng)) {
                 failures += "index 0 and index 1 drew the same picture (one avatar kind is missing)"
+            }
+            // The pictures are the phone's own files, so the LAST one has to
+            // load too: a missing resource would fall back to the person vector
+            // and look plausible while showing the wrong face.
+            val lastPng = render("avatar-last") {
+                Box(Modifier.fillMaxSize()) { LtAvatar(avatarIndex = LT_AVATARS.lastIndex, username = "Ada", size = 80) }
+            }
+            println("== avatar (last)        ink=${ink(lastPng)}")
+            if (digest(lastPng) == digest(barePng)) {
+                failures += "the last mobile avatar drew an empty circle (its image did not load)"
             }
         } else {
             println("   (this renderer paints no glyphs, so the avatar's contents cannot be checked here)")
@@ -171,6 +190,8 @@ object LtRoomRenderCheck {
             notice = null,
             suggestInput = "",
             onSuggestInput = {},
+            avatarIndex = 1,
+            onAvatar = {},
             autoApprove = false,
             onAutoApprove = {},
             syncVolume = true,
@@ -179,6 +200,10 @@ object LtRoomRenderCheck {
             onSmartResync = {},
             server = "wss://relay.example",
             onServer = {},
+            blockedUsers = emptySet(),
+            onUnblock = {},
+            logs = emptyList(),
+            onClearLogs = {},
             copied = false,
             copiedFailed = false,
             linkCopied = false,

@@ -35,6 +35,34 @@ object LoginWebView {
     @Volatile private var unavailable = false
     @Volatile private var delivered = false
 
+    /**
+     * Every request waiting for this window's answer.
+     *
+     * The window used to hold ONE callback — the one of the request that opened
+     * it — and a second request while it was open was answered with `return true`
+     * and no callback at all. The screen sets "waiting for the window" before it
+     * calls in and only clears it from the callback, so that press left the
+     * button disabled for the rest of the session: exactly the report "I can only
+     * open the Google sign-in window once". A request that arrives while a window
+     * is already up now JOINS it and gets the same answer.
+     */
+    private val waiting = java.util.Collections.synchronizedList(mutableListOf<(Capture?) -> Unit>())
+
+    /** Requests made this session, so the log says which attempt did what. */
+    private val requests = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** When the window on screen was created, for the staleness test below. */
+    @Volatile private var openedAtMs = 0L
+
+    /**
+     * How long a window may stay open without answering before the next request
+     * ignores it and opens a fresh one. The capture itself gives up at 120 s and
+     * hands over what it has, so a window still silent after this much time is
+     * stuck (a refused Stage, a toolkit that dropped it) and must not be able to
+     * block the rest of the session.
+     */
+    private const val WINDOW_STALE_MS = 150_000L
+
     private val debugLog = File(System.getProperty("user.home"), ".vivimusic/login-debug.log")
 
     /**
@@ -97,22 +125,43 @@ object LoginWebView {
         // attempt failed can still succeed on the next — treating the first
         // failure as permanent is what left "the sign-in window only opens
         // once" (the button then fell through to the manual paste forever).
-        if (windowOpen) return true
+        val attempt = requests.incrementAndGet()
+        val ageMs = if (windowOpen) System.currentTimeMillis() - openedAtMs else 0L
+        val stale = windowOpen && ageMs > WINDOW_STALE_MS
+        if (windowOpen && !stale) {
+            // Already on screen: this request rides along and is answered with the
+            // same capture, instead of being dropped (see [waiting]).
+            logDebug("window request #$attempt: joining the window opened ${ageMs / 1000}s ago")
+            waiting.add(onCaptured)
+            return true
+        }
+        if (stale) {
+            logDebug(
+                "window request #$attempt: the window from ${ageMs / 1000}s ago never answered, " +
+                    "treating it as stuck and opening a new one"
+            )
+            windowOpen = false
+            delivered = false
+        }
         return try {
             if (CookieHandler.getDefault() !is CookieManager) {
                 CookieHandler.setDefault(CookieManager())
             }
             if (resetFirst) clearSession()
             windowOpen = true
+            openedAtMs = System.currentTimeMillis()
             delivered = false
             unavailable = false
+            waiting.add(onCaptured)
+            logDebug("window request #$attempt: opening")
             ensureFxStarted()
-            FxPlatform.runLater { createWindow(language, onCaptured) }
+            FxPlatform.runLater { createWindow(language) }
             true
-        } catch (_: Throwable) {
+        } catch (t: Throwable) {
             windowOpen = false
             unavailable = true
-            deliver(null, null, null, onCaptured)
+            logDebug("window request #$attempt failed: $t")
+            deliver(null, null, null)
             false
         }
     }
@@ -166,19 +215,30 @@ object LoginWebView {
         return removed
     }
 
-    private fun deliver(cookie: String?, dataSyncId: String?, visitorData: String?, callback: (Capture?) -> Unit) {
+    /**
+     * Hands the answer to EVERY request waiting for this window and closes the
+     * window's life: `windowOpen` goes back to false so the next press opens a
+     * new one, and the waiting list is emptied so no caller stays stuck (which is
+     * what made the button work only once). The app closes this window itself
+     * once it has the session, and a window closed that way never reaches its own
+     * close request, so this is the only place that can do it. See the same shape
+     * in [SpotifyLoginWebView].
+     */
+    private fun deliver(cookie: String?, dataSyncId: String?, visitorData: String?) {
         if (delivered) return
         delivered = true
-        // The app closes this window itself once it has the session, and a
-        // window closed that way never reaches its own close request: without
-        // clearing `windowOpen` here, the first sign-in attempt of a session
-        // was the only one that could ever open a window. See the same line in
-        // [SpotifyLoginWebView].
         windowOpen = false
-        runCatching { callback(Capture(cookie, dataSyncId, visitorData)) }
+        val capture = Capture(cookie, dataSyncId, visitorData)
+        val pending = synchronized(waiting) {
+            val copy = waiting.toList()
+            waiting.clear()
+            copy
+        }
+        logDebug("delivering to ${pending.size} waiting request(s)")
+        pending.forEach { callback -> runCatching { callback(capture) } }
     }
 
-    private fun createWindow(language: String, callback: (Capture?) -> Unit) {
+    private fun createWindow(language: String) {
         try {
             val stage = Stage()
             // The header is dark: its text is set light, and a plain label could
@@ -231,7 +291,7 @@ object LoginWebView {
             stage.scene = Scene(root, 1000.0, 720.0)
             stage.setOnCloseRequest {
                 windowOpen = false
-                deliver(capture().header, null, null, callback)
+                deliver(capture().header, null, null)
             }
             stage.show()
 
@@ -277,7 +337,7 @@ object LoginWebView {
                                 "${finalCap.missing}, dataSyncId=${if (ids.first != null) "ok" else "MISSING"}, " +
                                 "visitorData=${if (ids.second != null) "ok" else "MISSING"}"
                         )
-                        deliver(finalCap.header ?: cap.header, ids.first, ids.second, callback)
+                        deliver(finalCap.header ?: cap.header, ids.first, ids.second)
                         FxPlatform.runLater { stage.close() }
                         break
                     }
@@ -343,7 +403,7 @@ object LoginWebView {
                                     "dataSyncId=${if (ids.first != null) "ok" else "MISSING"}, " +
                                     "visitorData=${if (ids.second != null) "ok" else "MISSING"}"
                             )
-                            deliver(finalCap.header ?: seen.header, ids.first, ids.second, callback)
+                            deliver(finalCap.header ?: seen.header, ids.first, ids.second)
                             FxPlatform.runLater { stage.close() }
                             break
                         }
@@ -364,7 +424,7 @@ object LoginWebView {
                             status.text = Localization.get(language, "login_saving")
                         }
                         val ids = extractPageIds(browser)
-                        deliver(cap.header, ids.first, ids.second, callback)
+                        deliver(cap.header, ids.first, ids.second)
                         FxPlatform.runLater { stage.close() }
                         break
                     }
@@ -376,7 +436,7 @@ object LoginWebView {
                         // inert ("it only opens once").
                         logDebug("capture timeout — no session cookies; closing the window")
                         FxPlatform.runLater { stage.close() }
-                        deliver(null, null, null, callback)
+                        deliver(null, null, null)
                         break
                     }
                     Thread.sleep(1000)
@@ -385,7 +445,7 @@ object LoginWebView {
         } catch (t: Throwable) {
             windowOpen = false
             unavailable = true
-            deliver(null, null, null, callback)
+            deliver(null, null, null)
         }
     }
 

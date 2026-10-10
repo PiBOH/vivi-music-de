@@ -548,6 +548,26 @@ tasks.register<JavaExec>("ltRoomRenderCheck") {
 }
 
 /**
+ * End-to-end check of backup restore:
+ *
+ *     ./gradlew :desktop:backupRestoreCheck [--args="<file> <file> …"]
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/BackupRestoreCheck.kt`. It
+ * restores a backup this build just wrote, the legacy single-JSON file (with and
+ * without a byte-order mark), an archive whose entries sit under a folder, and an
+ * archive with a corrupt settings entry, and it refuses to call the last one a
+ * success. Runs against a temporary user.home; pass a real
+ * `*.vivide.backup` on the command line to check that file too.
+ */
+tasks.register<JavaExec>("backupRestoreCheck") {
+    group = "verification"
+    description = "Restores real and synthetic backups through BackupManager and reports what each one does"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.BackupRestoreCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Network probe for the "HTTP 403 downloading audio" playback failure:
  *
  *     ./gradlew :desktop:streamResolveProbe [--args="videoId videoId"]

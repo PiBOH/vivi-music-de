@@ -189,6 +189,14 @@ object NativeNotifier {
         val labelPrevious: String = "Previous",
         val labelOpen: String = "Open VIVI Music",
         val labelQuit: String = "Quit",
+        /**
+         * False while this user may not drive playback (a Listen Together
+         * guest): the three transport rows are drawn greyed and inert, exactly
+         * like the same buttons in the players. A media key cannot be greyed,
+         * but this menu can, and a menu row that looks available while the
+         * host owns the transport is the same lie the players had.
+         */
+        val transportEnabled: Boolean = true,
     )
 
     @Volatile
@@ -280,14 +288,15 @@ object NativeNotifier {
 
     private fun buildMenu(icon: TrayIcon, a: TrayActions) {
         val menu = java.awt.PopupMenu()
-        fun add(label: String, action: () -> Unit) {
+        fun add(label: String, action: () -> Unit, enabled: Boolean = true) {
             val item = java.awt.MenuItem(label)
+            item.isEnabled = enabled
             item.addActionListener { runCatching { action() } }
             menu.add(item)
         }
-        add(a.labelPlayPause, a.onPlayPause)
-        add(a.labelNext, a.onNext)
-        add(a.labelPrevious, a.onPrevious)
+        add(a.labelPlayPause, a.onPlayPause, a.transportEnabled)
+        add(a.labelNext, a.onNext, a.transportEnabled)
+        add(a.labelPrevious, a.onPrevious, a.transportEnabled)
         menu.addSeparator()
         add(a.labelOpen, a.onOpen)
         add(a.labelQuit, a.onQuit)

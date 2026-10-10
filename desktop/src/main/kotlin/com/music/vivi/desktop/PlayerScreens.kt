@@ -604,6 +604,10 @@ private fun M3EPlayerContent(
                     Spacer(Modifier.height(14.dp))
 
                     // 5. Main Playback Controls (Shuffle, Previous, Play/Pause, Next, Repeat)
+                    // Listen Together: as a guest the transport is the host's, so
+                    // the three controls they may not touch are grey and inert
+                    // (shuffle and repeat stay live: the lock never covered them).
+                    val transportOff = transportLocked()
                     Row(
                         modifier = Modifier.offset(x = controlsOffsetX, y = controlsOffsetY),
                         horizontalArrangement = Arrangement.spacedBy(20.dp),
@@ -627,26 +631,30 @@ private fun M3EPlayerContent(
                             }
                         }
 
-                        Surface(
-                            onClick = onPrevious,
-                            shape = CircleShape,
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
-                            modifier = Modifier.size(skipButtonSize),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Filled.SkipPrevious,
-                                    contentDescription = Localization.get(language, "previous"),
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.size(26.dp),
-                                )
+                        Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "previous")) {
+                            Surface(
+                                onClick = onPrevious,
+                                enabled = !transportOff,
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
+                                modifier = Modifier.size(skipButtonSize),
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        Icons.Filled.SkipPrevious,
+                                        contentDescription = Localization.get(language, "previous"),
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                                        modifier = Modifier.size(26.dp),
+                                    )
+                                }
                             }
                         }
 
                         Surface(
                             onClick = onTogglePlay,
+                            enabled = !transportOff,
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(playPauseButtonSize),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -669,6 +677,7 @@ private fun M3EPlayerContent(
 
                         Surface(
                             onClick = onNext,
+                            enabled = !transportOff,
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f),
                             modifier = Modifier.size(skipButtonSize),
@@ -677,7 +686,7 @@ private fun M3EPlayerContent(
                                 Icon(
                                     Icons.Filled.SkipNext,
                                     contentDescription = Localization.get(language, "next"),
-                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                     modifier = Modifier.size(26.dp),
                                 )
                             }
@@ -1228,7 +1237,8 @@ private fun PlayerArtworkBlock(
             // on thumbnail" option is on.
             val currentPos by rememberUpdatedState(positionMs)
             val canSeek = onSeek != null && durationMs > 0L
-            val canToggle = gestureSettings.lyricsThumbnailPlayPause && onTogglePlay != null
+            val canToggle = gestureSettings.lyricsThumbnailPlayPause && onTogglePlay != null &&
+                !transportLocked()
             // Swipe to change song (mobile): the same gesture the mini players
             // have, on the artwork of the full player.
             val swipeModifier = if (
@@ -1512,6 +1522,10 @@ private fun PlayerControlPanel(
     // Transport controls: shuffle / previous / play / next / repeat / like.
     // Apple-style "glass" circles (semi-transparent, subtle sheen + border)
     // instead of flat Material buttons, so the controls sit on the artwork.
+    // A Listen Together guest gets the same buttons greyed and inert: the host
+    // owns the transport (see GuestTransport.kt). Shuffle and repeat stay live,
+    // exactly like the lock they mirror.
+    val transportOff = transportLocked()
     val onSurface = MaterialTheme.colorScheme.onSurface
     Row(
         Modifier.fillMaxWidth(),
@@ -1526,18 +1540,23 @@ private fun PlayerControlPanel(
             iconSize = 22.dp,
             tint = if (isShuffle) MaterialTheme.colorScheme.primary else onSurface.copy(alpha = 0.85f),
         )
-        GlassCircleButton(
-            onClick = onPrevious,
-            icon = Icons.Filled.SkipPrevious,
-            contentDescription = Localization.get(language, "previous"),
-            size = 52.dp,
-            iconSize = 34.dp,
-            tint = onSurface,
-        )
+        Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "previous")) {
+            GlassCircleButton(
+                onClick = onPrevious,
+                icon = Icons.Filled.SkipPrevious,
+                contentDescription = Localization.get(language, "previous"),
+                size = 52.dp,
+                iconSize = 34.dp,
+                tint = onSurface,
+                enabled = !transportOff,
+            )
+        }
         if (pillPlay) {
             Button(
                 onClick = onTogglePlay,
+                enabled = !transportOff,
                 shape = RoundedCornerShape(50),
+                modifier = Modifier.dimmedWhenLocked(),
             ) {
                 Icon(
                     if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
@@ -1557,16 +1576,20 @@ private fun PlayerControlPanel(
                 tint = MaterialTheme.colorScheme.onPrimary,
                 background = MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
                 borderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                enabled = !transportOff,
             )
         }
-        GlassCircleButton(
-            onClick = onNext,
-            icon = Icons.Filled.SkipNext,
-            contentDescription = Localization.get(language, "next"),
-            size = 52.dp,
-            iconSize = 34.dp,
-            tint = onSurface,
-        )
+        Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "next")) {
+            GlassCircleButton(
+                onClick = onNext,
+                icon = Icons.Filled.SkipNext,
+                contentDescription = Localization.get(language, "next"),
+                size = 52.dp,
+                iconSize = 34.dp,
+                tint = onSurface,
+                enabled = !transportOff,
+            )
+        }
         GlassCircleButton(
             onClick = onCycleRepeat,
             icon = repeatIcon(repeatMode),
@@ -1677,6 +1700,9 @@ private fun GlassCircleButton(
     tint: Color = MaterialTheme.colorScheme.onSurface,
     background: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
     borderColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+    // Listen Together: a guest's transport controls are drawn grey and inert
+    // instead of looking usable and doing nothing (see GuestTransport.kt).
+    enabled: Boolean = true,
 ) {
     // Expressive press feedback: the button presses in while held, so a tap on
     // the glass feels physical instead of only changing colour. The spring is
@@ -1694,12 +1720,14 @@ private fun GlassCircleButton(
     )
     Surface(
         onClick = onClick,
+        enabled = enabled,
         shape = CircleShape,
         color = Color.Transparent,
         interactionSource = interaction,
         modifier = Modifier
             .size(size)
-            .graphicsLayer { scaleX = pressScale; scaleY = pressScale },
+            .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
+            .alpha(if (enabled) 1f else LOCKED_CONTROL_ALPHA),
     ) {
         Box(
             Modifier
@@ -1796,14 +1824,17 @@ fun AppleUpNextQueueScreen(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 if (queue.isNotEmpty()) {
+                    // Listen Together: the queue is the host's, so a guest's
+                    // Clear button is grey and inert.
                     TextButton(
                         onClick = onClear,
+                        enabled = !transportLocked(),
                         contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                     ) {
                         Text(
                             text = Localization.get(language, "clear_queue"),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (transportLocked()) LOCKED_CONTROL_ALPHA else 1f),
                         )
                     }
                 }
@@ -2070,7 +2101,8 @@ fun QueueScreen(
             Text(Localization.get(language, "queue"), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.weight(1f))
             if (queue.isNotEmpty()) {
-                Button(onClick = onClear) { Text(Localization.get(language, "clear_queue")) }
+                // Listen Together: a guest may not clear the host's queue.
+                Button(onClick = onClear, enabled = !transportLocked()) { Text(Localization.get(language, "clear_queue")) }
             }
         }
         if (queue.isEmpty()) {
@@ -2297,6 +2329,9 @@ fun LyricsScreen(
         loading = false
     }
 
+    // Listen Together: as a guest this thumbnail's play/pause is the host's, so
+    // it is drawn grey and inert like every other transport control.
+    val transportOff = transportLocked()
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         onBack?.let { back -> BackButton(language, back) }
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -2311,13 +2346,13 @@ fun LyricsScreen(
                             .size(40.dp)
                             .clip(RoundedCornerShape(8.dp))
                             .background(Color.Black.copy(alpha = 0.45f))
-                            .clickable(onClick = onTogglePlay),
+                            .clickable(enabled = !transportOff, onClick = onTogglePlay),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -2904,23 +2939,24 @@ fun ClassicDesktopMiniPlayer(
                                     )
                                 }
                             }
-                            Tooltip(Localization.get(language, "tooltip_previous")) {
-                                IconButton(onClick = onPrevious) {
+                            val transportOff = transportLocked()
+                            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
+                                IconButton(onClick = onPrevious, enabled = !transportOff) {
                                     Icon(
                                         Icons.Filled.SkipPrevious,
                                         contentDescription = Localization.get(language, "previous"),
-                                        tint = contentColor,
+                                        tint = contentColor.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                         modifier = Modifier.size(24.dp),
                                     )
                                 }
                             }
-                            Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
+                            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
                                 Box(
                                     Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
-                                        .clickable(onClick = onTogglePlay),
+                                        .background(MaterialTheme.colorScheme.primary.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f))
+                                        .clickable(enabled = !transportOff, onClick = onTogglePlay),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     if (isLoading) {
@@ -2935,12 +2971,12 @@ fun ClassicDesktopMiniPlayer(
                                     }
                                 }
                             }
-                            Tooltip(Localization.get(language, "tooltip_next")) {
-                                IconButton(onClick = onNext) {
+                            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                                IconButton(onClick = onNext, enabled = !transportOff) {
                                     Icon(
                                         Icons.Filled.SkipNext,
                                         contentDescription = Localization.get(language, "next"),
-                                        tint = contentColor,
+                                        tint = contentColor.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                         modifier = Modifier.size(24.dp),
                                     )
                                 }
@@ -3150,11 +3186,13 @@ fun NewDesktopMiniPlayer(
             // Circular Artwork Thumbnail with Song Progress Arc & Play/Pause Button Inside Cover
             // (a fainter buffered arc sits behind the played arc while streaming)
             val bufferedFraction = playbackBufferedFraction()
+            // Listen Together: a guest's cover play/pause is grey and inert.
+            val transportOff = transportLocked()
             Box(
                 Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .clickable(onClick = onTogglePlay),
+                    .clickable(enabled = !transportOff, onClick = onTogglePlay),
                 contentAlignment = Alignment.Center,
             ) {
                 Canvas(Modifier.fillMaxSize()) {
@@ -3201,7 +3239,7 @@ fun NewDesktopMiniPlayer(
                             Icon(
                                 if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = Color.White,
+                                tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                 modifier = Modifier.size(20.dp),
                             )
                         }
@@ -3294,12 +3332,12 @@ fun NewDesktopMiniPlayer(
                         )
                     }
                 }
-                Tooltip(Localization.get(language, "tooltip_next")) {
-                    IconButton(onClick = onNext) {
+                Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                    IconButton(onClick = onNext, enabled = !transportOff) {
                         Icon(
                             Icons.Filled.SkipNext,
                             contentDescription = Localization.get(language, "next"),
-                            tint = contentColor,
+                            tint = contentColor.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -3407,12 +3445,14 @@ fun AppleDesktopMiniPlayer(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Squircle Artwork Thumbnail with Play/Pause Button Inside Cover
+            // Listen Together: a guest's cover play/pause is grey and inert.
+            val transportOff = transportLocked()
             Box(
                 Modifier
                     .size(42.dp)
                     .clip(RoundedCornerShape(10.dp))
                     .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
-                    .clickable(onClick = onTogglePlay),
+                    .clickable(enabled = !transportOff, onClick = onTogglePlay),
                 contentAlignment = Alignment.Center,
             ) {
                 Thumbnail(nowPlaying.thumbnail, Modifier.fillMaxSize())
@@ -3428,7 +3468,7 @@ fun AppleDesktopMiniPlayer(
                         Icon(
                             if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.White,
+                            tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -3476,12 +3516,12 @@ fun AppleDesktopMiniPlayer(
                         )
                     }
                 }
-                Tooltip(Localization.get(language, "tooltip_next")) {
-                    IconButton(onClick = onNext) {
+                Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                    IconButton(onClick = onNext, enabled = !transportOff) {
                         Icon(
                             Icons.Filled.SkipNext,
                             contentDescription = Localization.get(language, "next"),
-                            tint = contentColor,
+                            tint = contentColor.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(26.dp),
                         )
                     }
@@ -3887,20 +3927,23 @@ fun LyricsFocusScreen(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Tooltip(Localization.get(language, "tooltip_previous")) {
-                IconButton(onClick = onPrevious) {
+            // Listen Together: a guest's transport bar is grey and inert.
+            val transportOff = transportLocked()
+            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
+                IconButton(onClick = onPrevious, enabled = !transportOff) {
                     Icon(
                         Icons.Filled.SkipPrevious,
                         contentDescription = Localization.get(language, "previous"),
-                        tint = Color.White,
+                        tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                         modifier = Modifier.size(32.dp),
                     )
                 }
             }
             Spacer(Modifier.width(20.dp))
-            Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
+            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
                 FilledIconButton(
                     onClick = onTogglePlay,
+                    enabled = !transportOff,
                     modifier = Modifier.size(56.dp),
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -3914,12 +3957,12 @@ fun LyricsFocusScreen(
                 }
             }
             Spacer(Modifier.width(20.dp))
-            Tooltip(Localization.get(language, "tooltip_next")) {
-                IconButton(onClick = onNext) {
+            Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
+                IconButton(onClick = onNext, enabled = !transportOff) {
                     Icon(
                         Icons.Filled.SkipNext,
                         contentDescription = Localization.get(language, "next"),
-                        tint = Color.White,
+                        tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                         modifier = Modifier.size(32.dp),
                     )
                 }

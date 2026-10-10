@@ -920,8 +920,12 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
         val f = pendingRestore
         if (restoreTarget == null && f != null) {
             pendingRestore = null
-            withContext(Dispatchers.IO) { BackupManager.import(f) }
-            showRestartDialog = true
+            // The row's own restore reports its outcome too: it used to open the
+            // "restart to apply" dialog whatever happened, so a restore that did
+            // nothing still looked like it had worked.
+            val result = withContext(Dispatchers.IO) { BackupManager.import(f) }
+            if (result.ok) showRestartDialog = true
+            else DesktopSnackbar.show(Localization.get(language, result.messageKey))
         }
     }
     LaunchedEffect(deleteTarget) {
@@ -978,10 +982,18 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
                 busy = true
                 scope.launch {
                     val file = withContext(Dispatchers.IO) { chooseBackupFile(save = false) }
-                    val ok = file != null && withContext(Dispatchers.IO) { BackupManager.import(file) }
+                    val result = if (file == null) null
+                    else withContext(Dispatchers.IO) { BackupManager.import(file) }
                     busy = false
-                    if (ok) showRestartDialog = true
-                    else DesktopSnackbar.show(Localization.get(language, "restore_failed"))
+                    // The reason is no longer always the same sentence: a file
+                    // that is not a DE backup (the phone's archive, say) and one
+                    // whose settings entry cannot be read are different answers,
+                    // and the log keeps the sentence for whoever has to dig.
+                    when {
+                        result == null -> Unit
+                        result.ok -> showRestartDialog = true
+                        else -> DesktopSnackbar.show(Localization.get(language, result.messageKey))
+                    }
                 }
             },
             enabled = !busy,

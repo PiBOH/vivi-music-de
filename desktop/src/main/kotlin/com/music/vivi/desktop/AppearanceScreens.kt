@@ -328,14 +328,53 @@ fun ThemeSection(
 
         Spacer(Modifier.height(24.dp))
 
+        // The custom-colour state lives BEFORE the palette because the palette
+        // draws the custom circle as its own last entry (the picker belongs at
+        // the end of the row the user is already looking at, not in a section of
+        // its own further down the screen).
+        //
+        // All three bars and that circle share this ONE state, keyed on the
+        // current accent: choosing a colour from the predefined palette moves the
+        // picker onto it, instead of leaving the picker on whatever was dragged
+        // there last (the bars used a plain `remember`, so they never followed).
+        val initialHsv = remember(accent) { colorToHsv(accent) }
+        var hue by remember(accent) { mutableStateOf(initialHsv[0]) }
+        var saturation by remember(accent) { mutableStateOf(initialHsv[1]) }
+        var brightness by remember(accent) { mutableStateOf(initialHsv[2]) }
+        val customColor = hsvToColor(hue, saturation, brightness)
+        val customAccentSelected = customAccents.any { argbIntToColor(it) == accent }
+        var showCustomPicker by remember { mutableStateOf(customAccentSelected) }
+
         Text(Localization.get(language, "color_palette"), style = MaterialTheme.typography.titleMedium)
-        // Palette swatches (wrap via FlowRow-like manual chunking: show in rows of 7).
-        AccentPalette.colors.chunked(7).forEach { row ->
+        // Palette swatches (wrap via FlowRow-like manual chunking: show in rows of 7),
+        // with the custom-colour circle as the LAST swatch of the flow — right of
+        // the predefined colours, on the next row when the current one is full.
+        val paletteSize = AccentPalette.colors.size
+        (0..paletteSize).chunked(7).forEach { row ->
             Row(
                 Modifier.fillMaxWidth().padding(top = 10.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                row.forEach { entry ->
+                row.forEach { index ->
+                    if (index == paletteSize) {
+                        Tooltip(Localization.get(language, "custom_color")) {
+                            AccentSwatch(
+                                color = customColor,
+                                selected = showCustomPicker,
+                                onClick = {
+                                    // Seed the bars from the accent in use, so the
+                                    // circle opens ON the current colour.
+                                    val hsv = colorToHsv(accent)
+                                    hue = hsv[0]
+                                    saturation = hsv[1]
+                                    brightness = hsv[2]
+                                    showCustomPicker = true
+                                },
+                            )
+                        }
+                        return@forEach
+                    }
+                    val entry = AccentPalette.colors[index]
                     val isSelected = if (entry.color == Color.Transparent) {
                         accent == Color.Transparent
                     } else {
@@ -439,14 +478,30 @@ fun ThemeSection(
         }
 
         // --- Custom color picker (HSV gradient bars) ---
+        // Opened by the circle at the end of the palette (and closable from its
+        // own title), so the palette stays one row of swatches instead of a
+        // section that is always in the way.
         Spacer(Modifier.height(28.dp))
-        Text(Localization.get(language, "custom_color"), style = MaterialTheme.typography.titleMedium)
+        Row(
+            Modifier.fillMaxWidth().clickable { showCustomPicker = !showCustomPicker },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                Localization.get(language, "custom_color"),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                Localization.get(language, if (showCustomPicker) "login_hide" else "login_show"),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+        if (!showCustomPicker) {
+            Spacer(Modifier.height(36.dp))
+            return@Column
+        }
 
-        val initialHsv = remember(accent) { colorToHsv(accent) }
-        var hue by remember { mutableStateOf(initialHsv[0]) }
-        var saturation by remember { mutableStateOf(initialHsv[1]) }
-        var brightness by remember { mutableStateOf(initialHsv[2]) }
-        val customColor = hsvToColor(hue, saturation, brightness)
         val alreadySaved = remember(customAccents, customColor) {
             customAccents.any { argbIntToColor(it) == customColor }
         }
