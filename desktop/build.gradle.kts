@@ -585,3 +585,29 @@ tasks.register<JavaExec>("streamResolveProbe") {
     mainClass.set("com.music.vivi.desktop.StreamResolveProbe")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+
+/**
+ * Headless check of the custom colour wheel:
+ *
+ *     ./gradlew :desktop:colorWheelRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ColorWheelRenderCheck.kt`.
+ * The picker is one round wheel on the right of the Theme & Colors screen (hue
+ * around the rim, saturation from the centre out) with the brightness strip
+ * beside it, in place of the three HSV bars it used to be. This renders the real
+ * `ThemeSection` into an off-screen `ImageComposeScene` with the picker open and
+ * reads the pixels back, because a wheel is a picture and nothing else can tell a
+ * wheel from a rectangle: the disc must be round and the wheel's own size, its
+ * four cardinal samples must be red, yellow-green, cyan and blue the way the
+ * sweep gradient and the pointer's clockwise angle put them, its centre white and
+ * its rim saturated, the marker must sit where the accent the screen opened on
+ * is (right for red, lower-left for green), the strip beside it must run from the
+ * full colour to black, and no wide thin colour bar may be left on the screen.
+ */
+tasks.register<JavaExec>("colorWheelRenderCheck") {
+    group = "verification"
+    description = "Renders the custom colour wheel headlessly and checks the disc, its hues and its marker"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ColorWheelRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

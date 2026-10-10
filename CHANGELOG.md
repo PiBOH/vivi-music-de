@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.6_DE-1.54.25-beta] - 2026-10-10
+
+### 🔧 Changed
+- [DE] **The custom colour is one round wheel, on the right of the section.** The picker was three horizontal HSV bars (hue, saturation, brightness) stacked under the palette; it is one round wheel now, placed to the right of the hex field and the **Add to palette** button. Hue runs around the rim, saturation comes out of the white centre, and the marker sits exactly on the picked colour - its angle is the hue, its distance the saturation - so one drag picks both. The disc is drawn from two gradients on a `Canvas`, a sweep for the hue and a radial white-to-transparent for the saturation, and darkened to the current brightness, so it always shows the colour being selected; one gesture loop tracks the press and every movement, the shape the bars used after issue #61 (`detectTapGestures` never returns, so the call after it was dead code and the surface only reacted on the release), which keeps the marker under the pointer. Brightness stays adjustable as a slim vertical strip beside the wheel (full colour at the top, black at the bottom) whose tooltip is the translated `brightness`; the three bars and the `GradientBar` composable they were drawn with are gone. **Measured:** the new `./gradlew :desktop:colorWheelRenderCheck` renders the real `ThemeSection` into an off-screen `ImageComposeScene` with the picker open and reads the pixels back: the wheel is a round 220x220 disc of 37155 px of ink (`wheel blob: 220x220px, 37155px of ink, at 746,928`), its rim reads red `(255,52,53)` at 3 o'clock, yellow-green `(152,255,52)` at the bottom, cyan `(50,254,255)` at the left and blue `(151,50,255)` at the top, its centre reads white `(253,254,255)`, the marker follows the accent the screen opens on (right `(962,1037)` for a red accent, lower-left `(801,1130)` for a green one), the strip runs from `(0,236,0)` at the top to `(0,128,0)` half way down, and no wide gradient band is left on the screen. **Open sub-item:** the wheel sits inside the picker section rather than beside the palette, and how the screen reads on a real window is unverified here: the check proves what is drawn, not how it looks.
+
 ## [6.0.8.5_DE-1.54.24-beta] - 2026-10-10
 
 ### 🐛 Fixed

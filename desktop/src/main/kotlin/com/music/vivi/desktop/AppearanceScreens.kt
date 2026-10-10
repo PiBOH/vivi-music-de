@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -69,15 +70,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.roundToInt
+import kotlin.math.sin
 
 /**
  * Appearance hub: rows mirroring the Android app's Appearance sub-menu.
@@ -477,7 +484,7 @@ fun ThemeSection(
             }
         }
 
-        // --- Custom color picker (HSV gradient bars) ---
+        // --- Custom color picker (one round wheel) ---
         // Opened by the circle at the end of the palette (and closable from its
         // own title), so the palette stays one row of swatches instead of a
         // section that is always in the way.
@@ -507,103 +514,86 @@ fun ThemeSection(
         }
 
         Spacer(Modifier.height(14.dp))
-        Text(
-            Localization.get(language, "hue"),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        GradientBar(
-            gradient = Brush.horizontalGradient(
-                listOf(Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red),
-            ),
-            fraction = hue / 360f,
-            onFractionChange = { hue = it * 360f },
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            Localization.get(language, "saturation"),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        GradientBar(
-            gradient = Brush.horizontalGradient(
-                listOf(hsvToColor(hue, 0f, brightness), hsvToColor(hue, 1f, brightness)),
-            ),
-            fraction = saturation,
-            onFractionChange = { saturation = it },
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-        )
-        Spacer(Modifier.height(12.dp))
-        Text(
-            Localization.get(language, "brightness"),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        GradientBar(
-            gradient = Brush.horizontalGradient(
-                listOf(hsvToColor(hue, saturation, 0f), hsvToColor(hue, saturation, 1f)),
-            ),
-            fraction = brightness,
-            onFractionChange = { brightness = it },
-            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-        )
-
-        Spacer(Modifier.height(16.dp))
-        // Live-updating HEX field (issue #61): typing a 6-digit value applies it
-        // to the picker immediately, so a color can be pasted from anywhere.
-        val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
-        var hexInput by remember { mutableStateOf(liveHex) }
-        var hexFocused by remember { mutableStateOf(false) }
-        // While the field is not focused it mirrors the color picked with the
-        // gradient bars; typing in it drives hue/saturation/brightness instead.
-        LaunchedEffect(hexFocused, liveHex) {
-            if (!hexFocused) hexInput = liveHex
-        }
+        // The three HSV bars are gone: the picker is one round wheel, on the
+        // right of the section, exactly as the owner asked for it. The wheel
+        // carries hue (around the rim) and saturation (from the centre out), the
+        // strip beside it the brightness a wheel cannot, and the column on the
+        // left keeps the exact value as a hex number and the button that saves
+        // the colour to the palette.
         Row(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(customColor)
-                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
+            Column(Modifier.weight(1f)) {
+                // Live-updating HEX field (issue #61): typing a 6-digit value applies it
+                // to the picker immediately, so a color can be pasted from anywhere.
+                val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
+                var hexInput by remember { mutableStateOf(liveHex) }
+                var hexFocused by remember { mutableStateOf(false) }
+                // While the field is not focused it mirrors the colour picked on the
+                // wheel; typing in it drives hue/saturation/brightness instead.
+                LaunchedEffect(hexFocused, liveHex) {
+                    if (!hexFocused) hexInput = liveHex
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(customColor)
+                            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    OutlinedTextField(
+                        value = hexInput,
+                        onValueChange = { raw ->
+                            val cleaned = raw.uppercase()
+                                .filter { it.isDigit() || it in 'A'..'F' }
+                                .take(6)
+                            hexInput = cleaned
+                            if (cleaned.length == 6) {
+                                cleaned.toIntOrNull(16)?.let { rgb ->
+                                    val hsv = colorToHsv(Color(0xFF000000.toInt() or rgb))
+                                    hue = hsv[0]
+                                    saturation = hsv[1]
+                                    brightness = hsv[2]
+                                }
+                            }
+                        },
+                        singleLine = true,
+                        isError = hexInput.length != 6,
+                        placeholder = { Text("#RRGGBB") },
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .width(150.dp)
+                            .onFocusChanged { hexFocused = it.isFocused },
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Button(
+                    onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
+                    enabled = !alreadySaved,
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(Localization.get(language, "add_to_palette"))
+                }
+            }
+            Spacer(Modifier.width(40.dp))
+            HsvColorWheel(
+                hue = hue,
+                saturation = saturation,
+                brightness = brightness,
+                onPick = { h, s -> hue = h; saturation = s },
             )
-            Spacer(Modifier.width(12.dp))
-            OutlinedTextField(
-                value = hexInput,
-                onValueChange = { raw ->
-                    val cleaned = raw.uppercase()
-                        .filter { it.isDigit() || it in 'A'..'F' }
-                        .take(6)
-                    hexInput = cleaned
-                    if (cleaned.length == 6) {
-                        cleaned.toIntOrNull(16)?.let { rgb ->
-                            val hsv = colorToHsv(Color(0xFF000000.toInt() or rgb))
-                            hue = hsv[0]
-                            saturation = hsv[1]
-                            brightness = hsv[2]
-                        }
-                    }
-                },
-                singleLine = true,
-                isError = hexInput.length != 6,
-                placeholder = { Text("#RRGGBB") },
-                textStyle = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .width(150.dp)
-                    .onFocusChanged { hexFocused = it.isFocused },
-            )
-            Spacer(Modifier.weight(1f))
-            Button(
-                onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
-                enabled = !alreadySaved,
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text(Localization.get(language, "add_to_palette"))
+            Spacer(Modifier.width(14.dp))
+            Tooltip(Localization.get(language, "brightness")) {
+                BrightnessStrip(
+                    hue = hue,
+                    saturation = saturation,
+                    brightness = brightness,
+                    onBrightnessChange = { brightness = it },
+                )
             }
         }
 
@@ -611,47 +601,140 @@ fun ThemeSection(
     }
 }
 
+/** The colour wheel's diameter, and the height of the strip beside it. */
+private val WheelSize = 220.dp
+
+/**
+ * The colour wheel: hue around the rim, saturation from the centre out, both
+ * picked with a single drag. It is drawn from two gradients - a sweep for the
+ * hue and a radial white-to-transparent for the saturation - and darkened to the
+ * current brightness, so the disc always shows the colour being selected. The
+ * marker is the same colour's position: the hue is its angle and the saturation
+ * its distance from the centre.
+ */
 @Composable
-private fun GradientBar(
-    gradient: Brush,
-    fraction: Float,
-    onFractionChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
+private fun HsvColorWheel(
+    hue: Float,
+    saturation: Float,
+    brightness: Float,
+    onPick: (Float, Float) -> Unit,
 ) {
-    var barWidthPx by remember { mutableStateOf(1f) }
-    BoxWithConstraints(
-        modifier = modifier
-            .height(24.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(gradient)
-            .onSizeChanged { barWidthPx = it.width.toFloat() }
-            .pointerInput(barWidthPx) {
-                fun pick(x: Float) = onFractionChange((x / barWidthPx).coerceIn(0f, 1f))
+    var radiusPx by remember { mutableStateOf(1f) }
+    Box(
+        Modifier
+            .size(WheelSize)
+            .onSizeChanged { radiusPx = it.width / 2f }
+            .pointerInput(Unit) {
+                fun pick(position: Offset) {
+                    val dx = position.x - radiusPx
+                    val dy = position.y - radiusPx
+                    // The sweep gradient starts at 3 o'clock and runs clockwise,
+                    // and the angle is read the same way (y grows downwards), so
+                    // the marker always sits under the pointer.
+                    val degrees = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
+                    onPick((degrees + 360f) % 360f, (hypot(dx, dy) / radiusPx).coerceIn(0f, 1f))
+                }
                 // ISSUE #61: `detectTapGestures` never returns (it loops
-                // forever), so the `detectDragGestures` call after it was dead
-                // code and the bar only reacted on mouse release. A single
-                // gesture loop tracks the press AND every drag movement, so the
-                // thumb and the previews follow the pointer in real time.
+                // forever), so a `detectDragGestures` call after it was dead code
+                // and the surface only reacted on mouse release. A single gesture
+                // loop tracks the press AND every drag movement, so the marker
+                // follows the pointer in real time.
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
-                    pick(down.position.x)
+                    pick(down.position)
                     down.consume()
                     while (true) {
                         val event = awaitPointerEvent()
                         val change = event.changes.firstOrNull { it.id == down.id } ?: break
                         if (!change.pressed) break
-                        pick(change.position.x)
+                        pick(change.position)
                         change.consume()
                     }
                 }
             },
     ) {
-        val thumbX = (fraction * maxWidth.value).dp.coerceIn(0.dp, maxWidth)
+        Canvas(Modifier.fillMaxSize()) {
+            val r = size.minDimension / 2f
+            val middle = center
+            drawCircle(
+                brush = Brush.sweepGradient(
+                    colors = listOf(Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red),
+                    center = middle,
+                ),
+                radius = r,
+                center = middle,
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color.White, Color.White.copy(alpha = 0f)),
+                    center = middle,
+                    radius = r,
+                ),
+                radius = r,
+                center = middle,
+            )
+            if (brightness < 1f) {
+                drawCircle(Color.Black.copy(alpha = 1f - brightness), radius = r, center = middle)
+            }
+            val angle = Math.toRadians(hue.toDouble())
+            val marker = Offset(
+                x = middle.x + (r * saturation * cos(angle)).toFloat(),
+                y = middle.y + (r * saturation * sin(angle)).toFloat(),
+            )
+            val markRadius = (r * 0.06f).coerceAtLeast(4f)
+            drawCircle(Color.White, radius = markRadius, center = marker)
+            drawCircle(
+                Color.Black.copy(alpha = 0.55f),
+                radius = markRadius,
+                center = marker,
+                style = Stroke(width = 2f),
+            )
+        }
+    }
+}
+
+/**
+ * The wheel's value control: the picked colour at full brightness at the top,
+ * black at the bottom. It stays a strip beside the wheel because a wheel carries
+ * hue and saturation only, and it is dragged exactly like the wheel is.
+ */
+@Composable
+private fun BrightnessStrip(
+    hue: Float,
+    saturation: Float,
+    brightness: Float,
+    onBrightnessChange: (Float) -> Unit,
+) {
+    var stripHeightPx by remember { mutableStateOf(1f) }
+    BoxWithConstraints(
+        modifier = Modifier
+            .width(20.dp)
+            .height(WheelSize)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Brush.verticalGradient(listOf(hsvToColor(hue, saturation, 1f), Color.Black)))
+            .onSizeChanged { stripHeightPx = it.height.toFloat() }
+            .pointerInput(stripHeightPx) {
+                fun pick(y: Float) = onBrightnessChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    pick(down.position.y)
+                    down.consume()
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        pick(change.position.y)
+                        change.consume()
+                    }
+                }
+            },
+    ) {
+        val thumbY = ((1f - brightness) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
         Box(
             Modifier
-                .offset(x = thumbX - 6.dp)
-                .width(12.dp)
-                .fillMaxHeight()
+                .offset(y = thumbY - 5.dp)
+                .height(10.dp)
+                .fillMaxWidth()
                 .border(2.dp, Color.White, RoundedCornerShape(3.dp))
                 .shadow(2.dp, RoundedCornerShape(3.dp)),
         )

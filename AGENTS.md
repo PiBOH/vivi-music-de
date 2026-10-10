@@ -315,6 +315,13 @@ Existing text that already contains a long dash and is not being edited is left
 as it is: do not go looking for em dashes to replace. The rule governs new text
 and the lines you actually touch.
 
+### Documentation voice - MANDATORY
+
+Documentation, changelog entries and `TODO.md` rows are never written in the
+third person about the reader: no "the user must test this", no "the user's own
+file is not here", no task addressed to whoever reads the note. State the fact
+instead of the instruction ("not verified: needs a device"), and keep it English.
+
 ### Installer size and the icon-minimization task
 
 The desktop installers ship a **minimized Material-icons jar**. The extended
