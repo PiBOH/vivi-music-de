@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.6",
+  "versionCode": 144,
+  "channel": "beta",
+  "title": "v6.0.8.6_DE-1.54.26: a track queued twice no longer crashes the app, and Listen Together keeps one server row and two room buttons",
+  "builtAt": "2026-10-10T19:22:06Z",
+  "commit": "0ff85277e06eacb83dbd2a7ebb28fcb680572712",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31628514,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30110052,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31628514,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
