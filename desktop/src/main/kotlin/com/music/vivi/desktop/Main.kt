@@ -87,6 +87,7 @@ import androidx.compose.material.icons.automirrored.filled.Subject
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -5083,6 +5084,23 @@ fun MiniPlayer(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                    }
+                    // Listen Together guest: the transport in this bar is
+                    // inert (the host owns playback), so the lock rides with
+                    // the play button the user is about to press. The controls
+                    // stay enabled on purpose — pressing one answers with the
+                    // reason (PlayerController's lock message) instead of doing
+                    // nothing at all.
+                    if (ListenTogetherGate.locked.value) {
+                        Tooltip(Localization.get(language, "lt_guest_note")) {
+                            Icon(
+                                Icons.Filled.Lock,
+                                contentDescription = Localization.get(language, "lt_guest_note"),
+                                tint = if (pureBlack) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                        Spacer(Modifier.width(6.dp))
                     }
                     Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
                         IconButton(onClick = onTogglePlay) {

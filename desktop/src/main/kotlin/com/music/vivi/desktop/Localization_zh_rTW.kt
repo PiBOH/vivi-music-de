@@ -854,4 +854,8 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "your_artists_feed" to "你的音樂人",
         "yt_sync" to "自動與帳號同步",
         "ytm_sync" to "自動與你的 YouTube Music 帳戶同步",
+        "login_retry_hint" to "登入通常需要兩次嘗試：如果第一次失敗，請再按一次。",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

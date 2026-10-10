@@ -854,4 +854,8 @@ internal fun strings_nl(): Map<String, String> =
         "your_artists_feed" to "Jouw artiesten",
         "yt_sync" to "Account automatisch synchroniseren",
         "ytm_sync" to "Automatisch synchroniseren met je YouTube Music account",
+        "login_retry_hint" to "Inloggen vraagt vaak twee pogingen: als de eerste mislukt, druk opnieuw.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

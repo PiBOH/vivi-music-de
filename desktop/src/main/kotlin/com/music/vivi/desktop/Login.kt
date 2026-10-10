@@ -150,6 +150,17 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
                         )
                     }
                 }
+                // Said before the first attempt, not after the second failure:
+                // in the large majority of reports the session is only handed
+                // over on the second try (the first capture comes back without
+                // everything YouTube issues — ERRORS.md · E1033), and a user who
+                // does not know that concludes that sign-in is broken.
+                Text(
+                    Localization.get(language, "login_retry_hint"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                 Button(
                     onClick = {
                         error = null

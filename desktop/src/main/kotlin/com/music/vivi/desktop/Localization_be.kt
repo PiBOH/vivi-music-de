@@ -854,4 +854,8 @@ internal fun strings_be(): Map<String, String> =
         "your_artists_feed" to "Вашы выканаўцы",
         "yt_sync" to "Аўтасінхранізацыя з уліковым запісам",
         "ytm_sync" to "Аўтаматычна сінхранізаваць з вашым уліковым запісам YouTube Music",
+        "login_retry_hint" to "Уваход часта патрабуе двух спроб: калі першая не ўдалася, націсніце зноў.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

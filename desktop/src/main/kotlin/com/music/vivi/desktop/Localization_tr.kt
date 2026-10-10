@@ -854,4 +854,8 @@ internal fun strings_tr(): Map<String, String> =
         "your_artists_feed" to "Sanatçıların",
         "yt_sync" to "Hesapla otomatik olarak senkronize et",
         "ytm_sync" to "YouTube Music hesabınızla otomatik olarak senkronize et",
+        "login_retry_hint" to "Oturum açma genellikle iki deneme gerektirir: ilki başarısız olursa tekrar basın.",
+        "lt_block_user" to "Kalıcı Olarak Engelle",
+        "lt_settings_desc" to "Sunucuyu, kullanıcı adını, ve daha fazlasını ayarlayın",
+        "lt_smart_resync" to "Yeniden eşitle",
     )

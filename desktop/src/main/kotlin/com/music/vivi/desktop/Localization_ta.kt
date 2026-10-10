@@ -854,4 +854,8 @@ internal fun strings_ta(): Map<String, String> =
         "your_artists_feed" to "உங்கள் கலைஞர்கள்",
         "yt_sync" to "கணக்குடன் தானியங்கி ஒத்திசைவு",
         "ytm_sync" to "உங்கள் YouTube Music கணக்குடன் தானாக ஒத்திசைக்கவும்",
+        "login_retry_hint" to "உள்நுழைவுக்கு அடிக்கடி இரண்டு முயற்சிகள் தேவை: முதலாவது தோல்வியடைந்தால் மீண்டும் அழுத்தவும்.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

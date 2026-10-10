@@ -854,4 +854,8 @@ internal fun strings_et(): Map<String, String> =
         "your_artists_feed" to "Sinu artistid",
         "yt_sync" to "Automaatne sünkroonimine kontoga",
         "ytm_sync" to "Sünkrooni automaatselt oma YouTube Musici kontoga",
+        "login_retry_hint" to "Sisselogimine vajab sageli kahte katset: kui esimene ebaõnnestub, vajuta uuesti.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

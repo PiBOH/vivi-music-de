@@ -730,6 +730,15 @@ MAPPING = {
     # one resource that IS translated everywhere it matters: "Liked Songs".
     # Everything else is authored in desktop_extra_translations_90.
     "spotify_liked_songs": "liked_songs",
+    # ------------------------------------------------------------------
+    # Listen Together on the desktop, brought to parity with the phone: the
+    # permanent block, the settings section and the re-sync switch all exist as
+    # Android resources (vivi_strings.xml), so they are mapped rather than
+    # authored again in 52 languages.
+    # ------------------------------------------------------------------
+    "lt_block_user": "permanently_kick_user",
+    "lt_settings_desc": "listen_together_settings_desc",
+    "lt_smart_resync": "resync",
 }
 
 # Full desktop English table (source language).
@@ -1010,6 +1019,12 @@ ENGLISH = {
     "login_webview_unavailable": "The embedded sign-in window is not available on this system. Open the browser and use the manual cookie method.",
     "login_open_browser": "Open music.youtube.com in the browser",
     "login_manual_title": "Manual sign-in with cookies",
+    # The sign-in window hands the session over on the second attempt in the
+    # large majority of reports: the first capture comes back without everything
+    # YouTube issues (ERRORS.md · E1033). Said out loud, because "press it again"
+    # is otherwise the one step nobody tries. Desktop-only → authored in
+    # `desktop_extra_translations_97.py`.
+    "login_retry_hint": "Sign-in often needs two attempts: if the first one fails, press Sign in with Google again.",
     "login_show": "Show",
     "login_hide": "Hide",
     "login_signed_in_hint": "Your YouTube Music session is active: History, Library and playlists use your account.",
@@ -1898,12 +1913,13 @@ from desktop_extra_translations_93 import EXTRA_TRANSLATIONS as _EXTRA_93
 from desktop_extra_translations_94 import EXTRA_TRANSLATIONS as _EXTRA_94
 from desktop_extra_translations_95 import EXTRA_TRANSLATIONS as _EXTRA_95
 from desktop_extra_translations_96 import EXTRA_TRANSLATIONS as _EXTRA_96
+from desktop_extra_translations_97 import EXTRA_TRANSLATIONS as _EXTRA_97
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93, _EXTRA_94, _EXTRA_95, _EXTRA_96):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 

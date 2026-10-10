@@ -854,4 +854,8 @@ internal fun strings_cs(): Map<String, String> =
         "your_artists_feed" to "Vaši interpreti",
         "yt_sync" to "Automaticky synchronizovat s účtem",
         "ytm_sync" to "Automaticky synchronizovat s vaším účtem YouTube Music",
+        "login_retry_hint" to "Přihlášení často vyžaduje dva pokusy: když první selže, stiskněte znovu.",
+        "lt_block_user" to "Trvale zablokovat",
+        "lt_settings_desc" to "Nastavit server, uživatelské jméno a další",
+        "lt_smart_resync" to "Synchronizovat znovu",
     )

@@ -854,4 +854,8 @@ internal fun strings_ro(): Map<String, String> =
         "your_artists_feed" to "Artiștii tăi",
         "yt_sync" to "Sincronizează automat cu contul",
         "ytm_sync" to "Sincronizează automat cu contul tău de YouTube Music",
+        "login_retry_hint" to "Autentificarea necesită adesea două încercări: dacă prima eșuează, apasă din nou.",
+        "lt_block_user" to "Blochează permanent",
+        "lt_settings_desc" to "Configurează serverul, numele de utilizator și altele",
+        "lt_smart_resync" to "Resincronizează",
     )

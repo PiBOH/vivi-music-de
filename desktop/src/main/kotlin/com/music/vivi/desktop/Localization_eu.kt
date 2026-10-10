@@ -854,4 +854,8 @@ internal fun strings_eu(): Map<String, String> =
         "your_artists_feed" to "Zure artistak",
         "yt_sync" to "Kontuarekin sinkronizazio automatikoa",
         "ytm_sync" to "Zure YouTube Music kontuarekin automatikoki sinkronizatu",
+        "login_retry_hint" to "Saioa hasteak bi saiakera behar izaten ditu: lehena huts eginez gero, sakatu berriro.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

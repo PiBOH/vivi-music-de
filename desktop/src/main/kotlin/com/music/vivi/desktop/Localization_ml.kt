@@ -854,4 +854,8 @@ internal fun strings_ml(): Map<String, String> =
         "your_artists_feed" to "നിങ്ങളുടെ കലാകാരന്മാർ",
         "yt_sync" to "അക്കൗണ്ടുമായി സ്വയം സമന്വയിക്കുക",
         "ytm_sync" to "നിങ്ങളുടെ YouTube Music അക്കൗണ്ടുമായി സ്വയം സമന്വയിക്കുക",
+        "login_retry_hint" to "സൈൻ ഇൻ ചെയ്യാൻ പലപ്പോഴും രണ്ട് ശ്രമം വേണം: ആദ്യത്തേത് പരാജയപ്പെട്ടാൽ വീണ്ടും അമർത്തുക.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

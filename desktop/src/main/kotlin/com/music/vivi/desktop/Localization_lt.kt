@@ -854,4 +854,8 @@ internal fun strings_lt(): Map<String, String> =
         "your_artists_feed" to "Jūsų atlikėjai",
         "yt_sync" to "Automatiškai sinchronizuoti su paskyra",
         "ytm_sync" to "Automatiškai sinchronizuoti su jūsų „YouTube Muzika” paskyra",
+        "login_retry_hint" to "Prisijungimas dažnai reikalauja dviejų bandymų: jei pirmas nepavyko, spauskite dar kartą.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

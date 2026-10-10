@@ -854,4 +854,8 @@ internal fun strings_el(): Map<String, String> =
         "your_artists_feed" to "Οι καλλιτέχνες σου",
         "yt_sync" to "Αυτόματος συγχρονισμός με λογαριασμό",
         "ytm_sync" to "Αυτόματος συγχρονισμός με τον λογαριασμό σας στο YouTube Music",
+        "login_retry_hint" to "Η σύνδεση συχνά χρειάζεται δύο προσπάθειες: αν η πρώτη αποτύχει, πατήστε ξανά.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

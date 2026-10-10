@@ -72,6 +72,9 @@ object LoginWebView {
 
     fun isWindowOpen(): Boolean = windowOpen
 
+    /** True once a sign-in window could not be created at all on this machine. */
+    val isUnavailable: Boolean get() = unavailable
+
     /**
      * Starts JavaFX once, then creates the embedded login Stage.
      *
@@ -87,7 +90,14 @@ object LoginWebView {
         resetFirst: Boolean = false,
         onCaptured: (Capture?) -> Unit,
     ): Boolean {
-        if (unavailable || windowOpen) return !unavailable
+        // `windowOpen` alone blocks a second window: a sign-in that is already
+        // on screen must not be opened twice. `unavailable` deliberately does
+        // NOT, it is retried: it is set by a failure of THIS attempt (JavaFX
+        // missing, the toolkit refusing a second stage), and a machine where one
+        // attempt failed can still succeed on the next — treating the first
+        // failure as permanent is what left "the sign-in window only opens
+        // once" (the button then fell through to the manual paste forever).
+        if (windowOpen) return true
         return try {
             if (CookieHandler.getDefault() !is CookieManager) {
                 CookieHandler.setDefault(CookieManager())
@@ -95,6 +105,7 @@ object LoginWebView {
             if (resetFirst) clearSession()
             windowOpen = true
             delivered = false
+            unavailable = false
             ensureFxStarted()
             FxPlatform.runLater { createWindow(language, onCaptured) }
             true
@@ -358,7 +369,14 @@ object LoginWebView {
                         break
                     }
                     if (System.currentTimeMillis() > deadline) {
-                        logDebug("capture timeout — no session cookies")
+                        // The window is taken down and the app is told, exactly
+                        // like a user closing it: a window that stays open while
+                        // the capture thread has given up cannot sign anyone in, 
+                        // and leaving `windowOpen` set would make the button
+                        // inert ("it only opens once").
+                        logDebug("capture timeout — no session cookies; closing the window")
+                        FxPlatform.runLater { stage.close() }
+                        deliver(null, null, null, callback)
                         break
                     }
                     Thread.sleep(1000)

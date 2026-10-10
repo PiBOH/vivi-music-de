@@ -308,6 +308,11 @@ def main():
             errors.append("key '%s' is asked for but no table defines it" % key)
 
     for lang, entries in sorted(tables.items()):
+        # The table carries an underscore alias for each hyphenated locale tag
+        # the phone sends during sync (`zh_rCN` beside `zh-rCN`), so the script
+        # rules are looked up under the canonical code: without this every Han
+        # value reads as "a script zh_rCN does not use".
+        canon = lang.replace("_", "-")
         if lang != "en":
             for key in sorted(set(en) - set(entries)):
                 errors.append("%s: missing '%s' (would fall back)" % (lang, key))
@@ -316,8 +321,8 @@ def main():
                     "%s: defines '%s' but English does not (English builds would show %s)"
                     % (lang, key, lang)
                 )
-        only = ONLY_SCRIPT.get(lang)
-        mixed = MIXED_SCRIPT.get(lang)
+        only = ONLY_SCRIPT.get(canon)
+        mixed = MIXED_SCRIPT.get(canon)
         for key, value in entries.items():
             found = scripts_in(value)
             if not found:
@@ -338,7 +343,11 @@ def main():
         # Letters of another language, in this language's table.
         misplaced.extend(foreign_letters(lang, entries))
 
-    print("Languages: %d   English keys: %d" % (len(tables) - 1, len(en)))
+    # Distinct languages, so the underscore aliases are not counted twice.
+    print(
+        "Languages: %d   English keys: %d"
+        % (len({l.replace("_", "-") for l in tables}) - 1, len(en))
+    )
     print("Missing / leaking keys: %d" % len(errors))
     for line in errors[:40]:
         print("  " + line)

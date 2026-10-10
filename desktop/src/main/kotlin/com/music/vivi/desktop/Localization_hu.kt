@@ -854,4 +854,8 @@ internal fun strings_hu(): Map<String, String> =
         "your_artists_feed" to "A te előadóid",
         "yt_sync" to "Automata szinkronizálás a fiókkal",
         "ytm_sync" to "Automatikusan szinkronizálhatja a Youtube Zene fiókjával",
+        "login_retry_hint" to "A bejelentkezés gyakran két próbát igényel: ha az első nem sikerül, nyomd meg újra.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

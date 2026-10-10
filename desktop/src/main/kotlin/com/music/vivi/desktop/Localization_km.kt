@@ -854,4 +854,8 @@ internal fun strings_km(): Map<String, String> =
         "your_artists_feed" to "សិល្បកររបស់អ្នក",
         "yt_sync" to "ធ្វើសមកាលកម្មស្វ័យប្រវត្តិជាមួយគណនី",
         "ytm_sync" to "ធ្វើសមកាលកម្មស្វ័យប្រវត្តិជាមួយគណនី YouTube Music របស់អ្នក",
+        "login_retry_hint" to "ការចូលជាញឹកញាប់ត្រូវការពីរដង៖ បើលើកទីមួយមិនបាន សូមចុចម្តងទៀត។",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

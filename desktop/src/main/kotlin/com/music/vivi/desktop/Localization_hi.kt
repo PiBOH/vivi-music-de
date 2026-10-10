@@ -854,4 +854,8 @@ internal fun strings_hi(): Map<String, String> =
         "your_artists_feed" to "आपके कलाकार",
         "yt_sync" to "खाते के साथ ऑटो सिंक",
         "ytm_sync" to "अपने YouTube Music खाते के साथ स्वतः सिंक करें",
+        "login_retry_hint" to "साइन इन के लिए अक्सर दो प्रयास लगते हैं: पहला विफल हो तो फिर दबाएँ।",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

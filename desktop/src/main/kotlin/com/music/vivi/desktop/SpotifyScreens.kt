@@ -102,8 +102,10 @@ fun SettingsSpotifyImportScreen(language: String, onBack: () -> Unit) {
     // window could be created, and the user can ask for it at any time — a
     // Google-only account can never finish the sign-in inside the window (see
     // `spotify_google_blocked`), so the paste has to be reachable without
-    // waiting for the window to fail.
-    var manualFallback by remember { mutableStateOf(false) }
+    // waiting for the window to fail. It opens by itself on a machine where the
+    // window cannot exist at all, because on that machine the paste is not the
+    // fallback: it is the only way in.
+    var manualFallback by remember { mutableStateOf(SpotifyLoginWebView.isUnavailable) }
 
     // A refresh replaces the list: a selection pointing at playlists that are no
     // longer there would silently import nothing, so it is narrowed to what is
@@ -167,7 +169,7 @@ fun SettingsSpotifyImportScreen(language: String, onBack: () -> Unit) {
                     if (!SpotifyImport.loginWithWindow(language)) manualFallback = true
                 },
                 windowUnavailable = SpotifyLoginWebView.isUnavailable,
-                onShowManual = { manualFallback = true },
+                onToggleManual = { manualFallback = !manualFallback },
             )
         } else {
             SpotifyAccountRow(
@@ -205,7 +207,7 @@ private fun SpotifyConnectSection(
     onOpenWindow: () -> Unit,
     /** True when no sign-in window can be created on this machine at all. */
     windowUnavailable: Boolean,
-    onShowManual: () -> Unit,
+    onToggleManual: () -> Unit,
 ) {
     // What the sign-in window is doing while it gets ready, drawn right under
     // the button that opened it. It used to be a bar in the window's own header,
@@ -293,10 +295,16 @@ private fun SpotifyConnectSection(
     // Always one click away, not only after a window has failed, so a window
     // that cannot finish the sign-in is never a dead end. Collapsible like the
     // Google screen's manual card.
+    //
+    // ONE control, not two: the header row IS the toggle — its title and its
+    // Show/Hide label — and this card used to draw a second "Show" button right
+    // under it, so the same action appeared twice in a row (and the header's own
+    // click was inert when collapsed, since it only re-opened an already open
+    // card).
     Card(modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
         Column(Modifier.padding(16.dp)) {
             Row(
-                Modifier.fillMaxWidth().clickable { if (manualFallback) onShowManual() },
+                Modifier.fillMaxWidth().clickable { onToggleManual() },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -311,12 +319,7 @@ private fun SpotifyConnectSection(
                 )
             }
 
-            if (!manualFallback) {
-                TextButton(onClick = onShowManual) {
-                    Text(Localization.get(language, "login_show"))
-                }
-                return@Column
-            }
+            if (!manualFallback) return@Column
 
             // Why the fields are here at all, but only when the window really
             // cannot be created, since the same block also opens on request.

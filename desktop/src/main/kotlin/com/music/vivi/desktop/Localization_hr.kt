@@ -854,4 +854,8 @@ internal fun strings_hr(): Map<String, String> =
         "your_artists_feed" to "Vaši izvođači",
         "yt_sync" to "Sinkronizacija automatski sa nalogom",
         "ytm_sync" to "Automatski sinkroniziraj sa svim playlistama i pjesmama na vašem YouTube Music nalogu",
+        "login_retry_hint" to "Prijava često zahtijeva dva pokušaja: ako prvi ne uspije, pritisnite ponovno.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

@@ -854,4 +854,8 @@ internal fun strings_ko(): Map<String, String> =
         "your_artists_feed" to "내 아티스트",
         "yt_sync" to "계정과 자동 동기화",
         "ytm_sync" to "YouTube Music 계정과 자동으로 동기화",
+        "login_retry_hint" to "로그인은 두 번 시도해야 하는 경우가 많습니다. 첫 번째가 실패하면 다시 누르세요.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

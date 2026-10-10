@@ -854,4 +854,8 @@ internal fun strings_sv(): Map<String, String> =
         "your_artists_feed" to "Dina artister",
         "yt_sync" to "Automatisk synk med kontot",
         "ytm_sync" to "Synka automatiskt med ditt YouTube Music konto",
+        "login_retry_hint" to "Inloggning kräver ofta två försök: om det första misslyckas, tryck igen.",
+        "lt_block_user" to "Blockera permanent",
+        "lt_settings_desc" to "Konfigurera server, användarnamn och mer",
+        "lt_smart_resync" to "Återsynk",
     )

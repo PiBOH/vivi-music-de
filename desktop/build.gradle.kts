@@ -527,6 +527,27 @@ tasks.register<JavaExec>("chatWindowRenderCheck") {
 }
 
 /**
+ * Headless check of the Listen Together lobby and room:
+ *
+ *     ./gradlew :desktop:ltRoomRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LtRoomRenderCheck.kt`. The
+ * room needs a live relay connection, so it was split into `LtLobby` and
+ * `LtInRoom`, which this renders off screen: the lobby must draw, an avatar of
+ * each kind (initial, emoji) must draw, the room must draw for a host and for a
+ * guest, and the two roles must NOT draw the same picture — the host sees the
+ * moderation controls and the guest the lock notice, so identical output would
+ * mean one of the two branches is not on screen.
+ */
+tasks.register<JavaExec>("ltRoomRenderCheck") {
+    group = "verification"
+    description = "Renders the Listen Together lobby and room headlessly and checks both roles"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LtRoomRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Network probe for the "HTTP 403 downloading audio" playback failure:
  *
  *     ./gradlew :desktop:streamResolveProbe [--args="videoId videoId"]

@@ -112,6 +112,7 @@ data class LtUserInfo(
     val username: String,
     @SerialName("is_host") val isHost: Boolean = false,
     @SerialName("is_connected") val isConnected: Boolean = true,
+    @SerialName("avatar_index") val avatarIndex: Int = 0,
 )
 
 @Serializable
@@ -128,11 +129,19 @@ data class LtRoomState(
 )
 
 // Request payloads
+//
+// `avatar_index` is part of both, exactly as on the phone: without it the relay
+// stores the room with the default avatar and a desktop user shows up as a bare
+// initial next to phone users who picked one.
 @Serializable
-data class LtCreateRoom(val username: String)
+data class LtCreateRoom(val username: String, @SerialName("avatar_index") val avatarIndex: Int = 0)
 
 @Serializable
-data class LtJoinRoom(@SerialName("room_code") val roomCode: String, val username: String)
+data class LtJoinRoom(
+    @SerialName("room_code") val roomCode: String,
+    val username: String,
+    @SerialName("avatar_index") val avatarIndex: Int = 0,
+)
 
 @Serializable
 data class LtApproveJoin(@SerialName("user_id") val userId: String)
@@ -203,7 +212,11 @@ data class LtJoinApproved(
 data class LtJoinRejected(val reason: String)
 
 @Serializable
-data class LtUserJoined(@SerialName("user_id") val userId: String, val username: String)
+data class LtUserJoined(
+    @SerialName("user_id") val userId: String,
+    val username: String,
+    @SerialName("avatar_index") val avatarIndex: Int = 0,
+)
 
 @Serializable
 data class LtUserLeft(@SerialName("user_id") val userId: String, val username: String)
@@ -633,16 +646,52 @@ class ListenTogetherClient(
         }
     }
 
+    /**
+     * Drops the stored room session without touching the socket.
+     *
+     * Called before CREATE_ROOM / JOIN_ROOM, exactly like the mobile client
+     * ("clear any existing session to ensure we create a new room instead of
+     * reconnecting"). Without it the socket's `onOpen` sees a stored session and
+     * sends a RECONNECT carrying the PREVIOUS room's token right after the new
+     * room was created: the relay answers that stale token with an error (the
+     * room it names does not exist any more) and the user was told "the room
+     * does not exist" every time a room was created while an old session was
+     * still on disk — and had to create a second one.
+     */
+    private fun abandonSession() {
+        sessionToken = null
+        storedRoomCode = null
+        clearSession()
+    }
+
     fun createRoom(name: String) {
+        abandonSession()
         username = name.trim()
         _busy.value = true
-        send(LtMessage(LtMessageTypes.CREATE_ROOM, json.encodeToJsonElement(LtCreateRoom.serializer(), LtCreateRoom(username))))
+        send(
+            LtMessage(
+                LtMessageTypes.CREATE_ROOM,
+                json.encodeToJsonElement(
+                    LtCreateRoom.serializer(),
+                    LtCreateRoom(username, DesktopSettings.load().listenTogetherAvatarIndex),
+                ),
+            ),
+        )
     }
 
     fun joinRoom(code: String, name: String) {
+        abandonSession()
         username = name.trim()
         _busy.value = true
-        send(LtMessage(LtMessageTypes.JOIN_ROOM, json.encodeToJsonElement(LtJoinRoom.serializer(), LtJoinRoom(code.trim().uppercase(), username))))
+        send(
+            LtMessage(
+                LtMessageTypes.JOIN_ROOM,
+                json.encodeToJsonElement(
+                    LtJoinRoom.serializer(),
+                    LtJoinRoom(code.trim().uppercase(), username, DesktopSettings.load().listenTogetherAvatarIndex),
+                ),
+            ),
+        )
     }
 
     fun leaveRoom() {
@@ -846,7 +895,14 @@ class ListenTogetherClient(
                         LtRoomState(
                             c.roomCode,
                             c.userId,
-                            listOf(LtUserInfo(c.userId, username, isHost = true)),
+                            listOf(
+                                LtUserInfo(
+                                    c.userId,
+                                    username,
+                                    isHost = true,
+                                    avatarIndex = DesktopSettings.load().listenTogetherAvatarIndex,
+                                ),
+                            ),
                         ),
                     )
                     saveSession()
@@ -915,7 +971,7 @@ class ListenTogetherClient(
                         withHostFlag(
                             state.copy(
                                 users = state.users.filter { x -> x.userId != u.userId } +
-                                    LtUserInfo(u.userId, u.username),
+                                    LtUserInfo(u.userId, u.username, avatarIndex = u.avatarIndex),
                             ),
                         )
                     }
@@ -1361,11 +1417,14 @@ class ListenTogetherManager(private val player: PlayerController) {
             }
 
             is LtEvent.SuggestionApproved -> {
-                // Host approved a guest suggestion: the server inserts it next on
-                // the host, and this side mirrors the "play next" (remote action,
-                // so a guest's own lock does not swallow it).
-                val track = event.suggestion.trackInfo
-                player.asRemote { player.insertNext(track.toNowPlaying()) }
+                // Host approved a guest suggestion: this inserts it (remote
+                // action, so a guest's own lock does not swallow it). When this
+                // device IS the approving host the insert already happened in
+                // [approveSuggestion] — the relay does not reliably echo the
+                // frame back to the approver, which is why the mobile client
+                // queues it locally too — and [applyApprovedSuggestion] drops
+                // the echo instead of queueing the same track twice.
+                applyApprovedSuggestion(event.suggestion.suggestionId, event.suggestion.trackInfo)
             }
 
             is LtEvent.HostChanged -> {
@@ -1725,12 +1784,47 @@ class ListenTogetherManager(private val player: PlayerController) {
     fun sendChatMessage(message: String, replyTo: LtRepliedMessage? = null) = client.sendChat(message, replyTo)
     fun requestSync() = client.requestSync()
     fun suggestTrack(track: LtTrackInfo) = client.suggestTrack(track)
-    fun approveSuggestion(suggestionId: String) = client.approveSuggestion(suggestionId)
+
+    /**
+     * Approves a guest's suggestion.
+     *
+     * The approved track is queued HERE, immediately, instead of waiting for the
+     * relay to echo `suggestion_approved` back: the host is the one who pressed
+     * "approve", and the mobile client queues it locally for the same reason
+     * (`LocalSuggestionApproved` -> `playNext`). The server's own echo, when it
+     * does arrive, only re-inserts the track on the *other* clients and is
+     * ignored here (see [appliedSuggestions]).
+     */
+    fun approveSuggestion(suggestionId: String) {
+        client.pendingSuggestions.value
+            .firstOrNull { it.suggestionId == suggestionId }
+            ?.let { applyApprovedSuggestion(it.suggestionId, it.trackInfo) }
+        client.approveSuggestion(suggestionId)
+    }
+
+    /**
+     * Suggestion ids already inserted into the local queue. The relay may echo
+     * the approval back to the approver (and a re-approved id may come twice),
+     * and "play next" is not idempotent: without this the same track landed in
+     * the queue two or three times.
+     */
+    private val appliedSuggestions = LinkedHashSet<String>()
+
+    private fun applyApprovedSuggestion(suggestionId: String, trackInfo: LtTrackInfo) {
+        if (!appliedSuggestions.add(suggestionId)) return
+        // Bounded: a listening session can last hours and this only has to
+        // remember the recent ids it already queued.
+        while (appliedSuggestions.size > 200) {
+            appliedSuggestions.remove(appliedSuggestions.first())
+        }
+        player.asRemote { player.insertNext(trackInfo.toNowPlaying()) }
+    }
     fun rejectSuggestion(suggestionId: String, reason: String? = null) = client.rejectSuggestion(suggestionId, reason)
     fun forceReconnect() = client.forceReconnect()
     fun clearLogs() = client.clearLogs()
 
     private fun cleanup() {
+        appliedSuggestions.clear()
         player.userControlLocked = false
         ListenTogetherGate.update(inRoom = false, isHost = false)
         if (isSyncing) isSyncing = false

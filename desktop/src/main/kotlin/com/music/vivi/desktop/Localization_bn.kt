@@ -854,4 +854,8 @@ internal fun strings_bn(): Map<String, String> =
         "your_artists_feed" to "আপনার শিল্পীর ফিড",
         "yt_sync" to "অ্যাকাউন্টের সাথে স্বয়ংক্রিয় সিঙ্ক",
         "ytm_sync" to "আপনার YouTube Music অ্যাকাউন্টের সাথে স্বয়ংক্রিয়ভাবে সিঙ্ক করুন",
+        "login_retry_hint" to "সাইন ইন করতে প্রায়ই দুটি চেষ্টা লাগে: প্রথমটি ব্যর্থ হলে আবার চাপুন।",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

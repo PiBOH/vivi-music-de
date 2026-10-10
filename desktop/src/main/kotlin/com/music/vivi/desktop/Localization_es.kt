@@ -854,4 +854,8 @@ internal fun strings_es(): Map<String, String> =
         "your_artists_feed" to "Tus artistas",
         "yt_sync" to "Sincronización automática con la cuenta",
         "ytm_sync" to "Sincronizar automáticamente con tu cuenta de YouTube Music",
+        "login_retry_hint" to "Iniciar sesión suele necesitar dos intentos: si falla el primero, pulsa de nuevo.",
+        "lt_block_user" to "Bloquear permanentemente",
+        "lt_settings_desc" to "Configurar servidor, nombre de usuario y más",
+        "lt_smart_resync" to "Re sincronizar",
     )

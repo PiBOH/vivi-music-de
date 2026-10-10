@@ -854,4 +854,8 @@ internal fun strings_pa(): Map<String, String> =
         "your_artists_feed" to "ਤੁਹਾਡੇ ਕਲਾਕਾਰ",
         "yt_sync" to "ਖਾਤੇ ਨਾਲ ਆਟੋ ਸਿੰਕ",
         "ytm_sync" to "ਆਪਣੇ YouTube Music ਖਾਤੇ ਨਾਲ ਆਟੋ ਸਿੰਕ ਕਰੋ",
+        "login_retry_hint" to "ਸਾਈਨ ਇਨ ਲਈ ਅਕਸਰ ਦੋ ਕੋਸ਼ਿਸ਼ਾਂ ਲੱਗਦੀਆਂ ਹਨ: ਪਹਿਲੀ ਫੇਲ੍ਹ ਹੋਵੇ ਤਾਂ ਦੁਬਾਰਾ ਦਬਾਓ।",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

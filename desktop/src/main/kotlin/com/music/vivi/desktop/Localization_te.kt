@@ -854,4 +854,8 @@ internal fun strings_te(): Map<String, String> =
         "your_artists_feed" to "మీ కళాకారులు",
         "yt_sync" to "ఖాతాతో ఆటో సింక్",
         "ytm_sync" to "మీ YouTube Music ఖాతాతో స్వయంచాలకంగా సింక్ చేయండి",
+        "login_retry_hint" to "సైన్ ఇన్ చేయడానికి తరచుగా రెండు ప్రయత్నాలు అవసరం: మొదటిది విఫలమైతే మళ్లీ నొక్కండి.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

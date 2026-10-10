@@ -854,4 +854,8 @@ internal fun strings_fa(): Map<String, String> =
         "your_artists_feed" to "خوراک هنرمندان شما",
         "yt_sync" to "همگام‌سازی خودکار با حساب",
         "ytm_sync" to "همگام‌سازی خودکار با حساب یوتیوب موزیک",
+        "login_retry_hint" to "ورود اغلب به دو تلاش نیاز دارد: اگر تلاش اول ناموفق بود، دوباره بزنید.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

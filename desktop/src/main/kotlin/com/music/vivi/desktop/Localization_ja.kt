@@ -854,4 +854,8 @@ internal fun strings_ja(): Map<String, String> =
         "your_artists_feed" to "登録アーティスト",
         "yt_sync" to "アカウントと自動で同期",
         "ytm_sync" to "YouTube Musicアカウントと自動で同期する",
+        "login_retry_hint" to "サインインは2回必要なことがよくあります。1回目が失敗したらもう一度押してください。",
+        "lt_block_user" to "完全にブロック",
+        "lt_settings_desc" to "サーバーやユーザー名などを設定します",
+        "lt_smart_resync" to "同期",
     )

@@ -854,4 +854,8 @@ internal fun strings_fil(): Map<String, String> =
         "your_artists_feed" to "Ang iyong mga artist",
         "yt_sync" to "Auto sync sa account",
         "ytm_sync" to "Awtomatikong i-sync sa iyong YouTube Music account",
+        "login_retry_hint" to "Madalas kailangan ng dalawang pagtatangka ang pag-sign in: kung mabigo ang una, pindutin muli.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

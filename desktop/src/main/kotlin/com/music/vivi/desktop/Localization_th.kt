@@ -854,4 +854,8 @@ internal fun strings_th(): Map<String, String> =
         "your_artists_feed" to "ศิลปินของคุณ",
         "yt_sync" to "ซิงค์กับบัญชีโดยอัตโนมัติ",
         "ytm_sync" to "ซิงค์กับบัญชี YouTube Music ของคุณโดยอัตโนมัติ",
+        "login_retry_hint" to "การลงชื่อเข้ามักต้องลองสองครั้ง: ถ้าครั้งแรกไม่สำเร็จให้กดอีกครั้ง",
+        "lt_block_user" to "บล็อกถาวร",
+        "lt_settings_desc" to "ตั้งค่าเซิร์ฟเวอร์ ชื่อผู้ใช้ และอื่น ๆ",
+        "lt_smart_resync" to "ซิงก์ใหม่",
     )

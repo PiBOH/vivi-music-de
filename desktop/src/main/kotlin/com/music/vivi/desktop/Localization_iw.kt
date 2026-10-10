@@ -854,4 +854,8 @@ internal fun strings_iw(): Map<String, String> =
         "your_artists_feed" to "הזנת האמנים שלך",
         "yt_sync" to "סנכרון אוטומטי עם החשבון",
         "ytm_sync" to "סנכרן אוטומטית עם חשבון YouTube Music שלך",
+        "login_retry_hint" to "הכניסה דורשת לעיתים שני ניסיונות: אם הראשון נכשל, לחצו שוב.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

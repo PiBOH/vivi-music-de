@@ -854,4 +854,8 @@ internal fun strings_ar(): Map<String, String> =
         "your_artists_feed" to "فنانوك",
         "yt_sync" to "المزامنة التلقائية مع الحساب",
         "ytm_sync" to "مزامنة تلقائية مع حساب YouTube Music الخاص بك",
+        "login_retry_hint" to "غالبًا ما يحتاج تسجيل الدخول إلى محاولتين: إذا فشلت المحاولة الأولى، اضغط مرة أخرى.",
+        "lt_block_user" to "حظر دائم",
+        "lt_settings_desc" to "تكوين الخادم واسم المستخدم والمزيد",
+        "lt_smart_resync" to "إعادة مزامنة",
     )

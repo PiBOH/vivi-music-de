@@ -854,4 +854,8 @@ internal fun strings_vi(): Map<String, String> =
         "your_artists_feed" to "Nghệ sĩ của bạn",
         "yt_sync" to "Tự động đồng bộ với tài khoản",
         "ytm_sync" to "Tự động đồng bộ với tài khoản YouTube Music của bạn",
+        "login_retry_hint" to "Đăng nhập thường cần hai lần thử: nếu lần đầu thất bại, hãy nhấn lại.",
+        "lt_block_user" to "Chặn vĩnh viễn",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Đồng bộ lại",
     )

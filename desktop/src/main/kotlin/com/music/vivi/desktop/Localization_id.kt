@@ -854,4 +854,8 @@ internal fun strings_id(): Map<String, String> =
         "your_artists_feed" to "Artis Anda",
         "yt_sync" to "Sinkronkan otomatis dengan akun",
         "ytm_sync" to "Sinkronkan secara otomatis dengan akun YouTube Music Anda",
+        "login_retry_hint" to "Masuk sering butuh dua percobaan: jika yang pertama gagal, tekan lagi.",
+        "lt_block_user" to "Blokir permanen",
+        "lt_settings_desc" to "Konfigurasikan server, nama pengguna, dan lainnya",
+        "lt_smart_resync" to "Sinkron ulang",
     )

@@ -854,4 +854,8 @@ internal fun strings_nb(): Map<String, String> =
         "your_artists_feed" to "Dine artister",
         "yt_sync" to "Automatisk synkronisering med kontoen",
         "ytm_sync" to "Synkroniser automatisk med YouTube Music-kontoen din",
+        "login_retry_hint" to "Pålogging krever ofte to forsøk: hvis det første mislykkes, trykk igjen.",
+        "lt_block_user" to "Permanently Block",
+        "lt_settings_desc" to "Configure server, username, and more",
+        "lt_smart_resync" to "Resync",
     )

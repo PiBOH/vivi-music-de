@@ -304,6 +304,14 @@ data class DesktopSyncState(
     val listenTogetherUsername: String = "",
     /** Listen Together relay server URL (default = mobile's Hugging Face relay). */
     val listenTogetherServerUrl: String = "wss://devilmi-vivi-music-listen-together.hf.space",
+    /**
+     * Listen Together avatar, as the SAME index the mobile app uses (0 = the
+     * username's initial, 1..13 = one of its avatar pictures). Desktops draw
+     * them as emoji instead of the APK's drawables, but the index travels in
+     * `avatar_index` either way, so a room shows each user the avatar they
+     * picked on whichever device they are on.
+     */
+    val listenTogetherAvatarIndex: Int = 0,
     /** Auto-approve join requests without asking the host. */
     val listenTogetherAutoApproval: Boolean = false,
     /** Host syncs its in-app volume to guests. */
