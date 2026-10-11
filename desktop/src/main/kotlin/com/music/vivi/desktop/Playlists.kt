@@ -26,6 +26,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
@@ -842,6 +843,36 @@ fun LocalPlaylistScreen(
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
+                                }
+                                // "Suggest to the host": a guest's quick action, right
+                                // before the remove cross, so proposing the song you
+                                // are looking at does not need the `⋮` menu. Same
+                                // condition the song menu uses (in a room and not its
+                                // host): for the host the queue is already theirs and
+                                // outside a room there is nowhere to send it, so the
+                                // button is not drawn at all.
+                                val inRoom by ListenTogetherGate.inRoom
+                                val isHostRole by ListenTogetherGate.isHost
+                                if (inRoom && !isHostRole) {
+                                    Tooltip(Localization.get(language, "lt_suggest")) {
+                                        IconButton(onClick = {
+                                            ListenTogetherBridge.manager?.suggestTrack(
+                                                LtTrackInfo(
+                                                    id = song.id,
+                                                    title = song.title,
+                                                    artist = song.artist,
+                                                    thumbnail = song.thumbnail,
+                                                ),
+                                            )
+                                            DesktopSnackbar.show(Localization.get(language, "lt_suggest"))
+                                        }) {
+                                            Icon(
+                                                Icons.AutoMirrored.Filled.QueueMusic,
+                                                contentDescription = Localization.get(language, "lt_suggest"),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
                                 }
                                 Text(
                                     "✕",

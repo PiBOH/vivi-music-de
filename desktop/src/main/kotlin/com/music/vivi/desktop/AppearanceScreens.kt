@@ -349,8 +349,13 @@ fun ThemeSection(
         var saturation by remember(accent) { mutableStateOf(initialHsv[1]) }
         var brightness by remember(accent) { mutableStateOf(initialHsv[2]) }
         val customColor = hsvToColor(hue, saturation, brightness)
-        val customAccentSelected = customAccents.any { argbIntToColor(it) == accent }
-        var showCustomPicker by remember { mutableStateOf(customAccentSelected) }
+        // The picker is open the moment the screen is: the round wheel is the
+        // point of the section, and having to find the palette's last dot and
+        // click it before anything appeared was the old behaviour ("the wheel
+        // must always be visible"). The section's own **Hide** label still
+        // collapses it, so the wheel is what the screen opens on and one click
+        // away from being put aside.
+        var showCustomPicker by remember { mutableStateOf(true) }
 
         Text(Localization.get(language, "color_palette"), style = MaterialTheme.typography.titleMedium)
         // Palette swatches (wrap via FlowRow-like manual chunking: show in rows of 7),

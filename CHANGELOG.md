@@ -11,6 +11,14 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.6_DE-1.54.27-beta] - 2026-10-11
+
+### ✨ Added
+- [DE] **A guest can put a local playlist's song in front of the host without opening the `⋮` menu.** "Suggest to the host" existed only as an item of a song's `⋮` menu (1.54.22), so a guest browsing their own playlists had to open the menu on a row to propose the track they were looking at. The row carries the action itself now, directly before the remove cross, and under exactly the menu's own condition - inside a Listen Together room and not as its host - so the host (whose queue it already is) and any window outside a room never see it: the button is not drawn, not merely disabled. It sends the same `LtTrackInfo` the menu sends and confirms with the same `lt_suggest` string, so the two doors behave identically. **Measured:** `:desktop:compileKotlin` and `:desktop:ltRoomRenderCheck` (`room (host) ink=342428`, `room (guest) ink=293228`, `OK`). **Open sub-item:** the new button is compile-verified; two accounts in a live room are needed to press it.
+
+### 🔧 Changed
+- [DE] **The custom colour wheel is on screen the moment Theme & Colors opens.** The picker was revealed only by clicking the palette's own last circle (or when the accent in use was already a custom colour), so the wheel - the whole point of the section - sat behind a swatch that announced nothing, and the section's own **Hide** label could only read "Show" until you found that circle. The section opens expanded now, exactly the state the owner's screenshot shows: the wheel and its slim brightness strip beside the hex field and **Add to palette**, with the same **Hide** label collapsing it in one click, so the wheel is what the screen opens on and is one click away from being put aside. The palette keeps its custom-colour circle as the last swatch, so picking a preset still moves the wheel onto it. **Measured:** `:desktop:colorWheelRenderCheck` still reads the wheel as a round 220x220 disc of 37155 px of ink at `746,928`, its rim red / yellow-green / cyan / blue at 3 / 6 / 9 / 12 o'clock, its centre white and the marker on the accent the screen opens with. **Open sub-item:** how it reads on a real window is unverified here; the check proves what is drawn, not how it looks.
+
 ## [6.0.8.6_DE-1.54.26-beta] - 2026-10-10
 
 ### 🐛 Fixed
