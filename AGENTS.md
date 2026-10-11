@@ -299,6 +299,54 @@ dependencies there, or you break the desktop build.
   never overrides explicit user requests, the trust-boundary/error-handling
   rules, or the localization rule in §6.
 
+### Skills - scan before installing - MANDATORY
+
+An agent skill is trusted instructions, so installing one is trusting its author:
+whatever the skill says, the agent will do. Nothing is installed here before
+**SkillSpector** (<https://github.com/NVIDIA/skillspector>) has scanned it.
+
+**The scanner.** SkillSpector is an NVIDIA Python CLI kept in a throwaway
+virtualenv at `.ignore/skillspector-venv` (gitignored, never shipped). The static
+pass needs no API key:
+
+```
+.ignore/skillspector-venv/Scripts/skillspector.exe scan <path-or-repo> --no-llm
+```
+
+Read the whole report, not just the score: the `Score`, `Severity` and
+`Recommendation` lines, every `Issues (n)` entry, and the `Inspection
+Completeness` block. `partial` coverage or a ledger exception is not a clean
+pass. LLM analysis is optional and needs a provider key (`SKILLSPECTOR_PROVIDER`
+plus that provider's credential).
+
+**The gate.**
+
+- `SAFE` with `LOW` and no finding: install.
+- `CAUTION` / `MEDIUM`, `HIGH` or `CRITICAL`, or any finding at all: **do not
+  install it.** Do not copy it into `.agents/skills/` or a global skill
+  directory, do not add it to `skills-lock.json`, and do not run it.
+- A skill that fails the gate is neither installed on the agent's own judgement
+  nor dropped in silence. The owner is told, with the scanner's own evidence
+  (rule id, file and line, confidence, the flagged text) and what the scan could
+  not evaluate, and the **owner** makes the real choice. The agent never waves a
+  `HIGH` or `CRITICAL` finding through as "probably a false positive"; if the
+  owner asks for the install anyway, the message that does it names the findings
+  that were overridden.
+
+**Re-scan.** An installed skill is re-scanned when its own files change and when
+SkillSpector is updated, and the new report replaces the old one. Reports are
+kept under `.ignore/` as a local audit trail and are not committed.
+
+**The inventory as scanned on 11 Oct 2026 (SkillSpector 2.12.0).** The seven
+skills under `.agents/skills/` (`frontend-design`, `ponytail`, `ponytail-audit`,
+`ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`) and six of
+the seven under `~/.agents/skills/` (`forget`, `handoff`, `lesson`,
+`memory-discipline`, `recall`, `remember`) score 0 to 20 (LOW, SAFE).
+`agentmemory-rest-api` scores 23 (MEDIUM, CAUTION), from an `<!-- AUTOGEN -->`
+comment marker read as hidden instructions and a `localhost` URL read as
+external transmission, both of which look like static false positives; it is
+left installed pending the owner's decision.
+
 ### Never use the long dash (em dash) - MANDATORY
 
 Never use the **long dash** (the em dash, the character `—`, also written as
