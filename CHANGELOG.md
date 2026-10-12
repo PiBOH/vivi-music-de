@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.6_DE-1.54.28-beta] - 2026-10-12
+
+### 🐛 Fixed
+- [DE] **A queue or a playlist whose rows are re-keyed mid-render no longer takes the app down.** The crash dump (`~/.vivimusic/crash.log`, 11 Oct 10:50) names it: `java.lang.IndexOutOfBoundsException: Index 0 out of bounds for length 0`, thrown from `QueueScreen` (`PlayerScreens.kt:2127`) inside the lazy list's own key lookup. The rows and their keys were two separate reads - the list handed to `itemsIndexed` was the live `localQueue`, the keys were the `remember` value of the last recomposition - and the `LazyColumn` item provider is re-evaluated on a snapshot change *before* the recomposition: the sync effect's `localQueue.clear()` + `addAll(queue)` made the provider read the new item count while the key list was still the previous, empty one, so `queueKeys[0]` asked an empty list for its first element. The rows and their `withOccurrences` keys are one immutable snapshot taken together now, in all three lists of this shape: the player's queue panel (`AppleUpNextQueueScreen`), the full queue screen (`QueueScreen`) and a local playlist's own song list, where `remember(localSongs)` never recomputed at all because a state list keeps its identity, so its keys stayed empty for the whole life of the screen. **Measured:** `:desktop:compileKotlin` and `:desktop:compileTestKotlin` pass with the new snapshots. **Watch:** queue a track, open the queue and clear / re-fill it: the window must stay up and the rows must re-key in step. **Open sub-item:** the race is between the snapshot apply and the recomposition, so no unit test covers it; the repro is the check to run on a real window.
+
 ## [6.0.8.6_DE-1.54.27-beta] - 2026-10-11
 
 ### ✨ Added
