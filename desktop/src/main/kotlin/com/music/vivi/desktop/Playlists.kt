@@ -816,9 +816,15 @@ fun LocalPlaylistScreen(
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 // A local playlist may hold the same track twice; see `withOccurrences`.
-                val songKeys = remember(localSongs) { localSongs.map { it.id }.withOccurrences() }
+                // One immutable snapshot for the rows and their keys: the lazy
+                // provider reads the item count before the recomposition rewrites
+                // the keys, and `remember(localSongs)` never recomputed at all (the
+                // state list keeps its identity), so the keys stayed empty while
+                // the list filled and the first row threw IndexOutOfBounds.
+                val songSnapshot = remember(localSongs.toList()) { localSongs.toList() }
+                val songKeys = remember(songSnapshot) { songSnapshot.map { it.id }.withOccurrences() }
                 LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                    itemsIndexed(localSongs, key = { i, _ -> songKeys[i] }) { i, song ->
+                    itemsIndexed(songSnapshot, key = { i, _ -> songKeys[i] }) { i, song ->
                         ReorderableItem(state = reorderableState, key = songKeys[i]) {
                             Row(
                                 Modifier.fillMaxWidth().clickable { onPlay(song) }.padding(vertical = 6.dp),

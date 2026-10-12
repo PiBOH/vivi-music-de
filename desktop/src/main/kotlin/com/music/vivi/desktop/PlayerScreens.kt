@@ -1877,14 +1877,20 @@ fun AppleUpNextQueueScreen(
                 )
             }
         } else {
-            // A queue may hold the same track twice; see `withOccurrences`.
-            val queueKeys = remember(localQueue.toList()) { localQueue.map { it.videoId }.withOccurrences() }
+            // A queue may hold the same track twice; see `withOccurrences`. The
+            // rows and their keys are one immutable snapshot taken together: the
+            // lazy provider is re-evaluated on a snapshot change *before* the
+            // recomposition, so a key list read at composition time next to the
+            // live `localQueue` reported the new item count with the previous
+            // (empty) keys and threw IndexOutOfBounds (crash dump 11 Oct 10:50).
+            val queueSnapshot = remember(localQueue.toList()) { localQueue.toList() }
+            val queueKeys = remember(queueSnapshot) { queueSnapshot.map { it.videoId }.withOccurrences() }
             LazyColumn(
                 state = lazyListState,
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                itemsIndexed(localQueue, key = { i, _ -> queueKeys[i] }) { i, item ->
+                itemsIndexed(queueSnapshot, key = { i, _ -> queueKeys[i] }) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
                     ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         Column(
@@ -2121,10 +2127,17 @@ fun QueueScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
-            // A queue may hold the same track twice; see `withOccurrences`.
-            val queueKeys = remember(localQueue.toList()) { localQueue.map { it.videoId }.withOccurrences() }
+            // A queue may hold the same track twice; see `withOccurrences`. The
+            // rows and their keys are one immutable snapshot taken together: the
+            // lazy provider is re-evaluated on a snapshot change *before* the
+            // recomposition, so a key list read at composition time next to the
+            // live `localQueue` reported the new item count with the previous
+            // (empty) keys and threw IndexOutOfBounds (crash dump 11 Oct 10:50,
+            // line 2127).
+            val queueSnapshot = remember(localQueue.toList()) { localQueue.toList() }
+            val queueKeys = remember(queueSnapshot) { queueSnapshot.map { it.videoId }.withOccurrences() }
             LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                itemsIndexed(localQueue, key = { i, _ -> queueKeys[i] }) { i, item ->
+                itemsIndexed(queueSnapshot, key = { i, _ -> queueKeys[i] }) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
                     ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         // Swipe gestures: swipe right to play, swipe left to remove.
