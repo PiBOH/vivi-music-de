@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.6_DE-1.54.30-beta] - 2026-10-13
+
+### 🐛 Fixed
+- [APK] **The "code" the phone showed instead of a song's name is gone, and the rows that already carry it are repaired.** Asked what the name looked like, the owner answered with the whole mechanism in one sentence: *"sembra l'url del brano, in teoria e' lo stesso nome del file che viviDE salva su windows"*. That string is a **videoId** - the desktop's own audio cache on Windows is called `<videoId>.m4a` - and there was exactly one place in the app that wrote one where a title belongs: `applyRemoteLikedSongs` stored an arriving like it knew nothing about as `title = entry.title.ifBlank { id }`. The desktop sends its liked library to the phone as a flat list of ids by design (`LibrarySnapshot.songIds`, the field an older peer reads), so *every* like in that list landed here named after its own id - and nothing could ever correct it, because the phone's own account sync (the only path that fetches a liked song's real metadata) did not refresh an existing row's title at all. Two changes: a like that arrives with no metadata is no longer named after its videoId (the like is still stored - that is what travelled - and the title is left empty on purpose instead of being filled with a wrong name), and the account sync now refreshes the metadata of a liked row whose title is blank **or equal to its own id**, so the rows already stored that way are repaired by the next liked-songs sync and the empty ones are filled. **Measured:** `:app:compileUniversalFossDebugKotlin` passes. **Watch:** after a liked-songs sync on the phone, no row in the liked list may read like a videoId, and a song whose row was stored that way must show its real title. **Open sub-item:** the repair reaches the rows the phone's own account sync covers (an account like) - a like that exists only in the device sync's ledger keeps the empty title, which is still better than a wrong name, and the log names it (`liked song '<id>' arrived with no metadata`).
+
 ## [6.0.8.6_DE-1.54.29-beta] - 2026-10-13
 
 ### 🐛 Fixed
