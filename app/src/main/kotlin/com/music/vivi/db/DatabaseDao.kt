@@ -1056,7 +1056,29 @@ interface DatabaseDao {
                 )
             )
         }
+        // A playlist whose SONGS changed has been edited, and the device sync
+        // has to hear about it: `lastUpdateTime` is the last-write-wins key the
+        // paired desktop compares and the row the sync observes to decide
+        // whether to push at all. Without this stamp a song added here sat in
+        // the local database and never reached the desktop ("the mobile
+        // playlists, even after I update them, do not arrive on the DE"),
+        // while the desktop's copy, missing it, looked newer and won.
+        stampPlaylistEdited(playlist.id)
     }
+
+    /**
+     * Records that a playlist's contents were edited, now.
+     *
+     * One stamp for every edit path: adding songs ([addSongToPlaylist]),
+     * reordering or removing one (the screen's drag and swipe, both of which go
+     * through [move]) — the sync cannot see an edit whose time did not move.
+     */
+    fun stampPlaylistEdited(playlistId: String) {
+        setPlaylistLastUpdateTime(playlistId, LocalDateTime.now())
+    }
+
+    @Query("UPDATE playlist SET lastUpdateTime = :at WHERE id = :playlistId")
+    fun setPlaylistLastUpdateTime(playlistId: String, at: LocalDateTime)
 
     fun downloadedSongs(
         sortType: SongSortType,

@@ -695,10 +695,67 @@ class PlayerController {
             return
         }
         if (isPlaying && positionMs - s.positionMs > toleranceMs) {
+            // A correction restarts the decode session, and with it the audio
+            // output: the device is closed, re-opened and re-primed (a fresh
+            // `audio output` + `audio output primed` pair in playback.log).
+            // That is the point of a correction, but it must never REPEAT with
+            // nothing to show for it. A playhead that does not move after a
+            // correction makes every later tick a "correction" again, and the
+            // reporter's own session proves the result: the device restarted
+            // the output every 5 s for eleven minutes — a gap per tick, i.e.
+            // exactly the "not one millisecond is played fluidly" report — while
+            // its state stayed at 98 ms. Two consecutive corrections that moved
+            // nothing are enough; the third is skipped and logged, and a track
+            // change or a user seek lets corrections through again (both
+            // happen through [playAt], which resets the counting).
+            // The peer's target moves ahead with every tick, so the question is
+            // not "same target" but "did the last correction move ANYTHING".
+            // The playhead is given [CATCH_UP_JUDGE_MS] of wall time to move;
+            // if it has not advanced by then, correcting it again cannot work.
+            val now = System.currentTimeMillis()
+            val unmoved = lastCatchUpPosMs >= 0L &&
+                now - lastCatchUpAtMs >= CATCH_UP_JUDGE_MS &&
+                s.positionMs - lastCatchUpPosMs < CATCH_UP_MOVED_MS
+            if (unmoved && catchUpSkips >= CATCH_UP_MAX_SKIPS) {
+                if (catchUpSkips == CATCH_UP_MAX_SKIPS) {
+                    AppLog.log(
+                        "sync",
+                        "drift correction held back: the playhead has not moved from " +
+                            "${s.positionMs}ms after ${catchUpSkips} corrections toward the peer's " +
+                            "${positionMs}ms - repeating them only restarts the audio output " +
+                            "(a gap per sync tick), so this device keeps playing until the track " +
+                            "changes or a user seek arrives",
+                    )
+                }
+                catchUpSkips++
+                setPlaying(isPlaying)
+                return
+            }
+            lastCatchUpPosMs = s.positionMs
+            lastCatchUpAtMs = now
+            if (unmoved) catchUpSkips++ else catchUpSkips = 0
             seekInternal(positionMs)
         }
         setPlaying(isPlaying)
     }
+
+    /** Local position at the last drift correction (device sync), or -1. */
+    private var lastCatchUpPosMs = -1L
+
+    /** When the last drift correction was applied (device sync). */
+    private var lastCatchUpAtMs = 0L
+
+    /** Consecutive corrections that changed nothing (see [seekRemoteCatchUp]). */
+    private var catchUpSkips = 0
+
+    /** How much the playhead has to move for a correction to count as effective. */
+    private val CATCH_UP_MOVED_MS = 250L
+
+    /** Wall time a correction is given to move the playhead before it is judged. */
+    private val CATCH_UP_JUDGE_MS = 2_000L
+
+    /** Corrections with nothing to show for them before they are held back. */
+    private val CATCH_UP_MAX_SKIPS = 2
 
     /**
      * Applies a seek. [startStream] is true only for local user scrubs: when
@@ -748,6 +805,13 @@ class PlayerController {
         // seeking it. Only clamp when the length is actually known.
         val target = if (s.durationMs > 0L) ms.coerceIn(0L, s.durationMs) else ms.coerceAtLeast(0L)
         if (loadedVideoId == s.current?.videoId && player.hasLoadedStream()) {
+            // The player jumps to `target` (it restarts its decode session
+            // there, so the playhead really does move); record it in the state
+            // in the same breath. Leaving the old position in place meant the
+            // device sync compared its peer's position against a value this
+            // device had already left behind, and "corrected" it again on the
+            // next tick — the restart-every-5-seconds loop of issue #3.
+            _state.update { it.copy(positionMs = target) }
             player.seekTo(target)
         } else if (startStream && !s.isResolving) {
             // Stream not loaded yet (restored queue / never started): the scrub
@@ -941,6 +1005,11 @@ class PlayerController {
     ) {
         val track = tracks[index]
         val token = ++playToken
+        // A new session: a drift correction from the paired device is
+        // meaningful again (see [seekRemoteCatchUp]).
+        lastCatchUpPosMs = -1L
+        lastCatchUpAtMs = 0L
+        catchUpSkips = 0
         loadedVideoId = track.videoId
         scope.launch {
             val playSettings = DesktopSettings.load()
@@ -1130,8 +1199,23 @@ class PlayerController {
                         )
                     }
                     if (resumeWhenReady && _state.value.isResolving) player.resume()
+                    // The playhead belongs to THIS session, so the only question
+                    // is whether this session is still the current one — the
+                    // token, not the queue row.
+                    //
+                    // Comparing the queue item used to drop every report the
+                    // moment the list under the running session was replaced,
+                    // which is exactly what the device sync does (the queue is
+                    // adopted from the paired phone as soon as the two devices
+                    // are on the same song). The desktop's reported position
+                    // then froze at the value it had at that instant — the
+                    // reporter's own session sits frozen at 98 ms for eleven
+                    // minutes while audio kept playing — and the sync's periodic
+                    // tick read a device that never advanced, so it "corrected"
+                    // it with a full pipeline restart every 5 s: the sound
+                    // stopped and restarted all evening (issue #3).
                     _state.update { s ->
-                        if (s.index == index && s.queue.getOrNull(index)?.videoId == track.videoId) {
+                        if (token == playToken) {
                             if (s.isResolving) {
                                 // Only on the resolving→ready transition apply the
                                 // held-back intent. After that, keep the latest
@@ -1148,7 +1232,9 @@ class PlayerController {
                 },
                 onDuration = { dur ->
                     _state.update { s ->
-                        if (s.index == index && s.queue.getOrNull(index)?.videoId == track.videoId) {
+                        // Same rule as onPosition: the session's own length, not
+                        // the queue row that may have been replaced under it.
+                        if (token == playToken && index in s.queue.indices) {
                             // Backfill the real duration into the queue item too:
                             // the persistent queue then keeps durations, so a
                             // track restored on the next launch already has a

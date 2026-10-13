@@ -324,8 +324,19 @@ object PlaylistStore {
             // point at it) and the account id is adopted from whichever side
             // carries it, so a playlist imported before this fix gains its link
             // instead of being mirrored a second time later.
+            // A playlist's name is never emptied by a copy that arrives without
+            // one (an older peer, or a row that lost its name on the way): the
+            // name is the only thing that tells the user what the playlist is,
+            // and a nameless row is read as "a code I cannot identify" on the
+            // other device. The surviving name is the winner's, then the local
+            // one, then the arriving one — so a rename still travels and an
+            // empty string can never overwrite a real name.
+            val name = winner.name.trim().ifBlank { null }
+                ?: target.name.trim().ifBlank { null }
+                ?: r.name.trim()
             merged[target.id] = winner.copy(
                 id = target.id,
+                name = name,
                 remoteId = target.remoteId ?: r.remoteId,
             )
         }
