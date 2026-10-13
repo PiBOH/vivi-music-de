@@ -766,10 +766,29 @@ class DeviceSyncManager @Inject constructor(
                 now
             }
             if (local == null) {
+                // A like that arrives WITHOUT metadata is not named after its own
+                // videoId any more.
+                //
+                // `title = id` is exactly what put a "code" on this device:
+                // the desktop saves the audio it caches on Windows as
+                // `<videoId>.m4a`, so the owner recognised the string before he
+                // recognised the song - "it looks like the song's URL, the same
+                // name as the file viviDE saves on Windows". An id is not a
+                // title, and this row is what the list then showed instead of
+                // the song.
+                //
+                // The like is still stored (that is what travelled); the title
+                // is left empty on purpose, and the phone's own account sync - 
+                // which fetches the account's liked songs WITH their metadata - 
+                // fills it in. An unknown id with a wrong name would never be
+                // corrected, which is why this cannot stay as it was.
+                if (entry.title.isBlank()) {
+                    Timber.d("DeviceSync: liked song '%s' arrived with no metadata, stored without a made-up title", id)
+                }
                 database.insert(
                     MediaMetadata(
                         id = id,
-                        title = entry.title.ifBlank { id },
+                        title = entry.title,
                         artists = entry.artist.takeIf { it.isNotBlank() }
                             ?.let { listOf(MediaMetadata.Artist(null, it)) }
                             .orEmpty(),

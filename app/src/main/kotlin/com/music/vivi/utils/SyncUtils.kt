@@ -492,13 +492,38 @@ class SyncUtils @Inject constructor(
                             val timestamp = now.minusSeconds(index.toLong())
                             val isVideoSong = song.isVideoSong
 
+                            val fresh = song.toMediaMetadata()
                             database.transaction {
                                 if (dbSong == null) {
-                                    insert(song.toMediaMetadata()) {
+                                    insert(fresh) {
                                         it.copy(liked = true, likedDate = timestamp, isVideo = isVideoSong)
                                     }
                                 } else if (!dbSong.song.liked || dbSong.song.likedDate != timestamp || dbSong.song.isVideo != isVideoSong) {
                                     update(dbSong.song.copy(liked = true, likedDate = timestamp, isVideo = isVideoSong))
+                                }
+                                // A like that arrived over the DEVICE SYNC carries no
+                                // metadata at all: the desktop sends its liked library as a
+                                // flat list of ids, so the row was created here with nothing
+                                // to name it with (and older builds named it after its own
+                                // videoId - the same string the desktop's audio cache file
+                                // has on Windows, i.e. the "it looks like the song's URL, I
+                                // do not even know what it is called" report).
+                                //
+                                // This is the only place that ever fetches the real
+                                // metadata for a liked song, and it did not refresh an
+                                // existing row: the name could never be corrected. A row
+                                // with a blank title, or with the id where its title should
+                                // be, is refreshed here; a row that already has a name is
+                                // left exactly as it was.
+                                if (dbSong != null &&
+                                    (dbSong.song.title.isBlank() || dbSong.song.title == dbSong.id)
+                                ) {
+                                    update(
+                                        dbSong.song.copy(
+                                            title = fresh.title,
+                                            thumbnailUrl = fresh.thumbnailUrl ?: dbSong.song.thumbnailUrl,
+                                        )
+                                    )
                                 }
                             }
                             delay(DB_OPERATION_DELAY_MS)
