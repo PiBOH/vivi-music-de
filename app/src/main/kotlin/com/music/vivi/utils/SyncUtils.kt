@@ -819,11 +819,13 @@ class SyncUtils @Inject constructor(
                             } else {
                                 database.update(playlistEntity, playlist)
                                 Timber.d("syncSavedPlaylists: Updated existing playlist ${playlist.title} (${playlist.id})")
-                                if (playlistEntity.isAutoSync) {
-                                    executeSyncPlaylist(playlist.id, playlistEntity.id)
-                                } else {
-                                    Timber.d("syncSavedPlaylists: Skipping full sync for cached playlist ${playlist.title} (isAutoSync=false)")
-                                }
+                                // The account's copy may have gained songs since the
+                                // phone last read it (added on YouTube Music, or on
+                                // the desktop): pull them in. This used to be gated
+                                // by isAutoSync, a column nothing ever sets, so an
+                                // existing playlist was never re-read and a song
+                                // added elsewhere never showed up here.
+                                executeRefreshPlaylist(playlist.id, playlistEntity.id)
                             }
                             delay(DB_OPERATION_DELAY_MS)
                         } catch (e: Exception) {
@@ -869,6 +871,90 @@ class SyncUtils @Inject constructor(
             }
         } catch (e: Exception) {
             Timber.e(e, "Error syncing auto-sync playlists")
+        }
+    }
+
+    /**
+     * Re-reads an account playlist this phone already has and adds the songs the
+     * account holds and this copy does not.
+     *
+     * The local copy stays the source of truth for the order and keeps its own
+     * songs: what was added on YouTube Music from another device reaches the
+     * phone, while a song that is only local is deliberately NOT removed (the
+     * app does not push removals to the account, so adopting the account's
+     * shorter list would silently undo the user's own edit here), and neither is
+     * the local order rewritten -- the account's new songs are appended.
+     *
+     * The same fetch also repairs the rows whose stored title is blank or is
+     * their own videoId: such a row is what a playlist showed instead of the
+     * song's name, and its real title is right here in the response.
+     */
+    private suspend fun executeRefreshPlaylist(browseId: String, playlistId: String) = withContext(Dispatchers.IO) {
+        withRetry {
+            YouTube.playlist(browseId).completed()
+        }.onSuccess { result ->
+            result.onSuccess { page ->
+                try {
+                    val songs = page.songs.map(SongItem::toMediaMetadata)
+                    val localEntries = database.playlistSongs(playlistId).first()
+                    val localIds = localEntries.sortedBy { it.map.position }.map { it.song.id }.toSet()
+                    val missing = songs.filterNot { it.id in localIds }
+
+                    // A row that carries an id where its title belongs is what a
+                    // playlist showed instead of the song's name (a like that
+                    // arrived from a peer without metadata used to be stored that
+                    // way, and the playlist renders that same row). This fetch
+                    // just brought in the real metadata, so the row is repaired
+                    // here as well, not only on the liked-songs sync: a row that
+                    // already has a name is left exactly as it was.
+                    val byId = songs.associateBy { it.id }
+                    val stale = localEntries.filter { entry ->
+                        val stored = entry.song.song.title.trim()
+                        stored.isEmpty() || stored == entry.song.id
+                    }
+                    stale.forEach { entry ->
+                        val fresh = byId[entry.song.id] ?: return@forEach
+                        database.update(
+                            entry.song.song.copy(
+                                title = fresh.title,
+                                thumbnailUrl = fresh.thumbnailUrl ?: entry.song.song.thumbnailUrl,
+                            )
+                        )
+                        Timber.d("refreshPlaylist: Repaired the name of ${entry.song.id} (${fresh.title})")
+                    }
+
+                    if (missing.isEmpty()) {
+                        Timber.d("refreshPlaylist: Nothing new in $browseId, local copy kept as it is")
+                        return@onSuccess
+                    }
+
+                    val startPosition = (localEntries.maxOfOrNull { it.map.position } ?: -1) + 1
+                    database.withTransaction {
+                        missing.forEachIndexed { idx, song ->
+                            if (database.song(song.id).firstOrNull() == null) {
+                                database.insert(song)
+                            }
+                            database.insert(
+                                PlaylistSongMap(
+                                    songId = song.id,
+                                    playlistId = playlistId,
+                                    position = startPosition + idx,
+                                    setVideoId = song.setVideoId
+                                )
+                            )
+                        }
+                    }
+                    Timber.d(
+                        "refreshPlaylist: Added ${missing.size} song(s) the account had and the phone did not ($browseId)"
+                    )
+                } catch (e: Exception) {
+                    Timber.e(e, "Error refreshing playlist from the account")
+                }
+            }.onFailure { e ->
+                Timber.e(e, "refreshPlaylist: Failed to fetch playlist $browseId from YouTube")
+            }
+        }.onFailure { e ->
+            Timber.e(e, "refreshPlaylist: Failed after retries")
         }
     }
 

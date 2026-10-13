@@ -368,7 +368,7 @@
     <string name="restore_failed">Misslyckades med att återställa backup</string>
 
     <string name="discord_integration">Discord‑integration</string>
-    <string name="discord_information">vivimusic använder KizzyRPC‑biblioteket för att sätta din Discord‑status. Detta innebär användning av Discord Gateway‑anslutningen, vilket kan anses bryta mot Discords TOS. Det finns dock inga kända fall där användarkonton har stängts av av denna anledning. Använd på egen risk.\n\vivimusic kommer endast att extrahera din token, och allt annat lagras lokalt.</string>
+    <string name="discord_information">vivimusic använder KizzyRPC‑biblioteket för att sätta din Discord‑status. Detta innebär användning av Discord Gateway‑anslutningen, vilket kan anses bryta mot Discords TOS. Det finns dock inga kända fall där användarkonton har stängts av av denna anledning. Använd på egen risk.\n\nvivimusic kommer endast att extrahera din token, och allt annat lagras lokalt.</string>
     <string name="dismiss">Stäng</string>
     <string name="options">Alternativ</string>
     <string name="preview">Förhandsvisning</string>
