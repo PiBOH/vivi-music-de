@@ -1155,4 +1155,5 @@ est irréversible.
     <string name="sponsorblock_skipped_intro">Segment d\'introduction ignoré</string>
     <string name="sponsorblock_skipped_outro">Segment de fin ignoré</string>
     <string name="sponsorblock_skipped_segment">Segment « SponsorBlock » ignoré</string>
+    <string name="build_alpha">ALPHA</string>
 </resources>

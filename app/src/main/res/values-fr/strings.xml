@@ -460,4 +460,10 @@
     <string name="library_sync_error">Échec de la synchronisation — appuyez ici pour réessayer</string>
     <string name="listening_summary">Résumé de l\'écoute</string>
     <string name="setting_listening_summary_desc">Consultez vos tendances d\'écoute quotidiennes et vos statistiques historiques de lecture.</string>
+    <string name="restore_failed_corrupt">La sauvegarde est corrompue et ne peut pas être restaurée</string>
+    <string name="restore_backup_date">Date de la sauvegarde : %s</string>
+    <string name="restore_backup_version">Version de l\'application : %s</string>
+    <string name="restore_unknown">Inconnu</string>
+    <string name="sync_native_volume">Synchroniser le volume du système</string>
+    <string name="sync_native_volume_desc">Reproduire le volume système de ce téléphone et de VIVI Music DE, pour que les touches de volume média agissent sur les deux. Désactivez-le pour garder les deux appareils indépendants.</string>
 </resources>

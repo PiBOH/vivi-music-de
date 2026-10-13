@@ -84,4 +84,5 @@
     <string name="enable_notifications">Bildirişləri aktiv et</string>
     <string name="download_notifications">Yükləmə bildirişləri</string>
     <string name="download_notifications_desc">Göstər progress when yüklənir yeniləmə.</string>
+    <string name="update_source">Yeniləmə mənbəyi</string>
 </resources>

@@ -371,4 +371,25 @@
     <string name="new_release_notifications_info">Açıq some cihazlar (Samsung, Xiaomi, etc.), batareya optimization may delay və ya block arxa fon bildirişlər. -a ensure timely xəbərdarlıqlar, set Vivi Musiqi -a Unrestricted batareya usage in sizin cihaz parametrlər.</string>
     <string name="taste_based_release_notifications">Zövq-əsaslanan buraxmaq xəbərdarlıqlar</string>
     <string name="taste_based_release_notifications_subtitle">Notify when ifaçılar siz tez-tez listen -a buraxmaq yeni mahnılar və ya albomlar</string>
+    <string name="search_albums">Albom axtar…</string>
+    <string name="search_playlists">Pleylist axtar…</string>
+    <string name="all">Hamısı</string>
+    <string name="search_listen_history">Dinləməyə davam et</string>
+    <string name="login_confirm">Girişi təsdiqlə</string>
+    <string name="login_brand_account_hint">Brend hesabı istifadə etmək üçün yuxarıdakı hesab menyusundan ona keçin, sonra təsdiqləmək üçün işarəni vurun.</string>
+    <string name="playing_from">Çalınır:</string>
+    <string name="restore_failed_corrupt">Ehtiyat nüsxə zədəlidir və bərpa edilə bilməz</string>
+    <string name="restore_backup_date">Ehtiyat nüsxənin tarixi: %s</string>
+    <string name="restore_backup_version">Tətbiq versiyası: %s</string>
+    <string name="restore_unknown">Naməlum</string>
+    <string name="switch_to_grid_view">Şəbəkə görünüşünə keç</string>
+    <string name="switch_to_list_view">Siyahı görünüşünə keç</string>
+    <string name="library_force_sync">Kitabxananı indi sinxronlaşdır</string>
+    <string name="library_syncing">Kitabxana sinxronlaşdırılır…</string>
+    <string name="library_sync_done">Kitabxana uğurla sinxronlaşdırıldı</string>
+    <string name="library_sync_error">Sinxronlaşdırma alınmadı, yenidən cəhd üçün vurun</string>
+    <string name="listening_summary">Dinləmə xülasəsi</string>
+    <string name="setting_listening_summary_desc">Gündəlik dinləmə tendensiyalarınıza və keçmiş oxutma statistikalarınıza baxın.</string>
+    <string name="sync_native_volume">OS səsini sinxronlaşdır</string>
+    <string name="sync_native_volume_desc">Bu telefonun və VIVI Music DE-nin sistem səsini eyni saxlayın ki, media səs düymələri hər ikisini idarə etsin. İki cihazı ayrı saxlamaq üçün söndürün.</string>
 </resources>

@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.9_DE-1.54.31-beta] - 2026-10-13
+
+### 🔧 Changed
+- [APK] **French and Azerbaijani are complete: every key the app declares now reads in those two languages.** "traduci interamente il apk in tutte le lingue in cui esso è disponibile": an audit of the whole resource tree (56 locale folders against the four base files) finds **50,916 missing (locale, key) pairs**, and the two smallest are closed here: French was missing 23 strings and Azerbaijani 103, almost all of them the app's own recent work that had been added to English only (the device sync screen and its two volume channels, the listening summary, the player design and crossfade settings, SponsorBlock, the custom font, the settings subtitles). A reusable filler now applies a translation pack to the locale files (`app/src/main/res/values-*/`), refusing a key no base string declares and refusing any translation whose `%`-placeholders do not match the English one, and it escapes the apostrophes aapt2 requires, so a batch of translations cannot reintroduce the build failure fixed in 6.0.8.8. **Measured:** the filler added 95 strings with 0 refused (31 of the 126 keys were already translated in another file of the same locale folder, and adding them again fails the resource merger with `Duplicate resources`), the escape scanner reports 0 problems over every `values*/` file, `:app:mergeUniversalFossReleaseResources` passes and `:app:compileUniversalFossReleaseKotlin` passes. **Watch:** French and Azerbaijani must show every screen in their own language with no English left; the audit must report `0` missing for `values-fr` and `values-az`. **Open sub-item:** the remaining 50,916 pairs are tracked in `TODO.md`, most of them one language at a time (the smallest next: Brazilian Portuguese 109, Swedish 110, Turkish 371, Japanese 524).
+
 ## [6.0.8.8_DE-1.54.31-beta] - 2026-10-13
 
 ### 🐛 Fixed
