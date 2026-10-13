@@ -611,11 +611,15 @@ class DeviceSyncManager @Inject constructor(
             } else now
 
             val playlistId = local?.playlist?.id ?: r.id.ifBlank { PlaylistEntity.generatePlaylistId() }
+            // A name that arrives blank never empties the one already stored:
+            // the name is what tells the user what the playlist is, and a
+            // nameless row is read as an unidentifiable code.
+            val name = r.name.trim().ifBlank { local?.playlist?.name?.trim().orEmpty() }
             if (local == null) {
                 database.insert(
                     PlaylistEntity(
                         id = playlistId,
-                        name = r.name,
+                        name = name,
                         // Kept so this row is known to live on the account: the
                         // playlist is not treated as a local-only one, and a later
                         // rename/delete from the desktop lands on it.
@@ -627,7 +631,7 @@ class DeviceSyncManager @Inject constructor(
             } else {
                 database.update(
                     local.playlist.copy(
-                        name = r.name,
+                        name = name,
                         browseId = local.playlist.browseId ?: accountId,
                         lastUpdateTime = remoteUpdateTime,
                     )

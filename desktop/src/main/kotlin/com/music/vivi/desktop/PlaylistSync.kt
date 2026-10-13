@@ -534,23 +534,36 @@ object PlaylistSync {
         // created here and pushed to the account ([SyncedPlaylist.remoteId]) —
         // is NOT mirrored a second time: the account's copy of such a playlist
         // was filled BY this app, so the local playlist is its source of truth
-        // (mirroring it would create the duplicate the sync exists to avoid,
-        // and would overwrite local edits with the order the account holds).
+        // for its order and its local-only songs (mirroring it would create the
+        // duplicate the sync exists to avoid).
+        //
+        // It is not SKIPPED either, and that was the "the playlists do not sync
+        // even with the YouTube sync on" report: the filter below used to drop
+        // these playlists before any request, so a song added to one of them ON
+        // YouTube Music (from the phone, or from the web UI) could never come
+        // back — the only lists that ever synced down were the ones that had
+        // no local copy at all. They are read too now, and what the account has
+        // and the local copy does not is added locally ([refreshLinked]).
+        val accountItems = page.items.filterIsInstance<PlaylistItem>()
         val linkedRemoteIds = PlaylistStore.active.mapNotNull { it.remoteId }.toSet()
-        val remoteItems = page.items.filterIsInstance<PlaylistItem>().filterNot { item ->
-            val linked = item.id in linkedRemoteIds
-            if (linked) {
-                AppLog.log("playlists", "  '${item.title}': already a local playlist — not mirrored again")
-            }
-            linked
-        }
-        AppLog.log("playlists", "youtube sync ($trigger): ${remoteItems.size} playlist(s) in the account")
+        val remoteItems = accountItems.filterNot { item -> item.id in linkedRemoteIds }
+        val linkedItems = accountItems.filter { item -> item.id in linkedRemoteIds }
+        AppLog.log(
+            "playlists",
+            "youtube sync ($trigger): ${accountItems.size} playlist(s) in the account " +
+                "(${remoteItems.size} new, ${linkedItems.size} already here and checked for " +
+                "songs added on YouTube Music)",
+        )
 
         // Songs are fetched with a small concurrency cap: a large library is
         // dozens of requests, and firing them all at once is what gets a client
         // rate-limited.
         val gate = Semaphore(4)
         val started = _status.value
+        // New playlists to mirror, and the ones already here to re-read: the
+        // second group is what brings a song added on YouTube Music back to the
+        // desktop (see [refreshLinked]).
+        val work = remoteItems.map { it to false } + linkedItems.map { it to true }
         _status.value = started.copy(
             Phase.RUNNING,
             playlists = 0,
@@ -559,16 +572,16 @@ object PlaylistSync {
             // A new phase: the totals now describe the account's list, not the
             // upload half that just finished.
             done = 0,
-            total = remoteItems.size,
+            total = work.size,
             songsDone = 0,
             songsTotal = 0,
             current = "",
             uploading = false,
         )
         var pulledSongs = 0
-        val mirrored = remoteItems.map { item ->
+        val mirrored = work.map { (item, alreadyLocal) ->
             scope.async {
-                gate.withPermit { mirrorOne(item) }
+                gate.withPermit { if (alreadyLocal) refreshLinked(item) else mirrorOne(item) }
             }
         }.mapIndexed { index, deferred ->
             // Awaited in list order: the progress line then advances one
@@ -577,7 +590,7 @@ object PlaylistSync {
             pulledSongs += result?.songs?.size ?: 0
             _status.value = _status.value.copy(
                 done = index + 1,
-                current = remoteItems.getOrNull(index)?.title.orEmpty(),
+                current = work.getOrNull(index)?.first?.title.orEmpty(),
                 songsDone = pulledSongs,
                 songsTotal = 0,
             )
@@ -588,9 +601,60 @@ object PlaylistSync {
         val songs = mirrored.sumOf { it.songs.size }
         AppLog.log(
             "playlists",
-            "youtube sync ($trigger): ${mirrored.size} of ${remoteItems.size} playlist(s) updated, $songs song(s)",
+            "youtube sync ($trigger): ${mirrored.size} of ${work.size} playlist(s) updated, " +
+                "$songs song(s)",
         )
         return Status(Phase.DONE, playlists = mirrored.size, songs = songs)
+    }
+
+    /**
+     * Pulls the changes made to an account playlist that ALREADY has a local
+     * copy (mirrored as `yt-…`, or created here and pushed up).
+     *
+     * The local copy stays the source of truth for the order and keeps its own
+     * songs: what the account holds and this copy does not is *added* here, so a
+     * song added on YouTube Music reaches the desktop. A song that is only
+     * local is deliberately NOT removed (the app does not push removals to the
+     * account, so taking the account's shorter list would silently undo the
+     * user's own edit here), and neither is the local order rewritten.
+     *
+     * Returns null when the two sides already agree, so a sync that finds
+     * nothing new does not bump `updatedAt` — that timestamp is the
+     * last-write-wins key of the device sync, and bumping it for free would
+     * make an untouched playlist win against a genuine edit made on the phone.
+     */
+    private suspend fun refreshLinked(item: PlaylistItem): SyncedPlaylist? {
+        val local = PlaylistStore.active.firstOrNull { it.accountPlaylistId() == item.id }
+            ?: return null
+        val page = YouTube.playlist(item.id).getOrElse { error ->
+            AppLog.log("playlists", "  '${item.title}': songs failed — ${error.message ?: "error"}")
+            return null
+        }
+        val accountSongs = page.songs.map { song ->
+            SyncedSong(
+                id = song.id,
+                title = song.title,
+                artist = song.artists.joinToString(", ") { it.name },
+                thumbnail = song.thumbnail,
+            )
+        }
+        val localIds = local.songs.map { it.id }.toSet()
+        val missing = accountSongs.filterNot { song -> song.id in localIds }
+        // A rename made on YouTube Music (or by the phone) is a real change and
+        // travels here like a song does; the local name is kept when the
+        // account answers with none.
+        val name = item.title.ifBlank { local.name }
+        if (missing.isEmpty() && name == local.name) return null
+        AppLog.log(
+            "playlists",
+            "  '$name': ${missing.size} song(s) added on YouTube Music were pulled into the local " +
+                "playlist" + if (name != local.name) " (renamed there)" else "",
+        )
+        return local.copy(
+            name = name,
+            songs = local.songs + missing,
+            updatedAt = System.currentTimeMillis(),
+        )
     }
 
     /**
