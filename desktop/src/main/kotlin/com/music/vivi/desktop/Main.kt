@@ -1340,6 +1340,26 @@ fun WindowScope.App(
         if (isLoggedIn && syncPlaylistsWithYoutube) PlaylistSync.sync("startup")
     }
 
+    // The account is not only read at startup. A song added on YouTube Music
+    // from the phone cannot reach this device while the app stays open, because
+    // the only runs of the pull were the one at startup and the one behind the
+    // switch - which is the report "I added songs from mobile to a YouTube
+    // Music playlist and it still does not update on the DE", made minutes
+    // after the startup run had already logged its own result. A timer re-reads
+    // the account every few minutes, and [PlaylistSync.refreshLinked] is what
+    // turns a song added there into a song here (it also moves the playlist's
+    // `updatedAt`, so the same change travels on to the paired phone). A run
+    // that finds nothing writes nothing, which is what keeps the last-write-wins
+    // key of an untouched playlist intact for the device sync.
+    LaunchedEffect(isLoggedIn, syncPlaylistsWithYoutube) {
+        if (!isLoggedIn || !syncPlaylistsWithYoutube) return@LaunchedEffect
+        val intervalMs = 5L * 60L * 1000L
+        while (true) {
+            delay(intervalMs)
+            PlaylistSync.sync("periodic")
+        }
+    }
+
     val displayUserName = if (isLoggedIn && accountName.isNotBlank()) accountName else "Guest"
     val displayUserHandle = if (isLoggedIn && accountName.isNotBlank()) {
         accountChannelHandle.ifBlank { "@${accountName.lowercase().replace(" ", "")}" }

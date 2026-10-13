@@ -294,4 +294,6 @@
     <string name="device_sync_paired_device">ജോടിയാക്കിയ ഉപകരണം</string>
     <string name="sync_vivi_volume">VIVI വോളിയം സമന്വയിപ്പിക്കുക</string>
     <string name="sync_vivi_volume_desc">ഈ ഫോണും VIVI Music DE-യും തമ്മിൽ ആപ്പിനുള്ളിലെ വോളിയം സ്ലൈഡർ പ്രതിഫലിപ്പിക്കുക. ഓരോ ഉപകരണത്തിന്റെയും പ്ലെയർ വോളിയം സ്വതന്ത്രമായി നിലനിർത്താൻ ഇത് അപ്രാപ്തമാക്കുക.</string>
+    <string name="sync_native_volume">OS വോള്യം സിംക് ചെയ്യുക</string>
+    <string name="sync_native_volume_desc">ഈ ഫോണും VIVI Music DEയും തമ്മിൽ ഓപറേറ്റ്റിംഗ് സിസ്റ്റംവിന്റെ വോള്യം (ഹാർഡ്‌വേയർ കീകള്‍ മാറ്റുന്ന മീഡിയ വോള്യം) ഒന്നുപോലെ നിർത്തുക. ഓഫ് ചെയ്താൽ ഓരോ ഉപകരണത്തിന്റെയും സിസ്റ്റം വോള്യം സ്വതന്ത്രമായിരിക്കും.</string>
 </resources>

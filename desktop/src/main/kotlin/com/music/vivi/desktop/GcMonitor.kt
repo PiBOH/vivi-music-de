@@ -46,6 +46,25 @@ object GcMonitor {
     @Volatile private var lastPauseAtNanos = 0L
     @Volatile private var lastPauseName = ""
 
+    /**
+     * The last **stop-the-world** pause, tracked apart from the cycles.
+     *
+     * A `G1 Concurrent GC` notification reports the whole cycle - its
+     * concurrent work included - so reading it as a pause made the 30 s Skiko
+     * `gc()` look like a 33 / 104 / 120 / 214 ms freeze in the reporter's
+     * 13 Oct log (issue #3, unpaired), while the number that actually explains a
+     * stall is the one the audio writer measures itself (`audio priority stall:
+     * ... 171ms held up at the writer's priority`). [context] reports a real
+     * stop-the-world pause; the concurrent cycles stay in `gc.log` as what they
+     * are, and their total is kept next to the pauses so a long cycle cannot be
+     * read as "the JVM did nothing".
+     */
+    @Volatile private var lastStwPauseMs = 0L
+    @Volatile private var lastStwPauseAtNanos = 0L
+    @Volatile private var lastStwPauseName = ""
+
+    private val worstStwPauseMs = AtomicLong()
+
     private val pauseCount = AtomicLong()
     private val totalPauseMs = AtomicLong()
     private val worstPauseMs = AtomicLong()
@@ -75,12 +94,17 @@ object GcMonitor {
      * the worst pause seen so far. Deliberately cheap (no allocation of note).
      */
     fun context(): String {
-        val at = lastPauseAtNanos
-        if (at == 0L) return "no GC pause measured yet (worst 0ms, total 0ms)"
+        val at = lastStwPauseAtNanos
+        if (at == 0L) {
+            return "no stop-the-world pause measured yet (worst 0ms; every collection so far " +
+                "was a young or concurrent cycle: ${totalPauseMs.get()}ms in ${pauseCount.get()} " +
+                "collections, worst ${worstPauseMs.get()}ms)"
+        }
         val ageMs = (System.nanoTime() - at) / 1_000_000L
         val age = if (ageMs < 1_000L) "${ageMs}ms" else "${ageMs / 1_000L}s"
-        return "last GC pause ${lastPauseMs}ms $age ago (${lastPauseName}), " +
-            "worst ${worstPauseMs.get()}ms, total ${totalPauseMs.get()}ms in ${pauseCount.get()} pauses"
+        return "last stop-the-world pause ${lastStwPauseMs}ms $age ago (${lastStwPauseName}), " +
+            "worst ${worstStwPauseMs.get()}ms (collection time including concurrent cycles " +
+            "${totalPauseMs.get()}ms in ${pauseCount.get()} collections, worst ${worstPauseMs.get()}ms)"
     }
 
     private fun handle(notification: Notification) {
@@ -90,21 +114,42 @@ object GcMonitor {
         val durationMs = info.gcInfo.duration
         val heap = runCatching { ManagementFactory.getMemoryMXBean().heapMemoryUsage.used / 1024 / 1024 }
             .getOrDefault(0L)
+        // A cycle is not a pause: `G1 Concurrent GC` (and any event whose cause
+        // is `No GC`) is reported with the length of the whole cycle, most of
+        // which runs while every thread keeps running. Only the others stop the
+        // world, and only those belong in `playback.log` as a freeze.
+        val concurrent = info.gcCause.equals("No GC", ignoreCase = true) ||
+            info.gcName.contains("Concurrent", ignoreCase = true)
+        val name = "${info.gcName}, ${info.gcCause}"
         lastPauseMs = durationMs
         lastPauseAtNanos = System.nanoTime()
-        lastPauseName = "${info.gcName}, ${info.gcCause}"
+        lastPauseName = name
         pauseCount.incrementAndGet()
         totalPauseMs.addAndGet(durationMs)
         worstPauseMs.updateAndGet { maxOf(it, durationMs) }
+        if (!concurrent) {
+            lastStwPauseMs = durationMs
+            lastStwPauseAtNanos = lastPauseAtNanos
+            lastStwPauseName = name
+            worstStwPauseMs.updateAndGet { maxOf(it, durationMs) }
+        }
         if (durationMs >= LOUD_THRESHOLD_MS) {
             AppLog.log(
                 "playback",
-                "gc pause: ${durationMs}ms (${lastPauseName}) — every thread was stopped here " +
-                    "(heap ${heap}MB in use)",
+                if (concurrent) {
+                    "gc cycle: ${durationMs}ms ($name) — mostly concurrent, only its short pause " +
+                        "phases stop the threads (heap ${heap}MB in use)"
+                } else {
+                    "gc pause: ${durationMs}ms ($name) — every thread was stopped here " +
+                        "(heap ${heap}MB in use)"
+                },
             )
         }
         if (durationMs >= LOG_THRESHOLD_MS) {
-            AppLog.log("gc", "${durationMs}ms — ${lastPauseName} (heap ${heap}MB)")
+            AppLog.log(
+                "gc",
+                "${durationMs}ms — $name (heap ${heap}MB)" + if (concurrent) " [cycle, not a pause]" else "",
+            )
         }
     }
 }

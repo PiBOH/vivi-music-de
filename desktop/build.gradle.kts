@@ -335,7 +335,22 @@ compose.desktop {
             // instead: same memory reclamation, no stop-the-world full GC. Same
             // run after the flag: zero `Pause Full`, the 30 s event becomes a
             // bounded 2.9-9.9 ms young pause that the 8 s PCM queue absorbs.
-            "-XX:+ExplicitGCInvokesConcurrent",
+            //
+            // That was not the end of it. The reporter's own 1.54.29 session
+            // (13 Oct, issue #3 while NOT paired - his own finding) shows the
+            // same 30.0 s event still starting a concurrent cycle whose
+            // `G1 Concurrent GC` event ran 33 / 104 / 120 / 214 ms, and the
+            // 214 ms one held the audio writer's 50 ms sleep 221 ms late
+            // (`audio priority stall: ... 171ms held up at the writer's
+            // priority`, heap 119 MB of 2 GB, cpu 13% of 59% busy - the process
+            // was neither busy nor short of memory). The explicit call itself is
+            // what has to go: `-XX:+DisableExplicitGC` ignores every
+            // `System.gc()`, so Skiko's every-30-s trim buys nothing and costs
+            // nothing at all (G1 keeps collecting on its own heuristics), and
+            // the periodic disturbance disappears instead of merely becoming
+            // concurrent - which is what "not one millisecond is played fluidly"
+            // was still measuring after the previous flag.
+            "-XX:+DisableExplicitGC",
             // JCEF (the Chromium sign-in window) needs reflective access to AWT
             // internals on JDK 16+; the macOS packages need the three lwawt ones,
             // and they are harmless where the package does not exist. See

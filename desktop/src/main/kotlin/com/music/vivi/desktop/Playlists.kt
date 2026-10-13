@@ -334,15 +334,51 @@ object PlaylistStore {
             val name = winner.name.trim().ifBlank { null }
                 ?: target.name.trim().ifBlank { null }
                 ?: r.name.trim()
+            // An equal edit time with a different song list is what a peer
+            // sends when its own edit was never stamped (an older phone
+            // build, or a copy that arrived while it was being edited):
+            // last-write-wins cannot choose between two equal timestamps, and
+            // keeping the local copy silently dropped the songs added on the
+            // phone - the "the mobile playlists, even the ones I have just
+            // updated, do not reach the DE" report, whose own store shows it
+            // (`nigga`: 5 songs on the phone, 2 here, the same timestamp).
+            // The union cannot lose anything: the local order stays, the songs
+            // only the peer holds are appended, and a song both sides have
+            // stays once. An identical list - the common case of the peer
+            // re-pushing what it already sent - changes nothing at all.
+            val songs = if (r.updatedAt == target.updatedAt) {
+                unionSongs(target.songs, r.songs)
+            } else {
+                winner.songs
+            }
             merged[target.id] = winner.copy(
                 id = target.id,
                 name = name,
+                songs = songs,
                 remoteId = target.remoteId ?: r.remoteId,
             )
         }
         _all.value = merged.values.toList()
         repairDuplicates()
         persist()
+    }
+
+    /**
+     * [local]'s songs followed by the ones only [remote] holds, in the peer's
+     * order ([PlaylistStore.applyRemote] uses it when two sides carry the same
+     * edit time but different songs).
+     *
+     * Identity is the song id and a song present on both sides keeps its local
+     * position, so the order the user built here is never rewritten. Nothing is
+     * ever removed: a removal made on the peer does not travel through this
+     * path, deliberately, because an equal timestamp carries no "which side is
+     * newer" to justify removing the user's own song.
+     */
+    private fun unionSongs(local: List<SyncedSong>, remote: List<SyncedSong>): List<SyncedSong> {
+        if (remote.isEmpty()) return local
+        val known = local.mapTo(HashSet()) { it.id }
+        val extra = remote.filterNot { it.id in known }
+        return if (extra.isEmpty()) local else local + extra
     }
 
     /**

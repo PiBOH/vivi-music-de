@@ -216,4 +216,6 @@
     <string name="device_sync_paired_device">জোড়া ডিভাইস</string>
     <string name="sync_vivi_volume">VIVI ভলিউম সিঙ্ক করুন</string>
     <string name="sync_vivi_volume_desc">এই ফোন এবং VIVI Music DE-এর মধ্যে অ্যাপের ভলিউম স্লাইডারটি মিরর করুন। প্রতিটি ডিভাইসের প্লেয়ার ভলিউম স্বাধীন রাখতে এটি বন্ধ করুন।</string>
+    <string name="sync_native_volume">অপারেটিং সিস্টেমের ভলিউম সিঙ্ক করুন</string>
+    <string name="sync_native_volume_desc">এই ফোন এবং VIVI Music DE এর মধ্যে অপারেটিং সিস্টেমের নিজস্ব ভলিউম (ফোনের মিডিয়া ভলিউম) মিলিয়ে রাখুন। বন্ধ করলে প্রতি ডিভাইসের সিস্টেম ভলিউম স্বাধীন থাকে।</string>
 </resources>

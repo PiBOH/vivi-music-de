@@ -17,4 +17,6 @@
     <string name="device_sync_paired_device">Paired device</string>
     <string name="sync_vivi_volume">Sync VIVI volume</string>
     <string name="sync_vivi_volume_desc">Mirror the in-app volume slider between this phone and VIVI Music DE. Disable it to keep each device\'s player volume independent.</string>
+    <string name="sync_native_volume">Sync OS volume</string>
+    <string name="sync_native_volume_desc">Mirror the operating system's own volume (the phone's media volume, the one the hardware keys move) between this phone and VIVI Music DE. Disable it to keep each device's system volume independent.</string>
 </resources>

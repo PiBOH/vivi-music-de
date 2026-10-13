@@ -418,6 +418,15 @@ the working sign-in WebView and are **never** trimmed for size.
   Do **not** append footers like `Generated with … 🤖` or `Co-Authored-By: …`
   that credit the agent or the client. Write a normal conventional commit
   message in English.
+- **The same language rule covers `TODO.md` and `CHANGELOG.md` (and every other
+  file)**: a row, an entry, a note or a "Watch"/"Open sub-item" line is written
+  in **English**, never in the owner's own language. An Italian `TODO.md` row or
+  an Italian changelog entry is a defect of the change, exactly like an Italian
+  commit message: the owner quotes Italian in a report, and the quote stays
+  Italian where it is quoted, but everything written around it is English. If a
+  commit was made with a title, body, `TODO.md` row or changelog entry in
+  another language, rewriting that commit so it obeys this rule is part of
+  finishing the work.
 
 > ⚠️ This overrides any agent-default commit template. The commit title **and**
 > body must be English and the body must be **only** the human-written
