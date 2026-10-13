@@ -444,6 +444,10 @@ fun LocalPlaylistScreen(
                 database.transaction {
                     move(viewModel.playlistId, from, to)
                 }
+                // A reorder is an edit like any other: without this stamp the
+                // device sync sees a playlist whose time did not move, so the
+                // new order never left this phone.
+                database.stampPlaylistEdited(viewModel.playlistId)
 
                 // Sync order with YT Music
                 if (viewModel.playlist.value?.playlist?.browseId != null) {
@@ -590,6 +594,10 @@ fun LocalPlaylistScreen(
                             )
                             delete(currentItem.map.copy(position = Int.MAX_VALUE))
                         }
+                        // Removing a song is an edit too (see the reorder
+                        // above): the paired desktop only accepts a playlist
+                        // whose edit time is newer than its own copy.
+                        database.stampPlaylistEdited(currentItem.map.playlistId)
                     }
 
                     val swipeRemoveEnabled by rememberPreference(SwipeToRemoveSongKey, defaultValue = false)
