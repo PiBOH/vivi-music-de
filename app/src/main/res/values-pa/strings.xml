@@ -244,6 +244,6 @@
     <string name="device_sync_paired_device">ਜੋੜਿਆ ਡਿਵਾਈਸ</string>
     <string name="sync_vivi_volume">VIVI ਵਾਲੀਅਮ ਸਿੰਕ ਕਰੋ</string>
     <string name="sync_vivi_volume_desc">ਇਸ ਫ਼ੋਨ ਅਤੇ VIVI Music DE ਵਿਚਕਾਰ ਐਪ ਦੇ ਵਾਲੀਅਮ ਸਲਾਈਡਰ ਨੂੰ ਮਿਰਰ ਕਰੋ। ਹਰੇਕ ਡਿਵਾਈਸ ਦਾ ਪਲੇਅਰ ਵਾਲੀਅਮ ਸੁਤੰਤਰ ਰੱਖਣ ਲਈ ਇਸਨੂੰ ਬੰਦ ਕਰੋ।</string>
-    <string name="sync_native_volume">OS ਵੋਲ੍ਯੂਮ ਸਿੰਕ ਕਰੋ</string>
-    <string name="sync_native_volume_desc">ਇਸ ਫੋਨ ਅਤੇ VIVI Music DE ਵਿੱਚ ਆਪਰੇਟਿੰਗ ਸਿਸਟਮ ਦਾ ਆਪਣਾ ਵੋਲ੍ਯੂਮ (ਫੋਨ ਦਾ ਮੀਡੀਆ ਵੋਲ੍ਯੂਮ) ਇੱਕੋ ਜਿਹਾ ਰੱਖੋ। ਬੰਦ ਕਰਨ 'ਤੇ ਹਰ ਇੱਕ ਡੀਵਾਈਸ ਦਾ ਸਿਸਟਮ ਵੋਲ੍ਯੂਮ ਦੂਜੇ ਤੋਂ ਵੱਖਰਾ ਰਹੇਗਾ।</string>
+    <string name="sync_native_volume">OS ਵਾਲੀਅਮ ਸਿੰਕ ਕਰੋ</string>
+    <string name="sync_native_volume_desc">ਇਸ ਫੋਨ ਅਤੇ VIVI Music DE ਦਾ ਸਿਸਟਮ ਵਾਲੀਅਮ ਇੱਕੋ ਜਿਹਾ ਰੱਖੋ, ਤਾਂ ਜੋ ਮੀਡੀਆ ਵਾਲੀਅਮ ਕੁੰਜੀ ਦੋਵਾਂ ਵਿੱਚ ਕੰਮ ਕਰੇ। ਬੰਦ ਕਰਨ ਨਾਲ ਦੋਵੇਂ ਡੀਵਾਈਸ ਵੱਖਰੇ ਰਹਣਗੇ।</string>
 </resources>
