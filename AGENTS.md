@@ -299,6 +299,54 @@ dependencies there, or you break the desktop build.
   never overrides explicit user requests, the trust-boundary/error-handling
   rules, or the localization rule in §6.
 
+### Skills - scan before installing - MANDATORY
+
+An agent skill is trusted instructions, so installing one is trusting its author:
+whatever the skill says, the agent will do. Nothing is installed here before
+**SkillSpector** (<https://github.com/NVIDIA/skillspector>) has scanned it.
+
+**The scanner.** SkillSpector is an NVIDIA Python CLI kept in a throwaway
+virtualenv at `.ignore/skillspector-venv` (gitignored, never shipped). The static
+pass needs no API key:
+
+```
+.ignore/skillspector-venv/Scripts/skillspector.exe scan <path-or-repo> --no-llm
+```
+
+Read the whole report, not just the score: the `Score`, `Severity` and
+`Recommendation` lines, every `Issues (n)` entry, and the `Inspection
+Completeness` block. `partial` coverage or a ledger exception is not a clean
+pass. LLM analysis is optional and needs a provider key (`SKILLSPECTOR_PROVIDER`
+plus that provider's credential).
+
+**The gate.**
+
+- `SAFE` with `LOW` and no finding: install.
+- `CAUTION` / `MEDIUM`, `HIGH` or `CRITICAL`, or any finding at all: **do not
+  install it.** Do not copy it into `.agents/skills/` or a global skill
+  directory, do not add it to `skills-lock.json`, and do not run it.
+- A skill that fails the gate is neither installed on the agent's own judgement
+  nor dropped in silence. The owner is told, with the scanner's own evidence
+  (rule id, file and line, confidence, the flagged text) and what the scan could
+  not evaluate, and the **owner** makes the real choice. The agent never waves a
+  `HIGH` or `CRITICAL` finding through as "probably a false positive"; if the
+  owner asks for the install anyway, the message that does it names the findings
+  that were overridden.
+
+**Re-scan.** An installed skill is re-scanned when its own files change and when
+SkillSpector is updated, and the new report replaces the old one. Reports are
+kept under `.ignore/` as a local audit trail and are not committed.
+
+**The inventory as scanned on 11 Oct 2026 (SkillSpector 2.12.0).** The seven
+skills under `.agents/skills/` (`frontend-design`, `ponytail`, `ponytail-audit`,
+`ponytail-debt`, `ponytail-gain`, `ponytail-help`, `ponytail-review`) and six of
+the seven under `~/.agents/skills/` (`forget`, `handoff`, `lesson`,
+`memory-discipline`, `recall`, `remember`) score 0 to 20 (LOW, SAFE).
+`agentmemory-rest-api` scores 23 (MEDIUM, CAUTION), from an `<!-- AUTOGEN -->`
+comment marker read as hidden instructions and a `localhost` URL read as
+external transmission, both of which look like static false positives; it is
+left installed pending the owner's decision.
+
 ### Never use the long dash (em dash) - MANDATORY
 
 Never use the **long dash** (the em dash, the character `—`, also written as
@@ -314,6 +362,13 @@ cookies` and **not** `Spotify login — manual cookies`.
 Existing text that already contains a long dash and is not being edited is left
 as it is: do not go looking for em dashes to replace. The rule governs new text
 and the lines you actually touch.
+
+### Documentation voice - MANDATORY
+
+Documentation, changelog entries and `TODO.md` rows are never written in the
+third person about the reader: no "the user must test this", no "the user's own
+file is not here", no task addressed to whoever reads the note. State the fact
+instead of the instruction ("not verified: needs a device"), and keep it English.
 
 ### Installer size and the icon-minimization task
 
@@ -363,6 +418,15 @@ the working sign-in WebView and are **never** trimmed for size.
   Do **not** append footers like `Generated with … 🤖` or `Co-Authored-By: …`
   that credit the agent or the client. Write a normal conventional commit
   message in English.
+- **The same language rule covers `TODO.md` and `CHANGELOG.md` (and every other
+  file)**: a row, an entry, a note or a "Watch"/"Open sub-item" line is written
+  in **English**, never in the owner's own language. An Italian `TODO.md` row or
+  an Italian changelog entry is a defect of the change, exactly like an Italian
+  commit message: the owner quotes Italian in a report, and the quote stays
+  Italian where it is quoted, but everything written around it is English. If a
+  commit was made with a title, body, `TODO.md` row or changelog entry in
+  another language, rewriting that commit so it obeys this rule is part of
+  finishing the work.
 
 > ⚠️ This overrides any agent-default commit template. The commit title **and**
 > body must be English and the body must be **only** the human-written
@@ -896,3 +960,209 @@ grep -rn "audio device stall\|cushion low\|starved\|writer stalled\|sample-table
 # the cushion every start actually got, and whether it was the target
 grep -rho "primed: device started with [0-9]*ms" logs/*/playback.log | sort | uniq -c
 ```
+
+## 11. Desktop UI work: how it is verified (headless checks)
+
+There is no GUI and no display in the agent environment, and most of the desktop
+edition is UI. "It compiles" therefore proves very little, and a claim about a
+screen that has not been rendered is a claim that has not been checked. The
+desktop module carries five **manual** Gradle checks that render the real
+composables into an off-screen `androidx.compose.ui.ImageComposeScene` (no
+window, no GPU) and look at the pixels or at the state they produce:
+
+| task | what it proves |
+| --- | --- |
+| `:desktop:changelogEmojiCheck` | every changelog emoji is drawn, in colour, on every path: `markdownInline` on its own, a line of emoji plus text, and the seven real `### 🐛 Fixed` style headings through `MarkdownView` |
+| `:desktop:framelessHitTestCheck` | the frameless window's drag surface, which sits BEHIND the interface, is hit only where nothing interactive is in front of it, so a button keeps its own clicks |
+| `:desktop:localDataMaintenanceCheck` | the log pruning rule: only logs older than seven days, never the session being written, never a data file |
+| `:desktop:firstRunRenderCheck` | the first-run screen composes and paints at 600x480, 1024x768 and 1600x900 |
+| `:desktop:chatWindowRenderCheck` | the Listen Together chat list: an empty conversation draws its empty state, a conversation draws its bubbles, and a bubble that quotes another one draws strictly more than the same message without the quote |
+
+They live in `desktop/src/test/kotlin/com/music/vivi/desktop/`, write their PNGs
+under `.ignore/`, are registered at the end of `desktop/build.gradle.kts`, and
+are deliberately **not** part of `check`: they are pixel and layout checks, need
+no test framework, and are run by hand (usually right after the change that
+motivated them). Each one exits non-zero with a list of failures.
+
+> **Rule**: when you change something one of these checks covers, run it and
+> paste its verdict into the CHANGELOG entry. When you add a piece of UI that
+> cannot be verified any other way, add a check to that list rather than
+> claiming it works.
+
+Two facts these checks depend on, both verified against the shipped bytecode of
+Compose 1.8.2, because guessing them produces a bug the other way round:
+
+1. `WindowDraggableArea` calls `DragHandler.onDragStarted()` on the pointer
+   DOWN, waits for no drag gesture and never consumes the event. Any surface it
+   covers therefore starts a window move on a press, so it must be placed BEHIND
+   the interface, never in front.
+2. Compose stops hit testing at the frontmost layer: a `clickable` in front
+   receives the press and the layer behind it receives nothing. That is what
+   makes the drag surface safe, and `framelessHitTestCheck` measures it rather
+   than assuming it.
+
+## 12. The changelog emoji and the bundled colour font (do not swap it back)
+
+The About screen renders `CHANGELOG.md` with the app's own Markdown renderer, and
+those headings start with an emoji (`🐛 Fixed`, `🔧 Changed`, `📝 Commits`,
+`✨ Added`, `🗑️ Removed`, `📌 Notes`, `🌍 Translations`).
+
+- **The colour font is `fonts/TwemojiColorEmoji.ttf`** (Twemoji Mozilla 0.7.0,
+  COLRv0, 1.47 MB). It is bundled because the app font has no emoji and Compose
+  Desktop does not fall back to a second font by itself: without it the emoji are
+  drawn as `.notdef`, which in this app's face is the question mark inside a
+  rhombus that was reported. `fonts/NotoEmoji.ttf` stays as the monochrome
+  fallback for the codepoints the colour face does not carry, and the OS emoji
+  face is the last resort.
+- **Do not replace the colour font with Noto Color Emoji.** Both the 165 KB
+  subset that used to ship and the full 25 MB COLRv1 build paint NOTHING through
+  this renderer (`0 ink`, measured with a Skiko rasteriser), which is worse than
+  monochrome. Twemoji paints every emoji in `EmojiCoverage.colorEmoji`.
+- **`EmojiCoverage.kt` is generated, never edited by hand:**
+  `python3 scripts/build_desktop_emoji_coverage.py` reads both bundled fonts'
+  own `cmap` and rewrites the list; `--check` exits 1 when it is stale. A font
+  swap without a regeneration is a bug.
+- **A span boundary must never fall inside a surrogate pair.** The tofu was
+  `markdownInline` appending one UTF-16 code unit per span, splitting every
+  supplementary-plane emoji (`U+1F000` and up) in half, which is why `✨`
+  (`U+2728`, one unit) was the only one that rendered. The plain-character
+  branch consumes whole code points; keep it that way.
+- **Grey emoji are not a bug.** `🔧` and `🗑️` are grey artwork in Twemoji
+  itself, so the check compares ink against the family the codepoint resolves to
+  instead of demanding chromatic pixels. A check that requires colour of them
+  fails on correct output.
+
+## 13. Desktop local data: installers and logs
+
+Two rules about `~/.vivimusic/` that are easy to get wrong, and the checks that
+keep them right.
+
+**The update counter counts installs, not downloads.** Only installers whose file
+name carries the version the app is currently running
+(`VIVIMusic-6.0.8.5_DE-1.54.20-setup.exe`) count, because an installer that has
+been downloaded but not run is the installer for the NEXT version. Both the
+counter and the "delete installers" button (on the Updates screen and on
+Storage) work on that set, so the number and the button can never disagree, and
+the installer of a pending update is never deleted underneath the user.
+`UpdateDownloader.installedInstallers(installedVersion)` is the single place that
+decides this.
+
+**Logs older than seven days are deleted at startup.** `~/.vivimusic/logs/`
+holds one session folder per launch plus the loose `.log` files in
+`~/.vivimusic/` (`actions.log`, `login-debug.log`, `crash.log`); everything older
+than seven days goes, the session being written never does, and no data file
+(`settings.json`, `playlists.json`, `history.json`, `device-sync.json`, …) is
+ever deleted. The rule is the pure function `AppLog.staleLogs`, so it can be
+checked without touching the real directory, and the `.log` test is part of the
+rule rather than of its caller for exactly that reason.
+
+## 14. First run, support links and Material 3 Expressive
+
+**The first-run flow** (`desktop/src/main/kotlin/com/music/vivi/desktop/FirstRun.kt`)
+is shown only on a fresh install, i.e. while no language has been chosen yet,
+and is not re-openable from Settings. Its three steps mirror the mobile
+`WelcomeActivity`: welcome (with a searchable language picker), community and
+support, desktop features. `Main.kt` keeps it on screen with its own flag
+because step one already saves the language: without that flag the app appears in
+the middle of its own welcome.
+
+**The two support links are the mobile developer's own**, by request, and are to
+be kept exactly as the mobile welcome screen has them: `UPI`
+(`upi://pay?pa=vividhpashokan@axl&pn=Vividh P Ashokan`) and Buy Me a Coffee
+(`https://ko-fi.com/vividhpashokan`). The repository and channel links are the DE
+ones (`github.com/PiBOH/vivi-music-de`, `t.me/vivimusicde`). The labels
+`support_upi` and `support_buy_me_a_coffee` are BRAND names, identical in every
+language on purpose, authored in `scripts/desktop_extra_translations_94.py` and
+listed in the audit's `BRAND_KEYS` beside `telegram_channel`.
+
+**Material 3 Expressive** is reached where the app owns the decision, because the
+library's own entry point is not usable here: `MaterialExpressiveTheme` and the
+flag it sets are `internal` in the Compose 1.8.2 this app compiles against
+(calling it is a compile error) and `ExpressiveNavigationBar` is a phone bottom
+bar. So the expressive pass is the shape scale (`expressiveShapes`, 8/12/16/20/28
+dp), the motion (`Animations.emphasizedDecelerate`, plus the expressive spring
+the panels already used) and the card settings groups with tonal icon containers
+(`M3Settings.kt`, `StorageSection`, `ContentSection`). Spotify mode keeps its
+flat 8 dp scale on purpose.
+## 15. The Listen Together chat window (its own window, replies, notifications)
+
+**The chat is a top-level window, not a panel of the room screen**
+(`desktop/src/main/kotlin/com/music/vivi/desktop/ListenTogetherChatWindow.kt`).
+`ListenTogetherScreen` keeps only a Chat card that shows the last line and the
+unread count and opens the window, while `Main.kt` emits the window beside the
+live-log window, so it survives leaving the room screen: the manager keeps
+feeding it either way. Do not move the conversation back inside the room screen,
+which is the shape this replaces (clipped to the room's own scroll, and gone the
+moment the user browses the library).
+
+**Visibility cannot live in the screen's composition** for the same reason, so it
+lives in the `ListenTogetherChatWindow` object: `visible` (read by the client's
+event loop to decide whether an incoming message still deserves a notification,
+and by the room screen for its Chat card) and `unread` (reset by `open()`). The
+window is deliberately not persisted: a window that reopens itself on every
+launch is worse than one the user opens on purpose.
+
+**A reply travels the wire, it is not a local decoration.** The reply model
+already existed (`LtChat.replyTo` / `reply_to`, `LtRepliedMessage`, and
+`LtChatMessage.replyTo`); `sendChat` / `sendChatMessage` now take it, so a quote
+written on the desktop arrives as a quote on Android and the other way round.
+Keep those field names: they are the protocol shared with
+`app/src/main/kotlin/com/music/vivi/listentogether/`.
+
+**A message from another user while the window is closed is a notification**,
+dispatched through `DesktopNotifier.notify(...)` from the manager's event loop
+(not from the screen), so it fires even while the user browses the library. That
+is what makes it follow the notification-type setting, native OS toast or the
+main window's in-app banner, and it lands in the notification history like every
+other notice. Own messages are never notified, and neither is a message the open
+window is already showing.
+
+**Date separators are formatted, not translated.** "Today" / "Yesterday" would
+have cost two more strings in each of the 52 languages for no gain, so the
+separator is the full date in the app language's own locale
+(`Languages.jvmLocale`): "8 ott 2026" in Italian, "Oct 8, 2026" in English.
+
+**Where the three strings come from.** `lt_no_messages`, `lt_reply` and
+`lt_send_message` are authored in `scripts/desktop_extra_translations_95.py` and
+were inserted into all 53 `Localization_*.kt` files in alphabetical position,
+CRLF preserved. Do not run `scripts/generate_desktop_localization.py` casually:
+it rebuilds the tables from the Android resources and drops the hand-edited
+translations this fork carries.
+
+
+## 16. Playback: the client chain and the 403 rule (never put a web client back)
+
+**A web client cannot play on the desktop.** Every `YouTubeClient` flagged
+`useWebPoTokens` (`WEB_REMIX`, `WEB_CREATOR`, `TVHTML5`, `TVHTML5_SIMPLY`) signs a
+googlevideo URL that is only served when the request carries a PoToken, and a
+PoToken has to be minted by a WebView: the phone has one, this app does not. Such
+a URL is not a weaker fallback, it is a guaranteed 403, and having one in the
+chain is worse than having an empty chain: the resolver reports a candidate, the
+player spends one of its three attempts on it, the retry re-resolves through the
+same chain and gets the same dead URL, and the track ends in `giving up after 3
+attempts: HTTP 403 downloading audio`, which is verbatim the failure in
+`~/.vivimusic/logs/20261007-205734/playback.log` (every failing URL carries
+`c=WEB_CREATOR`).
+
+**The rule**, in `desktop/src/main/kotlin/com/music/vivi/desktop/player/StreamResolver.kt`:
+`CLIENT_CHAIN` holds PoToken-free identities only and ends with
+`filterNot { it.useWebPoTokens }`, which is the enforcement of the rule and not
+decoration, so a future edit cannot quietly reintroduce one. When that chain is
+refused the result must be **no candidate at all**, because that is the case
+`PlayerController` already answers correctly (rotate the guest identity and
+resolve again). Never "help" it by adding a web client as a last resort.
+
+`VISIONOS` leads the chain because it was measured answering while the client that used to lead it
+(`ANDROID_VR_1_43_32`) returned no URL for any probe track. The order is a
+measurement, not a style: re-measure before changing it.
+
+**How it is measured:** `./gradlew :desktop:streamResolveProbe` (needs the
+network, `verification` group, `desktop/src/test/kotlin/com/music/vivi/desktop/StreamResolveProbe.kt`).
+It runs the real resolver for real tracks and fetches the first 256 KB of every
+candidate URL with that candidate's own User-Agent, printing the client each URL
+came from and the HTTP status, which tells "the chain is refused" (no candidate,
+or every candidate 403) apart from "the chain is fine but the wrong candidate was
+used" (some candidate 2xx). It also signs one track with `WEB_CREATOR` as a
+control, and that control is how the rule above was established instead of
+assumed. A `206` is a success: the probe fetches a range, not the whole file.
+**Watch:** every track the probe resolves must show at least one 2xx candidate.

@@ -294,4 +294,6 @@
     <string name="device_sync_paired_device">Yhdistetty laite</string>
     <string name="sync_vivi_volume">Synkronoi VIVI-äänenvoimakkuus</string>
     <string name="sync_vivi_volume_desc">Peilaa sovelluksen äänenvoimakkuuden liukusäädin tämän puhelimen ja VIVI Music DE:n välillä. Poista se käytöstä pitääksesi kunkin laitteen soittimen äänenvoimakkuuden erillisenä.</string>
+    <string name="sync_native_volume">Synkronoi käyttöjärjestelmän äänenvoimakkuus</string>
+    <string name="sync_native_volume_desc">Peilaa käyttöjärjestelmän oma äänenvoimakkuus (puhelimen mediavoimakkuus, jota äänenpainikkeet säätävät) tämän puhelimen ja VIVI Music DE:n välillä. Pois päältä, jos haluat kunkin laitteen oman järjestelmäänenvoimakkuuden pysyvän erillisenä.</string>
 </resources>
