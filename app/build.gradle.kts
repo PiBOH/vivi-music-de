@@ -30,8 +30,8 @@ android {
         // Versioning follows the Android scheme (last digit increments per
         // release: 6.0.6 -> 6.0.6.1 -> 6.0.6.2 -> 6.0.6.3). versionCode stays
         // monotonic and always increases per release.
-        versionCode = 146
-        versionName = "6.0.8.8"
+        versionCode = 147
+        versionName = "6.0.8.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

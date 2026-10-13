@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_listen_history">Dinləməyə davam et</string>
+    <string name="login_confirm">Girişi təsdiqlə</string>
+    <string name="login_brand_account_hint">Brend hesabı istifadə etmək üçün yuxarıdakı hesab menyusundan ona keçin, sonra təsdiqləmək üçün işarəni vurun.</string>
+    <string name="restore_failed_corrupt">Ehtiyat nüsxə zədəlidir və bərpa edilə bilməz</string>
+    <string name="restore_backup_date">Ehtiyat nüsxənin tarixi: %s</string>
+    <string name="restore_backup_version">Tətbiq versiyası: %s</string>
+    <string name="restore_unknown">Naməlum</string>
+    <string name="sync_native_volume">OS səsini sinxronlaşdır</string>
+    <string name="sync_native_volume_desc">Bu telefonun və VIVI Music DE-nin sistem səsini eyni saxlayın ki, media səs düymələri hər ikisini idarə etsin. İki cihazı ayrı saxlamaq üçün söndürün.</string>
+</resources>

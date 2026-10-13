@@ -1090,4 +1090,5 @@ est irréversible.
     <string name="account_settings_desc_about">Informations sur la version et mentions légales</string>
 	<string name="action_view_update">Afficher</string>
     <string name="new_version_found">Une nouvelle version a été trouvée</string>
+    <string name="build_alpha">ALPHA</string>
 </resources>
