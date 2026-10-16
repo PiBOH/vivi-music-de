@@ -84,9 +84,11 @@ private fun SyncedPlaylist.accountIdentity(): String? =
  * phone already has its own Liked list and its own saved-for-later row, and
  * carrying the desktop's mirror of them over as an ordinary playlist is what gave
  * it a second entry for each of them (the mobile app filters exactly these two out
- * of its own account sync).
+ * of its own account sync). The account sync here does not read them either:
+ * storing them is refused below, so fetching them was work thrown away on
+ * every run of the pull (issue #102).
  */
-private val SPECIAL_ACCOUNT_PLAYLISTS = setOf("LM", "SE")
+internal val SPECIAL_ACCOUNT_PLAYLISTS = setOf("LM", "SE")
 
 /**
  * True when two entries are the same playlist even though their ids do not say so:
@@ -216,8 +218,9 @@ object PlaylistStore {
         // A playlist that has just learned its account id may now be the same
         // playlist as an entry that already knew it (the mirror of the account's
         // copy, or the peer's row for it) — the copies collapse here, at the very
-        // moment the link makes them recognisable.
-        repairDuplicates()
+        // moment the link makes them recognisable - and the row being linked is the
+        // one that survives, because it is the playlist the user is looking at.
+        repairDuplicates(prefer = id)
         persist()
     }
 
@@ -418,8 +421,14 @@ object PlaylistStore {
      * here ever touches the account: only the delete the user performs does, so this
      * cleanup can never remove a playlist from YouTube Music. Runs at startup and
      * after every merge or link, and it does nothing when there is nothing to merge.
+     *
+     * [prefer] is the row to keep when it is one of the copies. [link] passes the
+     * playlist it has just linked (the one the user is looking at, because the
+     * create dialog navigates to it), so an adopted playlist is not tombstoned
+     * under their feet. Null keeps the previous choice: the row that already knows
+     * its account id, then a mirror, then the oldest.
      */
-    fun repairDuplicates() {
+    fun repairDuplicates(prefer: String? = null) {
         val active = _all.value.filterNot { it.deleted }
         if (active.size < 2) return
         val now = System.currentTimeMillis()
@@ -435,7 +444,8 @@ object PlaylistStore {
             .groupBy { it.accountIdentity()!! }
             .filterValues { it.size > 1 }
             .forEach { (_, share) ->
-                val keep = share.firstOrNull { it.remoteId != null }
+                val keep = share.firstOrNull { it.id == prefer }
+                    ?: share.firstOrNull { it.remoteId != null }
                     ?: share.firstOrNull { it.id.startsWith(MIRROR_PREFIX) }
                     ?: share.minByOrNull { it.updatedAt }
                     ?: return@forEach

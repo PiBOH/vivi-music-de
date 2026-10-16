@@ -388,13 +388,16 @@ object PlaylistSync {
     private var accountCache: Pair<Long, List<PlaylistItem>>? = null
 
     /**
-     * The account playlist called [name] that is not already linked to another
-     * local playlist, or null.
+     * The account playlist called [name], preferring one that no local playlist
+     * has claimed yet, or null.
      *
-     * "Not already linked" matters: two local playlists must never be pointed at
-     * the same account playlist, or the next pull would have both of them
-     * claiming it. A read failure returns null (the caller then creates the
-     * playlist as before) rather than aborting the upload.
+     * An unclaimed copy is preferred, so two unrelated local playlists do not end
+     * up on one account playlist. It is not a hard rule: when the only copy of
+     * that name is already claimed, that copy is returned and the two local rows
+     * collapse into one ([PlaylistStore.repairDuplicates]), which is what keeps a
+     * second account playlist from being created for a name the account already
+     * holds (issue #102). A read failure returns null (the caller then creates
+     * the playlist as before) rather than aborting the upload.
      */
     private suspend fun accountPlaylistNamed(name: String): PlaylistItem? {
         if (name.isBlank()) return null
@@ -414,10 +417,17 @@ object PlaylistSync {
                 accountCache = System.currentTimeMillis() to list
             }
         }
-        val linked = PlaylistStore.active.mapNotNull { it.remoteId }.toSet()
-        return items.firstOrNull { item ->
-            item.id !in linked && item.title.trim().equals(name.trim(), ignoreCase = true)
-        }
+        // Both stored forms of the account id count as claimed (see [pull]).
+        val linked = PlaylistStore.active.mapNotNull { it.accountPlaylistId() }.toSet()
+        val named = items.filter { item -> item.title.trim().equals(name.trim(), ignoreCase = true) }
+        // A copy nobody has claimed wins; a claimed copy is the second best answer
+        // and the one that matters. The owner's own store is the case: `nigga`
+        // holds six rows over four distinct account ids, because the local row
+        // was already linked to one of them, the guard sent this lookup home with
+        // nothing, and [pushOne] created the playlist again instead of adopting
+        // the copy the account already had. The copy that already exists is
+        // adopted instead, and the local rows go back to one entry.
+        return named.firstOrNull { item -> item.id !in linked } ?: named.firstOrNull()
     }
 
     /** How long [accountCache] may answer for (see [accountPlaylistNamed]). */
@@ -544,15 +554,30 @@ object PlaylistSync {
         // back — the only lists that ever synced down were the ones that had
         // no local copy at all. They are read too now, and what the account has
         // and the local copy does not is added locally ([refreshLinked]).
-        val accountItems = page.items.filterIsInstance<PlaylistItem>()
-        val linkedRemoteIds = PlaylistStore.active.mapNotNull { it.remoteId }.toSet()
+        // The account's own special lists - 'Liked Music' (LM) and 'Episodes for
+        // Later' (SE) - are not playlists this app mirrors: [PlaylistStore.applyRemote]
+        // refuses them, which is why every run printed the same "2 new, 8 already
+        // here": the pull mirrored both of them with their songs
+        // ('Liked Music': 11 song(s) mirrored (new)) and then threw them away, on
+        // each of the 46 runs the owner's playlists.log holds (issue #102).
+        val allItems = page.items.filterIsInstance<PlaylistItem>()
+        val notMirrored = allItems.count { item -> item.id in SPECIAL_ACCOUNT_PLAYLISTS }
+        val accountItems = allItems.filterNot { item -> item.id in SPECIAL_ACCOUNT_PLAYLISTS }
+        // BOTH stored forms count as "already here": a playlist mirrored from the
+        // account carries its account id inside its own id (`yt-...`), one created
+        // here and pushed up carries it in `remoteId`. Matching on `remoteId` alone
+        // left every mirror looking new on every run, so it was re-fetched and
+        // re-compared for nothing each time.
+        val linkedRemoteIds = PlaylistStore.active.mapNotNull { it.accountPlaylistId() }.toSet()
         val remoteItems = accountItems.filterNot { item -> item.id in linkedRemoteIds }
         val linkedItems = accountItems.filter { item -> item.id in linkedRemoteIds }
         AppLog.log(
             "playlists",
-            "youtube sync ($trigger): ${accountItems.size} playlist(s) in the account " +
+            "youtube sync ($trigger): ${allItems.size} playlist(s) in the account " +
                 "(${remoteItems.size} new, ${linkedItems.size} already here and checked for " +
-                "songs added on YouTube Music)",
+                "songs added on YouTube Music" +
+                (if (notMirrored > 0) ", $notMirrored special list(s) not mirrored on purpose" else "") +
+                ")",
         )
 
         // Songs are fetched with a small concurrency cap: a large library is

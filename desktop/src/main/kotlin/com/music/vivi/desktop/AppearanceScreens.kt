@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.shape.CircleShape
@@ -357,248 +356,252 @@ fun ThemeSection(
         // away from being put aside.
         var showCustomPicker by remember { mutableStateOf(true) }
 
-        Text(Localization.get(language, "color_palette"), style = MaterialTheme.typography.titleMedium)
-        // Palette swatches (wrap via FlowRow-like manual chunking: show in rows of 7),
-        // with the custom-colour circle as the LAST swatch of the flow — right of
-        // the predefined colours, on the next row when the current one is full.
-        val paletteSize = AccentPalette.colors.size
-        (0..paletteSize).chunked(7).forEach { row ->
-            Row(
-                Modifier.fillMaxWidth().padding(top = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                row.forEach { index ->
-                    if (index == paletteSize) {
-                        Tooltip(Localization.get(language, "custom_color")) {
-                            AccentSwatch(
-                                color = customColor,
-                                selected = showCustomPicker,
-                                onClick = {
-                                    // Seed the bars from the accent in use, so the
-                                    // circle opens ON the current colour.
-                                    val hsv = colorToHsv(accent)
-                                    hue = hsv[0]
-                                    saturation = hsv[1]
-                                    brightness = hsv[2]
-                                    showCustomPicker = true
-                                },
-                            )
-                        }
-                        return@forEach
-                    }
-                    val entry = AccentPalette.colors[index]
-                    val isSelected = if (entry.color == Color.Transparent) {
-                        accent == Color.Transparent
-                    } else {
-                        accent == entry.color
-                    }
-                    val colorName = Localization.get(language, "accent_${entry.key}")
-                    Tooltip(colorName) {
-                        AccentSwatch(
-                            color = entry.color,
-                            selected = isSelected,
-                            onClick = {
-                                if (entry.color == Color.Transparent) {
-                                    AccentPalette.refreshSystemAccent()
-                                    onAccentChange(Color.Transparent)
-                                } else {
-                                    onAccentChange(entry.color)
-                                }
-                            },
-                        )
-                    }
-                }
-            }
-        }
-
-        if (customAccents.isNotEmpty()) {
-            Spacer(Modifier.height(20.dp))
-            Text(Localization.get(language, "custom_colors"), style = MaterialTheme.typography.titleMedium)
-            customAccents.chunked(7).forEach { row ->
-                Row(
-                    Modifier.fillMaxWidth().padding(top = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    row.forEach { argb ->
-                        val c = argbIntToColor(argb)
-                        val isSelected = accent == c
-                        Tooltip(Localization.get(language, "remove_custom_color")) {
-                            Box {
-                                AccentSwatch(
-                                    color = c,
-                                    selected = isSelected,
-                                    onClick = { onAccentChange(c) },
-                                )
-                                Icon(
-                                    Icons.Filled.Close,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .size(16.dp)
-                                        .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.surface)
-                                        .clickable { onRemoveCustomAccent(argb) }
-                                        .padding(2.dp),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(Localization.get(language, "accent_intensity"), style = MaterialTheme.typography.titleMedium)
+        // Two columns, the layout the owner drew: the palette and the saved
+        // custom colours on the left, the picker on the right - the wheel with
+        // its brightness strip and, rightmost, the accent intensity, and the hex
+        // field with *Add to palette* under the wheel.
+        //
+        // The intensity used to be a full-width slider with a row of five preview
+        // circles under it, in a section of its own further down the screen: the
+        // same value in two places, and a screen two screens tall. It is one
+        // vertical strip beside the wheel now (issue #103).
         Row(
-            Modifier.fillMaxWidth().padding(top = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Slider(
-                value = accentIntensity,
-                onValueChange = onAccentIntensityChange,
-                // The drag itself only updates the in-memory state (issue #61:
-                // persisting on every frame made the thumb stutter); the file
-                // is written once, when the pointer is released.
-                onValueChangeFinished = onAccentIntensityChangeFinished,
-                valueRange = 0f..1f,
-                steps = 18,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                "${(accentIntensity * 100).roundToInt()}%",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 14.dp).widthIn(min = 44.dp),
-                textAlign = TextAlign.End,
-            )
-        }
-        // Small live preview of the currently adjusted accent.
-        Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(100, 75, 50, 25, 0).forEach { pct ->
-                val c = adjustAccentIntensity(accent, pct / 100f)
-                Box(
-                    Modifier
-                        .size(34.dp)
-                        .clip(CircleShape)
-                        .background(c)
-                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
-                )
-            }
-        }
-
-        // --- Custom color picker (one round wheel) ---
-        // Opened by the circle at the end of the palette (and closable from its
-        // own title), so the palette stays one row of swatches instead of a
-        // section that is always in the way.
-        Spacer(Modifier.height(28.dp))
-        Row(
-            Modifier.fillMaxWidth().clickable { showCustomPicker = !showCustomPicker },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                Localization.get(language, "custom_color"),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                Localization.get(language, if (showCustomPicker) "login_hide" else "login_show"),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-            )
-        }
-        if (!showCustomPicker) {
-            Spacer(Modifier.height(36.dp))
-            return@Column
-        }
-
-        val alreadySaved = remember(customAccents, customColor) {
-            customAccents.any { argbIntToColor(it) == customColor }
-        }
-
-        Spacer(Modifier.height(14.dp))
-        // The three HSV bars are gone: the picker is one round wheel, on the
-        // right of the section, exactly as the owner asked for it. The wheel
-        // carries hue (around the rim) and saturation (from the centre out), the
-        // strip beside it the brightness a wheel cannot, and the column on the
-        // left keeps the exact value as a hex number and the button that saves
-        // the colour to the palette.
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+            Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(40.dp),
         ) {
             Column(Modifier.weight(1f)) {
-                // Live-updating HEX field (issue #61): typing a 6-digit value applies it
-                // to the picker immediately, so a color can be pasted from anywhere.
-                val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
-                var hexInput by remember { mutableStateOf(liveHex) }
-                var hexFocused by remember { mutableStateOf(false) }
-                // While the field is not focused it mirrors the colour picked on the
-                // wheel; typing in it drives hue/saturation/brightness instead.
-                LaunchedEffect(hexFocused, liveHex) {
-                    if (!hexFocused) hexInput = liveHex
+                Text(Localization.get(language, "color_palette"), style = MaterialTheme.typography.titleMedium)
+                // Palette swatches in rows of six, with the custom-colour circle
+                // as the LAST swatch of the flow - right of the predefined
+                // colours, on the next row when the current one is full.
+                val paletteSize = AccentPalette.colors.size
+                (0..paletteSize).chunked(6).forEach { row ->
+                    Row(
+                        Modifier.fillMaxWidth().padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        row.forEach { index ->
+                            if (index == paletteSize) {
+                                Tooltip(Localization.get(language, "custom_color")) {
+                                    AccentSwatch(
+                                        color = customColor,
+                                        selected = showCustomPicker,
+                                        onClick = {
+                                            // Seed the picker from the accent in use, so the
+                                            // circle opens ON the current colour.
+                                            val hsv = colorToHsv(accent)
+                                            hue = hsv[0]
+                                            saturation = hsv[1]
+                                            brightness = hsv[2]
+                                            showCustomPicker = true
+                                        },
+                                    )
+                                }
+                                return@forEach
+                            }
+                            val entry = AccentPalette.colors[index]
+                            val isSelected = if (entry.color == Color.Transparent) {
+                                accent == Color.Transparent
+                            } else {
+                                accent == entry.color
+                            }
+                            val colorName = Localization.get(language, "accent_${entry.key}")
+                            Tooltip(colorName) {
+                                AccentSwatch(
+                                    color = entry.color,
+                                    selected = isSelected,
+                                    onClick = {
+                                        if (entry.color == Color.Transparent) {
+                                            AccentPalette.refreshSystemAccent()
+                                            onAccentChange(Color.Transparent)
+                                        } else {
+                                            onAccentChange(entry.color)
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(customColor)
-                            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    OutlinedTextField(
-                        value = hexInput,
-                        onValueChange = { raw ->
-                            val cleaned = raw.uppercase()
-                                .filter { it.isDigit() || it in 'A'..'F' }
-                                .take(6)
-                            hexInput = cleaned
-                            if (cleaned.length == 6) {
-                                cleaned.toIntOrNull(16)?.let { rgb ->
-                                    val hsv = colorToHsv(Color(0xFF000000.toInt() or rgb))
-                                    hue = hsv[0]
-                                    saturation = hsv[1]
-                                    brightness = hsv[2]
+
+                if (customAccents.isNotEmpty()) {
+                    Spacer(Modifier.height(20.dp))
+                    Text(Localization.get(language, "custom_colors"), style = MaterialTheme.typography.titleMedium)
+                    customAccents.chunked(6).forEach { row ->
+                        Row(
+                            Modifier.fillMaxWidth().padding(top = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            row.forEach { argb ->
+                                val c = argbIntToColor(argb)
+                                val isSelected = accent == c
+                                Tooltip(Localization.get(language, "remove_custom_color")) {
+                                    Box {
+                                        AccentSwatch(
+                                            color = c,
+                                            selected = isSelected,
+                                            onClick = { onAccentChange(c) },
+                                        )
+                                        Icon(
+                                            Icons.Filled.Close,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .size(16.dp)
+                                                .clip(CircleShape)
+                                                .background(MaterialTheme.colorScheme.surface)
+                                                .clickable { onRemoveCustomAccent(argb) }
+                                                .padding(2.dp),
+                                        )
+                                    }
                                 }
                             }
-                        },
-                        singleLine = true,
-                        isError = hexInput.length != 6,
-                        placeholder = { Text("#RRGGBB") },
-                        textStyle = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .width(150.dp)
-                            .onFocusChanged { hexFocused = it.isFocused },
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Button(
-                    onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
-                    enabled = !alreadySaved,
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(Localization.get(language, "add_to_palette"))
+                        }
+                    }
                 }
             }
-            Spacer(Modifier.width(40.dp))
-            HsvColorWheel(
-                hue = hue,
-                saturation = saturation,
-                brightness = brightness,
-                onPick = { h, s -> hue = h; saturation = s },
-            )
-            Spacer(Modifier.width(14.dp))
-            Tooltip(Localization.get(language, "brightness")) {
-                BrightnessStrip(
-                    hue = hue,
-                    saturation = saturation,
-                    brightness = brightness,
-                    onBrightnessChange = { brightness = it },
-                )
+
+            // --- Custom color picker (one round wheel) ---
+            // A fixed width, not a weight: the picker needs the room for the wheel,
+            // its two strips and the widest caption, and the palette is the part
+            // that can give it away. It is also what keeps the header row below
+            // from sizing the column (a full-width row in an UNWEIGHTED column
+            // takes 100 % of the Row, which left the palette with nothing: the
+            // wheel rendered at x = 0, as the render check reported).
+            Column(Modifier.width(PickerColumnWidth)) {
+                // The section's own title and the switch that puts the picker
+                // aside; the title stays because it is what names the block, and
+                // the Hide/Show label lands above the strips, as in the mockup.
+                Row(
+                    Modifier.fillMaxWidth().clickable { showCustomPicker = !showCustomPicker },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        Localization.get(language, "custom_color"),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        Localization.get(language, if (showCustomPicker) "login_hide" else "login_show"),
+                        color = MaterialTheme.colorScheme.primary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                if (!showCustomPicker) {
+                    Spacer(Modifier.height(36.dp))
+                } else {
+                    val alreadySaved = remember(customAccents, customColor) {
+                        customAccents.any { argbIntToColor(it) == customColor }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    // The picker's three controls, left to right: the wheel (hue
+                    // around the rim, saturation from the centre out), the
+                    // brightness strip, and the intensity - rightmost, where the
+                    // owner moved it.
+                    Row(verticalAlignment = Alignment.Top) {
+                        HsvColorWheel(
+                            hue = hue,
+                            saturation = saturation,
+                            brightness = brightness,
+                            onPick = { h, s -> hue = h; saturation = s },
+                        )
+                        Spacer(Modifier.width(StripGap))
+                        Tooltip(Localization.get(language, "brightness")) {
+                            BrightnessStrip(
+                                hue = hue,
+                                saturation = saturation,
+                                brightness = brightness,
+                                onBrightnessChange = { brightness = it },
+                            )
+                        }
+                        Spacer(Modifier.width(StripGap))
+                        Tooltip(Localization.get(language, "accent_intensity")) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                IntensityStrip(
+                                    accent = accent,
+                                    intensity = accentIntensity,
+                                    onIntensityChange = onAccentIntensityChange,
+                                    onIntensityChangeFinished = onAccentIntensityChangeFinished,
+                                )
+                                Text(
+                                    Localization.get(language, "accent_intensity"),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(top = 6.dp).width(StripCaptionWidth),
+                                )
+                                Text(
+                                    "${(accentIntensity * 100).roundToInt()}%",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                            }
+                        }
+                    }
+                    // The hex field and the button that saves the colour: UNDER
+                    // the wheel, centred with it.
+                    Column(
+                        Modifier.padding(top = 18.dp).width(WheelSize),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        // Live-updating HEX field (issue #61): typing a 6-digit value applies it
+                        // to the picker immediately, so a color can be pasted from anywhere.
+                        val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
+                        var hexInput by remember { mutableStateOf(liveHex) }
+                        var hexFocused by remember { mutableStateOf(false) }
+                        // While the field is not focused it mirrors the colour picked on the
+                        // wheel; typing in it drives hue/saturation/brightness instead.
+                        LaunchedEffect(hexFocused, liveHex) {
+                            if (!hexFocused) hexInput = liveHex
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(customColor)
+                                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            OutlinedTextField(
+                                value = hexInput,
+                                onValueChange = { raw ->
+                                    val cleaned = raw.uppercase()
+                                        .filter { it.isDigit() || it in 'A'..'F' }
+                                        .take(6)
+                                    hexInput = cleaned
+                                    if (cleaned.length == 6) {
+                                        cleaned.toIntOrNull(16)?.let { rgb ->
+                                            val hsv = colorToHsv(Color(0xFF000000.toInt() or rgb))
+                                            hue = hsv[0]
+                                            saturation = hsv[1]
+                                            brightness = hsv[2]
+                                        }
+                                    }
+                                },
+                                singleLine = true,
+                                isError = hexInput.length != 6,
+                                placeholder = { Text("#RRGGBB") },
+                                textStyle = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
+                                    .width(150.dp)
+                                    .onFocusChanged { hexFocused = it.isFocused },
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
+                            enabled = !alreadySaved,
+                        ) {
+                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text(Localization.get(language, "add_to_palette"))
+                        }
+                    }
+                }
             }
         }
 
@@ -608,6 +611,19 @@ fun ThemeSection(
 
 /** The colour wheel's diameter, and the height of the strip beside it. */
 private val WheelSize = 220.dp
+
+/** The width one of the strips beside the wheel takes, and the gap before it. */
+private val StripSize = 20.dp
+private val StripGap = 14.dp
+
+/**
+ * The picker column's width: the wheel, the brightness strip and the intensity
+ * strip with the gaps between them, plus the width of the caption under the
+ * intensity (the widest text in the column, which is what the strip is centred
+ * in).
+ */
+private val StripCaptionWidth = 92.dp
+private val PickerColumnWidth = WheelSize + StripGap + StripSize + StripGap + StripCaptionWidth
 
 /**
  * The colour wheel: hue around the rim, saturation from the centre out, both
@@ -713,7 +729,7 @@ private fun BrightnessStrip(
     var stripHeightPx by remember { mutableStateOf(1f) }
     BoxWithConstraints(
         modifier = Modifier
-            .width(20.dp)
+            .width(StripSize)
             .height(WheelSize)
             .clip(RoundedCornerShape(10.dp))
             .background(Brush.verticalGradient(listOf(hsvToColor(hue, saturation, 1f), Color.Black)))
@@ -735,6 +751,72 @@ private fun BrightnessStrip(
             },
     ) {
         val thumbY = ((1f - brightness) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
+        Box(
+            Modifier
+                .offset(y = thumbY - 5.dp)
+                .height(10.dp)
+                .fillMaxWidth()
+                .border(2.dp, Color.White, RoundedCornerShape(3.dp))
+                .shadow(2.dp, RoundedCornerShape(3.dp)),
+        )
+    }
+}
+
+/**
+ * The accent intensity, as the strip the owner moved beside the wheel: the
+ * rightmost of the picker's three controls.
+ *
+ * It carries what the removed row of five preview circles used to: the gradient
+ * is the accent itself at the top and the same accent at 0 % at the bottom, so
+ * the strip shows what the drag is doing while the screen applies it live. The
+ * pointer loop is [BrightnessStrip]'s, and the ticks are the slider's own
+ * `steps = 18` (20 values), so a drag lands on the values it used to. The drag
+ * only moves the in-memory state and the file is written once, on release
+ * (issue #61: persisting per frame made the thumb stutter).
+ */
+@Composable
+private fun IntensityStrip(
+    accent: Color,
+    intensity: Float,
+    onIntensityChange: (Float) -> Unit,
+    onIntensityChangeFinished: () -> Unit,
+) {
+    var stripHeightPx by remember { mutableStateOf(1f) }
+    BoxWithConstraints(
+        modifier = Modifier
+            .width(StripSize)
+            .height(WheelSize)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Brush.verticalGradient(listOf(accent, adjustAccentIntensity(accent, 0f))))
+            .onSizeChanged { stripHeightPx = it.height.toFloat() }
+            .pointerInput(stripHeightPx) {
+                fun pick(y: Float) = onIntensityChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    pick(down.position.y)
+                    down.consume()
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        pick(change.position.y)
+                        change.consume()
+                    }
+                    // One write per gesture, on the release.
+                    onIntensityChangeFinished()
+                }
+            },
+    ) {
+        repeat(20) { step ->
+            Box(
+                Modifier
+                    .offset(y = maxHeight * step / 19f)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color.White.copy(alpha = 0.5f)),
+            )
+        }
+        val thumbY = ((1f - intensity) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
         Box(
             Modifier
                 .offset(y = thumbY - 5.dp)
