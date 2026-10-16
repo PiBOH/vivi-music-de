@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.9",
+  "versionCode": 147,
+  "channel": "beta",
+  "title": "v6.0.8.9_DE-1.54.32: Theme & Colors rebuilt, playlist duplicates fixed",
+  "builtAt": "2026-10-16T15:40:07Z",
+  "commit": "ce6a0c726ddf9d46a22aab619c423ffb93d45bea",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31635974,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30133916,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31635974,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
