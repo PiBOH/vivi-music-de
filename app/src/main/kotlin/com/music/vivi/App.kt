@@ -23,11 +23,13 @@ import coil3.request.allowHardware
 import coil3.request.crossfade
 import com.music.innertube.YouTube
 import com.music.innertube.models.IpVersion
+import com.music.innertube.models.YouTubeClient
 import com.music.innertube.models.YouTubeLocale
 import com.music.kugou.KuGou
 import com.music.lastfm.LastFM
 import com.music.vivi.constants.*
 import com.music.vivi.vivimusic.release.NewReleaseCheckWorker
+import com.music.vivi.db.MusicDatabase
 import com.music.vivi.di.ApplicationScope
 import com.music.vivi.extensions.toEnum
 import com.music.vivi.extensions.toInetSocketAddress
@@ -42,6 +44,7 @@ import com.music.vivi.utils.reportException
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -64,6 +67,9 @@ class App : Application(), SingletonImageLoader.Factory {
     @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
+
+    @Inject
+    lateinit var database: MusicDatabase
 
     override fun onCreate() {
         super.onCreate()
@@ -93,6 +99,39 @@ class App : Application(), SingletonImageLoader.Factory {
             initializeSettings()
             observeSettingsChanges()
         }
+
+        // Names that were stored as video ids are repaired once per start, in
+        // the background: nothing else ever re-reads the name of a song that is
+        // already in the library, so a row written that way showed
+        // `x8-Wpxu7hag` for as long as it existed.
+        applicationScope.launch { repairSongsNamedAfterTheirId() }
+    }
+
+    /**
+     * Gives rows whose name is a video id (or empty) their real title.
+     *
+     * A song that arrives from the paired desktop with no title was stored as it
+     * came, and the app then displayed its id as the song's name. The rows are
+     * read in one bounded batch per start ([MAX_TITLE_REPAIRS]) and renamed from
+     * the video's own metadata; a failed lookup leaves the row untouched, so a
+     * later start retries it, and a run that finds nothing does nothing at all.
+     */
+    private suspend fun repairSongsNamedAfterTheirId() {
+        runCatching {
+            val rows = database.songsNamedAfterTheirId(MAX_TITLE_REPAIRS)
+            if (rows.isEmpty()) return@runCatching
+            var repaired = 0
+            for (row in rows) {
+                val details = YouTube.player(row.id, client = YouTubeClient.WEB_REMIX)
+                    .getOrNull()?.videoDetails ?: continue
+                val title = details.title?.trim().orEmpty()
+                if (title.isEmpty() || title == row.id) continue
+                database.updateSongTitle(row.id, title)
+                repaired++
+                delay(150)
+            }
+            Timber.d("repairSongsNamedAfterTheirId: %d of %d row(s) renamed", repaired, rows.size)
+        }.onFailure { Timber.e(it, "repairSongsNamedAfterTheirId failed") }
     }
 
     private suspend fun initializeSettings() {
@@ -306,6 +345,9 @@ class App : Application(), SingletonImageLoader.Factory {
     companion object {
         lateinit var context: Context
             private set
+
+        /** Rows renamed per start (one metadata request each, so the sweep is bounded). */
+        private const val MAX_TITLE_REPAIRS = 50
 
         suspend fun forgetAccount(context: Context) {
             Timber.d("forgetAccount: Starting logout process")

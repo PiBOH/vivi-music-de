@@ -532,9 +532,42 @@ object PlaylistSync {
         return true
     }
 
+    /**
+     * Uploads the local playlists that have no account copy yet.
+     *
+     * The sync was one-way: the *Auto sync with account* switch only mirrored
+     * the account's playlists down, so a playlist created here — with the create
+     * dialog's switch on, or simply kept locally before the sync existed — never
+     * reached YouTube Music, and the user had to find the bulk *Create on
+     * YouTube Music* action. It is part of every run now, because the switch the
+     * user already turned on is the same consent. Imported playlists stay local
+     * on purpose ([isImportedPlaylist]), as they always have.
+     *
+     * Failures are logged per playlist and never abort the run: the pull that
+     * follows must still bring the account's side in.
+     */
+    private suspend fun pushLocalPlaylists(trigger: String) {
+        val pending = PlaylistStore.active
+            .filter { it.accountPlaylistId() == null }
+            .filterNot { isImportedPlaylist(it.id) }
+        if (pending.isEmpty()) return
+        AppLog.log(
+            "playlists",
+            "youtube sync ($trigger): ${pending.size} local playlist(s) not on the account yet — uploading them",
+        )
+        for (playlist in pending) {
+            runCatching { pushOne(playlist.id, trigger) }
+                .onFailure { AppLog.log("playlists", "  '${playlist.name}': upload failed — ${it.message}") }
+        }
+        // The account's list changed: the pull below must not answer from a
+        // cache taken before the uploads.
+        accountCache = null
+    }
+
     /** One pull: the account's playlists into the local store. */
     private suspend fun pull(trigger: String): Status {
         _status.value = _status.value.copy(uploading = false, current = "")
+        pushLocalPlaylists(trigger)
         val page = YouTube.library("FEmusic_liked_playlists").getOrElse { error ->
             val why = error.message ?: error.javaClass.simpleName
             AppLog.log("playlists", "youtube sync ($trigger): playlist list failed — $why")

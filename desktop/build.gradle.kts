@@ -316,8 +316,17 @@ compose.desktop {
             "-Xmx2g",
             "-XX:+UseG1GC",
             "-XX:MaxGCPauseMillis=20",
-            "-XX:NewSize=128m",
-            "-XX:MaxNewSize=384m",
+            // The young generation was capped at 384 MB, and the owner's own
+            // `gc.log` measures what that costs: a `G1 Evacuation Pause` of
+            // 279/371/412/444/480 ms every two to four minutes, each one matched
+            // by an `audio priority stall` of the same size in `playback.log`
+            // (497/357/386/441 ms) while the live set is only ~67 MB — i.e. the
+            // pauses are the young size, not the heap. `MaxGCPauseMillis=20`
+            // cannot help against a young generation that is allowed to grow to
+            // 384 MB. 128 MB is the same policy at a third of the pause, paid for
+            // with more frequent (short) collections.
+            "-XX:NewSize=64m",
+            "-XX:MaxNewSize=128m",
             "-XX:MaxMetaspaceSize=256m",
             // Skiko (Compose Desktop's renderer) calls `System.gc()` every 30 s by
             // design, to trim memory on a parked window. Its `FrameWatcher`
@@ -552,6 +561,25 @@ tasks.register<JavaExec>("chatWindowRenderCheck") {
  * 120-line one, which a painted full-height strip could not be. The two jump
  * buttons and the follow state are interaction, not visible in a still frame.
  */
+/**
+ * Controlled check of the account's write path:
+ *
+ *     ./gradlew :desktop:playlistWriteCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/PlaylistWriteCheck.kt`.
+ * Creates one `VIVI write check <timestamp>` playlist, adds one song, reads it
+ * back, asks the library whether it lists it, and deletes it again — one line
+ * per step, so a failure names the request instead of leaving it a guess. It
+ * writes to the signed-in account (one playlist, removed at the end).
+ */
+tasks.register<JavaExec>("playlistWriteCheck") {
+    group = "verification"
+    description = "Creates, fills, reads back and deletes one test playlist on the account"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.PlaylistWriteCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("liveLogRenderCheck") {
     group = "verification"
     description = "Renders the live log window headlessly and checks its scrollbar"

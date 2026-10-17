@@ -558,11 +558,16 @@ object PlaylistStore {
             // so the peer recognises it as the account playlist instead of
             // importing yet another copy of it (E1034).
             .map { p ->
-                if (p.remoteId == null) {
+                val linked = if (p.remoteId == null) {
                     p.accountIdentity()?.let { account -> p.copy(remoteId = account) } ?: p
                 } else {
                     p
                 }
+                // The peer is told whether this playlist still has to reach the
+                // account: the desktop holds the session, so it answers, and the
+                // phone no longer has to guess (a local row with no account id
+                // means "not on YouTube Music yet").
+                linked.copy(needsYoutubeSync = linked.accountIdentity() == null)
             }
     }
 

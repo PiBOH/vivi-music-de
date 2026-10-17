@@ -638,6 +638,16 @@ class DeviceSyncManager @Inject constructor(
                 )
             }
 
+            // The desktop holds the account session, so it also says whether
+            // this playlist still has to reach YouTube Music (a local row with no
+            // account id over there). Logged so the device-sync log answers
+            // "which playlists are not on YouTube Music yet" without guessing
+            // from `browseId`, which is empty for a playlist the desktop created
+            // locally and has not uploaded yet too.
+            if (r.needsYoutubeSync && local?.playlist?.browseId == null) {
+                Timber.d("deviceSync: playlist '%s' still needs an update on YouTube Music", name)
+            }
+
             // Replace the playlist's songs with the remote order (under the id the
             // playlist is stored with here, which may be the local one).
             database.clearPlaylist(playlistId)
