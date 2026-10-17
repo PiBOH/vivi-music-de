@@ -542,6 +542,25 @@ tasks.register<JavaExec>("chatWindowRenderCheck") {
 }
 
 /**
+ * Headless check of the live log window and its scroll controls:
+ *
+ *     ./gradlew :desktop:liveLogRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LiveLogWindowRenderCheck.kt`.
+ * A log with lines must draw, and the sidebar scrollbar must be a real slider:
+ * the thumb of a 4000-line log has to be strictly shorter than the thumb of a
+ * 120-line one, which a painted full-height strip could not be. The two jump
+ * buttons and the follow state are interaction, not visible in a still frame.
+ */
+tasks.register<JavaExec>("liveLogRenderCheck") {
+    group = "verification"
+    description = "Renders the live log window headlessly and checks its scrollbar"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LiveLogWindowRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Headless check of the Listen Together lobby and room:
  *
  *     ./gradlew :desktop:ltRoomRenderCheck
