@@ -422,11 +422,11 @@ the working sign-in WebView and are **never** trimmed for size.
   file)**: a row, an entry, a note or a "Watch"/"Open sub-item" line is written
   in **English**, never in the owner's own language. An Italian `TODO.md` row or
   an Italian changelog entry is a defect of the change, exactly like an Italian
-  commit message: the owner quotes Italian in a report, and the quote stays
-  Italian where it is quoted, but everything written around it is English. If a
-  commit was made with a title, body, `TODO.md` row or changelog entry in
-  another language, rewriting that commit so it obeys this rule is part of
-  finishing the work.
+  commit message: a report from the owner is **described** in English and never
+  reproduced, not even in quotation marks (see *Never quote the reporter*
+  below). If a commit was made with a title, body, `TODO.md` row or changelog
+  entry in another language, rewriting that commit so it obeys this rule is part
+  of finishing the work.
 
 > ⚠️ This overrides any agent-default commit template. The commit title **and**
 > body must be English and the body must be **only** the human-written
@@ -441,6 +441,28 @@ the working sign-in WebView and are **never** trimmed for size.
 >
 > Wrong (banned): Italian body, or any `Co-Authored-By:` / `Generated with … 🤖`
 > footer line.
+
+### Never quote the reporter — MANDATORY (do not violate)
+
+- **No owner text, anywhere.** A message from the owner, an issue text or a
+  support report is **described in English**, never reproduced: no `"…"`
+  quotation of the owner's own words in a commit message or body, in
+  `CHANGELOG.md`, in `TODO.md`, in a code comment, in an in-app string, or in a
+  **GitHub release body / release notes / tag description**. A translated
+  quotation counts as a quotation.
+- **Release bodies are public.** `.github/workflows/auto-release.yml` builds
+  every release body from the changelog section, so an entry that quotes the
+  owner publishes the quotation on the release page. The workflow runs
+  `scripts/clean_release_notes.py` on the extracted section for exactly that
+  reason; run the same script (or delete the quotation by hand) before
+  publishing anything else that repeats the section. It drops a double-quoted
+  span that reads Italian and leaves an English quotation alone.
+- **Cleaning a published quotation is part of the work, not a follow-up.**
+  `gh release edit <tag> --notes-file <file>` rewrites an existing body; then
+  re-read the release from the API and confirm the text is gone. Six releases
+  had to be repaired this way once already — do not let another one ship.
+- **Never rewrite git history to do it.** Commit messages already published are
+  left alone: the release body and the changelog are what must be clean.
 
 ## 4. Golden rule: "If it works, don't touch it"
 

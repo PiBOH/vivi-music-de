@@ -154,6 +154,13 @@ jobs:
           # Never surface the website bookkeeping commits (an older entry may
           # still carry them in its `### Commits` list).
           SECTION="$(printf '%s\n' "$SECTION" | grep -v -F -- '- chore(website): refresh the static release manifest' || true)"
+          # ...nor the reporter's own words. A changelog entry that quotes the
+          # owner used to be published verbatim in the release body, and six
+          # releases (6.0.6.8, 6.0.8.6, 6.0.8.7, 6.0.8.8, 6.0.8.9 twice) had to be
+          # rewritten by hand because of it. The quoted Italian spans are dropped
+          # here, before the body is built, so it cannot happen again; the rule
+          # (and its trade-offs) is documented in the script itself.
+          SECTION="$(printf '%s\n' "$SECTION" | python3 scripts/clean_release_notes.py)"
           {
             echo "section<<CHANGELOG_EOF"
             echo "$SECTION"
