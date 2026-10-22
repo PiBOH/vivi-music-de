@@ -48,6 +48,14 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Brightness1
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Gradient
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Swipe
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
@@ -119,6 +127,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import com.music.innertube.YouTube
 import androidx.compose.runtime.Composable
@@ -4039,4 +4048,291 @@ private fun OutputDeviceRow(label: String, selected: Boolean, onClick: () -> Uni
         Spacer(Modifier.width(10.dp))
         Text(label, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+@Composable
+fun SettingsPlayerDesignScreen(
+    language: String,
+    onBack: () -> Unit,
+    design: PlayerDesign,
+    onDesignChange: (PlayerDesign) -> Unit,
+    background: PlayerBackgroundStyle,
+    onBackgroundChange: (PlayerBackgroundStyle) -> Unit,
+    rotatingThumbnail: Boolean,
+    onRotatingThumbnailChange: (Boolean) -> Unit,
+    miniPlayerDesign: MiniPlayerDesign = MiniPlayerDesign.CLASSIC,
+    onMiniPlayerDesignChange: (MiniPlayerDesign) -> Unit = {},
+    miniPlayerBackgroundStyle: MiniPlayerBackgroundStyle = MiniPlayerBackgroundStyle.FOLLOW_THEME,
+    onMiniPlayerBackgroundStyleChange: (MiniPlayerBackgroundStyle) -> Unit = {},
+    pureBlackMiniPlayer: Boolean = false,
+    onPureBlackMiniPlayerChange: (Boolean) -> Unit = {},
+    sliderStyle: String = "slim",
+    onSliderStyleChange: (String) -> Unit = {},
+    swipeThumbnail: Boolean = true,
+    onSwipeThumbnailChange: (Boolean) -> Unit = {},
+    swipeSensitivity: Float = 0.73f,
+    onSwipeSensitivityChange: (Float) -> Unit = {},
+) {
+    SettingsSubScreen(language, onBack) {
+        PlayerDesignScreen(
+            language = language,
+            design = design,
+            onDesignChange = onDesignChange,
+            background = background,
+            onBackgroundChange = onBackgroundChange,
+            rotatingThumbnail = rotatingThumbnail,
+            onRotatingThumbnailChange = onRotatingThumbnailChange,
+            miniPlayerDesign = miniPlayerDesign,
+            onMiniPlayerDesignChange = onMiniPlayerDesignChange,
+            miniPlayerBackgroundStyle = miniPlayerBackgroundStyle,
+            onMiniPlayerBackgroundStyleChange = onMiniPlayerBackgroundStyleChange,
+            pureBlackMiniPlayer = pureBlackMiniPlayer,
+            onPureBlackMiniPlayerChange = onPureBlackMiniPlayerChange,
+            sliderStyle = sliderStyle,
+            onSliderStyleChange = onSliderStyleChange,
+            // "Enable swipe to change song" and its sensitivity slider are
+            // settings of the player, so they belong to this screen — but the
+            // screen used to be built without them, so both controls sat on
+            // their defaults and did nothing at all: the switch snapped back on
+            // and the slider could not be moved.
+            swipeThumbnail = swipeThumbnail,
+            onSwipeThumbnailChange = onSwipeThumbnailChange,
+            swipeSensitivity = swipeSensitivity,
+            onSwipeSensitivityChange = onSwipeSensitivityChange,
+        )
+    }
+}
+
+
+/**
+ * The label of one entry of the player picker.
+ *
+ * The two expressive finishes are separate entries, and their names are built
+ * from two keys that are **already translated in all 52 languages** — the
+ * player's own name ("Expressive") and the tab finish ("Translucent tab") —
+ * rather than from a brand-new key that would have to be translated 52 times to
+ * say one word in a parenthesis. There is no English fallback hiding here: the
+ * tab key exists in every table, and [Localization.get] is asked for it in the
+ * selected language like every other label on this screen.
+ */
+internal fun playerDesignLabel(language: String, design: PlayerDesign): String {
+    val name = Localization.get(language, when (design) {
+        PlayerDesign.NEW -> "player_design_new"
+        PlayerDesign.EXPRESSIVE, PlayerDesign.EXPRESSIVE_TRANSLUCENT -> "player_design_expressive"
+        else -> "player_design_classic"
+    })
+    return if (design == PlayerDesign.EXPRESSIVE_TRANSLUCENT) {
+        "$name (${Localization.get(language, "expressive_tab_translucent")})"
+    } else {
+        name
+    }
+}
+
+@Composable
+fun PlayerDesignScreen(
+    language: String,
+    design: PlayerDesign,
+    onDesignChange: (PlayerDesign) -> Unit,
+    background: PlayerBackgroundStyle,
+    onBackgroundChange: (PlayerBackgroundStyle) -> Unit,
+    rotatingThumbnail: Boolean,
+    onRotatingThumbnailChange: (Boolean) -> Unit,
+    miniPlayerDesign: MiniPlayerDesign = MiniPlayerDesign.CLASSIC,
+    onMiniPlayerDesignChange: (MiniPlayerDesign) -> Unit = {},
+    miniPlayerBackgroundStyle: MiniPlayerBackgroundStyle = MiniPlayerBackgroundStyle.FOLLOW_THEME,
+    onMiniPlayerBackgroundStyleChange: (MiniPlayerBackgroundStyle) -> Unit = {},
+    pureBlackMiniPlayer: Boolean = false,
+    onPureBlackMiniPlayerChange: (Boolean) -> Unit = {},
+    sliderStyle: String = "slim",
+    onSliderStyleChange: (String) -> Unit = {},
+    swipeThumbnail: Boolean = true,
+    onSwipeThumbnailChange: (Boolean) -> Unit = {},
+    swipeSensitivity: Float = 0.73f,
+    onSwipeSensitivityChange: (Float) -> Unit = {},
+) {
+    // One subject - how the player looks - so the screen reads in the order the
+    // player is built: the full player first (its design, then the background
+    // behind it and the artwork turning on it), then the mini player (design,
+    // background, its pure-black finish and the swipe that changes track), then
+    // the seek bar both share. Every choice about the full player is in the same
+    // card and every choice about the mini player in another: seven loose cards
+    // said the seven choices were unrelated, two cards plus one say what each
+    // belongs to. Slider style stands alone at the end because it styles both
+    // players and neither of them alone.
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            Localization.get(language, "player_and_mini_player_design"),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        Spacer(Modifier.height(4.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.MusicNote,
+                    title = { Text(Localization.get(language, "player_design")) },
+                    // The old "V2" entry was the CLASSIC layout with a bigger
+                    // artwork (one player, two names) and has been removed. The
+                    // two expressive finishes ARE two entries here rather than a
+                    // separate switch: the tab is the only thing that
+                    // distinguishes them, so picking the player and picking its
+                    // finish are the same decision - and a switch that only
+                    // applied to one of the layouts was a dead control in the
+                    // other two.
+                    dropdown = M3Dropdown(
+                        value = playerDesignLabel(language, design),
+                        options = PlayerDesign.entries.map { v -> v.key to playerDesignLabel(language, v) },
+                        onSelect = { key -> onDesignChange(PlayerDesign.from(key)) },
+                    ),
+                ),
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Wallpaper,
+                    title = { Text(Localization.get(language, "player_background")) },
+                    dropdown = M3Dropdown(
+                        value = Localization.get(language, playerBackgroundLabelKey(background)),
+                        options = PlayerBackgroundStyle.entries.map { b ->
+                            b.key to Localization.get(language, playerBackgroundLabelKey(b))
+                        },
+                        onSelect = { key -> onBackgroundChange(PlayerBackgroundStyle.from(key)) },
+                    ),
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Album,
+                    title = { Text(Localization.get(language, "rotating_thumbnail")) },
+                    description = { Text(Localization.get(language, "rotating_thumbnail_desc")) },
+                    trailing = { Switch(checked = rotatingThumbnail, onCheckedChange = onRotatingThumbnailChange) },
+                    onClick = { onRotatingThumbnailChange(!rotatingThumbnail) },
+                ),
+            ),
+        )
+        Spacer(Modifier.height(8.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Devices,
+                    title = { Text(Localization.get(language, "mini_player_design")) },
+                    dropdown = M3Dropdown(
+                        value = Localization.get(language, miniPlayerDesignLabelKey(miniPlayerDesign)),
+                        options = listOf(
+                            MiniPlayerDesign.CLASSIC to "mini_player_classic",
+                            MiniPlayerDesign.NEW to "mini_player_new",
+                            MiniPlayerDesign.APPLE to "mini_player_apple",
+                        ).map { (v, k) -> v.key to Localization.get(language, k) },
+                        onSelect = { key -> onMiniPlayerDesignChange(MiniPlayerDesign.from(key)) },
+                    ),
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Gradient,
+                    title = { Text(Localization.get(language, "mini_player_background")) },
+                    dropdown = M3Dropdown(
+                        value = Localization.get(language, miniPlayerBackgroundLabelKey(miniPlayerBackgroundStyle)),
+                        options = MiniPlayerBackgroundStyle.entries.map { b ->
+                            b.key to Localization.get(language, miniPlayerBackgroundLabelKey(b))
+                        },
+                        onSelect = { key -> onMiniPlayerBackgroundStyleChange(MiniPlayerBackgroundStyle.from(key)) },
+                    ),
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Brightness1,
+                    title = { Text(Localization.get(language, "pure_black_mini")) },
+                    description = { Text(Localization.get(language, "pure_black_mini_desc")) },
+                    trailing = { Switch(checked = pureBlackMiniPlayer, onCheckedChange = onPureBlackMiniPlayerChange) },
+                    onClick = { onPureBlackMiniPlayerChange(!pureBlackMiniPlayer) },
+                ),
+                // Mobile "Enable swipe to change song": the artwork of the mini
+                // player changes track when dragged sideways. It belongs to the
+                // mini player, so it rides the mini player's own card.
+                M3SettingsItem(
+                    icon = Icons.Filled.Swipe,
+                    title = { Text(Localization.get(language, "enable_swipe_thumbnail")) },
+                    description = { Text(Localization.get(language, "enable_swipe_thumbnail_desc")) },
+                    trailing = { Switch(checked = swipeThumbnail, onCheckedChange = onSwipeThumbnailChange) },
+                    onClick = { onSwipeThumbnailChange(!swipeThumbnail) },
+                ),
+            ) + if (swipeThumbnail) {
+                // The sensitivity is a derivative of the switch above and a row of
+                // the same card, directly under it: it tunes the gesture that row
+                // turns on, so a card of its own made it look like an unrelated
+                // setting that happened to be nearby. It exists only while the
+                // swipe is on, the same rule as the other derived rows (the
+                // skip-silence sub-options).
+                listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Swipe,
+                        title = {
+                            Text(
+                                "${Localization.get(language, "swipe_sensitivity")}: " +
+                                    "${(swipeSensitivity * 100).roundToInt()}%",
+                            )
+                        },
+                        description = { Text(Localization.get(language, "swipe_sensitivity_desc")) },
+                        slider = {
+                            M3SettingsSlider(
+                                value = swipeSensitivity,
+                                onValueChange = onSwipeSensitivityChange,
+                                valueRange = 0f..1f,
+                                steps = 9,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        },
+                    ),
+                )
+            } else {
+                emptyList()
+            },
+        )
+        Spacer(Modifier.height(8.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.SwapHoriz,
+                    title = { Text(Localization.get(language, "slider_style")) },
+                    dropdown = M3Dropdown(
+                        value = sliderStyleLabel(language, sliderStyle),
+                        options = listOf("slim", "squiggly", "wavy").map { it to sliderStyleLabel(language, it) },
+                        onSelect = onSliderStyleChange,
+                    ),
+                ),
+            ),
+        )
+    }
+}
+
+/** The localized name of a [PlayerBackgroundStyle]. */
+private fun playerBackgroundLabelKey(style: PlayerBackgroundStyle): String = when (style) {
+    PlayerBackgroundStyle.CANVAS -> "canvas"
+    PlayerBackgroundStyle.GRADIENT -> "player_background_gradient"
+    PlayerBackgroundStyle.BLUR -> "player_background_blur"
+    PlayerBackgroundStyle.GLOW -> "player_background_glow"
+    PlayerBackgroundStyle.APPLE_MUSIC -> "player_background_apple"
+    PlayerBackgroundStyle.LIVE_MESH -> "player_background_mesh"
+    PlayerBackgroundStyle.VISUALIZER -> "player_background_visualizer"
+}
+
+/** The localized name of a [MiniPlayerDesign]. */
+private fun miniPlayerDesignLabelKey(design: MiniPlayerDesign): String = when (design) {
+    MiniPlayerDesign.NEW -> "mini_player_new"
+    MiniPlayerDesign.APPLE -> "mini_player_apple"
+    else -> "mini_player_classic"
+}
+
+/** The localized name of a [MiniPlayerBackgroundStyle]. */
+private fun miniPlayerBackgroundLabelKey(style: MiniPlayerBackgroundStyle): String = when (style) {
+    MiniPlayerBackgroundStyle.GRADIENT -> "mini_player_bg_gradient"
+    MiniPlayerBackgroundStyle.BLUR -> "mini_player_bg_blur"
+    MiniPlayerBackgroundStyle.GLOW_MOTION -> "mini_player_bg_glow_motion"
+    MiniPlayerBackgroundStyle.LIVE_MESH -> "mini_player_bg_live_mesh"
+    else -> "mini_player_bg_follow_theme"
+}
+
+/** The localized name of a [ViviSliderStyle] key. */
+internal fun sliderStyleLabel(language: String, style: String): String = when (style) {
+    "squiggly" -> Localization.get(language, "slider_squiggly")
+    "wavy" -> Localization.get(language, "slider_wavy")
+    else -> Localization.get(language, "slider_slim")
 }

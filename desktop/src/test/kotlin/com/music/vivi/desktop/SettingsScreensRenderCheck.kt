@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
@@ -172,6 +173,48 @@ object SettingsScreensRenderCheck {
         val licenseEdge = bands(license, column = 596)
         println("license: right-edge bands=${licenseEdge.map { "${it.top}..${it.bottom}" }}")
 
+        val playerDesign = render {
+            PlayerDesignScreen(
+                language = "en",
+                design = PlayerDesign.CLASSIC,
+                onDesignChange = {},
+                background = PlayerBackgroundStyle.GRADIENT,
+                onBackgroundChange = {},
+                rotatingThumbnail = true,
+                onRotatingThumbnailChange = {},
+                sliderStyle = "slim",
+                onSliderStyleChange = {},
+                swipeThumbnail = true,
+                onSwipeThumbnailChange = {},
+                swipeSensitivity = 0.73f,
+                onSwipeSensitivityChange = {},
+            )
+        }
+        File(outDir, "player_design.png").writeBytes(playerDesign)
+        val playerDesignBands = bands(playerDesign)
+        println("player design: bands=${playerDesignBands.size} ${playerDesignBands.map { "${it.top}..${it.bottom}" }}")
+
+        val playerDesignNoSwipe = render {
+            PlayerDesignScreen(
+                language = "en",
+                design = PlayerDesign.CLASSIC,
+                onDesignChange = {},
+                background = PlayerBackgroundStyle.GRADIENT,
+                onBackgroundChange = {},
+                rotatingThumbnail = true,
+                onRotatingThumbnailChange = {},
+                sliderStyle = "slim",
+                onSliderStyleChange = {},
+                swipeThumbnail = false,
+                onSwipeThumbnailChange = {},
+                swipeSensitivity = 0.73f,
+                onSwipeSensitivityChange = {},
+            )
+        }
+        File(outDir, "player_design_no_swipe.png").writeBytes(playerDesignNoSwipe)
+        val playerDesignNoSwipeBands = bands(playerDesignNoSwipe)
+        println("player design (no swipe): bands=${playerDesignNoSwipeBands.size}")
+
         val about = render { AboutSection(language = "en", onOpenContributors = {}, onOpenLicense = {}) }
         File(outDir, "about.png").writeBytes(about)
         val aboutBands = bands(about)
@@ -300,6 +343,17 @@ object SettingsScreensRenderCheck {
             failures += "Contributors should be one card (${contributorBands.size - 1} seams), read ${seams(contributorBands)}"
         }
 
+        // Player & mini-player design: the design row alone, the background card
+        // of two, the mini player card of five (four with the swipe off) and the
+        // slider style.
+        val designCards = cards(playerDesignBands)
+        val designNoSwipeCards = cards(playerDesignNoSwipeBands)
+        if (designCards.size != 9) failures += "Player design should read nine rows, read ${designCards.size}"
+        if (seams(designCards) != 5) failures += "Player design should join 2 + 5 rows (5 seams), read ${seams(designCards)}"
+        if (designNoSwipeCards.size != 8) {
+            failures += "Player design without the swipe should lose its sensitivity row (8), read ${designNoSwipeCards.size}"
+        }
+
         // About: the head card, then three cards of four, three and two rows.
         if (aboutCards.size != 10) failures += "About should read ten rows (the head plus 4 + 3 + 2), read ${aboutCards.size}"
         if (seams(aboutCards) != 6) failures += "About should join 4 + 3 + 2 rows (6 seams), read ${seams(aboutCards)}"
@@ -330,7 +384,8 @@ object SettingsScreensRenderCheck {
                     "Privacy is one card of two switches, AI is ${aiCards.size} cards with $aiSeams seams, " +
                     "Contributors is one card of ${contributorBands.size} rows, " +
                     "About is a head and three cards of 4 + 3 + 2 rows, Desktop features one card of three switches, " +
-                    "Canvas's source folds with its switch, App font joins its six rows, and Display density is two cards",
+                    "Canvas's source folds with its switch, App font joins its six rows, Display density is two cards, " +
+                    "and Player & mini-player design is five cards whose sensitivity row leaves with the swipe",
             )
             return
         }

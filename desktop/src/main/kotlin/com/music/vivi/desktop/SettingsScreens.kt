@@ -499,59 +499,6 @@ fun SettingsTransitionsScreen(
 }
 
 @Composable
-fun SettingsPlayerDesignScreen(
-    language: String,
-    onBack: () -> Unit,
-    design: PlayerDesign,
-    onDesignChange: (PlayerDesign) -> Unit,
-    background: PlayerBackgroundStyle,
-    onBackgroundChange: (PlayerBackgroundStyle) -> Unit,
-    rotatingThumbnail: Boolean,
-    onRotatingThumbnailChange: (Boolean) -> Unit,
-    miniPlayerDesign: MiniPlayerDesign = MiniPlayerDesign.CLASSIC,
-    onMiniPlayerDesignChange: (MiniPlayerDesign) -> Unit = {},
-    miniPlayerBackgroundStyle: MiniPlayerBackgroundStyle = MiniPlayerBackgroundStyle.FOLLOW_THEME,
-    onMiniPlayerBackgroundStyleChange: (MiniPlayerBackgroundStyle) -> Unit = {},
-    pureBlackMiniPlayer: Boolean = false,
-    onPureBlackMiniPlayerChange: (Boolean) -> Unit = {},
-    sliderStyle: String = "slim",
-    onSliderStyleChange: (String) -> Unit = {},
-    swipeThumbnail: Boolean = true,
-    onSwipeThumbnailChange: (Boolean) -> Unit = {},
-    swipeSensitivity: Float = 0.73f,
-    onSwipeSensitivityChange: (Float) -> Unit = {},
-) {
-    SettingsSubScreen(language, onBack) {
-        PlayerDesignScreen(
-            language = language,
-            design = design,
-            onDesignChange = onDesignChange,
-            background = background,
-            onBackgroundChange = onBackgroundChange,
-            rotatingThumbnail = rotatingThumbnail,
-            onRotatingThumbnailChange = onRotatingThumbnailChange,
-            miniPlayerDesign = miniPlayerDesign,
-            onMiniPlayerDesignChange = onMiniPlayerDesignChange,
-            miniPlayerBackgroundStyle = miniPlayerBackgroundStyle,
-            onMiniPlayerBackgroundStyleChange = onMiniPlayerBackgroundStyleChange,
-            pureBlackMiniPlayer = pureBlackMiniPlayer,
-            onPureBlackMiniPlayerChange = onPureBlackMiniPlayerChange,
-            sliderStyle = sliderStyle,
-            onSliderStyleChange = onSliderStyleChange,
-            // "Enable swipe to change song" and its sensitivity slider are
-            // settings of the player, so they belong to this screen — but the
-            // screen used to be built without them, so both controls sat on
-            // their defaults and did nothing at all: the switch snapped back on
-            // and the slider could not be moved.
-            swipeThumbnail = swipeThumbnail,
-            onSwipeThumbnailChange = onSwipeThumbnailChange,
-            swipeSensitivity = swipeSensitivity,
-            onSwipeSensitivityChange = onSwipeSensitivityChange,
-        )
-    }
-}
-
-@Composable
 fun SettingsWrappedScreen(
     language: String,
     onBack: () -> Unit,

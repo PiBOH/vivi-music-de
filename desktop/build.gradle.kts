@@ -935,7 +935,13 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
  * Appearance's Canvas, App font and Display density and the About screens
  * (About, Contributors, Desktop features) are read the same way: the Canvas
  * source only exists with its switch, the fonts are one card with the import as
- * its last row, About is a head and three cards, and Contributors is one card.
+ * its last row, About is a head and three cards, Contributors is one card, and
+ * Player & mini-player design is five cards whose sensitivity row leaves with
+ * the swipe it tunes.
+ *
+ * What it cannot read is a dropdown's menu: the rows open a Material 3
+ * `DropdownMenu`, which is a popup, and an off-screen `ImageComposeScene` paints
+ * no popups (a click on a row leaves the frame without a menu in it).
  * A manual check, not part of `check` (pixels, no test framework, PNGs under
  * .ignore/settings/).
  */
