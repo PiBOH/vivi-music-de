@@ -29,9 +29,9 @@ android {
         // it can coexist with the upstream app. The mobile version is the
         // upstream feature version plus our own patch counter (6.0.8 ->
         // 6.0.8.10); versionCode is our own counter and only ever increases.
-        versionCode = 148
+        versionCode = 149
         val betaVersionName = project.findProperty("betaVersionName") as String?
-        versionName = betaVersionName ?: "6.0.8.10"
+        versionName = betaVersionName ?: "6.0.8.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

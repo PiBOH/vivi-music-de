@@ -47,6 +47,9 @@ sealed interface Screen {
     data object SettingsDevices : Screen
     data object SettingsContent : Screen
     data object SettingsLyrics : Screen
+
+    /** Romanization: its own screen, reached from the Lyrics one. */
+    data object SettingsRomanize : Screen
     data object SettingsPrivacy : Screen
     data object SettingsWrapped : Screen
     data object SettingsStorage : Screen

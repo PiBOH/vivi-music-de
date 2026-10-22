@@ -152,6 +152,103 @@ object Animations {
             shrinkTowards = androidx.compose.ui.Alignment.Top,
         ) + fadeOut(animationSpec = tween(ms(120)))
 
+    /**
+     * A settings row that belongs to a switch, opening and closing inside its card.
+     *
+     * [sectionEnter]/[sectionExit] ride a spring, which suits a panel that appears
+     * once; a row that folds under the user's finger is measured against the row
+     * under it, and a spring that settles on its own clock after the height looks
+     * finished makes the card's bottom edge creep for another 250 ms. These two are
+     * one tween each, both [rowMs] long and on the same curve as the fade, so the
+     * height and the opacity land together: the row is never a half-height strip
+     * already painted at full strength. [rowMs] is also what the card's bottom
+     * corners animate over, so the two movements are one.
+     */
+    /**
+     * The two row transitions, built once per value of [enabled].
+     *
+     * `AnimatedVisibility` is given a transition on every recomposition, and a NEW
+     * spec instance mid-flight restarts the animation: a row on its way out would
+     * run its exit, be handed a fresh spec the next frame and start over, which is
+     * the "it closes, comes back and closes again" stutter. These are the same
+     * objects for as long as the master switch does not move, so the transition
+     * keeps the instance it already animates with.
+     */
+    private var rowTransitionsFor: Boolean? = null
+    private var rowEnterTransition: EnterTransition = EnterTransition.None
+    private var rowExitTransition: ExitTransition = ExitTransition.None
+
+    fun rowEnter(): EnterTransition {
+        buildRowTransitions()
+        return rowEnterTransition
+    }
+
+    /** A settings row folding away: the same 200 ms as [rowEnter], in reverse. */
+    fun rowExit(): ExitTransition {
+        buildRowTransitions()
+        return rowExitTransition
+    }
+
+    private fun buildRowTransitions() {
+        if (rowTransitionsFor == enabled) return
+        rowTransitionsFor = enabled
+        rowEnterTransition = if (!enabled) {
+            EnterTransition.None
+        } else {
+            expandVertically(
+                animationSpec = tween(rowMs(), easing = emphasizedDecelerate),
+                expandFrom = androidx.compose.ui.Alignment.Top,
+            ) + fadeIn(animationSpec = tween(rowMs(), easing = emphasizedDecelerate))
+        }
+        rowExitTransition = if (!enabled) {
+            ExitTransition.None
+        } else {
+            shrinkVertically(
+                animationSpec = tween(rowMs(), easing = emphasizedDecelerate),
+                shrinkTowards = androidx.compose.ui.Alignment.Top,
+            ) + fadeOut(animationSpec = tween(rowMs(), easing = emphasizedDecelerate))
+        }
+    }
+
+    /** How long a settings row takes to fold (0 with the master switch off). */
+    fun rowMs(): Int = if (enabled) ms(200) else 0
+
+    /**
+     * The sign-in window button taking its leave.
+     *
+     * The two sign-in screens keep one action on offer at a time: while the
+     * manual-cookie card is open, its own submit button is the action and the
+     * window button is gone. That hand-over is one movement of two halves, and
+     * both halves are driven by the same state change, so Compose starts them in
+     * the same frame: this one lifts the button out of the card (upwards, the
+     * direction it came from) and takes its row with it (the shrink), while the
+     * card below unfolds downward through [sectionEnter].
+     *
+     * The shrink is what keeps the geometry honest: the card above must lose
+     * exactly the height of the action, not keep an empty gap where the button
+     * used to be.
+     */
+    fun signInActionExit(): ExitTransition =
+        if (!enabled) ExitTransition.None
+        else slideOutVertically(
+            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
+            targetOffsetY = { -it / 3 },
+        ) + fadeOut(animationSpec = tween(ms(140))) + shrinkVertically(
+            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+            shrinkTowards = androidx.compose.ui.Alignment.Top,
+        )
+
+    /** The window button coming back down as the manual-cookie card folds away. */
+    fun signInActionEnter(): EnterTransition =
+        if (!enabled) EnterTransition.None
+        else slideInVertically(
+            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+            initialOffsetY = { -it / 3 },
+        ) + fadeIn(animationSpec = tween(ms(160))) + expandVertically(
+            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+            expandFrom = androidx.compose.ui.Alignment.Top,
+        )
+
     /** Duration for an `animateDpAsState`/`animateFloatAsState` panel size (0 = instant). */
     fun sizeMs(): Int = if (enabled) ms(220) else 0
 

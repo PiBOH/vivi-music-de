@@ -522,6 +522,25 @@ tasks.register<JavaExec>("ltReplyCodecCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the player design screen:
+ *
+ *     ./gradlew :desktop:playerDesignRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/PlayerDesignRenderCheck.kt`.
+ * The screen holds four cards (the full player, the player background with the
+ * rotating artwork, the mini player, the slider style); the check renders it off
+ * screen, counts the cards and their rows in the middle column of the pixels, and
+ * asserts that the chips draw the value they are given.
+ */
+tasks.register<JavaExec>("playerDesignRenderCheck") {
+    group = "verification"
+    description = "Renders the player design screen headlessly and checks its four cards"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.PlayerDesignRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("firstRunRenderCheck") {
     group = "verification"
     description = "Renders the first-run flow headlessly and checks that it paints"
@@ -671,5 +690,207 @@ tasks.register<JavaExec>("colorWheelRenderCheck") {
     description = "Renders the custom colour wheel headlessly and checks the disc, its hues and its marker"
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.ColorWheelRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the Google sign-in screen:
+ *
+ *     ./gradlew :desktop:loginRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LoginRenderCheck.kt`.
+ * The screen is a hero (the Google mark on a filled tile, what it is for, the
+ * state as one pill) plus one card that numbers the three steps and carries the
+ * single button. This renders both into an off-screen `ImageComposeScene` and
+ * measures the pixels: the tile must be a solid filled square, the button below
+ * it must share that fill, and the state pill must change when the account
+ * changes. A manual check, not part of `check` (pixels, no test framework, PNGs
+ * under .ignore/).
+ */
+tasks.register<JavaExec>("loginRenderCheck") {
+    group = "verification"
+    description = "Renders the Google sign-in screen headlessly and checks its tile, button and state"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LoginRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the folding group on the Device sync screen:
+ *
+ *     ./gradlew :desktop:deviceSyncFoldCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/DeviceSyncFoldCheck.kt`.
+ * The two volume channels sit in `M3SettingsCollapsibleGroup`, whose header is the
+ * card's first row: folding it has to leave that one row, draw the two switches
+ * only while it is open, and turn the chevron. This renders both states into an
+ * off-screen `ImageComposeScene` and reads the pixels back - one card band against
+ * three joined by 3 dp seams, a header of at least the 56 dp a list row is, the
+ * switches' `primary` track in exactly two body rows, and the chevron's ink wide at
+ * the top and narrow at the bottom folded against narrow-then-wide open, in
+ * `primary`. A manual check, not part of `check` (pixels, no test framework, PNGs
+ * under .ignore/).
+ */
+tasks.register<JavaExec>("deviceSyncFoldCheck") {
+    group = "verification"
+    description = "Renders the folding Advanced group headlessly and checks the fold, the two switches and the chevron"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.DeviceSyncFoldCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the Material 3 rebuild of *Import from Spotify* and of the
+ * signed-in Account head:
+ *
+ *     ./gradlew :desktop:spotifyAccountRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/SpotifyAccountRenderCheck.kt`.
+ * The two screens are now the shared `SignInHero` (a 64 dp `primary` tile, a
+ * promise and one state pill), the shared numbered steps and the settings groups;
+ * the manual-cookie form folds through `M3CollapsibleCard`. This renders those
+ * pieces into an off-screen `ImageComposeScene` and measures them: the tile must
+ * be the 64 dp square and the import button must share its fill, the three source
+ * rows must be one card joined by 3 dp seams with exactly the two selected rows
+ * carrying `primary` checkbox ink, the Account head must change with the name, and
+ * the folding card must be one header row against header + body joined by 3 dp. A
+ * manual check, not part of `check` (pixels, no test framework, PNGs under
+ * .ignore/).
+ */
+tasks.register<JavaExec>("spotifyAccountRenderCheck") {
+    group = "verification"
+    description = "Renders the Spotify import and Account screens headlessly and checks the hero, the source card and the folding form"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.SpotifyAccountRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the language picker's search box:
+ *
+ *     ./gradlew :desktop:languageSearchCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/LanguageSearchCheck.kt`.
+ * Settings -> Language lists 48 languages, so the menu carries a search field.
+ * This reads `Languages.matching` directly (a blank query is every language,
+ * "ital" is Italiano alone, the accents and the Azerbaijani schwa do not matter,
+ * the code works, an unmatched query is empty) and renders
+ * `LanguagePickerRows` off screen to check the field is drawn and the list below
+ * it really narrows. A manual check, not part of `check` (pixels, no test
+ * framework, PNGs under .ignore/).
+ */
+tasks.register<JavaExec>("languageSearchCheck") {
+    group = "verification"
+    description = "Checks the language picker's search filter and renders the field and the narrowed list"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.LanguageSearchCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the account screen's sync row:
+ *
+ *     ./gradlew :desktop:accountSyncRowCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/AccountSyncRowCheck.kt`.
+ * The row that runs the playlist sync answers "how far along is it?" with a
+ * counter in its trailing slot (`3/12`, `SyncRunTrailing`) instead of a ring that
+ * only says something is happening. This renders the row into an off-screen
+ * `ImageComposeScene` and reads the right quarter of the pixels: no ink with no
+ * run, ink right of the 80 % line during one, a different image when the run's
+ * numbers change, and the ring standing in while the total is unknown. A manual
+ * check, not part of `check` (pixels, no test framework, PNGs under .ignore/).
+ */
+/**
+ * Headless check of the Romanization screen:
+ *
+ *     ./gradlew :desktop:romanizeRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/RomanizeRenderCheck.kt`.
+ * Romanization has its own screen now (the master switch, the twelve script
+ * switches, the as-main choice) instead of a card in the middle of *Lyrics*.
+ * This renders it off screen in both states and reads the pixels: off is one row,
+ * on is fourteen rows in two cards. A manual check, not part of `check` (pixels,
+ * no test framework, PNGs under .ignore/).
+ */
+tasks.register<JavaExec>("romanizeRenderCheck") {
+    group = "verification"
+    description = "Renders the Romanization screen headlessly and checks its rows in both states"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.RomanizeRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+tasks.register<JavaExec>("accountSyncRowCheck") {
+    group = "verification"
+    description = "Renders the account sync row headlessly and checks the run's counter in its trailing slot"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.AccountSyncRowCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the Player & audio screen's cards:
+ *
+ *     ./gradlew :desktop:playerAudioCardCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/PlayerAudioCardCheck.kt`.
+ * The crossfade duration and the stream cache are thresholds of their own card's
+ * setting, and the skip-silence sub-option belongs to its switch: this renders the
+ * section in four states into an off-screen `ImageComposeScene` and reads the column
+ * through its middle, where the 3 dp seams of a card and the 8 dp gaps between two
+ * cards say which card took a row. Turning either switch on must add rows and no
+ * card, and the seams must say the rows went into the switch's own card. A manual
+ * check, not part of `check` (pixels, no test framework, PNGs under .ignore/).
+ */
+tasks.register<JavaExec>("playerAudioCardCheck") {
+    group = "verification"
+    description = "Renders Player & audio headlessly and checks the duration, the cache slider and the skip-silence row"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.PlayerAudioCardCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the rebuilt Equalizer screen:
+ *
+ *     ./gradlew :desktop:equalizerRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/EqualizerRenderCheck.kt`.
+ * The screen is the phone's list (no equalization plus the imported AutoEQ
+ * profiles) and, for the active one, the response curve, the preamp and one row
+ * per band with the Q factors folded. This renders both states off screen and
+ * reads the pixels: the empty state is one card of four rows and no `primary`
+ * ink at all, the active one adds four cards including a curve drawn in
+ * `primary` and a band card of ten rows. A manual check, not part of `check`
+ * (pixels, no test framework, PNGs under .ignore/equalizer/).
+ */
+tasks.register<JavaExec>("equalizerRenderCheck") {
+    group = "verification"
+    description = "Renders the Equalizer screen headlessly and checks its list, curve and band rows"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.EqualizerRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of the Material 3 Expressive settings slider:
+ *
+ *     ./gradlew :desktop:sliderRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/SliderRenderCheck.kt`.
+ * The shape of a slider is a pixel fact no compiler can see, so the composable is
+ * rendered into an off-screen `ImageComposeScene` at density 1 and a row through
+ * the track centre is read as runs: primary up to the cut, 6 px of page, the
+ * handle, 6 px of page, `secondaryContainer` to the end. Pressing widens the
+ * handle to 8 px and draws its state layer, releasing puts both back, and a
+ * stepped slider reports only its ticks. A manual check, not part of `check`
+ * (pixels, no test framework, PNGs under .ignore/slider/).
+ */
+tasks.register<JavaExec>("sliderRenderCheck") {
+    group = "verification"
+    description = "Renders the settings slider headlessly and checks its track, cut, handle and ticks"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.SliderRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }

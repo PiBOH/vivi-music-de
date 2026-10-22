@@ -202,6 +202,13 @@ MAPPING = {
     "player_design_classic": "Classic",
     "player_design_new": "New",
     "player_design_expressive": "Expressive",
+    # "Player & mini-player design": the Appearance row and the title of the
+    # screen it opens, which holds the full player AND the mini player - the
+    # old wording named only half of it. No Android resource carries this
+    # combined wording (the phone keeps two separate screens), so the English
+    # column is the inline literal and every language is authored in
+    # desktop_extra_translations_103.py.
+    "player_and_mini_player_design": "Player & mini-player design",
     "player_background": "Player background",
     "player_background_visualizer": "Visualizer",
     "player_background_desc": "Animated style behind the player.",
@@ -667,6 +674,10 @@ MAPPING = {
     "yt_sync": "yt_sync",
     "ytm_sync": "ytm_sync",
     "sync_playlist": "sync_playlist",
+    # The account screen's sync row is an action, so it is labelled as one; the
+    # run's own progress is the counter in its trailing slot. Desktop-only (the
+    # phone keeps "Sync playlist"), supplied by desktop_extra_translations_108.
+    "sync_now": "Sync now",
     # The mobile create dialog's "Sync playlist" switch (1.53.14) and the hint
     # its switch shows when there is no session.
     "sync_playlist_desc": "sync_playlist_desc",
@@ -686,6 +697,12 @@ MAPPING = {
     "romanize_hindi": "lyrics_romanize_hindi",
     "romanize_punjabi": "lyrics_romanize_punjabi",
     "translate_lyrics": "ai_lyrics_translation",
+    # The font screen's switch for the lyrics, and the reason the translation
+    # switch is not offered: both desktop-only, supplied by
+    # desktop_extra_translations_109.
+    "font_in_lyrics": "Use the app font in lyrics",
+    "font_in_lyrics_desc": "Draw the lyrics with the font selected above. Off, they use the renderer's own face.",
+    "translate_needs_api_key": "Needs an API key: add one on the AI Lyrics Translation screen.",
     # Content screen filters: these four were in the English table only through
     # the extra batches, which cannot define English, so the UI showed the raw
     # key in English builds.
@@ -868,6 +885,12 @@ ENGLISH = {
     "back": "Back",
     "about": "About",
     "language": "Language",
+    # The search box of the language picker (Settings -> Language) and the line
+    # it shows when a query matches nothing. Desktop-only: the phone's picker is
+    # a screen of its own with no field. Supplied by
+    # desktop_extra_translations_106.
+    "language_search": "Search language",
+    "language_search_none": "No languages found",
     "choose_language": "Choose your language",
     "translation_ai_disclaimer": "Translations were created with AI tools and may not be 100% accurate. If you find an error, please report it.",
     "mobile": "Mobile",
@@ -1072,6 +1095,12 @@ ENGLISH = {
     # is otherwise the one step nobody tries. Desktop-only → authored in
     # `desktop_extra_translations_97.py`.
     "login_retry_hint": "Sign-in often needs two attempts: if the first one fails, press Sign in with Google again.",
+    # The Google sign-in head (the shape Import from Spotify uses): the sentence
+    # under its title and the "how long this takes" line of its card. Neither
+    # exists on the phone, so the English column is the literal and every
+    # language is authored in desktop_extra_translations_104.py.
+    "login_promise": "Sign in with your Google account to sync your library, playlists and history.",
+    "login_one_window": "One window, about ten seconds",
     "login_show": "Show",
     "login_hide": "Hide",
     "login_signed_in_hint": "Your YouTube Music session is active: History, Library and playlists use your account.",
@@ -1195,6 +1224,10 @@ ENGLISH = {
     # that is translated widely enough to borrow, so desktop_extra_translations_90
     # writes them out for every language.
     "spotify_import": "Import from Spotify",
+    # The same head once an account is connected: the screen is no longer about
+    # importing *from* somewhere but about the account it is importing *with*.
+    # Supplied by desktop_extra_translations_105.
+    "spotify_connected_title": "Connected to Spotify",
     "spotify_desc": "Bring your Spotify playlists and Liked Songs over. Every track is searched on YouTube Music and the closest match is saved in a local playlist.",
     "spotify_not_connected": "Not connected to Spotify",
     "spotify_connected_as": "Connected as %s",
@@ -2010,12 +2043,19 @@ from desktop_extra_translations_99 import EXTRA_TRANSLATIONS as _EXTRA_99
 from desktop_extra_translations_100 import EXTRA_TRANSLATIONS as _EXTRA_100
 from desktop_extra_translations_101 import EXTRA_TRANSLATIONS as _EXTRA_101
 from desktop_extra_translations_102 import EXTRA_TRANSLATIONS as _EXTRA_102
+from desktop_extra_translations_103 import EXTRA_TRANSLATIONS as _EXTRA_103
+from desktop_extra_translations_104 import EXTRA_TRANSLATIONS as _EXTRA_104
+from desktop_extra_translations_105 import EXTRA_TRANSLATIONS as _EXTRA_105
+from desktop_extra_translations_106 import EXTRA_TRANSLATIONS as _EXTRA_106
+from desktop_extra_translations_107 import EXTRA_TRANSLATIONS as _EXTRA_107
+from desktop_extra_translations_108 import EXTRA_TRANSLATIONS as _EXTRA_108
+from desktop_extra_translations_109 import EXTRA_TRANSLATIONS as _EXTRA_109
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97, _EXTRA_98, _EXTRA_99, _EXTRA_100, _EXTRA_101, _EXTRA_102):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97, _EXTRA_98, _EXTRA_99, _EXTRA_100, _EXTRA_101, _EXTRA_102, _EXTRA_103, _EXTRA_104, _EXTRA_105, _EXTRA_106, _EXTRA_107, _EXTRA_108, _EXTRA_109):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 

@@ -1,5 +1,7 @@
 package com.music.vivi.desktop
 
+import java.text.Normalizer
+
 /** A selectable language: locale tag + native display name. */
 data class AppLanguage(val code: String, val name: String)
 
@@ -8,6 +10,44 @@ data class AppLanguage(val code: String, val name: String)
  * `LanguageCodeToName` map. English is the primary (source) language.
  */
 object Languages {
+
+    /** Combining marks, i.e. what NFD turns an accent into. */
+    private val DIACRITICS = Regex("\\p{Mn}+")
+
+    /**
+     * The letters that are letters of their own and not a marked vowel, so NFD
+     * leaves them alone: the Azerbaijani schwa is the one this list needs
+     * ("azerbaycan" must find Azərbaycan dili), and the rest are here because a
+     * keyboard without them should still land on the language.
+     */
+    private val LETTERS = mapOf(
+        'ə' to "e", 'ı' to "i", 'ø' to "o", 'ł' to "l", 'đ' to "d",
+        'ß' to "ss", 'æ' to "ae", 'þ' to "th", 'ð' to "d",
+    )
+
+    /**
+     * [text] without its accents and in lower case, so "Čeština" and "cestina"
+     * are the same word to a search box and "Azərbaycan" is found by "azerbaycan".
+     */
+    internal fun fold(text: String): String {
+        val plain = StringBuilder(text.length)
+        for (ch in text.lowercase()) {
+            val folded = LETTERS[ch]
+            if (folded != null) plain.append(folded) else plain.append(ch)
+        }
+        return Normalizer.normalize(plain, Normalizer.Form.NFD).replace(DIACRITICS, "")
+    }
+
+    /**
+     * The languages whose name or code contains [query], ignoring case and
+     * diacritics; every language for a blank query.
+     */
+    fun matching(query: String): List<AppLanguage> {
+        val needle = fold(query.trim())
+        if (needle.isEmpty()) return all
+        return all.filter { fold(it.name).contains(needle) || it.code.lowercase().contains(needle) }
+    }
+
     val all: List<AppLanguage> = listOf(
         AppLanguage("en", "English"),
         AppLanguage("az", "Azərbaycan dili"),

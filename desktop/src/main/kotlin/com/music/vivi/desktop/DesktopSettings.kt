@@ -217,6 +217,18 @@ data class DesktopSyncState(
     val lyricsRomanizeCyrillicByLine: Boolean = false,
     /** When true the translated lyric (when available) is shown as a subtitle. */
     val translateLyrics: Boolean = false,
+
+    /**
+     * Whether the lyrics use the app's own font ("App font" in Appearance).
+     *
+     * The lyrics renderer draws from a bare `TextStyle`, so the app font the
+     * theme applies to every other screen never reached them; this is the
+     * switch that says whether that was a bug or a preference. On by default:
+     * a font chosen in the font screen is expected to show up in the lyrics
+     * too, and the renderer's own face stays available for a reading face that
+     * is easier at 30 sp.
+     */
+    val lyricsUseAppFont: Boolean = true,
     val pureBlack: Boolean = false,
     val audioQuality: String = "auto",
     /** In-app (VIVI) player volume (0..1), restored at startup. */

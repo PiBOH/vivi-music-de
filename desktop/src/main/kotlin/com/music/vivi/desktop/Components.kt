@@ -13,6 +13,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
@@ -40,11 +43,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
@@ -56,6 +61,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -600,6 +606,134 @@ fun BackButton(language: String, onClick: () -> Unit) {
     )
 }
 
+/**
+ * The head the two sign-ins (Google and Spotify) and the signed-in Account screen
+ * share: the brand mark on a filled 64 dp tile, what the screen is for, and - when
+ * there is something to state - the state as one pill.
+ *
+ * The three screens are the same decision for the user - which account the app
+ * talks to, and whether it has one - so they are one shape instead of three
+ * differently built cards. [mark] draws the brand glyph on the tile; it inherits
+ * `onPrimary`, so a mark that carries its own shape still reads on the fill.
+ *
+ * [stateText] is the identity when there is one; a `null` draws no pill at all.
+ * A head with no account does not need to say "not connected": the card under it
+ * is the one sign-in button and the title already says what the screen is for, so
+ * a pill there only repeated the absence a third time.
+ */
+@Composable
+internal fun SignInHero(
+    title: String,
+    promise: String,
+    stateText: String?,
+    active: Boolean,
+    mark: @Composable () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center,
+            ) {
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onPrimary) {
+                    mark()
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    promise,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                if (stateText != null) HeroStatePill(text = stateText, active = active)
+            }
+        }
+    }
+}
+
+/** The state of a [SignInHero], said once: a dot and what it means. */
+@Composable
+internal fun HeroStatePill(text: String, active: Boolean) {
+    Row(
+        modifier = Modifier
+            .padding(top = 12.dp)
+            .clip(RoundedCornerShape(50))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(horizontal = 12.dp, vertical = 5.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(
+                    if (active) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.outline,
+                ),
+        )
+        Text(
+            text,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+/**
+ * The numbered sequence under a sign-in hero (`login_step1`-`3`,
+ * `spotify_step1`-`3`): a sign-in is a sequence, and the number is what says so.
+ * The two screens print the same three steps, so they share the list instead of
+ * drawing it twice with two different paddings.
+ */
+@Composable
+internal fun SignInStepList(language: String, keys: List<String>, firstStepTop: Dp = 16.dp) {
+    keys.forEachIndexed { index, key ->
+        Row(
+            Modifier.fillMaxWidth().padding(top = if (index == 0) firstStepTop else 12.dp),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(26.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    "${index + 1}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Text(
+                Localization.get(language, key),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 10.dp),
+            )
+        }
+    }
+}
+
 /** Route a tap on any [YTItem] to the matching screen/action. */
 fun onItemClick(
     item: YTItem,
@@ -902,6 +1036,139 @@ fun ViviSlider(
                 style = Stroke(width = 1.5f),
             )
         }
+    }
+}
+
+/**
+ * The Material 3 Expressive slider, used by every slider in the app that is not
+ * a player's own seek or volume strip (those are [ViviSlider], which carries the
+ * buffer segment and the player's four track styles).
+ *
+ * The geometry is the Expressive one, not `material3.Slider`'s: a 16 dp capsule
+ * track (8 dp radius), a handle 4 dp wide and 44 dp tall that widens to 8 dp
+ * while it is pressed, and a 6 dp cut either side of the handle where the track
+ * stops. The active ink is `primary`, the rest of the track
+ * `secondaryContainer`, and the handle draws a 40 dp state layer (8 % hovered,
+ * 10 % pressed) so a mouse gets the same acknowledgement a finger does.
+ *
+ * The gesture is the one [ViviSlider] settled on - a single `pointerInput` for
+ * press, drag and release - because a press must already move the value and a
+ * separate tap detector steals the down event from the drag. `steps` snaps the
+ * reported value to the ticks the caller declared, the way the M3 slider does.
+ */
+@Composable
+fun M3SettingsSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+    steps: Int = 0,
+    enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
+) {
+    val range = valueRange.endInclusive - valueRange.start
+    val fraction = if (range == 0f) 0f else ((value - valueRange.start) / range).coerceIn(0f, 1f)
+    val primary = MaterialTheme.colorScheme.primary
+    val inactive = MaterialTheme.colorScheme.secondaryContainer
+    val handleColor = if (enabled) primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+
+    var pressed by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    val stateLayer by animateFloatAsState(
+        targetValue = if (pressed) 0.10f else if (hovered && enabled) 0.08f else 0f,
+        animationSpec = tween(120),
+        label = "sliderStateLayer",
+    )
+    val handleWidth by animateFloatAsState(
+        targetValue = if (pressed) 8f else 4f,
+        animationSpec = tween(120),
+        label = "sliderHandleWidth",
+    )
+
+    fun snapped(raw: Float): Float {
+        if (steps <= 0 || range == 0f) return raw.coerceIn(valueRange.start, valueRange.endInclusive)
+        val step = range / (steps + 1)
+        val tick = ((raw - valueRange.start) / step).roundToInt() * step + valueRange.start
+        return tick.coerceIn(valueRange.start, valueRange.endInclusive)
+    }
+
+    Canvas(
+        modifier = modifier
+            .height(48.dp)
+            .fillMaxWidth()
+            .hoverable(interactionSource, enabled = enabled)
+            .pointerInput(enabled, valueRange, steps) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    if (!enabled) return@awaitEachGesture
+                    // The handle's own half-width, so it never pokes out of the ends.
+                    val inset = 4.dp.toPx()
+                    fun valueAt(x: Float): Float {
+                        val usable = (size.width.toFloat() - inset * 2f).coerceAtLeast(1f)
+                        val f = ((x - inset) / usable).coerceIn(0f, 1f)
+                        return snapped(valueRange.start + f * range)
+                    }
+                    pressed = true
+                    onValueChange(valueAt(down.position.x))
+                    down.consume()
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        onValueChange(valueAt(change.position.x))
+                        change.consume()
+                    }
+                    pressed = false
+                    onValueChangeFinished?.invoke()
+                }
+            },
+    ) {
+        val trackHeight = 16.dp.toPx()
+        val gap = 6.dp.toPx()
+        val handleHeight = 44.dp.toPx()
+        val handleWidthPx = handleWidth.dp.toPx()
+        val inset = 4.dp.toPx()
+        val cy = size.height / 2f
+        val usable = (size.width - inset * 2f).coerceAtLeast(1f)
+        val centerX = inset + usable * fraction
+        val radius = CornerRadius(trackHeight / 2f, trackHeight / 2f)
+
+        if (stateLayer > 0f) {
+            drawCircle(
+                color = primary.copy(alpha = stateLayer),
+                radius = 20.dp.toPx(),
+                center = Offset(centerX, cy),
+            )
+        }
+
+        // The track is two capsules with the handle's gap cut out between them,
+        // so neither end runs under the handle or past the edge of the strip.
+        val activeEnd = centerX - handleWidthPx / 2f - gap
+        val inactiveStart = centerX + handleWidthPx / 2f + gap
+        if (activeEnd > 0f) {
+            drawRoundRect(
+                color = primary,
+                topLeft = Offset(0f, cy - trackHeight / 2f),
+                size = Size(activeEnd, trackHeight),
+                cornerRadius = radius,
+            )
+        }
+        if (inactiveStart < size.width) {
+            drawRoundRect(
+                color = inactive,
+                topLeft = Offset(inactiveStart, cy - trackHeight / 2f),
+                size = Size(size.width - inactiveStart, trackHeight),
+                cornerRadius = radius,
+            )
+        }
+
+        drawRoundRect(
+            color = handleColor,
+            topLeft = Offset(centerX - handleWidthPx / 2f, cy - handleHeight / 2f),
+            size = Size(handleWidthPx, handleHeight),
+            cornerRadius = CornerRadius(handleWidthPx / 2f, handleWidthPx / 2f),
+        )
     }
 }
 

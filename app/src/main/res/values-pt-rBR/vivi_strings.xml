@@ -948,7 +948,7 @@
     <string name="skip">Pular</string>
     <string name="data_saver">Protetor de dados</string>
     <string name="data_saver_desc">Desliga vídeos de tela e de fundo, e carrega imagens de baixa qualidade para salvar dados e bateria</string>
-    <string name="data_saver_turns_off_header">Desligar quando estiver ativo</string>
+    <string name="data_saver_turns_off_header">Quando ativado, estes itens são desligados</string>
     <string name="data_saver_player_canvas">Animação da tela do tocador</string>
     <string name="data_saver_artist_video">Vídeo de tela do artista</string>
     <string name="data_saver_artist_bg_video">Vídeo de fundo do artista</string>

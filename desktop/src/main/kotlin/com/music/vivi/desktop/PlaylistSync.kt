@@ -81,6 +81,21 @@ object PlaylistSync {
             val head = parts.joinToString(" · ")
             return if (current.isNotBlank()) "$head — '$current'" else head
         }
+
+        /**
+         * [progressText] without the playlist counter, for the screen that
+         * draws that counter in a slot of its own (the account screen's sync
+         * row): `Syncing your playlists… · 128/540 — 'Feste'`. Printing the same
+         * `3/12` twice, once on the right and once in the sentence, reads like
+         * two different numbers.
+         */
+        fun detailText(prefix: String): String {
+            if (phase != Phase.RUNNING) return prefix
+            val parts = mutableListOf(prefix)
+            if (songsTotal > 0) parts += "$songsDone/$songsTotal"
+            val head = parts.joinToString(" · ")
+            return if (current.isNotBlank()) "$head — '$current'" else head
+        }
     }
 
     /**

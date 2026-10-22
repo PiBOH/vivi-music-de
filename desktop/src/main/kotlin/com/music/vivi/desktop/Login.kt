@@ -1,8 +1,8 @@
 package com.music.vivi.desktop
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -20,11 +22,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,7 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -96,254 +95,332 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
         accountName = DesktopSettings.load().accountName
     }
 
-    Column {
-        // ------------------------------------------------ signed-in state
-        if (isLoggedIn) {
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Row(
-                    Modifier.fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            "${Localization.get(language, "logged_in_as")}: $accountName",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Text(
-                            Localization.get(language, "login_signed_in_hint"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                    TextButton(onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            LoginManager.logout()
-                            refreshAccount()
+    if (isLoggedIn) {
+        // Signed in: the Account section's own block (who, playlist sync, the
+        // way out) and nothing that offers to sign in again. The pink banner
+        // that used to sit above the card said the same thing a second time.
+        AccountSection(
+            language = language,
+            isLoggedIn = true,
+            accountName = accountName,
+            onOpenLogin = {},
+            onLogout = {
+                scope.launch(Dispatchers.IO) {
+                    LoginManager.logout()
+                    refreshAccount()
+                }
+            },
+            onLoggedIn = onLoggedIn,
+        )
+    } else {
+        Column {
+            // ------------------------------------------------ path 1: Google window
+            // The shape Import from Spotify uses, because the two do the same job:
+            // a head that states the state once (mark, what it is for, the state as
+            // one pill), then one card that numbers the steps and ends in the button
+            // that opens the window. It used to be a card with a title, three
+            // bullets and the button, which read as a form rather than as a sign-in.
+            GoogleSignInHero(language = language, accountName = accountName)
+            GoogleSignInCard(
+                language = language,
+                waiting = waitingForWindow,
+                saving = savingCookie,
+                // While the manual card is open its submit button is the action:
+                // the window button leaves in the same frame the card unfolds.
+                manualOpen = manualOpen,
+                onStart = {
+                    error = null
+                    status = null
+                    waitingForWindow = true
+                    val opened = LoginWebView.openEmbedded(
+                        language,
+                        resetFirst = freshSession,
+                    ) { captured ->
+                        waitingForWindow = false
+                        if (captured?.cookie != null) {
+                            // Auto-captured session: validate + persist exactly
+                            // like the manual flow, then hand back to the app.
+                            scope.launch {
+                                savingCookie = true
+                                try {
+                                    val account = withContext(Dispatchers.IO) {
+                                        LoginManager.login(
+                                            cookie = captured.cookie,
+                                            dataSyncIdOverride = captured.dataSyncId,
+                                            visitorDataOverride = captured.visitorData,
+                                        )
+                                    }
+                                    status = "${Localization.get(language, "logged_in_as")}: ${account.name}"
+                                    freshSession = false
+                                    refreshAccount()
+                                    onLoggedIn()
+                                } catch (e: Exception) {
+                                    // Keep the captured cookies in the manual field
+                                    // so a retry is a single click.
+                                    cookie = captured.cookie
+                                    dataSyncId = captured.dataSyncId.orEmpty()
+                                    visitorData = captured.visitorData.orEmpty()
+                                    manualOpen = true
+                                    // The next window starts from a clean store.
+                                    freshSession = true
+                                    error = e.message ?: (e::class.simpleName ?: "error")
+                                } finally {
+                                    savingCookie = false
+                                }
+                            }
+                        } else if (!LoginManager.isLoggedIn()) {
+                            status = Localization.get(language, "login_window_closed")
                         }
-                    }) { Text(Localization.get(language, "logout")) }
+                    }
+                    if (!opened) {
+                        waitingForWindow = false
+                        error = Localization.get(language, "login_webview_unavailable")
+                    }
+                },
+            )
+
+            status?.let {
+                SelectionContainer { Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp)) }
+            }
+            error?.let {
+                // Selectable so a failed login (e.g. the E-code detail) can be copied for a report.
+                SelectionContainer {
+                    Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
+                }
+                // And where the code is explained: the message carries one (E1033,
+                // E1029, E1030) and it is only useful if it can be looked up.
+                Text(
+                    "ERRORS.md · ${Localization.get(language, "website")}: $ERROR_PAGE_URL",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+
+            // Embedded window unavailable → offer the browser fallback right here.
+            if (error == Localization.get(language, "login_webview_unavailable")) {
+                OutlinedButton(
+                    onClick = { LoginWebView.openBrowser() },
+                    modifier = Modifier.padding(top = 4.dp),
+                ) {
+                    Text(Localization.get(language, "login_open_browser"))
                 }
             }
-        }
 
-        // ------------------------------------------------ path 1: Google window
-        Card(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            Column(Modifier.padding(16.dp)) {
+            // ------------------------------------------------ path 2: manual cookies
+            // One header row until it is asked, then the fields: the same folding
+            // card the settings screens use for a group that is set once, so the
+            // fallback sits in the page's own system instead of being a second
+            // full-size card that competes with the primary path.
+            Spacer(Modifier.height(12.dp))
+            M3CollapsibleCard(
+                title = Localization.get(language, "login_manual_title"),
+                expanded = manualOpen,
+                onExpandedChange = { manualOpen = it },
+            ) {
                 Text(
-                    Localization.get(language, "login_google"),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    Localization.get(language, "login_instructions"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                listOf("login_step1", "login_step2", "login_step3").forEach { key ->
-                    Row(Modifier.padding(top = 6.dp), verticalAlignment = Alignment.Top) {
-                        Text("• ", color = MaterialTheme.colorScheme.primary)
-                        Text(
-                            Localization.get(language, key),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                // Said before the first attempt, not after the second failure:
-                // in the large majority of reports the session is only handed
-                // over on the second try (the first capture comes back without
-                // everything YouTube issues — ERRORS.md · E1033), and a user who
-                // does not know that concludes that sign-in is broken.
+                OutlinedTextField(
+                    value = cookie,
+                    onValueChange = { cookie = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(140.dp),
+                    label = { Text(Localization.get(language, "cookie_label")) },
+                )
+
+                // Optional manual fallbacks, used only when the automatic
+                // extraction from the music.youtube.com shell fails.
                 Text(
-                    Localization.get(language, "login_retry_hint"),
+                    Localization.get(language, "advanced_login_hint"),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
                 )
+                OutlinedTextField(
+                    value = dataSyncId,
+                    onValueChange = { dataSyncId = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text(Localization.get(language, "data_sync_id_label")) },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = visitorData,
+                    onValueChange = { visitorData = it },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    label = { Text(Localization.get(language, "visitor_data_label")) },
+                    singleLine = true,
+                )
+
                 Button(
                     onClick = {
-                        error = null
-                        status = null
-                        waitingForWindow = true
-                        val opened = LoginWebView.openEmbedded(
-                            language,
-                            resetFirst = freshSession,
-                        ) { captured ->
-                            waitingForWindow = false
-                            if (captured?.cookie != null) {
-                                // Auto-captured session: validate + persist exactly
-                                // like the manual flow, then hand back to the app.
-                                scope.launch {
-                                    savingCookie = true
-                                    try {
-                                        val account = withContext(Dispatchers.IO) {
-                                            LoginManager.login(
-                                                cookie = captured.cookie,
-                                                dataSyncIdOverride = captured.dataSyncId,
-                                                visitorDataOverride = captured.visitorData,
-                                            )
-                                        }
-                                        status = "${Localization.get(language, "logged_in_as")}: ${account.name}"
-                                        freshSession = false
-                                        refreshAccount()
-                                        onLoggedIn()
-                                    } catch (e: Exception) {
-                                        // Keep the captured cookies in the manual field
-                                        // so a retry is a single click.
-                                        cookie = captured.cookie
-                                        dataSyncId = captured.dataSyncId.orEmpty()
-                                        visitorData = captured.visitorData.orEmpty()
-                                        manualOpen = true
-                                        // The next window starts from a clean store.
-                                        freshSession = true
-                                        error = e.message ?: (e::class.simpleName ?: "error")
-                                    } finally {
-                                        savingCookie = false
-                                    }
+                        scope.launch {
+                            savingCookie = true
+                            error = null
+                            status = null
+                            try {
+                                val account = withContext(Dispatchers.IO) {
+                                    LoginManager.login(
+                                        cookie = cookie,
+                                        dataSyncIdOverride = dataSyncId.ifBlank { null },
+                                        visitorDataOverride = visitorData.ifBlank { null },
+                                    )
                                 }
-                            } else if (!LoginManager.isLoggedIn()) {
-                                status = Localization.get(language, "login_window_closed")
+                                status = "${Localization.get(language, "logged_in_as")}: ${account.name}"
+                                refreshAccount()
+                                onLoggedIn()
+                            } catch (e: Exception) {
+                                error = e.message ?: (e::class.simpleName ?: "error")
+                            } finally {
+                                savingCookie = false
                             }
                         }
-                        if (!opened) {
-                            waitingForWindow = false
-                            error = Localization.get(language, "login_webview_unavailable")
-                        }
                     },
-                    enabled = !waitingForWindow && !savingCookie,
-                    modifier = Modifier.padding(top = 12.dp),
+                    enabled = cookie.isNotBlank() && !savingCookie,
+                    modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
                 ) {
+                    Text(if (savingCookie) Localization.get(language, "logging_in") else Localization.get(language, "login"))
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * The head of the sign-in content: the Google mark on its tile, what the screen
+ * is for and, when a session exists, who it belongs to - the same shape
+ * `Import from Spotify` has, so the two sign-ins read as one family.
+ *
+ * With no session there is no pill: the card under the head is the sign-in and
+ * the head already says what the screen is for, so "Not logged in" only repeated
+ * the absence. Import from Spotify follows the same rule.
+ */
+@Composable
+internal fun GoogleSignInHero(language: String, accountName: String) {
+    SignInHero(
+        title = Localization.get(language, "login_google"),
+        promise = Localization.get(language, "login_promise"),
+        // Who the session belongs to, and nothing at all without one. Signed in
+        // this screen is not reachable from the app (the account card replaces
+        // it), but the composable is also the standalone Login screen, so it tells
+        // the truth there.
+        stateText = accountName.takeIf { it.isNotBlank() }
+            ?.let { "${Localization.get(language, "logged_in_as")}: $it" },
+        active = true,
+        mark = { GoogleMark(30.dp) },
+    )
+}
+
+/**
+ * The head of the signed-in Account screen, in the same shape as the sign-in
+ * screens: the mark on its tile, what the section is, and the session as one pill.
+ * It replaces a loose "Account" title with a "Logged in as ..." line under it,
+ * which was the only screen in this family without a head of its own.
+ */
+@Composable
+internal fun AccountHero(language: String, accountName: String) {
+    SignInHero(
+        title = Localization.get(language, "account"),
+        promise = Localization.get(language, "login_signed_in_hint"),
+        stateText = "${Localization.get(language, "logged_in_as")}: " +
+            accountName.ifBlank { "YouTube" },
+        active = true,
+        mark = { GoogleMark(30.dp) },
+    )
+}
+
+/**
+ * The one card: the three steps the app already printed (`login_step1`-`3`),
+ * numbered because a sign-in is a sequence, the warning it prints before the
+ * first attempt rather than after the second failure, and the button that opens
+ * the window.
+ *
+ * The button is the card's only action, and the manual-cookie card below carries
+ * one of its own, so only one of the two is offered at a time: with
+ * [manualOpen] the button leaves and the card gets shorter by its row, in the
+ * same frame the form below unfolds ([Animations.signInActionExit]).
+ */
+@Composable
+internal fun GoogleSignInCard(
+    language: String,
+    waiting: Boolean,
+    saving: Boolean,
+    manualOpen: Boolean,
+    onStart: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Column(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    GoogleMark(22.dp)
+                }
+                Column(Modifier.padding(start = 12.dp)) {
+                    Text(
+                        Localization.get(language, "login_google"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        Localization.get(language, "login_one_window"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            SignInStepList(
+                language = language,
+                keys = listOf("login_step1", "login_step2", "login_step3"),
+            )
+            // Said before the first attempt, not after the second failure: in the
+            // large majority of reports the session is only handed over on the
+            // second try (the first capture comes back without everything YouTube
+            // issues - ERRORS.md E1033), and a user who does not know that
+            // concludes that sign-in is broken.
+            Text(
+                Localization.get(language, "login_retry_hint"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.tertiary,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            // One action at a time: the card that opens below carries its own
+            // button, so this one leaves (upwards, into the card) and the card
+            // loses its row while the form unfolds - both start in the frame the
+            // manual card is asked for. The padding travels with the button, so
+            // nothing is left behind where it used to be.
+            AnimatedVisibility(
+                visible = !manualOpen,
+                enter = Animations.signInActionEnter(),
+                exit = Animations.signInActionExit(),
+            ) {
+                Button(
+                    onClick = onStart,
+                    enabled = !waiting && !saving,
+                    modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
+                ) {
+                    GoogleMark(18.dp)
+                    Spacer(Modifier.width(8.dp))
                     Text(
                         when {
-                            savingCookie -> Localization.get(language, "login_saving")
-                            waitingForWindow -> Localization.get(language, "login_waiting")
+                            saving -> Localization.get(language, "login_saving")
+                            waiting -> Localization.get(language, "login_waiting")
                             else -> Localization.get(language, "login_google")
                         },
                     )
                 }
             }
         }
-
-        status?.let {
-            SelectionContainer { Text(it, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 8.dp)) }
-        }
-        error?.let {
-            // Selectable so a failed login (e.g. the E-code detail) can be copied for a report.
-            SelectionContainer {
-                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
-            }
-            // And where the code is explained: the message carries one (E1033,
-            // E1029, E1030) and it is only useful if it can be looked up.
-            Text(
-                "ERRORS.md · ${Localization.get(language, "website")}: $ERROR_PAGE_URL",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-        }
-
-        // Embedded window unavailable → offer the browser fallback right here.
-        if (error == Localization.get(language, "login_webview_unavailable")) {
-            OutlinedButton(
-                onClick = { LoginWebView.openBrowser() },
-                modifier = Modifier.padding(top = 4.dp),
-            ) {
-                Text(Localization.get(language, "login_open_browser"))
-            }
-        }
-
-        // ------------------------------------------------ path 2: manual cookies
-        Card(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-            Column(Modifier.padding(16.dp)) {
-                Row(
-                    Modifier.fillMaxWidth().clickable { manualOpen = !manualOpen },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        Localization.get(language, "login_manual_title"),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    Text(
-                        Localization.get(language, if (manualOpen) "login_hide" else "login_show"),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-
-                AnimatedVisibility(visible = manualOpen) {
-                    Column {
-                        Text(
-                            Localization.get(language, "login_instructions"),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 10.dp),
-                        )
-                        OutlinedTextField(
-                            value = cookie,
-                            onValueChange = { cookie = it },
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).height(140.dp),
-                            label = { Text(Localization.get(language, "cookie_label")) },
-                        )
-
-                        // Optional manual fallbacks, used only when the automatic
-                        // extraction from the music.youtube.com shell fails.
-                        Text(
-                            Localization.get(language, "advanced_login_hint"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                        OutlinedTextField(
-                            value = dataSyncId,
-                            onValueChange = { dataSyncId = it },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            label = { Text(Localization.get(language, "data_sync_id_label")) },
-                            singleLine = true,
-                        )
-                        OutlinedTextField(
-                            value = visitorData,
-                            onValueChange = { visitorData = it },
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                            label = { Text(Localization.get(language, "visitor_data_label")) },
-                            singleLine = true,
-                        )
-
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    savingCookie = true
-                                    error = null
-                                    status = null
-                                    try {
-                                        val account = withContext(Dispatchers.IO) {
-                                            LoginManager.login(
-                                                cookie = cookie,
-                                                dataSyncIdOverride = dataSyncId.ifBlank { null },
-                                                visitorDataOverride = visitorData.ifBlank { null },
-                                            )
-                                        }
-                                        status = "${Localization.get(language, "logged_in_as")}: ${account.name}"
-                                        refreshAccount()
-                                        onLoggedIn()
-                                    } catch (e: Exception) {
-                                        error = e.message ?: (e::class.simpleName ?: "error")
-                                    } finally {
-                                        savingCookie = false
-                                    }
-                                }
-                            },
-                            enabled = cookie.isNotBlank() && !savingCookie,
-                            modifier = Modifier.padding(top = 16.dp),
-                        ) {
-                            Text(if (savingCookie) Localization.get(language, "logging_in") else Localization.get(language, "login"))
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
     }
 }

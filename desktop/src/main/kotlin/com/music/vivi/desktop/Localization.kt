@@ -60,6 +60,7 @@ object Localization {
         "pl" to { strings_pl() },
         "pt" to { strings_pt() },
         "pt-rBR" to { strings_pt_rBR() },
+        "pt_rBR" to { strings_pt_rBR() },
         "ro" to { strings_ro() },
         "ru" to { strings_ru() },
         "sk" to { strings_sk() },
@@ -74,6 +75,8 @@ object Localization {
         "vi" to { strings_vi() },
         "zh-rCN" to { strings_zh_rCN() },
         "zh-rTW" to { strings_zh_rTW() },
+        "zh_rCN" to { strings_zh_rCN() },
+        "zh_rTW" to { strings_zh_rTW() },
     )
 
     /** Built tables, so a language is parsed once per session. */

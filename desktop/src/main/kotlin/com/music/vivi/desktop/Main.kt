@@ -93,11 +93,11 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.SkipNext
@@ -120,6 +120,7 @@ import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Storage
@@ -166,7 +167,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -1382,6 +1382,18 @@ fun WindowScope.App(
     // so the renderer, the settings screen and the file always agree.
     var lyricsDisplay by remember(settingsFileRevision()) { mutableStateOf(lyricsDisplayOptionsFrom(DesktopSettings.load())) }
     var translateLyrics by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().translateLyrics) }
+    // The lyrics' own face: on, the app font the font screen chose; off, the
+    // renderer's own default. See `FontSection` and `LyricsDisplayOptions.fontFamily`.
+    var lyricsUseAppFont by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().lyricsUseAppFont) }
+    // The family the lyrics draw with, resolved from the same choice the theme
+    // uses. Null means "the renderer's own default", which is what the switch off.
+    val lyricsFontFamily = if (lyricsUseAppFont) AppFonts.familyFor(font, customFontPath) else null
+    // AI translation needs a key, and the row that offers it says so: DeepL has
+    // its own key, every other provider the AI one.
+    val lyricsTranslationAvailable = remember(settingsFileRevision()) {
+        val s = DesktopSettings.load()
+        if (s.aiProvider == "DeepL") s.deeplApiKey.isNotBlank() else s.aiApiKey.isNotBlank()
+    }
     var streamCacheMinutes by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().streamCacheMinutes) }
     var discordRpcEnabled by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().discordRpcEnabled) }
     var discordClientId by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().discordClientId) }
@@ -2776,6 +2788,11 @@ fun WindowScope.App(
                         onFontChange = onFontChange,
                         customFontPath = customFontPath,
                         onImportFont = onImportFont,
+                        useFontInLyrics = lyricsUseAppFont,
+                        onUseFontInLyricsChange = { on ->
+                            lyricsUseAppFont = on
+                            DesktopSettings.update { it.copy(lyricsUseAppFont = on) }
+                        },
                     )
                     is Screen.SettingsCanvas -> SettingsCanvasScreen(
                         language = language,
@@ -2854,6 +2871,11 @@ fun WindowScope.App(
                         onPureBlackMiniPlayerChange = { p ->
                             pureBlackMiniPlayer = p
                             DesktopSettings.update { it.copy(pureBlackMiniPlayer = p) }
+                        },
+                        sliderStyle = sliderStyle,
+                        onSliderStyleChange = { s ->
+                            sliderStyle = s
+                            DesktopSettings.update { it.copy(sliderStyle = s) }
                         },
                         swipeThumbnail = swipeThumbnail,
                         onSwipeThumbnailChange = { s ->
@@ -2990,16 +3012,6 @@ fun WindowScope.App(
                         onTogglePersistentQueue = { checked ->
                             persistentQueue = checked
                             DesktopSettings.update { it.copy(persistentQueue = checked) }
-                        },
-                        syncViviVolume = syncViviVolume,
-                        onToggleSyncViviVolume = { checked ->
-                            syncViviVolume = checked
-                            DesktopSettings.update { it.copy(syncViviVolume = checked) }
-                        },
-                        sliderStyle = sliderStyle,
-                        onSliderStyleChange = { s ->
-                            sliderStyle = s
-                            DesktopSettings.update { it.copy(sliderStyle = s) }
                         },
                         onOpenPlayerDesign = { navigate(Screen.SettingsPlayerDesign) },
                         onOpenEqualizer = { navigate(Screen.SettingsEqualizer) },
@@ -3324,6 +3336,22 @@ fun WindowScope.App(
                             lyricsThumbnailPlayPause = on
                             DesktopSettings.update { it.copy(lyricsThumbnailPlayPause = on) }
                         },
+                        onOpenRomanize = { navigate(Screen.SettingsRomanize) },
+                        translationAvailable = lyricsTranslationAvailable,
+                    )
+                    is Screen.SettingsRomanize -> SettingsRomanizeScreen(
+                        language = language,
+                        onBack = goBack,
+                        options = lyricsDisplay,
+                        onOptionsChange = { opts ->
+                            lyricsDisplay = opts
+                            DesktopSettings.update {
+                                it.copy(
+                                    lyricsTextSize = opts.textSizeSp,
+                                    lyricsLineSpacing = opts.lineSpacing,
+                                ).withLyricsDisplayOptions(opts)
+                            }
+                        },
                     )
                     is Screen.SettingsStorage -> SettingsStorageScreen(
                         language = language,
@@ -3575,7 +3603,7 @@ fun WindowScope.App(
                         synced = syncedLyrics,
                         textSizeSp = lyricsTextSize,
                         lineSpacing = lyricsLineSpacing,
-                        display = lyricsDisplay,
+                        display = lyricsDisplay.copy(fontFamily = lyricsFontFamily),
                         translate = lyricsTranslationConfig(DesktopSettings.load(), translateLyrics),
                         onSeek = { ms -> player.seekTo(ms) },
                         onTogglePlay = { player.toggle() },
@@ -3591,7 +3619,7 @@ fun WindowScope.App(
                         synced = syncedLyrics,
                         textSizeSp = lyricsTextSize,
                         lineSpacing = lyricsLineSpacing,
-                        display = lyricsDisplay,
+                        display = lyricsDisplay.copy(fontFamily = lyricsFontFamily),
                         translate = lyricsTranslationConfig(DesktopSettings.load(), translateLyrics),
                         onSeek = { ms -> player.seekTo(ms) },
                         onTogglePlay = { player.toggle() },
@@ -5599,7 +5627,7 @@ fun SettingsSystemScreen(
         // Advanced: Developer options is hidden here until the version code in
         // About is tapped seven times. A section of its own (not a row in the
         // group above) so the unlock is the only way it can appear.
-        if (developerUnlocked) {
+        M3SettingsFold(visible = developerUnlocked) {
             Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 title = Localization.get(language, "advanced"),
@@ -5810,21 +5838,36 @@ fun DeviceSyncSection(
         }
     }
 
-    SettingSwitch(
-        language = language,
-        key = "sync_vivi_volume",
-        checked = syncViviVolume,
-        onCheckedChange = onToggleSyncViviVolume,
-    )
-    // The native (OS) volume has its own switch: it is a different channel from
-    // the in-app slider above, and the two are wanted independently. The label
-    // says NATIVE — next to "Sync VIVI volume" a bare "Sync volume" read as a
-    // second app-volume sync.
-    SettingSwitch(
-        language = language,
-        key = "sync_os_volume",
-        checked = syncNativeVolume,
-        onCheckedChange = onToggleSyncNativeVolume,
+    // The two volume channels fold away under the app's own "Advanced" heading.
+    // They are the channels the sync reads - the in-app slider and the operating
+    // system's own media volume - each its own data-store key, so they are wanted
+    // independently; but they are set once and then left alone, and as two loose
+    // rows between the connection method and the relay field they read as a part
+    // of the connection flow. The group opens unrolled, and where the pointer
+    // left it is not a setting: nothing about it is written to disk.
+    var advancedExpanded by remember { mutableStateOf(true) }
+    M3SettingsCollapsibleGroup(
+        title = Localization.get(language, "advanced"),
+        expanded = advancedExpanded,
+        onExpandedChange = { advancedExpanded = it },
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.VolumeUp,
+                title = { Text(Localization.get(language, "sync_vivi_volume")) },
+                trailing = { Switch(checked = syncViviVolume, onCheckedChange = onToggleSyncViviVolume) },
+                onClick = { onToggleSyncViviVolume(!syncViviVolume) },
+            ),
+            // The native (OS) volume has its own switch: it is a different channel
+            // from the in-app slider above, and the two are wanted independently.
+            // The label says NATIVE — next to "Sync VIVI volume" a bare "Sync
+            // volume" read as a second app-volume sync.
+            M3SettingsItem(
+                icon = Icons.Filled.Speaker,
+                title = { Text(Localization.get(language, "sync_os_volume")) },
+                trailing = { Switch(checked = syncNativeVolume, onCheckedChange = onToggleSyncNativeVolume) },
+                onClick = { onToggleSyncNativeVolume(!syncNativeVolume) },
+            ),
+        ),
     )
 
     val connecting = connectionState == SyncConnectionState.CONNECTING
@@ -6100,18 +6143,42 @@ fun AccountSection(
     onLogout: () -> Unit,
     onLoggedIn: () -> Unit,
 ) {
-    Text(Localization.get(language, "account"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
     if (isLoggedIn) {
-        Text(
-            "${Localization.get(language, "logged_in_as")}: ${accountName.ifBlank { "YouTube" }}",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 8.dp),
-        )
+        // The head this screen never had: the same hero as the two sign-ins, with
+        // the session as its pill, instead of a title and a "Logged in as" line
+        // that were the only two loose texts left in this family.
+        AccountHero(language = language, accountName = accountName)
         // Mobile's "Auto sync with account": the account's playlists are
         // mirrored into the local store, so they can be played, queued and
         // edited offline instead of only being listed by the sidebar.
         var syncPlaylists by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().syncPlaylistsWithYoutube) }
         val syncStatus by PlaylistSync.status.collectAsState()
+        // The switch and the run it triggers are one subject (the account's
+        // playlists) and so one card: as a row, "Sync playlist" is the same kind
+        // of control as the switch above it, and its state is that row's own
+        // description instead of a text floating beside a button.
+        val syncRunning = syncStatus.phase == PlaylistSync.Phase.RUNNING
+        val syncStatusText = when (syncStatus.phase) {
+            // A whole-library sync is minutes of network work, so the line reports
+            // where it actually is (playlists done / total, songs moved, current
+            // playlist), not just "in progress".
+            // The counter in the row's trailing slot already says `3/12`, so
+            // the sentence under the title carries the rest of the run: the
+            // songs moved and the playlist being worked on.
+            PlaylistSync.Phase.RUNNING -> syncStatus.detailText(
+                Localization.get(
+                    language,
+                    if (syncStatus.uploading) "playlists_upload" else "sync_in_progress",
+                ),
+            )
+            PlaylistSync.Phase.DONE -> if (syncStatus.playlists == 0 && syncStatus.created == 0) {
+                Localization.get(language, "sync_finished")
+            } else {
+                "${Localization.get(language, "sync_finished")} (${syncStatus.playlists + syncStatus.created})"
+            }
+            PlaylistSync.Phase.FAILED -> Localization.get(language, "update_failed")
+            PlaylistSync.Phase.IDLE -> null
+        }
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -6126,46 +6193,27 @@ fun AccountSection(
                         if (next) PlaylistSync.sync("switched on")
                     },
                 ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Refresh,
+                    title = { Text(Localization.get(language, "sync_now")) },
+                    description = if (syncStatusText != null) {
+                        { Text(syncStatusText) }
+                    } else {
+                        null
+                    },
+                    enabled = syncPlaylists && !syncRunning,
+                    onClick = { PlaylistSync.sync("manual") },
+                    // The run's state is a counter, not a spinner alone: `3/12`
+                    // says how much of the library is done and how much is
+                    // left, which a ring cannot.
+                    trailing = if (syncRunning) {
+                        { SyncRunTrailing(syncStatus) }
+                    } else {
+                        null
+                    },
+                ),
             ),
         )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(top = 8.dp),
-        ) {
-            OutlinedButton(
-                onClick = { PlaylistSync.sync("manual") },
-                enabled = syncPlaylists && syncStatus.phase != PlaylistSync.Phase.RUNNING,
-            ) {
-                Text(Localization.get(language, "sync_playlist"))
-            }
-            if (syncStatus.phase == PlaylistSync.Phase.RUNNING) {
-                Spacer(Modifier.width(12.dp))
-                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-            }
-            Spacer(Modifier.width(12.dp))
-            Text(
-                when (syncStatus.phase) {
-                    // A whole-library sync is minutes of network work, so the
-                    // line reports where it actually is (playlists done / total,
-                    // songs moved, current playlist), not just "in progress".
-                    PlaylistSync.Phase.RUNNING -> syncStatus.progressText(
-                        Localization.get(
-                            language,
-                            if (syncStatus.uploading) "playlists_upload" else "sync_in_progress",
-                        ),
-                    )
-                    PlaylistSync.Phase.DONE -> if (syncStatus.playlists == 0 && syncStatus.created == 0) {
-                        Localization.get(language, "sync_finished")
-                    } else {
-                        "${Localization.get(language, "sync_finished")} (${syncStatus.playlists + syncStatus.created})"
-                    }
-                    PlaylistSync.Phase.FAILED -> Localization.get(language, "update_failed")
-                    PlaylistSync.Phase.IDLE -> ""
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
         // The other direction, and the one the user asks for explicitly: the
         // local playlists that are NOT on the account yet are created there and
         // their songs uploaded (the mobile app only offers this at creation time,
@@ -6243,9 +6291,20 @@ fun AccountSection(
                 },
             )
         }
-        Button(onClick = onLogout, modifier = Modifier.padding(top = 8.dp)) {
-            Text(Localization.get(language, "logout"))
-        }
+        // The way out as a row of a card like every other action on this screen,
+        // in the error colour so a destructive action never reads as a normal one.
+        Spacer(Modifier.height(16.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.AutoMirrored.Filled.Logout,
+                    title = {
+                        Text(Localization.get(language, "logout"), color = MaterialTheme.colorScheme.error)
+                    },
+                    onClick = onLogout,
+                ),
+            ),
+        )
     } else {
         // Show the sign-in options directly here instead of a "Log in" button
         // that opens a second screen: the user picks Google or manual cookies
@@ -6256,6 +6315,40 @@ fun AccountSection(
     }
 }
 
+/**
+ * The trailing slot of the account screen's sync row (`Sync now`): the run's
+ * counter, `3/12`, against the playlist total the run was given.
+ *
+ * A ring alone said "something is happening" and nothing about how much was
+ * left, which is the wrong half of the answer for a whole-library sync that
+ * takes minutes. Before the total is known (`0`) there is nothing to count yet,
+ * so the 18 dp ring stands in - the same state the app had before, kept for the
+ * first second of a run instead of for all of it.
+ */
+@Composable
+fun SyncRunTrailing(status: PlaylistSync.Status) {
+    if (status.total > 0) {
+        Text(
+            "${status.done}/${status.total}",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+    }
+}
+
+/**
+ * Settings -> Language: the current language, and a menu over the other 48.
+ *
+ * The menu carries a search box: forty-eight rows is not a list to scroll with a
+ * wheel, and "Magyar" is not something to find by reading from the top. The
+ * box matches the language's own name and its code, ignoring case and accents
+ * ([Languages.matching]), so "ital", "cestina" and "de" all land where they
+ * should. It is the same field the Browse screen already uses; a language the
+ * list does not contain is a query that matches nothing, and that says so
+ * instead of drawing an empty menu.
+ */
 @Composable
 fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
@@ -6273,15 +6366,70 @@ fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
             Text(Languages.name(language))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            Languages.all.forEach { lang ->
-                DropdownMenuItem(
-                    text = { Text(lang.name) },
-                    onClick = {
-                        expanded = false
-                        onLanguageChange(lang.code)
-                    },
-                )
-            }
+            LanguagePickerRows(
+                language = language,
+                selected = language,
+                onSelect = { code ->
+                    expanded = false
+                    onLanguageChange(code)
+                },
+            )
+        }
+    }
+}
+
+/**
+ * The body of [LanguageSection]'s menu: the search field, then the languages
+ * that match what is in it, the current one carrying a check.
+ *
+ * Split out of the menu so it can be rendered off screen (a `DropdownMenu` is a
+ * popup, which a headless scene does not draw): `:desktop:languageSearchCheck`
+ * renders these rows and reads them back, which is what says the field is drawn
+ * and the list really narrows.
+ */
+@Composable
+internal fun LanguagePickerRows(
+    language: String,
+    selected: String,
+    onSelect: (String) -> Unit,
+    initialQuery: String = "",
+) {
+    var query by remember { mutableStateOf(initialQuery) }
+    val matches = Languages.matching(query)
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium,
+        placeholder = {
+            Text(
+                Localization.get(language, "language_search"),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+    )
+
+    if (matches.isEmpty()) {
+        Text(
+            Localization.get(language, "language_search_none"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 17.dp, vertical = 14.dp),
+        )
+    } else {
+        matches.forEach { lang ->
+            DropdownMenuItem(
+                text = { Text(lang.name) },
+                onClick = { onSelect(lang.code) },
+                trailingIcon = if (lang.code == selected) {
+                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                } else {
+                    null
+                },
+            )
         }
     }
 }
@@ -7237,10 +7385,6 @@ fun PlayerSection(
     onToggleRememberShuffleRepeat: (Boolean) -> Unit,
     persistentQueue: Boolean,
     onTogglePersistentQueue: (Boolean) -> Unit,
-    syncViviVolume: Boolean,
-    onToggleSyncViviVolume: (Boolean) -> Unit,
-    sliderStyle: String,
-    onSliderStyleChange: (String) -> Unit,
     onOpenPlayerDesign: () -> Unit = {},
     onOpenEqualizer: () -> Unit = {},
     streamCacheMinutes: Int = 10,
@@ -7252,7 +7396,7 @@ fun PlayerSection(
         items = listOf(
             M3SettingsItem(
                 icon = Icons.Filled.MusicNote,
-                title = { Text(Localization.get(language, "player_design")) },
+                title = { Text(Localization.get(language, "player_and_mini_player_design")) },
                 trailing = { SettingsChevron() },
                 onClick = onOpenPlayerDesign,
             ),
@@ -7274,8 +7418,12 @@ fun PlayerSection(
     )
 
     // --- Crossfade (mobile keeps these three in their own group) ---------
+    // One card: the switch, the gapless exception it enables and the duration
+    // that only means something once it is on. The duration used to be a card of
+    // its own with a loose `Slider` under it, so a threshold of the switch above
+    // read as a setting of its own instead of a part of that switch.
     M3SettingsGroup(
-        items = listOfNotNull(
+        items = listOf(
             M3SettingsItem(
                 icon = Icons.Filled.CompareArrows,
                 title = { Text(Localization.get(language, "crossfade")) },
@@ -7283,34 +7431,31 @@ fun PlayerSection(
                 trailing = { Switch(checked = crossfade, onCheckedChange = onToggleCrossfade) },
                 onClick = { onToggleCrossfade(!crossfade) },
             ),
-            if (crossfade) M3SettingsItem(
+            M3SettingsItem(
                 icon = Icons.Filled.DiscFull,
                 title = { Text(Localization.get(language, "disable_crossfade_gapless")) },
                 description = { Text(Localization.get(language, "disable_crossfade_gapless_desc")) },
+                visible = crossfade,
                 trailing = { Switch(checked = disableCrossfadeGapless, onCheckedChange = onToggleDisableCrossfadeGapless) },
                 onClick = { onToggleDisableCrossfadeGapless(!disableCrossfadeGapless) },
-            ) else null,
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.CompareArrows,
+                title = { Text("${Localization.get(language, "crossfade_duration")}: $crossfadeDurationSeconds s") },
+                description = { Text(Localization.get(language, "crossfade_duration_desc")) },
+                visible = crossfade,
+                slider = {
+                    M3SettingsSlider(
+                        value = crossfadeDurationSeconds.coerceIn(1, 12).toFloat(),
+                        onValueChange = { onCrossfadeDurationSecondsChange(it.roundToInt().coerceIn(1, 12)) },
+                        valueRange = 1f..12f,
+                        steps = 10,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
+            ),
         ),
     )
-
-    if (crossfade) {
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.CompareArrows,
-                    title = { Text("${Localization.get(language, "crossfade_duration")}: $crossfadeDurationSeconds s") },
-                    description = { Text(Localization.get(language, "crossfade_duration_desc")) },
-                ),
-            ),
-        )
-        Slider(
-            value = crossfadeDurationSeconds.coerceIn(1, 12).toFloat(),
-            onValueChange = { onCrossfadeDurationSecondsChange(it.roundToInt().coerceIn(1, 12)) },
-            valueRange = 1f..12f,
-            steps = 10,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        )
-    }
 
     // --- History duration -------------------------------------------------
     M3SettingsGroup(
@@ -7322,7 +7467,7 @@ fun PlayerSection(
             ),
         ),
     )
-    Slider(
+    M3SettingsSlider(
         value = historyDurationSeconds.coerceIn(1, 100).toFloat(),
         onValueChange = { onHistoryDurationSecondsChange(it.roundToInt().coerceIn(1, 100)) },
         valueRange = 1f..100f,
@@ -7400,27 +7545,25 @@ fun PlayerSection(
                 trailing = { Switch(checked = skipSilence, onCheckedChange = onToggleSkipSilence) },
                 onClick = { onToggleSkipSilence(!skipSilence) },
             ),
-            // "Instantly skip silence" is a derivative of the master toggle:
-            // it only shows (and only has an effect) when "Skip silence" is on.
-            if (skipSilence) M3SettingsItem(
+            // "Instantly skip silence" is a derivative of the master toggle: it
+            // only shows (and only has an effect) when "Skip silence" is on, and
+            // it folds away with the card instead of vanishing from it.
+            M3SettingsItem(
                 icon = Icons.Filled.FlashOn,
                 title = { Text(Localization.get(language, "skip_silence_instant")) },
                 description = { Text(Localization.get(language, "skip_silence_instant_desc")) },
+                visible = skipSilence,
                 trailing = { Switch(checked = skipSilenceInstant, onCheckedChange = onToggleSkipSilenceInstant) },
                 onClick = { onToggleSkipSilenceInstant(!skipSilenceInstant) },
-            ) else null,
+            ),
         ),
     )
 
     // --- Misc (mobile's "Misc" group) ------------------------------------
+    // The volume channel is *not* here: it is a device-sync option and lives in
+    // Settings -> Device sync, next to the other volume channel, on both editions.
     M3SettingsGroup(
         items = listOf(
-            M3SettingsItem(
-                icon = Icons.Filled.VolumeUp,
-                title = { Text(Localization.get(language, "sync_vivi_volume")) },
-                trailing = { Switch(checked = syncViviVolume, onCheckedChange = onToggleSyncViviVolume) },
-                onClick = { onToggleSyncViviVolume(!syncViviVolume) },
-            ),
             M3SettingsItem(
                 icon = Icons.Filled.VolumeOff,
                 title = { Text(Localization.get(language, "pause_music_when_media_muted")) },
@@ -7436,14 +7579,8 @@ fun PlayerSection(
         ),
     )
 
-    M3SettingsDropdownItem(
-        icon = Icons.Filled.SwapHoriz,
-        title = Localization.get(language, "slider_style"),
-        value = sliderStyleLabel(language, sliderStyle),
-        options = listOf("slim", "squiggly", "wavy").map { it to sliderStyleLabel(language, it) },
-        onSelect = onSliderStyleChange,
-    )
-
+    // The cache's number is the row's own, so the slider is drawn in the row's
+    // text column instead of floating under the card.
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -7456,40 +7593,25 @@ fun PlayerSection(
                     )
                 },
                 description = { Text(Localization.get(language, "stream_cache_minutes_desc")) },
+                slider = {
+                    M3SettingsSlider(
+                        value = if (streamCacheMinutes <= 0) 61f else streamCacheMinutes.toFloat(),
+                        onValueChange = {
+                            val v = it.roundToInt()
+                            // Minimum is 10 minutes (issue #25): anything below means "forever" only at 61+.
+                            onStreamCacheMinutesChange(if (v >= 61) 0 else v.coerceIn(10, 60))
+                        },
+                        valueRange = 10f..61f,
+                        steps = 50,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                },
             ),
         ),
     )
-    Slider(
-        value = if (streamCacheMinutes <= 0) 61f else streamCacheMinutes.toFloat(),
-        onValueChange = {
-            val v = it.roundToInt()
-            // Minimum is 10 minutes (issue #25): anything below means "forever" only at 61+.
-            onStreamCacheMinutesChange(if (v >= 61) 0 else v.coerceIn(10, 60))
-        },
-        valueRange = 10f..61f,
-        steps = 50,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-    )
-}
-
-private fun sliderStyleLabel(language: String, style: String): String = when (style) {
-    "squiggly" -> Localization.get(language, "slider_squiggly")
-    "wavy" -> Localization.get(language, "slider_wavy")
-    else -> Localization.get(language, "slider_slim")
 }
 
 @Composable
-private fun SettingSwitch(language: String, key: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-        Text(Localization.get(language, key))
-    }
-}
-
 private fun audioQualityLabel(language: String, quality: String): String = when (quality) {
     "high" -> Localization.get(language, "audio_quality_high")
     "low" -> Localization.get(language, "audio_quality_low")

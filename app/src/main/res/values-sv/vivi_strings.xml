@@ -1086,7 +1086,7 @@
     <!-- Data Saver -->
     <string name="data_saver">Data‑sparare</string>
     <string name="data_saver_desc">Stänger av canvas och bakgrundsvideor samt laddar lågkvalitativa bilder för att spara data och batteri</string>
-    <string name="data_saver_turns_off_header">Stängs av när aktiverad</string>
+    <string name="data_saver_turns_off_header">När det är på stängs dessa av</string>
     <string name="data_saver_player_canvas">Spelarens canvasanimation</string>
     <string name="data_saver_artist_video">Artistens canvasvideo</string>
     <string name="data_saver_artist_bg_video">Artistens bakgrundsvideo</string>

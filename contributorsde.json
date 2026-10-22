@@ -26,6 +26,10 @@
     "- \"description\": short neutral-English text (not translated by the app).",
     "  Keep it on a single line inside the quotes.",
     "- \"url\": optional; defaults to https://github.com/<username> when missing.",
+    "- \"group\": which heading the person is shown under in the Contributors",
+    "  screen: \"developer\", \"supporter\" (help and testing that arrive almost",
+    "  immediately) or \"contributor\" (everyone else). Missing means",
+    "  \"contributor\", so an entry added without it still appears.",
     "",
     "Notes:",
     "- The order in the file is the order shown in the Contributors screen.",
@@ -36,30 +40,36 @@
     {
       "username": "PiBOH",
       "name": "Pietro Bonaldo",
-      "description": "Created the desktop version of Vivi Music, despite having a 16 years old potato PC."
+      "description": "Created the desktop version of Vivi Music, despite having a 16 years old potato PC.",
+      "group": "developer"
     },
     {
       "username": "vivizzz007",
       "name": "VIVIDH P ASHOKAN",
-      "description": "Created the Android app that VIVI Music DE is based on, and keeps the project — and its developer — in line."
+      "description": "Created the Android app that VIVI Music DE is based on, and keeps the project — and its developer — in line.",
+      "group": "developer"
     },
     {
       "username": "Ansu216",
-      "description": "Always available to help those in need in the Telegram channel, even without a PC."
+      "description": "Always available to help those in need in the Telegram channel, even without a PC.",
+      "group": "supporter"
     },
     {
       "username": "bogdan-developer",
-      "description": "Contributes massively by testing VIVI Music DE on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)"
-    },
-    {
-      "username": "dumbshrn",
-      "name": "Sharon Thomas",
-      "description": "Created the foundation of the new UX — without him, this would not exist."
+      "description": "Contributes massively by testing VIVI Music DE on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)",
+      "group": "supporter"
     },
     {
       "username": "Adithyan007hack",
       "name": "AdithyanSM",
-      "description": "Contributes massively by testing VIVI Music DE on Fedora linux."
+      "description": "Contributes massively by testing VIVI Music DE on Fedora linux.",
+      "group": "supporter"
+    },
+    {
+      "username": "dumbshrn",
+      "name": "Sharon Thomas",
+      "description": "Created the foundation of the new UX — without him, this would not exist.",
+      "group": "contributor"
     }
   ]
 }

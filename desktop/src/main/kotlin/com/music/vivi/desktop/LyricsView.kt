@@ -61,6 +61,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -207,6 +208,16 @@ data class LyricsDisplayOptions(
     val romanizeAsMain: Boolean = false,
     /** One translated line per lyric line, or null when off/unavailable. */
     val translated: List<String?>? = null,
+    /**
+     * The app's own font, when the lyrics are set to use it.
+     *
+     * The renderer builds its lines from a bare [TextStyle] (colour, size,
+     * line height), so the `Typography` the app theme applies everywhere else
+     * never reached the lyrics: choosing Outfit changed the whole app and left
+     * the lyrics on the default face. Null keeps that default on purpose, which
+     * is what the font screen's switch turns off.
+     */
+    val fontFamily: FontFamily? = null,
 )
 
 /**
@@ -660,6 +671,7 @@ fun LyricsList(
                 color = if (isActive) accent else inactive,
                 fontSize = (baseSize * if (isActive) 1.12f else 1f).sp,
                 lineHeight = (baseSize * options.lineSpacing).sp,
+                fontFamily = options.fontFamily,
             )
 
             // The line-level cross-fade, animated with the mobile timings (the

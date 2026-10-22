@@ -948,7 +948,7 @@
     <string name="skip">Keç</string>
     <string name="data_saver">Data Yadda saxlar</string>
     <string name="data_saver_desc">Turns off canvas və arxa fon videolar, və loads aşağı-keyfiyyət şəkillər -a yadda saxla data və batareya</string>
-    <string name="data_saver_turns_off_header">Aktiv ediləndə sönür</string>
+    <string name="data_saver_turns_off_header">Aktiv olduqda bunlar söndürülür</string>
     <string name="data_saver_player_canvas">Pleyer canvas animation</string>
     <string name="data_saver_artist_video">İfaçı canvas video</string>
     <string name="data_saver_artist_bg_video">İfaçı arxa fon video</string>

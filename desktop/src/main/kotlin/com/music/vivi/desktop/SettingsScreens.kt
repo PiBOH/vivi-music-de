@@ -1,6 +1,10 @@
 package com.music.vivi.desktop
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -34,7 +39,11 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DesktopWindows
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.EnergySavingsLeaf
 import androidx.compose.material.icons.filled.GraphicEq
@@ -72,7 +81,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -85,12 +93,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitTouchSlopOrCancellation
+import androidx.compose.foundation.gestures.drag
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -100,8 +126,11 @@ import java.io.File
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.hypot
+import kotlin.math.roundToInt
 
 /** YouTube host-language codes (mirrors the Android app's `LanguageCodeToName`). */
 val LanguageCodeToName: Map<String, String> = mapOf(
@@ -393,6 +422,8 @@ fun SettingsFontScreen(
     onFontChange: (AppFont) -> Unit,
     customFontPath: String = "",
     onImportFont: () -> Unit = {},
+    useFontInLyrics: Boolean = true,
+    onUseFontInLyricsChange: (Boolean) -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
         FontSection(
@@ -401,6 +432,8 @@ fun SettingsFontScreen(
             onFontChange = onFontChange,
             customFontPath = customFontPath,
             onImportFont = onImportFont,
+            useFontInLyrics = useFontInLyrics,
+            onUseFontInLyricsChange = onUseFontInLyricsChange,
         )
     }
 }
@@ -477,6 +510,8 @@ fun SettingsPlayerDesignScreen(
     onMiniPlayerBackgroundStyleChange: (MiniPlayerBackgroundStyle) -> Unit = {},
     pureBlackMiniPlayer: Boolean = false,
     onPureBlackMiniPlayerChange: (Boolean) -> Unit = {},
+    sliderStyle: String = "slim",
+    onSliderStyleChange: (String) -> Unit = {},
     swipeThumbnail: Boolean = true,
     onSwipeThumbnailChange: (Boolean) -> Unit = {},
     swipeSensitivity: Float = 0.73f,
@@ -497,6 +532,8 @@ fun SettingsPlayerDesignScreen(
             onMiniPlayerBackgroundStyleChange = onMiniPlayerBackgroundStyleChange,
             pureBlackMiniPlayer = pureBlackMiniPlayer,
             onPureBlackMiniPlayerChange = onPureBlackMiniPlayerChange,
+            sliderStyle = sliderStyle,
+            onSliderStyleChange = onSliderStyleChange,
             // "Enable swipe to change song" and its sensitivity slider are
             // settings of the player, so they belong to this screen — but the
             // screen used to be built without them, so both controls sat on
@@ -621,10 +658,6 @@ fun SettingsPlayerScreen(
     onToggleRememberShuffleRepeat: (Boolean) -> Unit,
     persistentQueue: Boolean,
     onTogglePersistentQueue: (Boolean) -> Unit,
-    syncViviVolume: Boolean,
-    onToggleSyncViviVolume: (Boolean) -> Unit,
-    sliderStyle: String,
-    onSliderStyleChange: (String) -> Unit,
     onOpenPlayerDesign: () -> Unit = {},
     onOpenEqualizer: () -> Unit = {},
     streamCacheMinutes: Int = 10,
@@ -669,10 +702,6 @@ fun SettingsPlayerScreen(
             onToggleRememberShuffleRepeat,
             persistentQueue,
             onTogglePersistentQueue,
-            syncViviVolume,
-            onToggleSyncViviVolume,
-            sliderStyle,
-            onSliderStyleChange,
             onOpenPlayerDesign,
             onOpenEqualizer,
             streamCacheMinutes,
@@ -1278,22 +1307,26 @@ fun SettingsLyricsScreen(
     onToggleTranslateLyrics: (Boolean) -> Unit = {},
     lyricsThumbnailPlayPause: Boolean = false,
     onToggleLyricsThumbnailPlayPause: (Boolean) -> Unit = {},
+    onOpenRomanize: () -> Unit = {},
+    translationAvailable: Boolean = false,
 ) {
     SettingsSubScreen(language, onBack) {
         LyricsSection(
-            language,
-            syncedLyrics,
-            onToggleSyncedLyrics,
-            lyricsTextSize,
-            onLyricsTextSizeChange,
-            lyricsLineSpacing,
-            onLyricsLineSpacingChange,
-            options,
-            onOptionsChange,
-            translateLyrics,
-            onToggleTranslateLyrics,
-            lyricsThumbnailPlayPause,
-            onToggleLyricsThumbnailPlayPause,
+            language = language,
+            syncedLyrics = syncedLyrics,
+            onToggleSyncedLyrics = onToggleSyncedLyrics,
+            lyricsTextSize = lyricsTextSize,
+            onLyricsTextSizeChange = onLyricsTextSizeChange,
+            lyricsLineSpacing = lyricsLineSpacing,
+            onLyricsLineSpacingChange = onLyricsLineSpacingChange,
+            options = options,
+            onOptionsChange = onOptionsChange,
+            translateLyrics = translateLyrics,
+            onToggleTranslateLyrics = onToggleTranslateLyrics,
+            lyricsThumbnailPlayPause = lyricsThumbnailPlayPause,
+            onToggleLyricsThumbnailPlayPause = onToggleLyricsThumbnailPlayPause,
+            onOpenRomanize = onOpenRomanize,
+            translationAvailable = translationAvailable,
         )
     }
 }
@@ -1518,6 +1551,10 @@ fun LyricsSection(
     onToggleTranslateLyrics: (Boolean) -> Unit = {},
     lyricsThumbnailPlayPause: Boolean = false,
     onToggleLyricsThumbnailPlayPause: (Boolean) -> Unit = {},
+    /** Opens the Romanization screen (its master switch and script list live there). */
+    onOpenRomanize: () -> Unit = {},
+    /** Whether an AI key is configured: without one the translation switch is not offered. */
+    translationAvailable: Boolean = false,
 ) {
     val romanize = options.romanize
 
@@ -1578,23 +1615,23 @@ fun LyricsSection(
             )
             // Mobile hides the Apple Music blur for every style but VIVI Music:
             // the renderer only applies it there, so the row is shown only then
-            // instead of offering a switch that would change nothing.
-            if (options.style == LyricsAnimationStyle.VIVIMUSIC_1) {
-                add(
-                    M3SettingsItem(
-                        icon = Icons.Filled.BlurOn,
-                        title = { Text(Localization.get(language, "lyrics_apple_blur")) },
-                        description = { Text(Localization.get(language, "lyrics_apple_blur_desc")) },
-                        trailing = {
-                            Switch(
-                                checked = options.appleMusicBlur,
-                                onCheckedChange = { onOptionsChange(options.copy(appleMusicBlur = it)) },
-                            )
-                        },
-                        onClick = { onOptionsChange(options.copy(appleMusicBlur = !options.appleMusicBlur)) },
-                    ),
-                )
-            }
+            // instead of offering a switch that would change nothing. It is
+            // `visible`, not an `if`, so choosing another style folds it away.
+            add(
+                M3SettingsItem(
+                    icon = Icons.Filled.BlurOn,
+                    title = { Text(Localization.get(language, "lyrics_apple_blur")) },
+                    description = { Text(Localization.get(language, "lyrics_apple_blur_desc")) },
+                    visible = options.style == LyricsAnimationStyle.VIVIMUSIC_1,
+                    trailing = {
+                        Switch(
+                            checked = options.appleMusicBlur,
+                            onCheckedChange = { onOptionsChange(options.copy(appleMusicBlur = it)) },
+                        )
+                    },
+                    onClick = { onOptionsChange(options.copy(appleMusicBlur = !options.appleMusicBlur)) },
+                ),
+            )
             add(
                 M3SettingsItem(
                     icon = Icons.Filled.BlurOn,
@@ -1617,7 +1654,7 @@ fun LyricsSection(
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(top = 16.dp),
     )
-    androidx.compose.material3.Slider(
+    M3SettingsSlider(
         value = lyricsTextSize,
         onValueChange = onLyricsTextSizeChange,
         valueRange = 12f..32f,
@@ -1629,7 +1666,7 @@ fun LyricsSection(
         style = MaterialTheme.typography.titleMedium,
         modifier = Modifier.padding(top = 16.dp),
     )
-    androidx.compose.material3.Slider(
+    M3SettingsSlider(
         value = lyricsLineSpacing,
         onValueChange = onLyricsLineSpacingChange,
         valueRange = 1.0f..2.0f,
@@ -1680,13 +1717,95 @@ fun LyricsSection(
         ),
     )
 
-    // --- Romanization (master switch + per-script children) ---------------
-    Text(Localization.get(language, "lyrics_romanize"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
+    // --- Romanization: one row that opens its own screen -------------------
+    // The master switch, the twelve script switches and the "as main" choice
+    // were one card in the middle of this screen, so the lyrics settings were
+    // mostly a list of twelve languages visible only while the switch was on.
+    // They live on their own screen now (`SettingsRomanizeScreen`), reached from
+    // here, and this row says whether it is on and which languages it covers.
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Translate,
+                title = { Text(Localization.get(language, "lyrics_romanize")) },
+                description = {
+                    Text(
+                        romanize?.let { ROMANIZE_SCRIPTS.count { script -> script.isEnabled(it) } }
+                            ?.let { "$it / ${ROMANIZE_SCRIPTS.size}" }
+                            ?: Localization.get(language, "lyrics_romanize_desc"),
+                    )
+                },
+                trailing = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                onClick = onOpenRomanize,
+            ),
+        ),
+    )
+
+    // --- AI translation ---------------------------------------------------
+    // The switch is only offered when there is a key to translate with: an on
+    // switch with no key behind it is a setting that silently does nothing, and
+    // the row said nothing about that. Without a key the row is disabled and its
+    // description says why, with the AI screen named as the place to fix it.
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Translate,
+                title = { Text(Localization.get(language, "translate_lyrics")) },
+                description = {
+                    Text(
+                        if (translationAvailable) {
+                            Localization.get(language, "translate_lyrics_desc")
+                        } else {
+                            Localization.get(language, "translate_needs_api_key")
+                        },
+                    )
+                },
+                trailing = {
+                    Switch(
+                        checked = translateLyrics && translationAvailable,
+                        enabled = translationAvailable,
+                        onCheckedChange = { on -> onToggleTranslateLyrics(on) },
+                    )
+                },
+                onClick = { if (translationAvailable) onToggleTranslateLyrics(!translateLyrics) },
+            ),
+        ),
+    )
+}
+
+/**
+ * Romanization on its own screen.
+ *
+ * The master switch, one switch per script (Japanese, Korean, Chinese, Russian,
+ * Ukrainian, Serbian, Bulgarian, Belarusian, Kyrgyz, Macedonian, Hindi, Punjabi)
+ * and the choice every translated line already had: show the romanized text as
+ * the main line with the original under it, or keep the original in front. The
+ * script rows are `visible = romanize != null`, so they fold away with the
+ * master switch instead of being dropped between two frames, and their readers
+ * stay null-safe because a row on its way out is still composed.
+ */
+@Composable
+fun RomanizeSection(
+    language: String,
+    options: LyricsDisplayOptions = LyricsDisplayOptions(),
+    onOptionsChange: (LyricsDisplayOptions) -> Unit = {},
+) {
+    val romanize = options.romanize
+
+    Text(Localization.get(language, "lyrics_romanize"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
     Text(
         Localization.get(language, "lyrics_romanize_desc"),
-        style = MaterialTheme.typography.bodySmall,
+        style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 8.dp, bottom = 8.dp),
     )
+
     M3SettingsGroup(
         items = buildList {
             add(
@@ -1707,54 +1826,69 @@ fun LyricsSection(
                     },
                 ),
             )
-            if (romanize != null) {
-                ROMANIZE_SCRIPTS.forEach { script ->
-                    add(
-                        M3SettingsItem(
-                            icon = null,
-                            title = { Text(Localization.get(language, script.labelKey)) },
-                            trailing = {
-                                Switch(
-                                    checked = script.isEnabled(romanize),
-                                    onCheckedChange = { on ->
-                                        onOptionsChange(options.copy(romanize = script.set(romanize, on)))
-                                    },
-                                )
-                            },
-                            onClick = { onOptionsChange(options.copy(romanize = script.set(romanize, !script.isEnabled(romanize)))) },
-                        ),
-                    )
-                }
+            // The script switches belong to the romanize switch: `visible` keeps
+            // them in the card and folds them in and out with it. Their readers are
+            // null-safe because the row exists (and is composed) while it folds.
+            ROMANIZE_SCRIPTS.forEach { script ->
                 add(
                     M3SettingsItem(
                         icon = null,
-                        title = { Text(Localization.get(language, "lyrics_romanize_as_main")) },
-                        description = { Text(Localization.get(language, "lyrics_romanize_as_main_desc")) },
+                        title = { Text(Localization.get(language, script.labelKey)) },
+                        visible = romanize != null,
                         trailing = {
                             Switch(
-                                checked = options.romanizeAsMain,
-                                onCheckedChange = { on -> onOptionsChange(options.copy(romanizeAsMain = on)) },
+                                checked = romanize?.let { script.isEnabled(it) } == true,
+                                onCheckedChange = { on ->
+                                    romanize?.let { onOptionsChange(options.copy(romanize = script.set(it, on))) }
+                                },
                             )
                         },
-                        onClick = { onOptionsChange(options.copy(romanizeAsMain = !options.romanizeAsMain)) },
+                        onClick = {
+                            romanize?.let { onOptionsChange(options.copy(romanize = script.set(it, !script.isEnabled(it)))) }
+                        },
                     ),
                 )
             }
         },
     )
 
-    // --- AI translation ---------------------------------------------------
+    // The lyrics' own choice, the same one the lines read when they are drawn:
+    // the romanized text in front, or the original in front with the romanized
+    // form under it.
+    Text(
+        Localization.get(language, "lyrics_romanize_as_main"),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 16.dp, bottom = 6.dp),
+    )
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
-                icon = Icons.Filled.Translate,
-                title = { Text(Localization.get(language, "translate_lyrics")) },
-                description = { Text(Localization.get(language, "translate_lyrics_desc")) },
-                trailing = { Switch(checked = translateLyrics, onCheckedChange = onToggleTranslateLyrics) },
-                onClick = { onToggleTranslateLyrics(!translateLyrics) },
+                icon = null,
+                title = { Text(Localization.get(language, "lyrics_romanize_as_main")) },
+                description = { Text(Localization.get(language, "lyrics_romanize_as_main_desc")) },
+                visible = romanize != null,
+                trailing = {
+                    Switch(
+                        checked = options.romanizeAsMain,
+                        onCheckedChange = { on -> onOptionsChange(options.copy(romanizeAsMain = on)) },
+                    )
+                },
+                onClick = { onOptionsChange(options.copy(romanizeAsMain = !options.romanizeAsMain)) },
             ),
         ),
     )
+}
+
+/** The Romanization sub-screen: its own destination, reached from Lyrics. */
+@Composable
+fun SettingsRomanizeScreen(
+    language: String,
+    onBack: () -> Unit,
+    options: LyricsDisplayOptions = LyricsDisplayOptions(),
+    onOptionsChange: (LyricsDisplayOptions) -> Unit = {},
+) {
+    SettingsSubScreen(language, onBack) { RomanizeSection(language, options, onOptionsChange) }
 }
 
 /** Localized label of an animation style. Shared with the player's lyrics menu. */
@@ -1931,7 +2065,9 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
             }
         }
 
-        if (enabled) {
+        // Folds like every other block that belongs to a switch: turning Developer
+        // options off closes the monitor instead of dropping it.
+        M3SettingsFold(visible = enabled) {
             Spacer(Modifier.height(16.dp))
 
             // Live monitor
@@ -2800,7 +2936,9 @@ fun SettingsIntegrationsScreen(
             checked = lastfmEnabled,
             onCheckedChange = onLastfmEnabledChange,
         )
-        if (lastfmEnabled) {
+        // The session field and the Now Playing switch belong to the switch above
+        // them, so they fold away with it instead of vanishing in one frame.
+        M3SettingsFold(visible = lastfmEnabled) {
             OutlinedTextField(
                 value = lastfmSession,
                 onValueChange = onLastfmSessionChange,
@@ -2950,7 +3088,83 @@ private fun eqRangeKey(frequency: Double): String = when {
     else -> "eq_range_treble"
 }
 
-/** Equalizer: profile list + import (AutoEQ .txt) + delete + active radio + live editor. */
+/**
+ * A band's own line: the frequency and the region it sits in, with its Q beside
+ * them.
+ *
+ * The Q is what sets how wide a band is, and it lived only in the folded *Q
+ * factor* card at the bottom of the screen: reading a band's Q meant scrolling to
+ * a second list of the same ten frequencies. It is a small muted number on the
+ * line of the band it belongs to instead, where it is read without competing with
+ * the gain - the number a listener actually turns.
+ */
+@Composable
+private fun EqBandTitle(language: String, band: ParametricEQBand) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            java.lang.String.format(java.util.Locale.US, "%.0f", band.frequency) + " Hz - " +
+                Localization.get(language, eqRangeKey(band.frequency)),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            "Q " + java.lang.String.format(java.util.Locale.US, "%.2f", band.q),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+        )
+    }
+}
+
+/**
+ * The gain a height in the chart means: 0 dB at the middle, +/-12 dB at the two
+ * edges, on the sliders' own half-dB stops.
+ *
+ * One map for both gestures on the curve. A drag sets it on every move; a click
+ * sets it once, at the height that was clicked, so a listener can put a peak
+ * where it belongs with one click instead of dragging it there by eye.
+ */
+internal fun eqGainAt(y: Float, height: Float): Double {
+    val mid = height / 2f
+    val span = mid * 0.92f
+    val raw = ((mid - y) / span).coerceIn(-1f, 1f) * 12f
+    return (raw * 2f).roundToInt() / 2.0
+}
+
+/**
+ * What the readout over a dragged band says: the frequency it stands for and the
+ * gain it is being given, on the same half-dB stops its own slider snaps to.
+ *
+ * A drag on the curve moves a height, and a height is not a number: the band's
+ * own row (with its `Hz` and its `dB`) is a scroll away from the chart, so the
+ * value has to travel with the point under the pointer.
+ */
+internal fun eqBandReadout(band: ParametricEQBand): String =
+    java.lang.String.format(java.util.Locale.US, "%.0f Hz", band.frequency) + "   " +
+        (if (band.gain > 0) "+" else "") +
+        java.lang.String.format(java.util.Locale.US, "%.1f dB", band.gain)
+
+/**
+ * Equalizer: the phone's own list (no equalization, then every profile imported
+ * here as an AutoEQ `ParametricEQ.txt`, each with the band count the app shows)
+ * and a desktop-shaped editor for the active one.
+ *
+ * The editor was 10 cards of two sliders each, one card per band, which is a
+ * phone column scrolled tall: on a desktop window ten bands stacked vertically
+ * read as one long list and the shape of the profile, the only thing an
+ * equalizer is about, was nowhere on screen. So the screen is the shape first (a
+ * response curve drawing the active profile's gains, redrawn through the
+ * animation whenever a slider moves), then one card of band rows carrying the
+ * gain: the numbers a listener touches are the gains.
+ *
+ * The Q of a band is read where the band is named, in small muted text beside
+ * its frequency (`EqBandTitle`), and it is not hand-tuned here: it is the width
+ * the profile was imported with, and the phone's equalizer has no Q of its own
+ * either. A second card of Q sliders stood at the bottom of this screen and said
+ * the same ten frequencies again.
+ *
+ * Everything is the same family as the rest of Settings: [M3SettingsGroup] rows
+ * with the group's uneven corners and [M3SettingsItem.slider] for a slider that
+ * belongs to its row, so the master Animations switch reaches the fold.
+ */
 @Composable
 fun SettingsEqualizerScreen(
     language: String,
@@ -2979,197 +3193,203 @@ fun SettingsEqualizerScreen(
         if (dir != null && name != null) File(dir, name) else null
     }.getOrNull()
 
+    fun importProfile(file: File) {
+        runCatching {
+            val eq = ParametricEQParser.parseText(file.readText())
+            if (eq.bands.isEmpty()) throw IllegalArgumentException("No filters found")
+            onImportProfile(file.nameWithoutExtension, eq)
+        }.onFailure {
+            error = it.message ?: Localization.get(language, "import_error_title")
+        }
+    }
+
+    val active = profiles.firstOrNull { it.id == activeProfileId }
+
     SettingsSubScreen(language, onBack) {
         Text(
             Localization.get(language, "equalizer_header"),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(vertical = 12.dp),
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(bottom = 12.dp),
         )
 
-        // "No Equalization" option (always first, like the mobile screen).
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clickable { onSelectProfile(null) }
-                .padding(vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        // --- The profile list (the phone's own: no equalization + imports) ---
+        M3SettingsGroup(
+            items = buildList {
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Block,
+                        title = { Text(Localization.get(language, "eq_disabled")) },
+                        trailing = { RadioButton(selected = activeProfileId.isEmpty(), onClick = null) },
+                        onClick = { onSelectProfile(null) },
+                    ),
+                )
+                profiles.forEach { profile ->
+                    add(
+                        M3SettingsItem(
+                            icon = Icons.Filled.GraphicEq,
+                            title = { Text(profile.deviceModel) },
+                            description = {
+                                Text(
+                                    Localization.get(language, "band_count")
+                                        .replace("%d", profile.bands.size.toString()),
+                                )
+                            },
+                            trailing = {
+                                // The radio that marks the active profile and the delete
+                                // action are one line, 4 dp apart, in the same 40 dp
+                                // slot: a 20 dp ring beside a 48 dp button read as two
+                                // controls stacked when the row was narrow.
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    RadioButton(selected = activeProfileId == profile.id, onClick = null)
+                                    Tooltip(Localization.get(language, "delete_profile_desc")) {
+                                        IconButton(
+                                            onClick = { deleteTarget = profile },
+                                            modifier = Modifier.size(40.dp),
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Delete,
+                                                contentDescription = null,
+                                                tint = MaterialTheme.colorScheme.error,
+                                            )
+                                        }
+                                    }
+                                }
+                            },
+                            onClick = { onSelectProfile(profile.id) },
+                        ),
+                    )
+                }
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.UploadFile,
+                        title = { Text(Localization.get(language, "import_profile")) },
+                        description = if (profiles.isEmpty()) {
+                            { Text(Localization.get(language, "no_profiles")) }
+                        } else {
+                            null
+                        },
+                        onClick = {
+                            val file = pickFile()
+                            if (file != null) importProfile(file)
+                        },
+                    ),
+                )
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.AutoAwesome,
+                        title = { Text(Localization.get(language, "add_example_profile")) },
+                        onClick = onAddExampleProfile,
+                    ),
+                )
+            },
+        )
+
+        // --- The shape of the active profile, then the controls that move it ---
+        // Choosing a profile opens the editor by folding it out from under the
+        // list, and choosing *No equalization* folds it back: the curve, the
+        // preamp, the bands and the Q factors are one block that arrives with the
+        // movement every other switch in Settings uses, instead of four cards
+        // dropped in between two frames.
+        //
+        // The profile the editor draws is the chosen one, and for the length of
+        // the collapse the one that was chosen before: without it the block would
+        // empty out while its height is still travelling.
+        val lastActive = remember { mutableStateOf<SavedEQProfile?>(null) }
+        SideEffect { active?.let { lastActive.value = it } }
+        val drawn = active ?: lastActive.value
+        AnimatedVisibility(
+            visible = active != null,
+            enter = Animations.rowEnter(),
+            exit = Animations.rowExit(),
         ) {
-            RadioButton(selected = activeProfileId.isEmpty(), onClick = { onSelectProfile(null) })
-            Spacer(Modifier.width(12.dp))
-            Text(Localization.get(language, "eq_disabled"), style = MaterialTheme.typography.bodyLarge)
-        }
+            // One child: AnimatedVisibility lays several out on top of each other.
+            Column(Modifier.fillMaxWidth()) {
+                val profile = drawn ?: return@Column
+                key(profile.id) {
+                    var draftBands by remember { mutableStateOf(profile.bands) }
+                    var draftPreamp by remember { mutableStateOf(profile.preamp) }
+                    fun commit() = onUpdateProfile(profile.id, draftBands, draftPreamp)
 
-        HorizontalDivider(Modifier.padding(vertical = 4.dp))
-
-        if (profiles.isEmpty()) {
-            Text(
-                Localization.get(language, "no_profiles"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 16.dp),
-            )
-        } else {
-            profiles.forEach { profile ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { onSelectProfile(profile.id) }
-                        .padding(vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(selected = activeProfileId == profile.id, onClick = { onSelectProfile(profile.id) })
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        Text(profile.deviceModel, style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            Localization.get(language, "band_count").replace("%d", profile.bands.size.toString()),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    IconButton(onClick = { deleteTarget = profile }) {
-                        Icon(
-                            Icons.Filled.Delete,
-                            contentDescription = Localization.get(language, "delete_profile_desc"),
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                    }
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(
-                onClick = {
-                    val file = pickFile()
-                    if (file != null) {
-                        runCatching {
-                            val eq = ParametricEQParser.parseText(file.readText())
-                            if (eq.bands.isEmpty()) throw IllegalArgumentException("No filters found")
-                            onImportProfile(file.nameWithoutExtension, eq)
-                        }.onFailure {
-                            error = it.message ?: Localization.get(language, "import_error_title")
-                        }
-                    }
-                },
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(Localization.get(language, "import_profile"))
-            }
-            OutlinedButton(onClick = onAddExampleProfile) {
-                Icon(Icons.Filled.AutoAwesome, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(Localization.get(language, "add_example_profile"))
-            }
-        }
-
-        // --- Live editor for the active profile: adjust gains/Q/preamp in real time. ---
-        val editingProfile = profiles.find { it.id == activeProfileId }
-        if (editingProfile != null) {
-            key(editingProfile.id) {
-                var draftBands by remember { mutableStateOf(editingProfile.bands) }
-                var draftPreamp by remember { mutableStateOf(editingProfile.preamp) }
-
-                fun commit() = onUpdateProfile(editingProfile.id, draftBands, draftPreamp)
-
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    "${Localization.get(language, "eq_edit_profile")}: ${editingProfile.name}",
-                    style = MaterialTheme.typography.titleMedium,
-                )
-
-                Text(
-                    Localization.get(language, "eq_preamp"),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 12.dp),
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Slider(
-                        value = draftPreamp.toFloat(),
-                        onValueChange = { draftPreamp = it.toDouble(); commit() },
-                        valueRange = -12f..12f,
-                        steps = 47,
-                        modifier = Modifier.weight(1f),
+                    Spacer(Modifier.height(8.dp))
+                    EqualizerResponseCard(
+                        language = language,
+                        profile = profile,
+                        bands = draftBands,
+                        modifier = Modifier.fillMaxWidth(),
+                        // A point on the curve is the band it stands for: dragging it
+                        // up or down is the same edit as the band's own slider, which
+                        // is what makes ten numbers into a shape that can be worked
+                        // on directly.
+                        onBandGainChange = { index, gain ->
+                            draftBands = draftBands.toMutableList().also {
+                                it[index] = it[index].copy(gain = gain)
+                            }
+                            commit()
+                        },
                     )
-                    Text(
-                        "${if (draftPreamp > 0) "+" else ""}${java.lang.String.format(java.util.Locale.US, "%.1f", draftPreamp)} dB",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 12.dp).widthIn(min = 64.dp),
-                        textAlign = TextAlign.End,
-                    )
-                }
 
-                draftBands.forEachIndexed { i, band ->
-                    Card(
-                        Modifier.fillMaxWidth().padding(top = 10.dp),
-                        shape = RoundedCornerShape(16.dp),
-                    ) {
-                        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
-                            Text(
-                                "${Localization.get(language, "eq_band")} ${i + 1} · ${java.lang.String.format(java.util.Locale.US, "%.0f", band.frequency)} Hz · ${Localization.get(language, eqRangeKey(band.frequency))}",
-                                style = MaterialTheme.typography.titleSmall,
+                    Spacer(Modifier.height(8.dp))
+                    M3SettingsGroup(
+                        items = listOf(
+                            M3SettingsItem(
+                                icon = Icons.Filled.VolumeUp,
+                                title = {
+                                    Text(
+                                        Localization.get(language, "eq_preamp") + ": " +
+                                            (if (draftPreamp > 0) "+" else "") +
+                                            java.lang.String.format(java.util.Locale.US, "%.1f", draftPreamp) + " dB",
+                                    )
+                                },
+                                slider = {
+                                    M3SettingsSlider(
+                                        value = draftPreamp.toFloat(),
+                                        onValueChange = { draftPreamp = it.toDouble(); commit() },
+                                        valueRange = -12f..12f,
+                                        steps = 47,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    )
+                                },
+                            ),
+                        ),
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+                    M3SettingsGroup(
+                        items = draftBands.mapIndexed { index, band ->
+                            M3SettingsItem(
+                                icon = null,
+                                title = { EqBandTitle(language, band) },
+                                description = {
+                                    Text(
+                                        Localization.get(language, "eq_gain") + ": " +
+                                            (if (band.gain > 0) "+" else "") +
+                                            java.lang.String.format(java.util.Locale.US, "%.1f", band.gain) + " dB",
+                                    )
+                                },
+                                slider = {
+                                    M3SettingsSlider(
+                                        value = band.gain.toFloat(),
+                                        onValueChange = { gain ->
+                                            draftBands = draftBands.toMutableList().also {
+                                                it[index] = band.copy(gain = gain.toDouble())
+                                            }
+                                            commit()
+                                        },
+                                        valueRange = -12f..12f,
+                                        steps = 47,
+                                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    )
+                                },
                             )
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    Localization.get(language, "eq_gain"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.widthIn(min = 44.dp),
-                                )
-                                Slider(
-                                    value = band.gain.toFloat(),
-                                    onValueChange = { g ->
-                                        draftBands = draftBands.toMutableList().also { it[i] = band.copy(gain = g.toDouble()) }
-                                        commit()
-                                    },
-                                    valueRange = -12f..12f,
-                                    steps = 47,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Text(
-                                    "${if (band.gain > 0) "+" else ""}${java.lang.String.format(java.util.Locale.US, "%.1f", band.gain)} dB",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.widthIn(min = 56.dp),
-                                    textAlign = TextAlign.End,
-                                )
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    Localization.get(language, "eq_q_factor"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.widthIn(min = 44.dp),
-                                )
-                                Slider(
-                                    value = band.q.toFloat(),
-                                    onValueChange = { q ->
-                                        draftBands = draftBands.toMutableList().also { it[i] = band.copy(q = q.toDouble()) }
-                                        commit()
-                                    },
-                                    valueRange = 0.4f..8f,
-                                    steps = 37,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                Text(
-                                    java.lang.String.format(java.util.Locale.US, "%.2f", band.q),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.widthIn(min = 56.dp),
-                                    textAlign = TextAlign.End,
-                                )
-                            }
-                        }
-                    }
+                        },
+                    )
+
                 }
             }
         }
-
-        Spacer(Modifier.height(24.dp))
     }
 
     error?.let { message ->
@@ -3208,6 +3428,257 @@ fun SettingsEqualizerScreen(
                 }
             },
         )
+    }
+}
+
+/**
+ * The active profile's response, drawn band by band.
+ *
+ * The gains are the numbers the band rows below edit, so this is not decoration:
+ * it is the only place where the ten values read as one shape. Each band's height
+ * comes through `animateFloatAsState` on the same 200 ms the rows fold on, so
+ * dragging a gain redraws the curve through the movement instead of jumping the
+ * line under the finger, and it follows the master Animations switch like every
+ * other transition.
+ *
+ * While a point is dragged, the band it belongs to is named over it - its
+ * frequency and the gain being set ([eqBandReadout]) - because the row that says
+ * the same numbers is below the chart: the point is what the pointer holds, and a
+ * height on its own is not a value.
+ */
+@Composable
+internal fun EqualizerResponseCard(
+    language: String,
+    profile: SavedEQProfile,
+    bands: List<ParametricEQBand>,
+    modifier: Modifier = Modifier,
+    onBandGainChange: (index: Int, gain: Double) -> Unit = { _, _ -> },
+) {
+    val gains = bands.map { band ->
+        animateFloatAsState(
+            targetValue = band.gain.toFloat(),
+            animationSpec = tween(Animations.rowMs(), easing = Animations.emphasizedDecelerate),
+            label = "eqBandGain",
+        ).value
+    }
+    val curve = MaterialTheme.colorScheme.primary
+    val grid = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.18f)
+    val fill = curve.copy(alpha = 0.16f)
+    // The readout of the band being dragged: a small pill of the card's own
+    // raised surface, so it sits over the curve instead of hiding behind it.
+    val readout = rememberTextMeasurer()
+    val readoutStyle = MaterialTheme.typography.labelMedium.copy(
+        color = MaterialTheme.colorScheme.onSurface,
+        fontWeight = FontWeight.Medium,
+    )
+    val pillColor = MaterialTheme.colorScheme.surfaceContainerHigh
+    val pillBorder = MaterialTheme.colorScheme.outlineVariant
+
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 14.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Filled.ShowChart,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(profile.deviceModel, style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        Localization.get(language, "band_count").replace("%d", bands.size.toString()),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            // Which band the gesture in flight owns. Kept outside the drawing so a
+            // vertical drag on one point does not slide to its neighbour when the
+            // pointer drifts sideways: the point under the finger is the one that
+            // moves, and the curve redraws through the same animated gains the
+            // sliders below drive.
+            var dragIndex by remember(bands.size) { mutableStateOf(-1) }
+            // A click (a press that never moved) is the second way to set a band:
+            // it takes the gain of the height clicked. Its readout stays up for a
+            // second after the click, because a single half-dB step is a small
+            // move on the curve and the pill is what says the click landed.
+            var tapIndex by remember(bands.size) { mutableStateOf(-1) }
+            var tapTick by remember { mutableStateOf(0) }
+            LaunchedEffect(tapTick) {
+                if (tapTick == 0) return@LaunchedEffect
+                delay(1000)
+                tapIndex = -1
+            }
+            // Which band the chart is naming: the dragged one while a gesture is
+            // in flight, the clicked one for as long as its readout lasts.
+            val namedIndex = if (dragIndex in bands.indices) dragIndex else tapIndex
+            // The gesture block outlives a recomposition, so the callback it calls
+            // is the one in force rather than the one it started with.
+            val reportGain = rememberUpdatedState(onBandGainChange)
+            Canvas(
+                Modifier
+                    .fillMaxWidth()
+                    .height(132.dp)
+                    .padding(top = 12.dp)
+                    // The curve is a control, so the pointer says so over it.
+                    .pointerHoverIcon(PointerIcon.Hand)
+                    // One gesture block for both edits, because a click is what a
+                    // drag is when it never moved: the press is followed until
+                    // either the slop is passed (a drag, from there on) or the
+                    // pointer goes up (a click).
+                    //
+                    // A drag takes the band under the pointer and sets its gain to
+                    // the height of every move; a click takes the height that was
+                    // clicked, but only on a point - within the 24 dp a dot is
+                    // aimed at. Anywhere else a click would move a value the
+                    // listener did not mean to touch, so it does nothing.
+                    .pointerInput(bands.size) {
+                        val radius = 24.dp.toPx()
+                        fun bandX(index: Int): Float = if (bands.size > 1) {
+                            size.width * index / (bands.size - 1).toFloat()
+                        } else {
+                            0f
+                        }
+                        fun bandY(index: Int): Float {
+                            val mid = size.height / 2f
+                            val span = mid * 0.92f
+                            return mid - (bands[index].gain.toFloat() / 12f).coerceIn(-1f, 1f) * span
+                        }
+                        // The point under the press, or -1 when the press was not on
+                        // one. The nearest point wins, so overlapping dots on a
+                        // crowded profile still pick the one being aimed at.
+                        fun pointAt(position: Offset): Int {
+                            var nearest = -1
+                            var distance = radius
+                            bands.indices.forEach { index ->
+                                val d = hypot(position.x - bandX(index), position.y - bandY(index))
+                                if (d <= distance) {
+                                    nearest = index
+                                    distance = d
+                                }
+                            }
+                            return nearest
+                        }
+                        // The column under the press: a drag works anywhere on the
+                        // chart, and the nearest frequency in x is the one it means.
+                        fun columnAt(x: Float): Int {
+                            if (bands.size < 2) return 0
+                            val step = size.width / (bands.size - 1).toFloat()
+                            return (x / step).roundToInt().coerceIn(0, bands.lastIndex)
+                        }
+                        suspend fun AwaitPointerEventScope.run() {
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            val slop = awaitTouchSlopOrCancellation(down.id) { change, _ ->
+                                change.consume()
+                            }
+                            if (slop == null) {
+                                // The pointer went up without passing the slop: a
+                                // click on a point sets that band, one on nothing
+                                // leaves every gain as it was.
+                                val index = pointAt(down.position)
+                                if (index >= 0) {
+                                    reportGain.value(index, eqGainAt(down.position.y, size.height.toFloat()))
+                                    tapIndex = index
+                                    tapTick += 1
+                                }
+                                return
+                            }
+                            var index = columnAt(slop.position.x)
+                            dragIndex = index
+                            reportGain.value(index, eqGainAt(slop.position.y, size.height.toFloat()))
+                            drag(slop.id) { change ->
+                                index = if (index in bands.indices) index else columnAt(change.position.x)
+                                reportGain.value(index, eqGainAt(change.position.y, size.height.toFloat()))
+                                change.consume()
+                            }
+                            dragIndex = -1
+                        }
+                        awaitEachGesture { run() }
+                    },
+            ) {
+                val mid = size.height / 2f
+                // 0 dB in the middle, +12 at the top edge and -12 at the bottom.
+                repeat(5) { line ->
+                    val y = size.height * line / 4f
+                    drawLine(
+                        color = if (line == 2) grid.copy(alpha = 0.4f) else grid,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = if (line == 2) 2f else 1f,
+                    )
+                }
+                if (gains.size >= 2) {
+                    val step = size.width / (gains.size - 1).toFloat()
+                    val points = gains.mapIndexed { index, gain ->
+                        Offset(
+                            x = step * index,
+                            y = mid - (gain / 12f).coerceIn(-1f, 1f) * mid * 0.92f,
+                        )
+                    }
+                    val line = Path().apply {
+                        moveTo(points.first().x, points.first().y)
+                        points.zipWithNext().forEach { (from, to) ->
+                            val controlX = (from.x + to.x) / 2f
+                            cubicTo(controlX, from.y, controlX, to.y, to.x, to.y)
+                        }
+                    }
+                    val area = Path().apply {
+                        addPath(line)
+                        lineTo(points.last().x, size.height)
+                        lineTo(points.first().x, size.height)
+                        close()
+                    }
+                    drawPath(area, fill)
+                    drawPath(line, curve, style = Stroke(width = 3f))
+                    // The band under the pointer is drawn larger, so a drag says
+                    // which of the ten values it is moving.
+                    points.forEachIndexed { index, point ->
+                        drawCircle(
+                            color = curve,
+                            radius = if (index == namedIndex) 6f else 3.5f,
+                            center = point,
+                        )
+                    }
+                    // The band being dragged says what it is: its frequency and
+                    // the gain it is being given, on a pill just above its point,
+                    // held inside the chart so a band at either end is still read.
+                    val active = namedIndex.takeIf { it in bands.indices }
+                    if (active != null) {
+                        val band = bands[active]
+                        val laid = readout.measure(AnnotatedString(eqBandReadout(band)), readoutStyle)
+                        val padH = 9.dp.toPx()
+                        val padV = 4.dp.toPx()
+                        val width = laid.size.width + padH * 2
+                        val height = laid.size.height + padV * 2
+                        val point = points[active]
+                        val x = (point.x - width / 2f).coerceIn(0f, size.width - width)
+                        val y = (point.y - height - 12f).coerceIn(0f, size.height - height)
+                        val corner = CornerRadius(height / 2f)
+                        drawRoundRect(
+                            color = pillColor,
+                            topLeft = Offset(x, y),
+                            size = Size(width, height),
+                            cornerRadius = corner,
+                        )
+                        drawRoundRect(
+                            color = pillBorder,
+                            topLeft = Offset(x, y),
+                            size = Size(width, height),
+                            cornerRadius = corner,
+                            style = Stroke(width = 1f),
+                        )
+                        drawText(laid, topLeft = Offset(x + padH, y + padV))
+                    }
+                }
+            }
+        }
     }
 }
 
