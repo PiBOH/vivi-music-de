@@ -21,7 +21,11 @@ package com.music.vivi.desktop
  */
 internal fun strings_pt_rBR(): Map<String, String> =
     mapOf(
+        "commits_count" to "%d commits",
+        "commits_one" to "1 commit",
         "font_in_lyrics" to "Usar a fonte do app nas letras",
         "font_in_lyrics_desc" to "Desenhar as letras com a fonte escolhida acima. Desativado, usam a fonte própria do visualizador.",
+        "storage_desc" to "Tudo o que o VIVI guarda nesta máquina e a única ação que esvazia cada parte.",
+        "storage_total" to "caches e instaladores",
         "translate_needs_api_key" to "Requer uma chave de API: adicione-a na tela AI Lyrics Translation.",
     )

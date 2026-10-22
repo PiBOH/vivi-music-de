@@ -894,3 +894,25 @@ tasks.register<JavaExec>("sliderRenderCheck") {
     mainClass.set("com.music.vivi.desktop.SliderRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+
+/**
+ * Headless check of the heads the Storage and Commits screens carry:
+ *
+ *     ./gradlew :desktop:storageCommitsRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/StorageCommitsRenderCheck.kt`.
+ * The hero is one card on the theme's own colours, and Storage's bar has to be
+ * the proportion of its parts rather than four numbers in a row: the composables
+ * are rendered into an off-screen `ImageComposeScene` and the colours are read
+ * back as blobs (a 56 dp `secondaryContainer` tile, a 12 dp bar with the pills at
+ * 6 : 3 : 1, three chips on Commits, two day rules and three rows under them). A
+ * manual check, not part of `check` (pixels, no test framework, PNGs under
+ * .ignore/hero/).
+ */
+tasks.register<JavaExec>("storageCommitsRenderCheck") {
+    group = "verification"
+    description = "Renders the Storage and Commits heads headlessly and checks the tile, the bar and the chips"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.StorageCommitsRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

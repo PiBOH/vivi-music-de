@@ -21,7 +21,11 @@ package com.music.vivi.desktop
  */
 internal fun strings_zh_rTW(): Map<String, String> =
     mapOf(
+        "commits_count" to "%d 次提交",
+        "commits_one" to "1 次提交",
         "font_in_lyrics" to "歌詞使用應用程式字型",
         "font_in_lyrics_desc" to "以上方選擇的字型繪製歌詞。關閉後使用渲染器自帶的字型。",
+        "storage_desc" to "VIVI 在此電腦上保留的所有內容，以及清空每一部分的唯一操作。",
+        "storage_total" to "快取與安裝檔",
         "translate_needs_api_key" to "需要 API 金鑰：請在 AI Lyrics Translation 畫面新增。",
     )

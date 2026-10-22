@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +43,8 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +75,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -1299,5 +1303,186 @@ internal fun List<String>.withOccurrences(): List<String> {
         val n = seen.getOrDefault(id, 0)
         seen[id] = n + 1
         "$id#$n"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The head of a settings screen (the Material 3 hero)
+// ---------------------------------------------------------------------------
+
+/**
+ * A settings screen's head, drawn as one Material 3 card.
+ *
+ * Several screens answer "what is this, and how much of it is there" with a line
+ * of headline text and then the numbers somewhere below - Storage is the one that
+ * came first - so the shape lives here instead of being retyped per screen: a
+ * 56 dp glyph tile on `secondaryContainer`, the title in `headlineSmall` over a
+ * sentence saying what the screen is for, the screen's own figure on the right of
+ * that row, and a block under it for what the figure is made of (Storage's
+ * breakdown bar, Commits' chips). The card is `surfaceVariant` at 30 %, the fill
+ * the equalizer's curve card uses, so the head reads as part of the same family
+ * without a second elevation.
+ *
+ * [trailing] and [content] are optional: a screen with no single figure passes
+ * neither and gets the title row alone.
+ */
+@Composable
+fun M3ScreenHero(
+    icon: ImageVector,
+    title: String,
+    description: String?,
+    modifier: Modifier = Modifier,
+    trailing: (@Composable () -> Unit)? = null,
+    content: (@Composable ColumnScope.() -> Unit)? = null,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 17.dp, vertical = 16.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(title, style = MaterialTheme.typography.headlineSmall)
+                    if (description != null) {
+                        Text(
+                            description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
+                    }
+                }
+                if (trailing != null) {
+                    Spacer(Modifier.width(16.dp))
+                    trailing()
+                }
+            }
+            if (content != null) {
+                Spacer(Modifier.height(14.dp))
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * A small informational chip, the shape `AssistChip` has without pretending to be
+ * a button: the Commits head says which branch, how many commits and which
+ * repository in three of them and none of the three does anything.
+ */
+@Composable
+fun M3InfoChip(text: String, icon: ImageVector? = null, tonal: Boolean = false) {
+    val container = if (tonal) MaterialTheme.colorScheme.secondaryContainer
+    else MaterialTheme.colorScheme.surfaceContainerHigh
+    val ink = if (tonal) MaterialTheme.colorScheme.onSecondaryContainer
+    else MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(container)
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        if (icon != null) {
+            Icon(icon, contentDescription = null, tint = ink, modifier = Modifier.size(16.dp))
+        }
+        Text(text, style = MaterialTheme.typography.labelLarge, color = ink)
+    }
+}
+
+/** One part of an [M3SegmentedBar]: what it is called, its colour, its weight and its own figure. */
+data class M3BarPart(
+    val label: String,
+    val color: Color,
+    val weight: Float,
+    val value: String? = null,
+)
+
+/**
+ * A bar showing how a total is made of its parts.
+ *
+ * Each part is a pill sized by its own weight, so a cache that is half the disk
+ * is half the strip: the only place on the screen where the four numbers are one
+ * figure, which is why the total above it is not enough on its own. A part of
+ * zero is not drawn (an absent pill and an empty one look the same, and only one
+ * of them can be pressed); the caller passes what it has.
+ */
+@Composable
+fun M3SegmentedBar(parts: List<M3BarPart>, modifier: Modifier = Modifier) {
+    val shown = parts.filter { it.weight > 0f }
+    Row(
+        modifier = modifier.fillMaxWidth().height(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        shown.forEach { part ->
+            Box(
+                Modifier
+                    .weight(part.weight.coerceAtLeast(0.001f))
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(part.color),
+            )
+        }
+    }
+}
+
+/**
+ * The names under an [M3SegmentedBar]: each part's dot, its label and its figure.
+ *
+ * A bar says the proportions and nothing else, so without this the four colours
+ * are unreadable. Two per line, so the labels stay legible in a narrow window,
+ * and the figure repeats the one the row below carries.
+ */
+@Composable
+fun M3SegmentedLegend(parts: List<M3BarPart>, modifier: Modifier = Modifier) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        parts.chunked(2).forEach { line ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                line.forEach { part ->
+                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(part.color))
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            part.label,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (part.value != null) {
+                            Text(
+                                part.value,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                }
+                // An odd number of parts leaves the last cell empty, so a lone
+                // item keeps the width of the pair above it.
+                if (line.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
     }
 }

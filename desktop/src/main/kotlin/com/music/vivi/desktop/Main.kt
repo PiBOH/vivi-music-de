@@ -114,6 +114,7 @@ import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.outlined.MusicNote
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.SdStorage
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lyrics
@@ -157,6 +158,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -7689,27 +7691,85 @@ fun StorageSection(language: String) {
 
     LaunchedEffect(Unit) { refresh() }
 
-    Text(Localization.get(language, "storage"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    // The head of the screen is one card: what this is, the total it comes to and
+    // the four parts it is made of as one bar. The numbers below are the same
+    // four, row by row, with the action that empties each; the bar is the only
+    // place where they read as a proportion of the whole.
+    //
+    // The four parts in the preview's own order and roles, so the same cache keeps
+    // the same colour in the bar, in the legend and on its row. The sizes are
+    // null while they are being measured, which is why the total only appears
+    // once all four are known.
+    val parts = listOf(
+        M3BarPart(
+            Localization.get(language, "cache_audio"),
+            MaterialTheme.colorScheme.primary,
+            (audioSize ?: 0L).toFloat(),
+            audioSize?.let { formatBytes(it) },
+        ),
+        M3BarPart(
+            Localization.get(language, "cache_lyrics"),
+            MaterialTheme.colorScheme.tertiary,
+            (lyricsSize ?: 0L).toFloat(),
+            lyricsSize?.let { formatBytes(it) },
+        ),
+        M3BarPart(
+            Localization.get(language, "cache_ai_lyrics"),
+            MaterialTheme.colorScheme.secondary,
+            (aiLyricsSize ?: 0L).toFloat(),
+            aiLyricsSize?.let { formatBytes(it) },
+        ),
+        M3BarPart(
+            Localization.get(language, "installers_downloaded"),
+            MaterialTheme.colorScheme.outline,
+            (installerSize ?: 0L).toFloat(),
+            installerSize?.let { formatBytes(it) },
+        ),
+    )
+    val known = listOf(audioSize, lyricsSize, aiLyricsSize, installerSize)
+    val totalBytes = if (known.all { it != null }) known.sumOf { it ?: 0L } else null
+    M3ScreenHero(
+        icon = Icons.Filled.SdStorage,
+        title = Localization.get(language, "storage"),
+        description = Localization.get(language, "storage_desc"),
+        trailing = {
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    totalBytes?.let { formatBytes(it) } ?: "...",
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                Text(
+                    Localization.get(language, "storage_total"),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        },
+        content = {
+            M3SegmentedBar(parts)
+            // The bar says the proportions; the legend says which colour is which
+            // and repeats the figure the row below carries.
+            Spacer(Modifier.height(12.dp))
+            M3SegmentedLegend(parts)
+        },
+    )
 
-    // One card per kind of cache, as the phone keeps them: the audio streams,
-    // the fetched lyrics, and the AI's translations of them. They are three
-    // different things with three different lifetimes — the translations are the
-    // ones that cost money to rebuild, the audio is the one that only costs
-    // bandwidth — so a single "cache size" row hid both the number and the
-    // choice (which of them to keep, and which to drop, is the user's call).
+    Spacer(Modifier.height(8.dp))
+
+    // One row per kind, as the preview draws it: the number and the action that
+    // empties it belong to the same row - they were two rows per kind, a size
+    // above a "Clear cache" that named the cache nowhere.
     M3SettingsGroup(
         title = Localization.get(language, "cache_size"),
         items = listOf(
-            M3SettingsItem(
+            storageRow(
+                language = language,
                 icon = Icons.Filled.GraphicEq,
-                title = { Text(Localization.get(language, "cache_audio")) },
-                description = { Text(Localization.get(language, "privacy_desc")) },
-                trailing = { Text(audioSize?.let { formatBytes(it) } ?: "…") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.DiscFull,
-                title = { Text(Localization.get(language, "clear_cache")) },
-                onClick = {
+                titleKey = "cache_audio",
+                descriptionKey = "privacy_desc",
+                size = audioSize,
+                actionKey = "clear_cache",
+                onAction = {
                     scope.launch {
                         withContext(Dispatchers.IO) { clearAudio() }
                         audioCleared = true
@@ -7717,16 +7777,14 @@ fun StorageSection(language: String) {
                     }
                 },
             ),
-            M3SettingsItem(
+            storageRow(
+                language = language,
                 icon = Icons.Filled.Lyrics,
-                title = { Text(Localization.get(language, "cache_lyrics")) },
-                description = { Text(Localization.get(language, "lyrics")) },
-                trailing = { Text(lyricsSize?.let { formatBytes(it) } ?: "…") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.Delete,
-                title = { Text(Localization.get(language, "clear_cache")) },
-                onClick = {
+                titleKey = "cache_lyrics",
+                descriptionKey = "lyrics",
+                size = lyricsSize,
+                actionKey = "clear_cache",
+                onAction = {
                     scope.launch {
                         withContext(Dispatchers.IO) { LyricsCache.clearDisk() }
                         lyricsCleared = true
@@ -7734,16 +7792,14 @@ fun StorageSection(language: String) {
                     }
                 },
             ),
-            M3SettingsItem(
+            storageRow(
+                language = language,
                 icon = Icons.Filled.Translate,
-                title = { Text(Localization.get(language, "cache_ai_lyrics")) },
-                description = { Text(Localization.get(language, "ai_lyrics_translation")) },
-                trailing = { Text(aiLyricsSize?.let { formatBytes(it) } ?: "…") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.Delete,
-                title = { Text(Localization.get(language, "clear_cache")) },
-                onClick = {
+                titleKey = "cache_ai_lyrics",
+                descriptionKey = "ai_lyrics_translation",
+                size = aiLyricsSize,
+                actionKey = "clear_cache",
+                onAction = {
                     scope.launch {
                         withContext(Dispatchers.IO) { LyricsTranslator.clearDiskCache() }
                         aiLyricsCleared = true
@@ -7754,18 +7810,18 @@ fun StorageSection(language: String) {
         ),
     )
 
+    Spacer(Modifier.height(8.dp))
+
     M3SettingsGroup(
         title = Localization.get(language, "installers_downloaded"),
         items = listOf(
-            M3SettingsItem(
+            storageRow(
+                language = language,
                 icon = Icons.Filled.Download,
-                title = { Text(Localization.get(language, "installers_downloaded")) },
-                trailing = { Text(installerSize?.let { formatBytes(it) } ?: "…") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.Delete,
-                title = { Text(Localization.get(language, "delete_installers")) },
-                onClick = {
+                titleKey = "installers_downloaded",
+                size = installerSize,
+                actionKey = "delete_installers",
+                onAction = {
                     UpdateState.deleteAllInstallers()
                     installersDeleted = true
                     refresh()
@@ -7810,6 +7866,49 @@ fun StorageSection(language: String) {
         )
     }
 }
+
+/**
+ * One kind of file the app keeps: its glyph, what it is, its size and the action
+ * that empties it, all on one row.
+ *
+ * The size used to be a row of its own with the button under it, so a screen of
+ * four kinds read as eight rows and the button named its cache nowhere. The
+ * number and the action are the same subject, so they share the row: the figure
+ * in the trailing slot, the action beside it as a tonal button. [size] is null
+ * while it is being measured, and the row says so instead of showing a 0 B; an
+ * emptied kind keeps its button, disabled, as the preview draws it.
+ */
+@Composable
+private fun storageRow(
+    language: String,
+    icon: ImageVector,
+    titleKey: String,
+    size: Long?,
+    actionKey: String,
+    onAction: () -> Unit,
+    descriptionKey: String? = null,
+): M3SettingsItem = M3SettingsItem(
+    icon = icon,
+    title = { Text(Localization.get(language, titleKey)) },
+    description = descriptionKey?.let { key ->
+        @Composable { Text(Localization.get(language, key)) }
+    },
+    trailing = {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                size?.let { formatBytes(it) } ?: "...",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FilledTonalButton(onClick = onAction, enabled = (size ?: 0L) > 0L) {
+                Text(Localization.get(language, actionKey), style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    },
+)
 
 /** JSON codec for persisting the queue between sessions. */
 private val queueJson = sharedJson

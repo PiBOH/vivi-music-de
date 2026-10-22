@@ -18,7 +18,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.CallSplit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +60,8 @@ data class CommitData(
     val authorAvatarUrl: String?,
     val date: String,
     val htmlUrl: String,
+    /** The time it landed, which the row says because the day heads the group. */
+    val time: String = "",
 )
 
 /** Minimal subset of the GitHub commits API response. */
@@ -113,13 +119,15 @@ object CommitFetcher {
                 val authorName = detail?.author?.name?.takeIf { it.isNotBlank() }
                     ?: c.author?.login?.takeIf { it.isNotBlank() }
                     ?: "Unknown"
+                val (day, time) = formatStamp(detail?.author?.date.orEmpty())
                 CommitData(
                     sha = c.sha,
                     message = message,
                     authorName = authorName,
                     authorAvatarUrl = c.author?.avatarUrl,
-                    date = formatDate(detail?.author?.date.orEmpty()),
+                    date = day,
                     htmlUrl = c.htmlUrl,
+                    time = time,
                 )
             }
         }
@@ -127,10 +135,14 @@ object CommitFetcher {
         emptyList()
     }
 
-    private fun formatDate(raw: String): String = try {
-        ZonedDateTime.parse(raw).format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault()))
+    /** `2026-10-16T17:23:04Z` as the day the list groups by and the time the row shows. */
+    private fun formatStamp(raw: String): Pair<String, String> = try {
+        val zoned = ZonedDateTime.parse(raw)
+        zoned.format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())) to
+            zoned.format(DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()))
     } catch (_: Exception) {
-        raw
+        // An unparsable stamp still groups by whatever it says, with no time.
+        raw to ""
     }
 }
 
@@ -149,17 +161,52 @@ fun CommitsScreen(language: String, onBack: () -> Unit) {
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         BackButton(language, onBack)
-        Text(Localization.get(language, "commits"), style = MaterialTheme.typography.headlineMedium)
-        Text(
-            Localization.get(language, "commits_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
+        CommitsContent(language, commits)
+    }
+}
 
-        val list = commits
+/** `1 commit` or `12 commits`, the chip's own sentence. */
+internal fun commitsCountLabel(language: String, count: Int): String =
+    if (count == 1) Localization.get(language, "commits_one")
+    else Localization.get(language, "commits_count").replace("%d", count.toString())
+
+/**
+ * The list under the head, grouped by the day each commit landed.
+ *
+ * The head is one card: the glyph, what the list is, and three chips saying where
+ * it comes from (the branch, how many commits are in it, the repository). The
+ * grouping is the one thing an Expressive list adds over the app's flat rows -
+ * the day is said once, in a chip with the count and a hairline that runs to the
+ * end of the row - instead of being repeated on every commit it belongs to. The
+ * rows themselves are unchanged: the history glyph, the message, the author, the
+ * time and the shortened SHA.
+ *
+ * Takes the commits instead of fetching them, so the same screen can be rendered
+ * off screen with a known list (`:desktop:storageCommitsRenderCheck`).
+ */
+@Composable
+internal fun CommitsContent(language: String, commits: List<CommitData>?) {
+    val list = commits
+    LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
+        item {
+            M3ScreenHero(
+                icon = Icons.Filled.History,
+                title = Localization.get(language, "commits"),
+                description = Localization.get(language, "commits_desc"),
+                content = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        M3InfoChip(UpdateSource.branch(), Icons.Filled.CallSplit, tonal = true)
+                        if (list != null) {
+                            M3InfoChip(commitsCountLabel(language, list.size), Icons.Filled.History)
+                        }
+                        M3InfoChip(UpdateSource.repo(), Icons.Filled.Verified)
+                    }
+                },
+            )
+            Spacer(Modifier.height(8.dp))
+        }
         when {
-            list == null -> {
+            list == null -> item {
                 Text(
                     Localization.get(language, "loading"),
                     style = MaterialTheme.typography.bodyLarge,
@@ -167,7 +214,7 @@ fun CommitsScreen(language: String, onBack: () -> Unit) {
                     modifier = Modifier.padding(top = 16.dp),
                 )
             }
-            list.isEmpty() -> {
+            list.isEmpty() -> item {
                 Text(
                     Localization.get(language, "error_loading_commits"),
                     style = MaterialTheme.typography.bodyLarge,
@@ -175,19 +222,45 @@ fun CommitsScreen(language: String, onBack: () -> Unit) {
                     modifier = Modifier.padding(top = 16.dp),
                 )
             }
-            else -> {
-                LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                    items(list) { commit ->
-                        CommitItem(commit, onClick = { openUrl(commit.htmlUrl) })
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 68.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        )
-                    }
-                    item { Spacer(Modifier.height(8.dp)) }
+            else -> list.groupBy { it.date }.forEach { (day, dayCommits) ->
+                item(key = "day-$day") {
+                    CommitDayHeader(day, commitsCountLabel(language, dayCommits.size))
+                }
+                items(dayCommits, key = { it.sha }) { commit ->
+                    CommitItem(commit, onClick = { openUrl(commit.htmlUrl) })
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 68.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    )
                 }
             }
         }
+        item { Spacer(Modifier.height(8.dp)) }
+    }
+}
+
+/** The day a group of commits belongs to: its chip, its count and the rule. */
+@Composable
+private fun CommitDayHeader(day: String, count: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            day,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        HorizontalDivider(
+            modifier = Modifier.weight(1f),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
+        Text(
+            count,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -216,7 +289,8 @@ private fun CommitItem(commit: CommitData, onClick: () -> Unit) {
             )
         }
 
-        // Center: commit message + author/date + short SHA.
+        // Center: commit message + author/time + short SHA. The day is the group's
+        // header above, so the row carries the time instead of the date.
         Column(
             Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -245,11 +319,19 @@ private fun CommitItem(commit: CommitData, onClick: () -> Unit) {
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(
-                    commit.date,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (commit.time.isNotBlank()) {
+                    Icon(
+                        Icons.Filled.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Text(
+                        commit.time,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Surface(
                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -266,7 +348,16 @@ private fun CommitItem(commit: CommitData, onClick: () -> Unit) {
 
         Spacer(Modifier.width(4.dp))
 
-        // Right: author avatar (fallback to initials).
+        // Right: the row opens on GitHub, then who wrote it (fallback to initials).
+        Icon(
+            Icons.AutoMirrored.Filled.OpenInNew,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp),
+        )
+        Spacer(Modifier.width(4.dp))
+
+        // The author's avatar (fallback to initials).
         val avatar = commit.authorAvatarUrl
         if (avatar != null) {
             AsyncImage(
