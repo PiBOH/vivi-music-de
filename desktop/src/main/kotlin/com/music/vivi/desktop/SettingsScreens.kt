@@ -1332,11 +1332,6 @@ fun SettingsLyricsScreen(
     }
 }
 
-@Composable
-fun SettingsPrivacyScreen(language: String, onBack: () -> Unit, isLoggedIn: Boolean, onLogout: () -> Unit) {
-    SettingsSubScreen(language, onBack) { PrivacySection(language, isLoggedIn, onLogout) }
-}
-
 /** Content section: innerTube host language + region (hl/gl). */
 @Composable
 fun ContentSection(
@@ -1409,7 +1404,10 @@ fun ContentSection(
         onSelect = onContentCountryChange,
     )
 
-    // --- Filters (the mobile Content screen's own rows) --------------------
+    // --- Filters and the artist page, one card -----------------------------
+    // The preview draws them as one list of five switches, and they are one
+    // subject (what the catalogue shows); two cards split the group in half for
+    // no reason the screen can state.
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1430,12 +1428,6 @@ fun ContentSection(
                 trailing = { Switch(checked = hideYoutubeShorts, onCheckedChange = onHideYoutubeShortsChange) },
                 onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) },
             ),
-        ),
-    )
-
-    // --- Artist page -------------------------------------------------------
-    M3SettingsGroup(
-        items = listOf(
             M3SettingsItem(
                 icon = Icons.Filled.Info,
                 title = { Text(Localization.get(language, "show_artist_description")) },
@@ -1938,76 +1930,6 @@ private val ROMANIZE_SCRIPTS = listOf(
     RomanizeScript("romanize_hindi", { it.hindi }, { o, v -> o.copy(hindi = v) }),
     RomanizeScript("romanize_punjabi", { it.punjabi }, { o, v -> o.copy(punjabi = v) }),
 )
-
-/** Privacy section: clear the local session, cache and downloaded installers. */
-@Composable
-fun PrivacySection(language: String, isLoggedIn: Boolean, onLogout: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    val cacheDir = remember { File(System.getProperty("user.home"), ".vivimusic/cache") }
-    var cacheCleared by remember { mutableStateOf(false) }
-    var installersCleared by remember { mutableStateOf(false) }
-
-    Text(Localization.get(language, "privacy"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-    Text(
-        Localization.get(language, "privacy_desc"),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 8.dp),
-    )
-
-    if (isLoggedIn) {
-        Button(onClick = onLogout, modifier = Modifier.padding(top = 12.dp)) {
-            Text(Localization.get(language, "clear_session"))
-        }
-    } else {
-        Text(
-            Localization.get(language, "not_logged_in"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 12.dp),
-        )
-    }
-
-    Button(
-        onClick = {
-            cacheCleared = false
-            scope.launch {
-                withContext(Dispatchers.IO) { cacheDir.listFiles()?.forEach { it.deleteRecursively() } }
-                cacheCleared = true
-            }
-        },
-        modifier = Modifier.padding(top = 12.dp),
-    ) { Text(Localization.get(language, "clear_cache")) }
-
-    Button(
-        onClick = {
-            // The same installers the Updates counter counts: the ones of the
-            // version that is already installed. The installer of a downloaded,
-            // not yet installed update is not touched, because the button next
-            // to this one is what runs it.
-            UpdateState.deleteAllInstallers()
-            installersCleared = true
-        },
-        modifier = Modifier.padding(top = 12.dp),
-    ) { Text(Localization.get(language, "delete_installers")) }
-
-    if (cacheCleared) {
-        Text(
-            Localization.get(language, "cache_cleared"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-    }
-    if (installersCleared) {
-        Text(
-            Localization.get(language, "installers_deleted"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 8.dp),
-        )
-    }
-}
 
 /** Performance options: enable/disable the live stats, pick a profile and placement. */
 @Composable

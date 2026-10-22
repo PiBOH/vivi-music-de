@@ -928,13 +928,16 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
  * the runs of card fill down a column say how many cards the screen is and how
  * many rows each one carries. Updates must read six bands with the two seams of
  * its two-row cards; Notifications the three rows of its one card with the two
- * seams that join them.
+ * seams that join them. Content, Language, Privacy and AI Lyrics Translation are
+ * read the same way: the dropdowns stand alone, the five content switches are
+ * one card, the language list is one card under its field, Privacy's two
+ * switches are one, and the AI screen's credentials and mode rows are two.
  * A manual check, not part of `check` (pixels, no test framework, PNGs under
  * .ignore/settings/).
  */
 tasks.register<JavaExec>("settingsScreensRenderCheck") {
     group = "verification"
-    description = "Renders Updates and Notifications headlessly and checks their cards, rows and seams"
+    description = "Renders Updates, Notifications, Content, Language, Privacy and AI headlessly and checks their cards, rows and seams"
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.SettingsScreensRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath

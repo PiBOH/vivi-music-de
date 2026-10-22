@@ -6355,8 +6355,6 @@ fun SyncRunTrailing(status: PlaylistSync.Status) {
  */
 @Composable
 fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
-
     Text(Localization.get(language, "language"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
     Text(
         Localization.get(language, "translation_ai_disclaimer"),
@@ -6365,31 +6363,25 @@ fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
         modifier = Modifier.padding(top = 6.dp),
     )
 
-    Box(Modifier.padding(top = 8.dp)) {
-        OutlinedButton(onClick = { expanded = true }) {
-            Text(Languages.name(language))
-        }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            LanguagePickerRows(
-                language = language,
-                selected = language,
-                onSelect = { code ->
-                    expanded = false
-                    onLanguageChange(code)
-                },
-            )
-        }
-    }
+    // The list is on the screen, not behind a button: 48 languages read as the
+    // page's own content in the preview, and a menu that had to be opened first
+    // hid the field that narrows it. The field and the rows are
+    // [LanguagePickerRows], the same body `:desktop:languageSearchCheck` reads.
+    Spacer(Modifier.height(10.dp))
+    LanguagePickerRows(
+        language = language,
+        selected = language,
+        onSelect = onLanguageChange,
+    )
 }
 
 /**
- * The body of [LanguageSection]'s menu: the search field, then the languages
- * that match what is in it, the current one carrying a check.
+ * The language list: the search field, then the languages that match what is in
+ * it, the current one carrying a check.
  *
- * Split out of the menu so it can be rendered off screen (a `DropdownMenu` is a
- * popup, which a headless scene does not draw): `:desktop:languageSearchCheck`
- * renders these rows and reads them back, which is what says the field is drawn
- * and the list really narrows.
+ * It is a composable of its own because `:desktop:languageSearchCheck` renders
+ * it off screen and reads it back, which is what says the field is drawn and the
+ * list really narrows.
  */
 @Composable
 internal fun LanguagePickerRows(
@@ -6404,7 +6396,7 @@ internal fun LanguagePickerRows(
     OutlinedTextField(
         value = query,
         onValueChange = { query = it },
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyMedium,
         placeholder = {
@@ -6416,25 +6408,36 @@ internal fun LanguagePickerRows(
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
     )
 
+    Spacer(Modifier.height(8.dp))
     if (matches.isEmpty()) {
         Text(
             Localization.get(language, "language_search_none"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 17.dp, vertical = 14.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 14.dp),
         )
     } else {
-        matches.forEach { lang ->
-            DropdownMenuItem(
-                text = { Text(lang.name) },
-                onClick = { onSelect(lang.code) },
-                trailingIcon = if (lang.code == selected) {
-                    { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                } else {
-                    null
-                },
-            )
-        }
+        M3SettingsGroup(
+            items = matches.map { lang ->
+                M3SettingsItem(
+                    icon = null,
+                    title = { Text(lang.name) },
+                    trailing = if (lang.code == selected) {
+                        {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    onClick = { onSelect(lang.code) },
+                )
+            },
+        )
     }
 }
 

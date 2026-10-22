@@ -34,9 +34,16 @@ import java.awt.image.BufferedImage
  *  * **Updates**: six bands - the check row with the version under it, the
  *    pre-release switch, the interval, the source, and the Changelog plus
  *    Commits destinations - with the two 3 dp seams of the two two-row cards.
- *  * **Notifications**: five bands - the mode, the three rows of the card it
- *    belongs to, the duration - and the test button under them, with the two
- *    seams of the three-row card.
+ *  * **Notifications**: the three rows of the card the mode owns, joined by its
+ *    two seams, with the dropdowns and the test button under and above them.
+ *  * **Content**: two dropdown cards that stand alone, one card of the five
+ *    switches (four seams) and one for the lyrics providers.
+ *  * **Language**: every language in one card under the search field, its rows
+ *    joined by one seam each, the list reaching the bottom of the frame.
+ *  * **Privacy**: one card of the two history switches (one seam).
+ *  * **AI Lyrics Translation**: six cards - the provider, the three credentials
+ *    rows, the two rows of the mode card - with three seams between rows that
+ *    share one, and the note between them as text.
  *
  * A frame is written under `.ignore/settings/` so it can be looked at.
  */
@@ -94,12 +101,81 @@ object SettingsScreensRenderCheck {
         val notificationBands = bands(notifications)
         println("notifications: bands=${notificationBands.size} ${notificationBands.map { "${it.top}..${it.bottom}" }}")
 
+        val content = render {
+            ContentSection(
+                language = "en",
+                contentLanguage = "",
+                contentCountry = "",
+                onContentLanguageChange = {},
+                onContentCountryChange = {},
+            )
+        }
+        File(outDir, "content.png").writeBytes(content)
+        val contentBands = bands(content)
+        println("content: bands=${contentBands.size} ${contentBands.map { "${it.top}..${it.bottom}" }}")
+
+        val language = render {
+            LanguageSection(language = "en", onLanguageChange = {})
+        }
+        File(outDir, "language.png").writeBytes(language)
+        val languageBands = bands(language)
+        println("language: bands=${languageBands.size} first=${languageBands.firstOrNull()?.top} last=${languageBands.lastOrNull()?.bottom}")
+
+        val privacy = render {
+            SettingsPrivacyScreen(
+                language = "en",
+                onBack = {},
+                pauseListenHistory = false,
+                onPauseListenHistoryChange = {},
+                pauseSearchHistory = false,
+                onPauseSearchHistoryChange = {},
+                onClearSearchHistory = {},
+            )
+        }
+        File(outDir, "privacy.png").writeBytes(privacy)
+        val privacyBands = bands(privacy)
+        println("privacy: bands=${privacyBands.size} ${privacyBands.map { "${it.top}..${it.bottom}" }}")
+
+        val ai = render {
+            SettingsAiScreen(
+                language = "en",
+                onBack = {},
+                aiProvider = "OpenRouter",
+                aiApiKey = "",
+                aiBaseUrl = "https://openrouter.ai/api/v1/chat/completions",
+                aiModel = "google/gemini-2.5-flash-lite",
+                translateLanguage = "it",
+                translateMode = "Literal",
+                deeplApiKey = "",
+                deeplFormality = "default",
+                onAiProviderChange = {},
+                onAiApiKeyChange = {},
+                onAiBaseUrlChange = {},
+                onAiModelChange = {},
+                onTranslateLanguageChange = {},
+                onTranslateModeChange = {},
+                onDeeplApiKeyChange = {},
+                onDeeplFormalityChange = {},
+            )
+        }
+        File(outDir, "ai.png").writeBytes(ai)
+        val aiBands = bands(ai)
+        println("ai: bands=${aiBands.size} ${aiBands.map { "${it.top}..${it.bottom}" }}")
+
         // The seam is the 3 dp the next row's own top padding takes; anything
         // wider is the gap the screen leaves between two cards.
         fun seams(bands: List<Band>) = bands.zipWithNext().count { (a, b) -> b.top - a.bottom - 1 in 1..4 }
+        // A screen title or a group label paints a few rows of glyphs, which the
+        // 6-unit cut above keeps as a band: the cards are the ones a row tall.
+        fun cards(all: List<Band>) = all.filter { it.height >= 20 }
 
         val updateSeams = seams(updateBands)
         val notificationSeams = seams(notificationBands)
+        val contentSeams = seams(contentBands)
+        val languageSeams = seams(languageBands)
+        val privacySeams = seams(privacyBands)
+        val aiCards = cards(aiBands)
+        val aiSeams = seams(aiCards)
 
         // Updates: 2 rows, two cards of one row, 2 rows.
         if (updateBands.size != 6) failures += "Updates should read six bands, read ${updateBands.size}"
@@ -112,11 +188,44 @@ object SettingsScreensRenderCheck {
         if (notificationBands.size != 3) failures += "Notifications should read the three rows of its card, read ${notificationBands.size}"
         if (notificationSeams != 2) failures += "Notifications should join its three rows (2 seams), read $notificationSeams"
 
+        // Content: the two dropdown cards stand alone, the five switches are one
+        // card (four seams) and the provider priority rows are another (one seam
+        // fewer than there are providers).
+        val providerSeams = DesktopLyrics.PROVIDER_ORDER.size - 1
+        if (contentSeams != 4 + providerSeams) {
+            failures += "Content should join its five switches (4 seams) and its ${DesktopLyrics.PROVIDER_ORDER.size} " +
+                "providers ($providerSeams seams), read $contentSeams"
+        }
+
+        // Language: a row per language, joined into one card under the field.
+        if (languageBands.size < 15) failures += "Language should list the languages, read ${languageBands.size} row(s)"
+        if (languageBands.firstOrNull()?.top?.let { it in 100..220 } != true) {
+            failures += "Language's list must start under its field, read ${languageBands.firstOrNull()?.top}"
+        }
+        if (languageBands.lastOrNull()?.bottom?.let { it >= 1000 } != true) {
+            failures += "Language's list must fill the page, read ${languageBands.lastOrNull()?.bottom}"
+        }
+        if (languageSeams != languageBands.size - 1) {
+            failures += "Language's rows must be one card (${languageBands.size - 1} seams), read $languageSeams"
+        }
+
+        // Privacy: the two history switches in one card, joined by one seam.
+        if (privacyBands.size != 2) failures += "Privacy should read two rows, read ${privacyBands.size}"
+        if (privacySeams != 1) failures += "Privacy should join its two switches (1 seam), read $privacySeams"
+
+        // AI: the provider card, then the three credentials rows, then the two
+        // rows of the mode card (the note is no card at all).
+        if (aiCards.size != 6) failures += "AI should read six cards, read ${aiCards.size}"
+        if (aiSeams != 3) failures += "AI should join its three credentials rows and its two mode rows (3 seams), read $aiSeams"
+
         if (failures.isEmpty()) {
             println()
             println(
                 "OK: Updates is six bands with the two seams of its two-row cards, " +
-                    "and Notifications is one card of three rows joined by two seams",
+                    "Notifications is one card of three rows joined by two seams, " +
+                    "Content joins its five switches and its providers, " +
+                    "Language is one card of every language under its field, " +
+                    "Privacy is one card of two switches, and AI is ${aiCards.size} cards with $aiSeams seams",
             )
             return
         }

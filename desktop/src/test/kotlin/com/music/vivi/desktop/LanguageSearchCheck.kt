@@ -5,8 +5,6 @@ package com.music.vivi.desktop
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -26,9 +24,9 @@ import java.io.File
  *
  *     ./gradlew :desktop:languageSearchCheck
  *
- * Settings -> Language lists 48 languages in a drop-down, and the field at the
- * top of that menu is the only way to reach one of them without reading the
- * whole list. Two halves are checked, because they fail differently:
+ * Settings -> Language lists 48 languages on the screen, and the field above the
+ * list is the only way to reach one of them without reading the whole list. Two
+ * halves are checked, because they fail differently:
  *
  *  * **the filter** (`Languages.matching`) is read directly: a blank query is
  *    every language, "ital" is Italiano alone, the accents do not matter
@@ -103,12 +101,11 @@ object LanguageSearchCheck {
                 failures += "query=$label: the search field must be drawn as a row of 40..80 px, read $height"
             }
             val width = field?.let { bandWidth(png, it) } ?: 0
-            // The menu body is measured at its intrinsic width, so a field that
-            // asks for the window's width is the regression this catches: in a
-            // DropdownMenu that is either a collapsed outline or a menu as wide
-            // as the window.
-            if (width !in 200..300) {
-                failures += "query=$label: the search field must be 200..300 px wide inside the menu, read $width"
+            // The field is a row of the page now, so it reads the page's own
+            // width: a field narrower than the list it narrows would be the
+            // regression this catches.
+            if (width !in 400..(WIDTH - 20)) {
+                failures += "query=$label: the search field must span the page ($WIDTH px), read $width"
             }
             when (label) {
                 "''" -> if (bottom < HEIGHT - 40) {
@@ -149,20 +146,12 @@ object LanguageSearchCheck {
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                             .verticalScroll(rememberScrollState()),
                     ) {
-                        // A DropdownMenu measures its body with `IntrinsicSize.Max`,
-                        // so the rows are rendered the same way here: a field that
-                        // only looks right when it is handed the window's width
-                        // would break inside the real menu.
-                        Box(Modifier.width(IntrinsicSize.Max)) {
-                            Column {
-                                LanguagePickerRows(
-                                    language = "en",
-                                    selected = "it",
-                                    onSelect = {},
-                                    initialQuery = query,
-                                )
-                            }
-                        }
+                        LanguagePickerRows(
+                            language = "en",
+                            selected = "it",
+                            onSelect = {},
+                            initialQuery = query,
+                        )
                     }
                 }
             }
