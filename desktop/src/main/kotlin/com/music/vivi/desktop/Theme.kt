@@ -191,6 +191,17 @@ fun hsvToColor(h: Float, s: Float, v: Float): Color {
     return Color(r + m, g + m, b + m)
 }
 
+/**
+ * The ink to draw on top of an arbitrary colour (a swatch, a stripe).
+ *
+ * An accent is the user's own colour, so it has no `onX` role to pair with: the
+ * contrast pair is the only correct answer, and the scheme's `onSurface` cannot
+ * stand in for it (it is dark in one scheme and light in the other). Only the
+ * two extremes are used, chosen by the colour's own luminance.
+ */
+fun contrastInk(color: Color): Color =
+    if (color.luminance() > 0.5f) Color(0xFF1D1B20) else Color(0xFFFFFFFF)
+
 /** Converts an RGB [Color] to HSV (hue 0..360, saturation/value 0..1). */
 fun colorToHsv(color: Color): FloatArray {
     val r = color.red

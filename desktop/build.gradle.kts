@@ -916,3 +916,26 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
     mainClass.set("com.music.vivi.desktop.StorageCommitsRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+
+/**
+ * Headless check of the Updates and Notifications screens:
+ *
+ *     ./gradlew :desktop:settingsScreensRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/SettingsScreensRenderCheck.kt`.
+ * Both are a column of settings cards, and what a card holds is a pixel fact: a
+ * row is joined to the next by a 3 dp seam while two cards stand 8 dp apart, so
+ * the runs of card fill down a column say how many cards the screen is and how
+ * many rows each one carries. Updates must read six bands with the two seams of
+ * its two-row cards; Notifications the three rows of its one card with the two
+ * seams that join them.
+ * A manual check, not part of `check` (pixels, no test framework, PNGs under
+ * .ignore/settings/).
+ */
+tasks.register<JavaExec>("settingsScreensRenderCheck") {
+    group = "verification"
+    description = "Renders Updates and Notifications headlessly and checks their cards, rows and seams"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.SettingsScreensRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

@@ -713,7 +713,14 @@ private fun BrightnessStrip(
             .width(StripSize)
             .height(WheelSize)
             .clip(RoundedCornerShape(10.dp))
-            .background(Brush.verticalGradient(listOf(hsvToColor(hue, saturation, 1f), Color.Black)))
+            // The bottom of a brightness ramp is the theme's scrim, not a literal
+            // black: it is the same ink in every scheme, and it is the role M3
+            // provides for "the darkest thing on this surface".
+            .background(
+                Brush.verticalGradient(
+                    listOf(hsvToColor(hue, saturation, 1f), MaterialTheme.colorScheme.scrim),
+                ),
+            )
             .onSizeChanged { stripHeightPx = it.height.toFloat() }
             .pointerInput(stripHeightPx) {
                 fun pick(y: Float) = onBrightnessChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
@@ -737,7 +744,7 @@ private fun BrightnessStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, Color.White, RoundedCornerShape(3.dp))
+                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(3.dp))
                 .shadow(2.dp, RoundedCornerShape(3.dp)),
         )
     }
@@ -794,7 +801,9 @@ private fun IntensityStrip(
                     .offset(y = maxHeight * step / 19f)
                     .fillMaxWidth()
                     .height(1.dp)
-                    .background(Color.White.copy(alpha = 0.5f)),
+                    // The ticks sit on the accent itself, so they take the ink the
+                    // accent can carry (a white tick disappears on Yellow).
+                    .background(contrastInk(accent).copy(alpha = 0.5f)),
             )
         }
         val thumbY = ((1f - intensity) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
@@ -803,7 +812,7 @@ private fun IntensityStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, Color.White, RoundedCornerShape(3.dp))
+                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(3.dp))
                 .shadow(2.dp, RoundedCornerShape(3.dp)),
         )
     }
@@ -904,7 +913,7 @@ private fun AccentSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
             Icon(
                 Icons.Filled.Check,
                 contentDescription = null,
-                tint = if (color == Color.Transparent) MaterialTheme.colorScheme.onSurface else Color.White,
+                tint = if (color == Color.Transparent) MaterialTheme.colorScheme.onSurface else contrastInk(color),
                 modifier = Modifier.size(16.dp),
             )
         } else if (color == Color.Transparent) {

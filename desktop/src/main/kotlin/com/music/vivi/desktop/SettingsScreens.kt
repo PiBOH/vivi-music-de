@@ -61,6 +61,7 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.TouchApp
@@ -2625,17 +2626,15 @@ fun SettingsNotificationsScreen(
     onRequestNotificationPermission: () -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
+        // The preview's shape: the mode and what it means, then the three rows
+        // that belong to it in one card, then the one action that proves it
+        // works. The duration is the app's own extra and stays a choice of its
+        // own under the card.
         Text(Localization.get(language, "notifications"), style = MaterialTheme.typography.titleLarge)
-        Text(
-            Localization.get(language, "notification_mode_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
         Spacer(Modifier.height(12.dp))
 
         M3SettingsDropdownItem(
-            icon = Icons.Filled.DesktopWindows,
+            icon = Icons.Filled.NotificationsActive,
             title = Localization.get(language, "notification_mode"),
             value = Localization.get(language, if (notificationMode == "native") "notification_native" else "notification_main_window"),
             options = listOf(
@@ -2644,32 +2643,42 @@ fun SettingsNotificationsScreen(
             ),
             onSelect = onNotificationModeChange,
         )
+        Text(
+            Localization.get(language, "notification_mode_desc"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 6.dp, start = 6.dp, end = 6.dp),
+        )
 
-        Spacer(Modifier.height(12.dp))
-        OutlinedButton(
-            onClick = onTestNotification,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(Localization.get(language, "test_notification"))
-        }
-
+        Spacer(Modifier.height(8.dp))
         // The mobile app's notification-permission row. It is shown on every
         // desktop platform (the options belong in the UI everywhere): on macOS
         // it asks UNUserNotificationCenter for the permission, on Windows and
-        // Linux — which have no runtime permission — it posts a notification so
+        // Linux, which have no runtime permission, it posts a notification so
         // the row still verifies that notifications arrive.
-        Spacer(Modifier.height(12.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.NotificationsActive,
+                    icon = Icons.Filled.Notifications,
                     title = { Text(Localization.get(language, "allow_notifications")) },
                     onClick = onRequestNotificationPermission,
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Save,
+                    title = { Text(Localization.get(language, "save_notification_history")) },
+                    trailing = { Switch(checked = saveHistory, onCheckedChange = onSaveHistoryChange) },
+                    onClick = { onSaveHistoryChange(!saveHistory) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.History,
+                    title = { Text(Localization.get(language, "notification_history")) },
+                    trailing = { SettingsChevron() },
+                    onClick = onOpenHistory,
                 ),
             ),
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.AccessTime,
             title = Localization.get(language, "notification_duration"),
@@ -2679,23 +2688,13 @@ fun SettingsNotificationsScreen(
             onSelect = { s -> onNotificationDurationChange(s.toIntOrNull() ?: notificationDurationSeconds) },
         )
 
-        Spacer(Modifier.height(16.dp))
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.History,
-                    title = { Text(Localization.get(language, "save_notification_history")) },
-                    trailing = { Switch(checked = saveHistory, onCheckedChange = onSaveHistoryChange) },
-                    onClick = { onSaveHistoryChange(!saveHistory) },
-                ),
-                M3SettingsItem(
-                    icon = Icons.Filled.Notifications,
-                    title = { Text(Localization.get(language, "notification_history")) },
-                    trailing = { SettingsChevron() },
-                    onClick = onOpenHistory,
-                ),
-            ),
-        )
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(
+            onClick = onTestNotification,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(Localization.get(language, "test_notification"))
+        }
     }
 }
 
@@ -2714,15 +2713,10 @@ fun NotificationHistoryScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),
         )
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-            OutlinedButton(onClick = {
-                NotificationHistory.clear()
-                history = emptyList()
-            }) {
-                Text(Localization.get(language, "clear_history"))
-            }
-        }
-        Spacer(Modifier.height(8.dp))
+        // One card, as the preview draws it: every notification is a row with the
+        // bell it would have shown, its own title and the message a moment ago.
+        // The mode and the time are the row's trailing column, the two things the
+        // list exists to say about it.
         if (history.isEmpty()) {
             // Its own key: "history_empty" belongs to the listening-history
             // screen, and sharing it made this list and that screen print each
@@ -2734,43 +2728,38 @@ fun NotificationHistoryScreen(
                 modifier = Modifier.padding(vertical = 24.dp),
             )
         } else {
-            history.forEach { record -> NotificationHistoryItem(language, record) }
+            Spacer(Modifier.height(8.dp))
+            M3SettingsGroup(
+                items = history.map { record ->
+                    M3SettingsItem(
+                        icon = Icons.Filled.Notifications,
+                        title = { Text(record.title) },
+                        description = { Text(record.message) },
+                        trailing = {
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text(
+                                    formatNotificationTime(record.timestamp),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    if (record.mode == "native") Localization.get(language, "notification_native")
+                                    else Localization.get(language, "notification_main_window"),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        },
+                    )
+                },
+            )
         }
-    }
-}
-
-@Composable
-private fun NotificationHistoryItem(language: String, record: NotificationRecord) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                record.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                formatNotificationTime(record.timestamp),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Text(
-            record.message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Surface(
-            shape = RoundedCornerShape(6.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer,
-            modifier = Modifier.padding(top = 4.dp),
-        ) {
-            Text(
-                if (record.mode == "native") Localization.get(language, "notification_native") else Localization.get(language, "notification_main_window"),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-            )
+        Spacer(Modifier.height(12.dp))
+        OutlinedButton(onClick = {
+            NotificationHistory.clear()
+            history = emptyList()
+        }) {
+            Text(Localization.get(language, "clear_history"))
         }
     }
 }

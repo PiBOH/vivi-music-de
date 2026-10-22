@@ -70,6 +70,8 @@ import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.BrightnessHigh
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Article
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.FlashOn
@@ -6635,79 +6637,89 @@ fun UpdateSection(
     val downloadedFile by UpdateState.downloadedFile.collectAsState()
     val installerCount by UpdateState.installerCount.collectAsState()
     var openError by remember { mutableStateOf<String?>(null) }
-    var intervalMenuOpen by remember { mutableStateOf(false) }
-    var sourceMenuOpen by remember { mutableStateOf(false) }
 
-    Text(Localization.get(language, "updates"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    // The screen is the preview's three blocks: what the app is and the check
+    // itself, the two choices that change what a check does (the source and the
+    // interval), and the two destinations the version history is read from.
+    // The update's own state (download, progress, installer) stays under them,
+    // where it appears only once there is something to report.
     Text(
-        "${Localization.get(language, "current_version")}: ${AppInfo.FULL_VERSION} (${Localization.get(language, "de")} ${AppInfo.DE_VERSION})",
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(top = 4.dp),
+        Localization.get(language, "updates"),
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.padding(top = 12.dp),
+    )
+    Spacer(Modifier.height(12.dp))
+
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Refresh,
+                title = { Text(Localization.get(language, "check_updates")) },
+                description = {
+                    Text(
+                        "${Localization.get(language, "current_version")}: ${AppInfo.FULL_VERSION} " +
+                            "(${Localization.get(language, "de")} ${AppInfo.DE_VERSION})",
+                    )
+                },
+                trailing = {
+                    Tooltip(Localization.get(language, "check_updates")) {
+                        IconButton(onClick = onCheckUpdates, enabled = status != UpdateStatus.Checking) {
+                            Icon(
+                                if (status == UpdateStatus.Checking) Icons.Filled.Sync else Icons.Filled.Refresh,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                },
+                onClick = onCheckUpdates,
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.NewReleases,
+                title = { Text(Localization.get(language, "include_prereleases")) },
+                trailing = { Switch(checked = includePreReleases, onCheckedChange = onTogglePreReleases) },
+                onClick = { onTogglePreReleases(!includePreReleases) },
+            ),
+        ),
     )
 
-    Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedButton(onClick = onOpenChangelog) {
-            Text(Localization.get(language, "changelog"))
-        }
-        OutlinedButton(onClick = onOpenCommits) {
-            Text(Localization.get(language, "commits"))
-        }
-    }
+    Spacer(Modifier.height(8.dp))
+    M3SettingsDropdownItem(
+        icon = Icons.Filled.Schedule,
+        title = Localization.get(language, "update_check_interval"),
+        value = intervalLabel(language, updateIntervalHours),
+        options = updateCheckIntervalOptions().map { hours -> hours.toString() to intervalLabel(language, hours) },
+        onSelect = { picked -> picked.toIntOrNull()?.let(onIntervalChange) },
+    )
 
-    Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = onCheckUpdates, enabled = status != UpdateStatus.Checking) {
-            Text(Localization.get(language, "check_updates"))
-        }
-        Switch(checked = includePreReleases, onCheckedChange = onTogglePreReleases)
-        Text(Localization.get(language, "include_prereleases"))
-    }
+    Spacer(Modifier.height(8.dp))
+    M3SettingsDropdownItem(
+        icon = Icons.Filled.CloudDownload,
+        title = Localization.get(language, "update_source"),
+        value = UpdateSource.repoFor(updateSource),
+        options = listOf(UpdateSource.FORK, UpdateSource.ORIGINAL).map { source -> source to UpdateSource.repoFor(source) },
+        onSelect = onUpdateSourceChange,
+    )
 
-    // Update source (fork vs original repo).
-    Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(Localization.get(language, "update_source"), style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.weight(1f))
-        Box {
-            OutlinedButton(onClick = { sourceMenuOpen = true }) {
-                Text(UpdateSource.repoFor(updateSource))
-            }
-            DropdownMenu(expanded = sourceMenuOpen, onDismissRequest = { sourceMenuOpen = false }) {
-                listOf(UpdateSource.FORK, UpdateSource.ORIGINAL).forEach { source ->
-                    DropdownMenuItem(
-                        text = { Text(UpdateSource.repoFor(source)) },
-                        onClick = {
-                            sourceMenuOpen = false
-                            onUpdateSourceChange(source)
-                        },
-                    )
-                }
-            }
-        }
-    }
+    Spacer(Modifier.height(8.dp))
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.Article,
+                title = { Text(Localization.get(language, "changelog")) },
+                trailing = { SettingsChevron() },
+                onClick = onOpenChangelog,
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.History,
+                title = { Text(Localization.get(language, "commits")) },
+                trailing = { SettingsChevron() },
+                onClick = onOpenCommits,
+            ),
+        ),
+    )
 
-    // Automatic check frequency.
-    Row(Modifier.fillMaxWidth().padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(Localization.get(language, "update_check_interval"), style = MaterialTheme.typography.bodyMedium)
-        Spacer(Modifier.weight(1f))
-        Box {
-            OutlinedButton(onClick = { intervalMenuOpen = true }) {
-                Text(intervalLabel(language, updateIntervalHours))
-            }
-            DropdownMenu(expanded = intervalMenuOpen, onDismissRequest = { intervalMenuOpen = false }) {
-                updateCheckIntervalOptions().forEach { hours ->
-                    DropdownMenuItem(
-                        text = { Text(intervalLabel(language, hours)) },
-                        onClick = {
-                            // Dismiss the popup before mutating the state that
-                            // changes this row's layout, or Compose throws
-                            // "layouts are not part of the same hierarchy".
-                            intervalMenuOpen = false
-                            onIntervalChange(hours)
-                        },
-                    )
-                }
-            }
-        }
-    }
+    Spacer(Modifier.height(8.dp))
 
     when (status) {
         is UpdateStatus.Checking -> Text(Localization.get(language, "checking"), modifier = Modifier.padding(top = 8.dp))
