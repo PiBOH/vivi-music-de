@@ -857,6 +857,7 @@ internal fun strings_de(): Map<String, String> =
         "transition_fade" to "Einblenden",
         "transition_off" to "Aus",
         "transition_slide" to "Schieben",
+        "transition_style" to "Übergangsstil",
         "translate_lyrics" to "KI-Song-Text-Übersetzung",
         "translate_lyrics_desc" to "Übersetzung jeder Zeile darunter anzeigen",
         "translate_needs_api_key" to "API-Schlüssel nötig: einen im Bildschirm AI Lyrics Translation hinzufügen.",

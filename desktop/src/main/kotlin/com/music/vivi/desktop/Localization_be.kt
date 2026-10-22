@@ -857,6 +857,7 @@ internal fun strings_be(): Map<String, String> =
         "transition_fade" to "Згасанне",
         "transition_off" to "Выключана",
         "transition_slide" to "Слайд",
+        "transition_style" to "Стыль пераходу",
         "translate_lyrics" to "Пераклад тэкстаў песень з ШІ",
         "translate_lyrics_desc" to "Паказаць пераклад кожнага радка пад ім",
         "translate_needs_api_key" to "Патрэбны ключ API: дадайце яго на экране AI Lyrics Translation.",

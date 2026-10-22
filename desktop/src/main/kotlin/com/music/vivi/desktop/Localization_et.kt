@@ -857,6 +857,7 @@ internal fun strings_et(): Map<String, String> =
         "transition_fade" to "Hajumine",
         "transition_off" to "Väljas",
         "transition_slide" to "Libisemine",
+        "transition_style" to "Üleminekustiil",
         "translate_lyrics" to "AI laulusõnade tõlge",
         "translate_lyrics_desc" to "Näita iga rea tõlget selle all",
         "translate_needs_api_key" to "Vajab API-võtit: lisa see AI Lyrics Translation ekraanil.",

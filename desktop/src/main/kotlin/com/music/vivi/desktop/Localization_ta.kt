@@ -857,6 +857,7 @@ internal fun strings_ta(): Map<String, String> =
         "transition_fade" to "மென்மையாக மாற்று",
         "transition_off" to "முடக்கு",
         "transition_slide" to "ஸ்லைடு",
+        "transition_style" to "மாற்றல் பாணி",
         "translate_lyrics" to "AI மூலம் பாடல் வரிகளை மொழிபெயர்",
         "translate_lyrics_desc" to "ஒவ்வொரு வரியின் மொழிபெயர்ப்பையும் அதற்குக் கீழே காட்டு",
         "translate_needs_api_key" to "API விசை தேவை: AI Lyrics Translation திரையில் சேர்க்கவும்.",

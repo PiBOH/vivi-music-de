@@ -857,6 +857,7 @@ internal fun strings_ca(): Map<String, String> =
         "transition_fade" to "Esvaïment",
         "transition_off" to "Desactivat",
         "transition_slide" to "Lliscament",
+        "transition_style" to "Estil de transició",
         "translate_lyrics" to "Lletra traduïda per IA",
         "translate_lyrics_desc" to "Mostra la traducció de cada línia a sota",
         "translate_needs_api_key" to "Cal una clau API: afegeix-ne una a la pantalla AI Lyrics Translation.",

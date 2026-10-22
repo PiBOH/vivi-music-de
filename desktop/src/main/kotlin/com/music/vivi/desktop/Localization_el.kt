@@ -857,6 +857,7 @@ internal fun strings_el(): Map<String, String> =
         "transition_fade" to "Ξεθώριασμα",
         "transition_off" to "Απενεργοποίηση",
         "transition_slide" to "Ολίσθηση",
+        "transition_style" to "Στυλ μετάβασης",
         "translate_lyrics" to "Μετάφραση στίχων με AI",
         "translate_lyrics_desc" to "Εμφάνιση μετάφρασης κάθε γραμμής από κάτω",
         "translate_needs_api_key" to "Απαιτείται κλειδί API: προσθέστε ένα στην οθόνη AI Lyrics Translation.",

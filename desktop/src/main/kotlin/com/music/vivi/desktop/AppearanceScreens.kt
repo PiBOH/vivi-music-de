@@ -45,6 +45,7 @@ import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material.icons.filled.Swipe
@@ -102,10 +103,6 @@ fun AppearanceSection(
     onOpenTransitions: () -> Unit,
     onOpenPlayerDesign: () -> Unit,
     onOpenIntro: () -> Unit,
-    animationsEnabled: Boolean = true,
-    onAnimationsEnabledChange: (Boolean) -> Unit = {},
-    animationSpeed: String = "normal",
-    onAnimationSpeedChange: (String) -> Unit = {},
     nativeTitleBar: Boolean = false,
     onNativeTitleBarChange: (Boolean) -> Unit = {},
     showRightSidebar: Boolean = true,
@@ -158,12 +155,6 @@ fun AppearanceSection(
                 onClick = onOpenDensity,
             ),
             M3SettingsItem(
-                icon = Icons.Filled.PlayArrow,
-                title = { Text(Localization.get(language, "screen_transitions")) },
-                trailing = { SettingsChevron() },
-                onClick = onOpenTransitions,
-            ),
-            M3SettingsItem(
                 icon = Icons.Filled.Movie,
                 title = { Text(Localization.get(language, "intro")) },
                 description = { Text(Localization.get(language, "show_intro_on_startup")) },
@@ -175,12 +166,15 @@ fun AppearanceSection(
 
     M3SettingsGroup(
         items = listOf(
+            // A destination, not a switch: the master switch, the transitions it
+            // governs, their style and the speed live on the screen this opens,
+            // instead of one of them sitting in this hub and the rest elsewhere.
             M3SettingsItem(
                 icon = Icons.Filled.MotionPhotosOn,
                 title = { Text(Localization.get(language, "animations")) },
                 description = { Text(Localization.get(language, "animations_desc")) },
-                trailing = { Switch(checked = animationsEnabled, onCheckedChange = onAnimationsEnabledChange) },
-                onClick = { onAnimationsEnabledChange(!animationsEnabled) },
+                trailing = { SettingsChevron() },
+                onClick = onOpenTransitions,
             ),
             M3SettingsItem(
                 icon = Icons.Filled.DesktopWindows,
@@ -222,30 +216,6 @@ fun AppearanceSection(
             ),
         ),
     )
-
-    // "Animation speed" applies a multiplier to every UI transition (screen
-    // transitions, player crossfade, the lyric animations, …). It is a
-    // derivative of the master "Animations" switch, so it is only offered
-    // while transitions are enabled at all.
-    // Folds, like every other option that belongs to a switch: turning the
-    // Animations switch off closes this card instead of dropping it.
-    M3SettingsFold(visible = animationsEnabled) {
-        M3SettingsDropdownItem(
-            icon = Icons.Filled.MotionPhotosOn,
-            title = Localization.get(language, "animation_speed"),
-            value = Localization.get(language, when (animationSpeed) {
-                "fast" -> "animation_speed_fast"
-                "slow" -> "animation_speed_slow"
-                else -> "animation_speed_normal"
-            }),
-            options = listOf(
-                "fast" to Localization.get(language, "animation_speed_fast"),
-                "normal" to Localization.get(language, "animation_speed_normal"),
-                "slow" to Localization.get(language, "animation_speed_slow"),
-            ),
-            onSelect = onAnimationSpeedChange,
-        )
-    }
 
     if (showRestartDialog) {
         AlertDialog(
@@ -1038,25 +1008,81 @@ fun TransitionsScreen(
     language: String,
     screenTransition: String,
     onScreenTransitionChange: (String) -> Unit,
+    animationsEnabled: Boolean = true,
+    onAnimationsEnabledChange: (Boolean) -> Unit = {},
+    animationSpeed: String = "normal",
+    onAnimationSpeedChange: (String) -> Unit = {},
 ) {
+    // The style's own *Off* is the transitions switch, so the setting is set in
+    // one place: off stores "off", and on restores the fade it falls back to.
+    val transitionsOn = screenTransition != "off"
+
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "screen_transitions"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-        Spacer(Modifier.height(4.dp))
-        M3SettingsDropdownItem(
-            icon = Icons.Filled.PlayArrow,
-            title = Localization.get(language, "screen_transitions"),
-            value = Localization.get(language, when (screenTransition) {
-                "slide" -> "transition_slide"
-                "off" -> "transition_off"
-                else -> "transition_fade"
-            }),
-            options = listOf(
-                "off" to Localization.get(language, "transition_off"),
-                "fade" to Localization.get(language, "transition_fade"),
-                "slide" to Localization.get(language, "transition_slide"),
-            ),
-            onSelect = onScreenTransitionChange,
+        Text(
+            Localization.get(language, "animations"),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 12.dp),
         )
+        Spacer(Modifier.height(12.dp))
+
+        // The master switch and the transitions it governs, in one card: the
+        // second row folds away with the first instead of sitting further down
+        // the hub among rows about other subjects.
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.MotionPhotosOn,
+                    title = { Text(Localization.get(language, "animations")) },
+                    description = { Text(Localization.get(language, "animations_desc")) },
+                    trailing = { Switch(checked = animationsEnabled, onCheckedChange = onAnimationsEnabledChange) },
+                    onClick = { onAnimationsEnabledChange(!animationsEnabled) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.PlayArrow,
+                    title = { Text(Localization.get(language, "screen_transitions")) },
+                    trailing = {
+                        Switch(
+                            checked = transitionsOn,
+                            onCheckedChange = { on -> onScreenTransitionChange(if (on) "fade" else "off") },
+                        )
+                    },
+                    onClick = { onScreenTransitionChange(if (transitionsOn) "off" else "fade") },
+                    visible = animationsEnabled,
+                ),
+            ),
+        )
+
+        // Both choices belong to the switches above and fold with them.
+        Spacer(Modifier.height(8.dp))
+        M3SettingsFold(visible = animationsEnabled && transitionsOn) {
+            M3SettingsDropdownItem(
+                icon = Icons.Filled.Movie,
+                title = Localization.get(language, "transition_style"),
+                value = Localization.get(language, if (screenTransition == "slide") "transition_slide" else "transition_fade"),
+                options = listOf(
+                    "fade" to Localization.get(language, "transition_fade"),
+                    "slide" to Localization.get(language, "transition_slide"),
+                ),
+                onSelect = onScreenTransitionChange,
+            )
+        }
+        M3SettingsFold(visible = animationsEnabled) {
+            M3SettingsDropdownItem(
+                icon = Icons.Filled.Speed,
+                title = Localization.get(language, "animation_speed"),
+                value = Localization.get(language, when (animationSpeed) {
+                    "fast" -> "animation_speed_fast"
+                    "slow" -> "animation_speed_slow"
+                    else -> "animation_speed_normal"
+                }),
+                options = listOf(
+                    "fast" to Localization.get(language, "animation_speed_fast"),
+                    "normal" to Localization.get(language, "animation_speed_normal"),
+                    "slow" to Localization.get(language, "animation_speed_slow"),
+                ),
+                onSelect = onAnimationSpeedChange,
+            )
+        }
     }
 }
 

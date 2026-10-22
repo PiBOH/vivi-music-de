@@ -857,6 +857,7 @@ internal fun strings_fil(): Map<String, String> =
         "transition_fade" to "Fade",
         "transition_off" to "Naka-off",
         "transition_slide" to "Slide",
+        "transition_style" to "Estilo ng transisyon",
         "translate_lyrics" to "Pagsasalin ng lyrics gamit ang AI",
         "translate_lyrics_desc" to "Ipakita ang salin ng bawat linya sa ilalim nito",
         "translate_needs_api_key" to "Kailangan ng API key: magdagdag sa AI Lyrics Translation screen.",

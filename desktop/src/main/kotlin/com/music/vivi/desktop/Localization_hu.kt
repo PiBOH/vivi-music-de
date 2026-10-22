@@ -857,6 +857,7 @@ internal fun strings_hu(): Map<String, String> =
         "transition_fade" to "Áttűnés",
         "transition_off" to "Ki",
         "transition_slide" to "Csúszás",
+        "transition_style" to "Átmenet stílusa",
         "translate_lyrics" to "AI dalszöveg-fordítás",
         "translate_lyrics_desc" to "Minden sor fordítása alatta",
         "translate_needs_api_key" to "API-kulcs szükséges: add hozzá az AI Lyrics Translation képernyőn.",

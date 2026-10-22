@@ -857,6 +857,7 @@ internal fun strings_pa(): Map<String, String> =
         "transition_fade" to "ਫੇਡ",
         "transition_off" to "ਬੰਦ",
         "transition_slide" to "ਸਲਾਈਡ",
+        "transition_style" to "ਟ੍ਰਾਂਜ਼ੀਸ਼ਨ ਸ਼ੈਲੀ",
         "translate_lyrics" to "AI ਨਾਲ ਗੀਤ ਦੇ ਬੋਲ ਦਾ ਅਨੁਵਾਦ",
         "translate_lyrics_desc" to "ਹਰ ਸਤਰ ਦਾ ਅਨੁਵਾਦ ਉਸ ਦੇ ਹੇਠਾਂ ਦਿਖਾਓ",
         "translate_needs_api_key" to "API ਕੁੰਜੀ ਲੋੜੀਂਦੀ ਹੈ: AI Lyrics Translation ਸਕਰੀਨ ਵਿੱਚ ਸ਼ਾਮਲ ਕਰੋ।",

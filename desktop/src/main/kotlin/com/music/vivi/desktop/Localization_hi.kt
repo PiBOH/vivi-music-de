@@ -857,6 +857,7 @@ internal fun strings_hi(): Map<String, String> =
         "transition_fade" to "फेड",
         "transition_off" to "बंद",
         "transition_slide" to "स्लाइड",
+        "transition_style" to "ट्रांज़िशन शैली",
         "translate_lyrics" to "AI से गीत के बोल का अनुवाद",
         "translate_lyrics_desc" to "हर पंक्ति का अनुवाद उसके नीचे दिखाएँ",
         "translate_needs_api_key" to "API कुंजी चाहिए: AI Lyrics Translation स्क्रीन में जोड़ें।",

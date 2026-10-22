@@ -857,6 +857,7 @@ internal fun strings_fr(): Map<String, String> =
         "transition_fade" to "Fondu",
         "transition_off" to "Désactivé",
         "transition_slide" to "Glissement",
+        "transition_style" to "Style de transition",
         "translate_lyrics" to "Traduction des paroles par IA",
         "translate_lyrics_desc" to "Afficher la traduction de chaque ligne en dessous",
         "translate_needs_api_key" to "Nécessite une clé API : ajoutez-en une dans l'écran AI Lyrics Translation.",

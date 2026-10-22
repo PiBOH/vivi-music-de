@@ -27,5 +27,6 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "font_in_lyrics_desc" to "用上方选择的字体绘制歌词。关闭后使用渲染器自带的字体。",
         "storage_desc" to "VIVI 在此计算机上保留的所有内容，以及清空每一部分的唯一操作。",
         "storage_total" to "缓存与安装包",
+        "transition_style" to "过渡样式",
         "translate_needs_api_key" to "需要 API 密钥：请在 AI Lyrics Translation 界面添加。",
     )

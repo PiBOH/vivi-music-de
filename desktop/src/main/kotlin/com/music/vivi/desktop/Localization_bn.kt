@@ -857,6 +857,7 @@ internal fun strings_bn(): Map<String, String> =
         "transition_fade" to "ফেড",
         "transition_off" to "বন্ধ",
         "transition_slide" to "স্লাইড",
+        "transition_style" to "ট্রানজিশন শৈলী",
         "translate_lyrics" to "এআই দিয়ে গানের কথা অনুবাদ করুন",
         "translate_lyrics_desc" to "প্রতিটি লাইনের অনুবাদ তার নিচে দেখান",
         "translate_needs_api_key" to "API key দরকার: AI Lyrics Translation স্ক্রিনে যোগ করুন।",

@@ -857,6 +857,7 @@ internal fun strings_fa(): Map<String, String> =
         "transition_fade" to "محو",
         "transition_off" to "خاموش",
         "transition_slide" to "لغزان",
+        "transition_style" to "سبک انتقال",
         "translate_lyrics" to "ترجمه متن ترانه با هوش مصنوعی",
         "translate_lyrics_desc" to "نمایش ترجمه هر خط در زیر آن",
         "translate_needs_api_key" to "به کلید API نیاز دارد: آن را در صفحه AI Lyrics Translation اضافه کنید.",

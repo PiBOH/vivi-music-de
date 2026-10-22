@@ -857,6 +857,7 @@ internal fun strings_in(): Map<String, String> =
         "transition_fade" to "Fade",
         "transition_off" to "Mati",
         "transition_slide" to "Geser",
+        "transition_style" to "Gaya transisi",
         "translate_lyrics" to "Terjemahan Lirik AI",
         "translate_lyrics_desc" to "Tampilkan terjemahan setiap baris di bawahnya",
         "translate_needs_api_key" to "Butuh kunci API: tambahkan di layar AI Lyrics Translation.",

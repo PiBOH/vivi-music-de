@@ -857,6 +857,7 @@ internal fun strings_ar(): Map<String, String> =
         "transition_fade" to "تلاشي",
         "transition_off" to "إيقاف",
         "transition_slide" to "انزلاق",
+        "transition_style" to "نمط الانتقال",
         "translate_lyrics" to "ترجمة كلمات الأغاني باستخدام الذكاء الاصطناعي",
         "translate_lyrics_desc" to "عرض ترجمة كل سطر تحته",
         "translate_needs_api_key" to "يتطلب مفتاح API: أضف واحدًا في شاشة ترجمة كلمات الأغاني بالذكاء الاصطناعي.",

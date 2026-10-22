@@ -857,6 +857,7 @@ internal fun strings_sv(): Map<String, String> =
         "transition_fade" to "Tonar",
         "transition_off" to "Av",
         "transition_slide" to "Glid",
+        "transition_style" to "Övergångsstil",
         "translate_lyrics" to "AI-översättning av låttexter",
         "translate_lyrics_desc" to "Visa en översättning av varje rad under den",
         "translate_needs_api_key" to "Kräver en API-nyckel: lägg till en på skärmen AI Lyrics Translation.",

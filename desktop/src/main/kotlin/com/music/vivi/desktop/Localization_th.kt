@@ -857,6 +857,7 @@ internal fun strings_th(): Map<String, String> =
         "transition_fade" to "เฟด",
         "transition_off" to "ปิด",
         "transition_slide" to "สไลด์",
+        "transition_style" to "สไตล์การเปลี่ยนหน้า",
         "translate_lyrics" to "แปลเนื้อเพลงด้วย AI",
         "translate_lyrics_desc" to "แสดงคำแปลของแต่ละบรรทัดด้านล่าง",
         "translate_needs_api_key" to "ต้องใช้คีย์ API: เพิ่มในหน้าจอ AI Lyrics Translation",

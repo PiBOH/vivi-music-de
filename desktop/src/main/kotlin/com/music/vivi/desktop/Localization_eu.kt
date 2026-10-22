@@ -857,6 +857,7 @@ internal fun strings_eu(): Map<String, String> =
         "transition_fade" to "Laukitzea",
         "transition_off" to "Itzalita",
         "transition_slide" to "Irristatzea",
+        "transition_style" to "Trantsizio-estiloa",
         "translate_lyrics" to "AI bidezko letren itzulpena",
         "translate_lyrics_desc" to "Erakutsi lerro bakoitzaren itzulpena haren azpian",
         "translate_needs_api_key" to "API gakoa behar da: gehitu bat AI Lyrics Translation pantailan.",

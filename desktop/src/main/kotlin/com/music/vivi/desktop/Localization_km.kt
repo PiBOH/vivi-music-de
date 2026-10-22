@@ -857,6 +857,7 @@ internal fun strings_km(): Map<String, String> =
         "transition_fade" to "រសាត់",
         "transition_off" to "បិទ",
         "transition_slide" to "រុញ",
+        "transition_style" to "រចនាប័ទ្មប្តូរផ្ទាំង",
         "translate_lyrics" to "បកប្រែទំនុកច្រៀងដោយ AI",
         "translate_lyrics_desc" to "បង្ហាញការបកប្រែនៃបន្ទាត់នីមួយៗនៅខាងក្រោម",
         "translate_needs_api_key" to "ត្រូវការសោ API៖ បន្ថែមវានៅអេក្រង់ AI Lyrics Translation។",

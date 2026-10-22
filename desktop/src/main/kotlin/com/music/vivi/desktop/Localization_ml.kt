@@ -857,6 +857,7 @@ internal fun strings_ml(): Map<String, String> =
         "transition_fade" to "ഫേഡ്",
         "transition_off" to "ഓഫ്",
         "transition_slide" to "സ്ലൈഡ്",
+        "transition_style" to "ട്രാൻസിഷൻ ശൈലി",
         "translate_lyrics" to "AI ഉപയോഗിച്ച് വരികൾ വിവർത്തനം ചെയ്യുക",
         "translate_lyrics_desc" to "ഓരോ വരിയുടെയും വിവർത്തനം അതിനടിയിൽ കാണിക്കുക",
         "translate_needs_api_key" to "API കീ ആവശ്യമാണ്: AI Lyrics Translation സ്ക്രീനിൽ ചേർക്കുക.",

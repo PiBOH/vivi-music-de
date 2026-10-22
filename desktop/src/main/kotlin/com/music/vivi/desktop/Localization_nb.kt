@@ -857,6 +857,7 @@ internal fun strings_nb(): Map<String, String> =
         "transition_fade" to "Fade",
         "transition_off" to "Av",
         "transition_slide" to "Glid",
+        "transition_style" to "Overgangsstil",
         "translate_lyrics" to "AI-oversettelse av sangtekster",
         "translate_lyrics_desc" to "Vis en oversettelse av hver linje under den",
         "translate_needs_api_key" to "Trenger en API-nøkkel: legg den til på AI Lyrics Translation-skjermen.",

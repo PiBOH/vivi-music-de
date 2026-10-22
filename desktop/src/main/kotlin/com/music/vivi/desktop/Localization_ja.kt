@@ -857,6 +857,7 @@ internal fun strings_ja(): Map<String, String> =
         "transition_fade" to "フェード",
         "transition_off" to "オフ",
         "transition_slide" to "スライド",
+        "transition_style" to "トランジションのスタイル",
         "translate_lyrics" to "AI歌詞翻訳",
         "translate_lyrics_desc" to "各行の下に翻訳を表示",
         "translate_needs_api_key" to "APIキーが必要です。AI Lyrics Translation 画面で追加してください。",

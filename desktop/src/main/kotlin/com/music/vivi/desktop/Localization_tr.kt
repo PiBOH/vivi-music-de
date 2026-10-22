@@ -857,6 +857,7 @@ internal fun strings_tr(): Map<String, String> =
         "transition_fade" to "Solma",
         "transition_off" to "Kapalı",
         "transition_slide" to "Kaydır",
+        "transition_style" to "Geçiş stili",
         "translate_lyrics" to "Yapay zeka ile şarkı sözü çevirisi",
         "translate_lyrics_desc" to "Her satırın çevirisini altında göster",
         "translate_needs_api_key" to "API anahtarı gerekli: AI Lyrics Translation ekranında ekleyin.",

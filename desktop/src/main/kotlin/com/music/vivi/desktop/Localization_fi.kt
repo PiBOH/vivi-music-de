@@ -857,6 +857,7 @@ internal fun strings_fi(): Map<String, String> =
         "transition_fade" to "Häivytys",
         "transition_off" to "Pois",
         "transition_slide" to "Liukuva",
+        "transition_style" to "Siirtymän tyyli",
         "translate_lyrics" to "Tekoälykäännös sanoituksista",
         "translate_lyrics_desc" to "Näytä jokaisen rivin käännös sen alla",
         "translate_needs_api_key" to "Vaatii API-avaimen: lisää se AI Lyrics Translation -näytöllä.",

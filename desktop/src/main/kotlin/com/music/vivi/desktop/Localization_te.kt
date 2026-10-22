@@ -857,6 +857,7 @@ internal fun strings_te(): Map<String, String> =
         "transition_fade" to "ఫేడ్",
         "transition_off" to "ఆఫ్",
         "transition_slide" to "స్లయిడ్",
+        "transition_style" to "ట్రాన్సిషన్ శైలి",
         "translate_lyrics" to "AI తో పాట సాహిత్యాన్ని అనువదించండి",
         "translate_lyrics_desc" to "ప్రతి పంక్తి అనువాదాన్ని దాని కింద చూపించు",
         "translate_needs_api_key" to "API కీ అవసరం: AI Lyrics Translation స్క్రీన్‌లో జోడించండి.",

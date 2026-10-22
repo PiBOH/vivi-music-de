@@ -857,6 +857,7 @@ internal fun strings_bg(): Map<String, String> =
         "transition_fade" to "Избледняване",
         "transition_off" to "Изключено",
         "transition_slide" to "Плъзгане",
+        "transition_style" to "Стил на прехода",
         "translate_lyrics" to "ИИ превод на текстове",
         "translate_lyrics_desc" to "Покажи превод на всеки ред под него",
         "translate_needs_api_key" to "Нужен е API ключ: добавете го в екрана AI Lyrics Translation.",

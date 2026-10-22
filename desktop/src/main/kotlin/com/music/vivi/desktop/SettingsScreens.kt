@@ -374,10 +374,6 @@ fun SettingsLanguageScreen(language: String, onBack: () -> Unit, onLanguageChang
 fun SettingsAppearanceScreen(
     language: String,
     onBack: () -> Unit,
-    animationsEnabled: Boolean = true,
-    onAnimationsEnabledChange: (Boolean) -> Unit = {},
-    animationSpeed: String = "normal",
-    onAnimationSpeedChange: (String) -> Unit = {},
     onOpenTheme: () -> Unit = {},
     onOpenFont: () -> Unit = {},
     onOpenCanvas: () -> Unit = {},
@@ -401,10 +397,6 @@ fun SettingsAppearanceScreen(
             onOpenTransitions = onOpenTransitions,
             onOpenPlayerDesign = onOpenPlayerDesign,
             onOpenIntro = onOpenIntro,
-            animationsEnabled = animationsEnabled,
-            onAnimationsEnabledChange = onAnimationsEnabledChange,
-            animationSpeed = animationSpeed,
-            onAnimationSpeedChange = onAnimationSpeedChange,
             nativeTitleBar = nativeTitleBar,
             onNativeTitleBarChange = onNativeTitleBarChange,
             showRightSidebar = showRightSidebar,
@@ -484,12 +476,20 @@ fun SettingsTransitionsScreen(
     onBack: () -> Unit,
     screenTransition: String,
     onScreenTransitionChange: (String) -> Unit,
+    animationsEnabled: Boolean = true,
+    onAnimationsEnabledChange: (Boolean) -> Unit = {},
+    animationSpeed: String = "normal",
+    onAnimationSpeedChange: (String) -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
         TransitionsScreen(
             language = language,
             screenTransition = screenTransition,
             onScreenTransitionChange = onScreenTransitionChange,
+            animationsEnabled = animationsEnabled,
+            onAnimationsEnabledChange = onAnimationsEnabledChange,
+            animationSpeed = animationSpeed,
+            onAnimationSpeedChange = onAnimationSpeedChange,
         )
     }
 }

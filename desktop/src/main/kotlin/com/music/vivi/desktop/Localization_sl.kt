@@ -857,6 +857,7 @@ internal fun strings_sl(): Map<String, String> =
         "transition_fade" to "Zbledenje",
         "transition_off" to "Izklopljeno",
         "transition_slide" to "Drsenje",
+        "transition_style" to "Slog prehoda",
         "translate_lyrics" to "AI prevod besedil pesmi",
         "translate_lyrics_desc" to "Prikaži prevod vsake vrstice pod njo",
         "translate_needs_api_key" to "Potrebuje ključ API: dodajte ga na zaslonu AI Lyrics Translation.",

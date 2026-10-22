@@ -857,6 +857,7 @@ internal fun strings_lt(): Map<String, String> =
         "transition_fade" to "Išblukimas",
         "transition_off" to "Išjungta",
         "transition_slide" to "Slydimas",
+        "transition_style" to "Perėjimo stilius",
         "translate_lyrics" to "AI dainų tekstų vertimas",
         "translate_lyrics_desc" to "Rodyti kiekvienos eilutės vertimą po ja",
         "translate_needs_api_key" to "Reikia API rakto: pridėkite jį AI Lyrics Translation ekrane.",

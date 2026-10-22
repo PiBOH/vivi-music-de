@@ -857,6 +857,7 @@ internal fun strings_iw(): Map<String, String> =
         "transition_fade" to "דהייה",
         "transition_off" to "כבוי",
         "transition_slide" to "החלקה",
+        "transition_style" to "סגנון מעבר",
         "translate_lyrics" to "תרגום מילות שיר עם בינה מלאכותית",
         "translate_lyrics_desc" to "הצג תרגום של כל שורה מתחתיה",
         "translate_needs_api_key" to "נדרש מפתח API: הוסף אותו במסך AI Lyrics Translation.",

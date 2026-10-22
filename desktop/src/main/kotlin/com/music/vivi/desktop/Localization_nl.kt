@@ -857,6 +857,7 @@ internal fun strings_nl(): Map<String, String> =
         "transition_fade" to "Vervagen",
         "transition_off" to "Uit",
         "transition_slide" to "Schuiven",
+        "transition_style" to "Overgangsstijl",
         "translate_lyrics" to "Songtekst vertalen met AI",
         "translate_lyrics_desc" to "Toon de vertaling van elke regel eronder",
         "translate_needs_api_key" to "Vereist een API-sleutel: voeg er een toe op het scherm AI Lyrics Translation.",

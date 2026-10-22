@@ -857,6 +857,7 @@ internal fun strings_ko(): Map<String, String> =
         "transition_fade" to "페이드",
         "transition_off" to "끄기",
         "transition_slide" to "슬라이드",
+        "transition_style" to "전환 스타일",
         "translate_lyrics" to "AI 가사 번역",
         "translate_lyrics_desc" to "각 줄 아래에 번역 표시",
         "translate_needs_api_key" to "API 키가 필요합니다. AI Lyrics Translation 화면에서 추가하세요.",

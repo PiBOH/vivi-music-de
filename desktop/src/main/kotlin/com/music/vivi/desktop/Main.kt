@@ -2752,21 +2752,6 @@ fun WindowScope.App(
                     is Screen.SettingsAppearance -> SettingsAppearanceScreen(
                         language = language,
                         onBack = goBack,
-                        animationsEnabled = animationsEnabled,
-                        onAnimationsEnabledChange = { v ->
-                            animationsEnabled = v
-                            // The transition helpers read this directly, so the
-                            // change is visible on the next frame instead of
-                            // waiting for the settings file reload.
-                            Animations.enabled = v
-                            DesktopSettings.update { it.copy(animationsEnabled = v) }
-                        },
-                        animationSpeed = animationSpeed,
-                        onAnimationSpeedChange = { v ->
-                            animationSpeed = v
-                            Animations.speed = v
-                            DesktopSettings.update { it.copy(animationSpeed = v) }
-                        },
                         onOpenTheme = { navigate(Screen.SettingsTheme) },
                         onOpenFont = { navigate(Screen.SettingsFont) },
                         onOpenCanvas = { navigate(Screen.SettingsCanvas) },
@@ -2831,6 +2816,21 @@ fun WindowScope.App(
                         onScreenTransitionChange = { t ->
                             screenTransition = t
                             DesktopSettings.update { it.copy(screenTransition = t) }
+                        },
+                        animationsEnabled = animationsEnabled,
+                        onAnimationsEnabledChange = { v ->
+                            animationsEnabled = v
+                            // The transition helpers read this directly, so the
+                            // change is visible on the next frame instead of
+                            // waiting for the settings file reload.
+                            Animations.enabled = v
+                            DesktopSettings.update { it.copy(animationsEnabled = v) }
+                        },
+                        animationSpeed = animationSpeed,
+                        onAnimationSpeedChange = { v ->
+                            animationSpeed = v
+                            Animations.speed = v
+                            DesktopSettings.update { it.copy(animationSpeed = v) }
                         },
                     )
                     is Screen.SettingsPlayerDesign -> SettingsPlayerDesignScreen(

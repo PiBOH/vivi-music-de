@@ -857,6 +857,7 @@ internal fun strings_vi(): Map<String, String> =
         "transition_fade" to "Mờ dần",
         "transition_off" to "Tắt",
         "transition_slide" to "Trượt",
+        "transition_style" to "Kiểu chuyển cảnh",
         "translate_lyrics" to "Dịch lời bài hát bằng AI",
         "translate_lyrics_desc" to "Hiển thị bản dịch của mỗi dòng bên dưới",
         "translate_needs_api_key" to "Cần khóa API: thêm khóa trong màn hình AI Lyrics Translation.",

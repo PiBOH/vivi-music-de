@@ -857,6 +857,7 @@ internal fun strings_ro(): Map<String, String> =
         "transition_fade" to "Estompare",
         "transition_off" to "Oprit",
         "transition_slide" to "Glisare",
+        "transition_style" to "Stil de tranziție",
         "translate_lyrics" to "Traducerea versurilor cu AI",
         "translate_lyrics_desc" to "Arată traducerea fiecărui rând sub el",
         "translate_needs_api_key" to "Necesită o cheie API: adaug-o în ecranul AI Lyrics Translation.",

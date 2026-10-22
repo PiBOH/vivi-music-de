@@ -857,6 +857,7 @@ internal fun strings_sk(): Map<String, String> =
         "transition_fade" to "Prelínanie",
         "transition_off" to "Vypnuté",
         "transition_slide" to "Posun",
+        "transition_style" to "Štýl prechodu",
         "translate_lyrics" to "AI preklad textu piesní",
         "translate_lyrics_desc" to "Zobraziť preklad každého riadku pod ním",
         "translate_needs_api_key" to "Vyžaduje API kľúč: pridajte ho na obrazovke AI Lyrics Translation.",
