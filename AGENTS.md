@@ -422,11 +422,11 @@ the working sign-in WebView and are **never** trimmed for size.
   file)**: a row, an entry, a note or a "Watch"/"Open sub-item" line is written
   in **English**, never in the owner's own language. An Italian `TODO.md` row or
   an Italian changelog entry is a defect of the change, exactly like an Italian
-  commit message: the owner quotes Italian in a report, and the quote stays
-  Italian where it is quoted, but everything written around it is English. If a
-  commit was made with a title, body, `TODO.md` row or changelog entry in
-  another language, rewriting that commit so it obeys this rule is part of
-  finishing the work.
+  commit message: a report from the owner is **described** in English and never
+  reproduced, not even in quotation marks (see *Never quote the reporter*
+  below). If a commit was made with a title, body, `TODO.md` row or changelog
+  entry in another language, rewriting that commit so it obeys this rule is part
+  of finishing the work.
 
 > ⚠️ This overrides any agent-default commit template. The commit title **and**
 > body must be English and the body must be **only** the human-written
@@ -441,6 +441,28 @@ the working sign-in WebView and are **never** trimmed for size.
 >
 > Wrong (banned): Italian body, or any `Co-Authored-By:` / `Generated with … 🤖`
 > footer line.
+
+### Never quote the reporter — MANDATORY (do not violate)
+
+- **No owner text, anywhere.** A message from the owner, an issue text or a
+  support report is **described in English**, never reproduced: no `"…"`
+  quotation of the owner's own words in a commit message or body, in
+  `CHANGELOG.md`, in `TODO.md`, in a code comment, in an in-app string, or in a
+  **GitHub release body / release notes / tag description**. A translated
+  quotation counts as a quotation.
+- **Release bodies are public.** `.github/workflows/auto-release.yml` builds
+  every release body from the changelog section, so an entry that quotes the
+  owner publishes the quotation on the release page. The workflow runs
+  `scripts/clean_release_notes.py` on the extracted section for exactly that
+  reason; run the same script (or delete the quotation by hand) before
+  publishing anything else that repeats the section. It drops a double-quoted
+  span that reads Italian and leaves an English quotation alone.
+- **Cleaning a published quotation is part of the work, not a follow-up.**
+  `gh release edit <tag> --notes-file <file>` rewrites an existing body; then
+  re-read the release from the API and confirm the text is gone. Six releases
+  had to be repaired this way once already — do not let another one ship.
+- **Never rewrite git history to do it.** Commit messages already published are
+  left alone: the release body and the changelog are what must be clean.
 
 ## 4. Golden rule: "If it works, don't touch it"
 
@@ -966,9 +988,11 @@ grep -rho "primed: device started with [0-9]*ms" logs/*/playback.log | sort | un
 There is no GUI and no display in the agent environment, and most of the desktop
 edition is UI. "It compiles" therefore proves very little, and a claim about a
 screen that has not been rendered is a claim that has not been checked. The
-desktop module carries five **manual** Gradle checks that render the real
+desktop module carries a set of **manual** Gradle checks that render the real
 composables into an off-screen `androidx.compose.ui.ImageComposeScene` (no
-window, no GPU) and look at the pixels or at the state they produce:
+window, no GPU) and look at the pixels or at the state they produce. Every one is
+registered at the end of `desktop/build.gradle.kts`; the table is the ones that
+are written down here, newest last:
 
 | task | what it proves |
 | --- | --- |
@@ -977,6 +1001,14 @@ window, no GPU) and look at the pixels or at the state they produce:
 | `:desktop:localDataMaintenanceCheck` | the log pruning rule: only logs older than seven days, never the session being written, never a data file |
 | `:desktop:firstRunRenderCheck` | the first-run screen composes and paints at 600x480, 1024x768 and 1600x900 |
 | `:desktop:chatWindowRenderCheck` | the Listen Together chat list: an empty conversation draws its empty state, a conversation draws its bubbles, and a bubble that quotes another one draws strictly more than the same message without the quote |
+| `:desktop:deviceSyncFoldCheck` | Device sync's folding *Advanced* group: folded it is one row of at least 56 dp (its header), open it is three rows in one card joined by 3 dp seams, the two volume switches only appear in those body rows, and the chevron's ink reads wide-then-narrow folded against narrow-then-wide open, tinted `primary` |
+| `:desktop:spotifyAccountRenderCheck` | the Spotify import and Account screens: the hero's brand tile is a 64 dp `primary` square, the import button shares that fill, three source rows are one card joined by 3 dp seams with exactly the two selected rows drawing a `primary` checkbox, the Account head's pixels change with the name, and `M3CollapsibleCard` is one header row folded against header plus body joined by 3 dp |
+| `:desktop:accountSyncRowCheck` | the account screen's sync row: the run's counter (`SyncRunTrailing`) is absent with no run under way, sits on the row's right edge during one (every changed pixel right of the trailing zone's left edge, `147 px` at `x>=571` of 640), changes when the run's numbers change (`3/12` against `7/8`, `188 px`) and is replaced by the ring while the total is unknown (`159 px` different) |
+| `:desktop:playerAudioCardCheck` | *Player & audio*'s cards and the fold a row that belongs to a switch makes: with crossfade on the gapless row and the duration are rows of the crossfade card (`rows=15` off against `17` on, same cards, two 3 dp seams more), with skip silence on one more row in the same cards, and and the row itself folds frame by frame through the 200 ms `Animations.rowEnter` / `rowExit` tween (`[76, 76] -> [76, 70] -> ... -> [76]`) and unfolds back to `[76, 76]`, while the card's bottom corner is drawn moving (`27 -> 42 px` inset over the fold) instead of swapped |
+| `:desktop:equalizerRenderCheck` | the rebuilt Equalizer screen: with no profile one card of four rows and no `primary` ink beyond the icon tiles (no curve, no band row), with a profile three more cards including the response curve drawn in `primary` (`37258 px`) and a band card of ten rows joined by nine 3 dp seams; the editor's fold read frame by frame as the chosen id flips (the page's bottom edge travels `366 -> 2065` and back); and the curve as a control: the card rendered on its own, found from its fill, pressed on the fourth band's point with the mouse and dragged up twice, which reports `250 Hz -1.0 -> 5.5 -> 10.0` (4.5 dB per 20 px, that band alone, on a half-dB stop); the dragged band's readout, both its text (`250 Hz   +5.5 dB`, `16000 Hz   -2.0 dB`, `62 Hz   0.0 dB`) and its pixels, by comparing the frame captured with the button still down against the frame after the release (`3051 px`, top row `85` against the point at `100`, so the pill is above the point and is not drawn afterwards); and the click: a click 60 px above the fourth band's point reports nothing (`far=0`), a click on the chart's 0 dB line in that band's column reports `[0.0]` for that band alone, and the frame right after it paints `3593 px` the frame a second later does not |
+| `:desktop:sliderRenderCheck` | the settings slider (`M3SettingsSlider`, the one every bar in Settings is drawn with): the track's centre row read off screen at rest (`X1 P92 X1 N6 P4 N6 X1 I288 X1` - `primary` to the cut, 6 px of page, the 4 px handle, 6 px of page, then `secondaryContainer`; the 1 px `X` runs are the capsule's antialiased ends and are dropped by `Row.significant()`), pressed 300 px along the strip (handle widened to 8 px, the 40 dp state layer tinting 43 px around it, the press reporting `0.755`), released back to a 4 px handle, and a slider with `steps = 3` reporting `0.5, 1.0, 0.0` for presses at 60 %, 90 % and 2 %. Each state is settled frame by frame (`settle`, 4 frames 150 ms apart) because a pointer event is read a pass after it is dispatched and a tween starts on the frame after that |
+| `:desktop:languageSearchCheck` | the language picker's search box: `Languages.matching` on a blank query, a name, an accented name, the schwa, a code and a query that matches nothing, and `LanguagePickerRows` rendered in those three states inside the menu's own `IntrinsicSize.Max` measurement (the field is drawn 200..300 px wide and the list below it narrows, 48 rows against one against the no-result line) |
+| `:desktop:storageCommitsRenderCheck` | the head the Storage and Commits screens share (`M3ScreenHero`, `M3SegmentedBar`, `M3SegmentedLegend`): a 56x56 `secondaryContainer` tile in both, Storage's bar as the proportion of its parts (`358 / 178 / 58 px`, 6 : 3 : 1) with one 8 dp legend dot per part in the bar's own colour and two names per line, and Commits' three chips (one tonal on `secondaryContainer`, two on `surfaceContainerHigh`) over two day rules and three rows. A rule is counted by the row it sits on, because a 1 px line can break into two runs where the layout splits its width |
 
 They live in `desktop/src/test/kotlin/com/music/vivi/desktop/`, write their PNGs
 under `.ignore/`, are registered at the end of `desktop/build.gradle.kts`, and
