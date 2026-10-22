@@ -160,6 +160,18 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
 
+    // `runComposeUiTest` for `:desktop:dropdownPositionCheck`: the settings rows
+    // open a Material 3 `DropdownMenu`, which is a popup, and an
+    // `ImageComposeScene` paints no popups. The test harness composes the
+    // popups and exposes their semantics, which is the only way to measure
+    // where a menu really opens.
+    // The `compose.uiTest` accessor resolves an older line of the artifact than
+    // the one the runtime ends up with (ui resolves to 1.10.0 through the
+    // material3 graph), and that mix fails on the first frame
+    // (`PlatformContext` has no `Companion` in it). Pinned to what ui resolves
+    // to, so the harness and the app are the same Compose.
+    testImplementation("org.jetbrains.compose.ui:ui-test:1.10.0")
+
     // Material 3 tonal color palette (same seed-based scheme as the Android app)
     implementation(libs.materialKolor)
 
@@ -941,7 +953,9 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
  *
  * What it cannot read is a dropdown's menu: the rows open a Material 3
  * `DropdownMenu`, which is a popup, and an off-screen `ImageComposeScene` paints
- * no popups (a click on a row leaves the frame without a menu in it).
+ * no popups (a click on a row leaves the frame without a menu in it). Where that
+ * menu lands is `:desktop:dropdownPositionCheck`'s subject, on the ui-test
+ * harness whose scene does hold the popup.
  * A manual check, not part of `check` (pixels, no test framework, PNGs under
  * .ignore/settings/).
  */
@@ -950,5 +964,26 @@ tasks.register<JavaExec>("settingsScreensRenderCheck") {
     description = "Renders the rebuilt settings screens headlessly and checks their cards, rows and seams"
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.SettingsScreensRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
+ * Headless check of where a settings dropdown opens:
+ *
+ *     ./gradlew :desktop:dropdownPositionCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/DropdownPositionCheck.kt`.
+ * The rows open a Material 3 `DropdownMenu`, a popup, and an
+ * `ImageComposeScene` paints no popups - which is why no render check could ever
+ * say where the menu went. This one runs on the compose ui-test harness, whose
+ * scene does hold the popup, so the menu's own bounds can be read against the
+ * row's: under the row with its left edge on the row's, and above it when there
+ * is no room below. A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("dropdownPositionCheck") {
+    group = "verification"
+    description = "Opens a settings dropdown and reads where its menu lands against the row"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.DropdownPositionCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
