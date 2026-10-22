@@ -62,6 +62,12 @@ import androidx.compose.ui.unit.dp
 data class M3SettingsItem(
     val icon: ImageVector?,
     val title: @Composable () -> Unit,
+    /**
+     * Drawn where [icon] would be, for a row whose mark is not a vector: the
+     * contributor list shows each person's own avatar, and a letter tile in its
+     * place would be the same row for everybody.
+     */
+    val leading: (@Composable () -> Unit)? = null,
     val description: (@Composable () -> Unit)? = null,
     val trailing: (@Composable () -> Unit)? = null,
     val onClick: (() -> Unit)? = null,
@@ -411,7 +417,10 @@ private fun M3SettingsItemRow(
                 .padding(horizontal = 17.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (item.icon != null) {
+            if (item.leading != null) {
+                item.leading()
+                Spacer(Modifier.width(13.dp))
+            } else if (item.icon != null) {
                 Box(
                     modifier = Modifier
                         .size(34.dp)

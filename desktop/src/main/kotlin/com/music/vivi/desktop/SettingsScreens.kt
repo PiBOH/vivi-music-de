@@ -62,6 +62,9 @@ import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.PictureInPicture
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Dock
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.TouchApp
@@ -2898,64 +2901,45 @@ fun SettingsDesktopScreen(
     SettingsSubScreen(language, onBack) {
         Text(
             Localization.get(language, "desktop_features"),
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 4.dp),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(top = 12.dp),
         )
         Text(
             Localization.get(language, "desktop_features_desc"),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 12.dp),
+            modifier = Modifier.padding(top = 6.dp),
         )
+        Spacer(Modifier.height(12.dp))
 
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(Localization.get(language, "now_playing_widget"), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    Localization.get(language, "now_playing_widget_desc"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(checked = showWidget, onCheckedChange = onShowWidgetChange)
-        }
-
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(Localization.get(language, "media_keys"), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    Localization.get(language, "media_keys_desc"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                checked = mediaKeysEnabled,
-                onCheckedChange = onMediaKeysChange,
-            )
-        }
-
-        Row(
-            Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(Localization.get(language, "tray_menu"), style = MaterialTheme.typography.bodyLarge)
-                Text(
-                    Localization.get(language, "tray_menu_desc"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(checked = trayMenuEnabled, onCheckedChange = onTrayMenuChange)
-        }
-        Spacer(Modifier.height(16.dp))
+        // The three are one subject (what this build does with the desktop around
+        // it), so they are one card, as the preview draws them.
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.PictureInPicture,
+                    title = { Text(Localization.get(language, "now_playing_widget")) },
+                    description = { Text(Localization.get(language, "now_playing_widget_desc")) },
+                    trailing = { Switch(checked = showWidget, onCheckedChange = onShowWidgetChange) },
+                    onClick = { onShowWidgetChange(!showWidget) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Keyboard,
+                    title = { Text(Localization.get(language, "media_keys")) },
+                    description = { Text(Localization.get(language, "media_keys_desc")) },
+                    trailing = { Switch(checked = mediaKeysEnabled, onCheckedChange = onMediaKeysChange) },
+                    onClick = { onMediaKeysChange(!mediaKeysEnabled) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Dock,
+                    title = { Text(Localization.get(language, "tray_menu")) },
+                    description = { Text(Localization.get(language, "tray_menu_desc")) },
+                    trailing = { Switch(checked = trayMenuEnabled, onCheckedChange = onTrayMenuChange) },
+                    onClick = { onTrayMenuChange(!trayMenuEnabled) },
+                ),
+            ),
+        )
+        Spacer(Modifier.height(24.dp))
     }
 }
 

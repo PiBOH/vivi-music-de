@@ -162,6 +162,77 @@ object SettingsScreensRenderCheck {
         val aiBands = bands(ai)
         println("ai: bands=${aiBands.size} ${aiBands.map { "${it.top}..${it.bottom}" }}")
 
+        val contributors = render { ContributorsSection(language = "en") }
+        File(outDir, "contributors.png").writeBytes(contributors)
+        val contributorBands = bands(contributors)
+        println("contributors: bands=${contributorBands.size} ${contributorBands.map { "${it.top}..${it.bottom}" }}")
+
+        val license = render { LicenseSection(language = "en") }
+        File(outDir, "license.png").writeBytes(license)
+        val licenseEdge = bands(license, column = 596)
+        println("license: right-edge bands=${licenseEdge.map { "${it.top}..${it.bottom}" }}")
+
+        val about = render { AboutSection(language = "en", onOpenContributors = {}, onOpenLicense = {}) }
+        File(outDir, "about.png").writeBytes(about)
+        val aboutBands = bands(about)
+        println("about: bands=${aboutBands.size} ${aboutBands.map { "${it.top}..${it.bottom}" }}")
+
+        val desktopFeatures = render {
+            SettingsDesktopScreen(
+                language = "en",
+                onBack = {},
+                showWidget = true,
+                onShowWidgetChange = {},
+                mediaKeysEnabled = false,
+                onMediaKeysChange = {},
+                trayMenuEnabled = true,
+                onTrayMenuChange = {},
+            )
+        }
+        File(outDir, "desktop_features.png").writeBytes(desktopFeatures)
+        val desktopBands = bands(desktopFeatures)
+        println("desktop: bands=${desktopBands.size} ${desktopBands.map { "${it.top}..${it.bottom}" }}")
+
+        val canvasOn = render {
+            CanvasSection(
+                language = "en",
+                canvasEnabled = true,
+                onCanvasEnabledChange = {},
+                canvasSource = CanvasSource.AUTO,
+                onCanvasSourceChange = {},
+            )
+        }
+        File(outDir, "canvas.png").writeBytes(canvasOn)
+        val canvasBands = bands(canvasOn)
+        println("canvas(on): bands=${canvasBands.size} ${canvasBands.map { "${it.top}..${it.bottom}" }}")
+
+        val canvasOff = render {
+            CanvasSection(
+                language = "en",
+                canvasEnabled = false,
+                onCanvasEnabledChange = {},
+                canvasSource = CanvasSource.AUTO,
+                onCanvasSourceChange = {},
+            )
+        }
+        File(outDir, "canvas_off.png").writeBytes(canvasOff)
+        val canvasOffBands = bands(canvasOff)
+        println("canvas(off): bands=${canvasOffBands.size} ${canvasOffBands.map { "${it.top}..${it.bottom}" }}")
+
+        val font = render {
+            FontSection(language = "en", selectedFont = AppFont.SYSTEM, onFontChange = {})
+        }
+        File(outDir, "font.png").writeBytes(font)
+        val fontBands = bands(font)
+        println("font: bands=${fontBands.size} ${fontBands.map { "${it.top}..${it.bottom}" }}")
+
+        val density = render {
+            DensityScreen(language = "en", densityScale = 1f, onDensityScaleChange = {}, gridItemSize = 160, onGridItemSizeChange = {})
+        }
+        File(outDir, "density.png").writeBytes(density)
+        val densityBands = bands(density)
+        println("density: bands=${densityBands.size} ${densityBands.map { "${it.top}..${it.bottom}" }}")
+
         // The seam is the 3 dp the next row's own top padding takes; anything
         // wider is the gap the screen leaves between two cards.
         fun seams(bands: List<Band>) = bands.zipWithNext().count { (a, b) -> b.top - a.bottom - 1 in 1..4 }
@@ -176,6 +247,9 @@ object SettingsScreensRenderCheck {
         val privacySeams = seams(privacyBands)
         val aiCards = cards(aiBands)
         val aiSeams = seams(aiCards)
+        val aboutCards = cards(aboutBands)
+        val desktopSeams = seams(desktopBands)
+        val fontSeams = seams(fontBands)
 
         // Updates: 2 rows, two cards of one row, 2 rows.
         if (updateBands.size != 6) failures += "Updates should read six bands, read ${updateBands.size}"
@@ -218,6 +292,34 @@ object SettingsScreensRenderCheck {
         if (aiCards.size != 6) failures += "AI should read six cards, read ${aiCards.size}"
         if (aiSeams != 3) failures += "AI should join its three credentials rows and its two mode rows (3 seams), read $aiSeams"
 
+        // Contributors: one card, a row per person (the bundled list is the
+        // fallback the frame draws); License is a document, so it is not read
+        // by the band scan at all.
+        if (contributorBands.isEmpty()) failures += "Contributors should list the bundled contributors, read nothing"
+        if (seams(contributorBands) != contributorBands.size - 1) {
+            failures += "Contributors should be one card (${contributorBands.size - 1} seams), read ${seams(contributorBands)}"
+        }
+
+        // About: the head card, then three cards of four, three and two rows.
+        if (aboutCards.size != 10) failures += "About should read ten rows (the head plus 4 + 3 + 2), read ${aboutCards.size}"
+        if (seams(aboutCards) != 6) failures += "About should join 4 + 3 + 2 rows (6 seams), read ${seams(aboutCards)}"
+
+        // Desktop features: one card of the three switches.
+        if (desktopBands.size != 3) failures += "Desktop features should read three rows, read ${desktopBands.size}"
+        if (desktopSeams != 2) failures += "Desktop features should join its three switches (2 seams), read $desktopSeams"
+
+        // Canvas: the source row only exists with the Canvas on.
+        if (canvasBands.size != 2) failures += "Canvas on should read the switch and its source, read ${canvasBands.size}"
+        if (canvasOffBands.size != 1) failures += "Canvas off should read its switch alone, read ${canvasOffBands.size}"
+
+        // Font: the preview, then one card of five faces plus the import row (5
+        // seams), then the lyrics switch in its own card.
+        if (fontBands.size != 8) failures += "App font should read the preview, six list rows and the lyrics card, read ${fontBands.size}"
+        if (fontSeams != 5) failures += "App font should join its five faces and the import (5 seams), read $fontSeams"
+
+        // Display density: the two dropdown cards.
+        if (densityBands.size != 2) failures += "Display density should read two cards, read ${densityBands.size}"
+
         if (failures.isEmpty()) {
             println()
             println(
@@ -225,7 +327,10 @@ object SettingsScreensRenderCheck {
                     "Notifications is one card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +
-                    "Privacy is one card of two switches, and AI is ${aiCards.size} cards with $aiSeams seams",
+                    "Privacy is one card of two switches, AI is ${aiCards.size} cards with $aiSeams seams, " +
+                    "Contributors is one card of ${contributorBands.size} rows, " +
+                    "About is a head and three cards of 4 + 3 + 2 rows, Desktop features one card of three switches, " +
+                    "Canvas's source folds with its switch, App font joins its six rows, and Display density is two cards",
             )
             return
         }

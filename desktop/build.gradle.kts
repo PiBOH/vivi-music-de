@@ -932,12 +932,16 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
  * read the same way: the dropdowns stand alone, the five content switches are
  * one card, the language list is one card under its field, Privacy's two
  * switches are one, and the AI screen's credentials and mode rows are two.
+ * Appearance's Canvas, App font and Display density and the About screens
+ * (About, Contributors, Desktop features) are read the same way: the Canvas
+ * source only exists with its switch, the fonts are one card with the import as
+ * its last row, About is a head and three cards, and Contributors is one card.
  * A manual check, not part of `check` (pixels, no test framework, PNGs under
  * .ignore/settings/).
  */
 tasks.register<JavaExec>("settingsScreensRenderCheck") {
     group = "verification"
-    description = "Renders Updates, Notifications, Content, Language, Privacy and AI headlessly and checks their cards, rows and seams"
+    description = "Renders the rebuilt settings screens headlessly and checks their cards, rows and seams"
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.SettingsScreensRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath

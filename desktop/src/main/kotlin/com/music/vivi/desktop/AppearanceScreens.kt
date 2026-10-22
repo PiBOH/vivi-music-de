@@ -1143,68 +1143,58 @@ fun FontSection(
             }
         }
 
-        Spacer(Modifier.height(16.dp))
-
-        Text(Localization.get(language, "font_selection"), style = MaterialTheme.typography.titleMedium)
-
-        FontOption(
-            title = Localization.get(language, "font_system"),
-            desc = Localization.get(language, "font_system_desc"),
-            family = FontFamily.Default,
-            selected = selectedFont == AppFont.SYSTEM,
-            onClick = { onFontChange(AppFont.SYSTEM) },
-        )
-        FontOption(
-            title = Localization.get(language, "font_google_sans"),
-            desc = Localization.get(language, "font_google_sans_desc"),
-            family = AppFonts.googleSans,
-            selected = selectedFont == AppFont.GOOGLE_SANS,
-            onClick = { onFontChange(AppFont.GOOGLE_SANS) },
-        )
-        FontOption(
-            title = Localization.get(language, "font_sans_flex"),
-            desc = Localization.get(language, "font_sans_flex_desc"),
-            family = AppFonts.sansFlex,
-            selected = selectedFont == AppFont.SANS_FLEX,
-            onClick = { onFontChange(AppFont.SANS_FLEX) },
-        )
-        FontOption(
-            title = Localization.get(language, "font_outfit"),
-            desc = Localization.get(language, "font_outfit_desc"),
-            family = AppFonts.outfit,
-            selected = selectedFont == AppFont.OUTFIT,
-            onClick = { onFontChange(AppFont.OUTFIT) },
-        )
-        FontOption(
-            title = Localization.get(language, "font_plus_jakarta_sans"),
-            desc = Localization.get(language, "font_plus_jakarta_sans_desc"),
-            family = AppFonts.plusJakartaSans,
-            selected = selectedFont == AppFont.PLUS_JAKARTA_SANS,
-            onClick = { onFontChange(AppFont.PLUS_JAKARTA_SANS) },
-        )
-
-        if (customFontPath.isNotBlank()) {
-            FontOption(
-                title = Localization.get(language, "custom_font"),
-                desc = customFontPath.substringAfterLast("\\").substringAfterLast("/"),
-                family = AppFonts.familyFor(AppFont.CUSTOM, customFontPath),
-                selected = selectedFont == AppFont.CUSTOM,
-                onClick = { onFontChange(AppFont.CUSTOM) },
-            )
-        }
-
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = onImportFont) {
-            Icon(Icons.Filled.FontDownload, contentDescription = null, modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
-            Text(Localization.get(language, "import_font"))
-        }
+
+        // One card of fonts, each row drawn in the face it offers, the radio in
+        // the row's own trailing slot; the import is the list's last row, so the
+        // screen is the choices and nothing else (the preview's shape).
+        M3SettingsGroup(
+            title = Localization.get(language, "font_selection"),
+            items = buildList {
+                add(fontRow(language, "font_system", "font_system_desc", FontFamily.Default, selectedFont == AppFont.SYSTEM) { onFontChange(AppFont.SYSTEM) })
+                add(fontRow(language, "font_google_sans", "font_google_sans_desc", AppFonts.googleSans, selectedFont == AppFont.GOOGLE_SANS) { onFontChange(AppFont.GOOGLE_SANS) })
+                add(fontRow(language, "font_sans_flex", "font_sans_flex_desc", AppFonts.sansFlex, selectedFont == AppFont.SANS_FLEX) { onFontChange(AppFont.SANS_FLEX) })
+                add(fontRow(language, "font_outfit", "font_outfit_desc", AppFonts.outfit, selectedFont == AppFont.OUTFIT) { onFontChange(AppFont.OUTFIT) })
+                add(
+                    fontRow(
+                        language,
+                        "font_plus_jakarta_sans",
+                        "font_plus_jakarta_sans_desc",
+                        AppFonts.plusJakartaSans,
+                        selectedFont == AppFont.PLUS_JAKARTA_SANS,
+                    ) { onFontChange(AppFont.PLUS_JAKARTA_SANS) },
+                )
+                if (customFontPath.isNotBlank()) {
+                    add(
+                        M3SettingsItem(
+                            icon = Icons.Filled.FontDownload,
+                            title = {
+                                Text(
+                                    Localization.get(language, "custom_font"),
+                                    fontFamily = AppFonts.familyFor(AppFont.CUSTOM, customFontPath),
+                                )
+                            },
+                            description = { Text(customFontPath.substringAfterLast("\\").substringAfterLast("/")) },
+                            trailing = { RadioButton(selected = selectedFont == AppFont.CUSTOM, onClick = null) },
+                            onClick = { onFontChange(AppFont.CUSTOM) },
+                        ),
+                    )
+                }
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.FontDownload,
+                        title = { Text(Localization.get(language, "import_font")) },
+                        onClick = onImportFont,
+                    ),
+                )
+            },
+        )
 
         // The lyrics draw from a bare text style of their own, so the face chosen
         // here never reached them even though the theme carries it everywhere
         // else. This is the switch that decides it, on by default: a font chosen
         // on this screen is expected to be the app's font, lyrics included.
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -1223,33 +1213,23 @@ fun FontSection(
     }
 }
 
+/** One font of [FontSection]'s list: its name and its own sentence, both set in
+ *  the face they describe, with the radio the row is chosen by. */
 @Composable
-private fun FontOption(
-    title: String,
-    desc: String,
+private fun fontRow(
+    language: String,
+    titleKey: String,
+    descKey: String,
     family: FontFamily,
     selected: Boolean,
     onClick: () -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = null)
-        Column(Modifier.weight(1f).padding(start = 12.dp)) {
-            Text(title, fontFamily = family, style = MaterialTheme.typography.bodyLarge)
-            Text(
-                desc,
-                fontFamily = family,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
+): M3SettingsItem = M3SettingsItem(
+    icon = Icons.Filled.FontDownload,
+    title = { Text(Localization.get(language, titleKey), fontFamily = family) },
+    description = { Text(Localization.get(language, descKey), fontFamily = family) },
+    trailing = { RadioButton(selected = selected, onClick = null) },
+    onClick = onClick,
+)
 
 @Composable
 fun CanvasSection(
@@ -1273,6 +1253,9 @@ fun CanvasSection(
                 ),
             ),
         )
+        // The source only means something while the Canvas is on (the preview
+        // hides it otherwise), and it folds away with the switch it belongs to.
+        M3SettingsFold(visible = canvasEnabled) {
         Spacer(Modifier.height(8.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.Palette,
@@ -1291,6 +1274,7 @@ fun CanvasSection(
             ).map { (v, k) -> v.key to Localization.get(language, k) },
             onSelect = { key -> onCanvasSourceChange(CanvasSource.from(key)) },
         )
+        }
     }
 }
 
