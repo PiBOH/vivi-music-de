@@ -135,6 +135,23 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SettingsBackupRestore
+import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.material.icons.outlined.Group
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.ui.input.key.key
+import com.music.innertube.YouTube
+import kotlinx.coroutines.flow.map
 
 /** YouTube host-language codes (mirrors the Android app's `LanguageCodeToName`). */
 val LanguageCodeToName: Map<String, String> = mapOf(
@@ -3934,3 +3951,603 @@ fun SettingsAiScreen(
         )
     }
 }
+
+@Composable
+fun SettingsScreen(
+    language: String,
+    themeMode: ThemeMode,
+    isLoggedIn: Boolean,
+    accountName: String,
+    updateStatus: UpdateStatus,
+    wrappedStats: WrappedStats = WrappedStats(),
+    onOpen: (Screen) -> Unit,
+) {
+    val devEnabled by DeveloperOptions.enabled.collectAsState()
+    var searchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+
+    val themeLabel = when (themeMode) {
+        ThemeMode.SYSTEM -> Localization.get(language, "theme_system")
+        ThemeMode.LIGHT -> Localization.get(language, "theme_light")
+        ThemeMode.DARK -> Localization.get(language, "theme_dark")
+    }
+    // The four groups below mirror the mobile app's settings screen, in the
+    // same order and with the same composition: the account/update group, the
+    // media & player group (where mobile also keeps the lyrics options, inside
+    // Appearance), the features & data group and the system & support group.
+    val generalItems = listOf(
+        M3SettingsItem(
+            icon = Icons.Filled.Refresh,
+            title = { Text(Localization.get(language, "updates")) },
+            description = {
+                Text(if (updateStatus is UpdateStatus.Available) Localization.get(language, "update_available") else AppInfo.FULL_VERSION)
+            },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsUpdates) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Person,
+            title = { Text(Localization.get(language, "account")) },
+            description = { Text(if (isLoggedIn) accountName.ifBlank { "YouTube" } else Localization.get(language, "not_logged_in")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsAccount) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Notifications,
+            title = { Text(Localization.get(language, "notifications")) },
+            description = {
+                Text(Localization.get(language, if (DesktopSettings.load().notificationMode == "native") "notification_native" else "notification_main_window"))
+            },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsNotifications) },
+        ),
+    )
+    val mediaItems = listOf(
+        M3SettingsItem(
+            icon = Icons.Filled.Palette,
+            title = { Text(Localization.get(language, "appearance")) },
+            description = { Text(themeLabel) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsAppearance) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Lyrics,
+            title = { Text(Localization.get(language, "lyrics")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsLyrics) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.GraphicEq,
+            title = { Text(Localization.get(language, "player_audio")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsPlayer) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Devices,
+            title = { Text(Localization.get(language, "device_sync")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsDevices) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Language,
+            title = { Text(Localization.get(language, "content")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsContent) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Translate,
+            title = { Text(Localization.get(language, "language")) },
+            description = { Text(Languages.name(language)) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsLanguage) },
+        ),
+    )
+    val privacyItems = listOf(
+        M3SettingsItem(
+            icon = Icons.Filled.AutoAwesome,
+            title = { Text(Localization.get(language, "ai_lyrics_translation")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsAi) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Security,
+            title = { Text(Localization.get(language, "privacy")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsPrivacy) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Storage,
+            title = { Text(Localization.get(language, "storage")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsStorage) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.EnergySavingsLeaf,
+            title = { Text(Localization.get(language, "data_saver")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsDataSaver) },
+        ),
+    )
+    val aboutItems = listOf(
+        M3SettingsItem(
+            icon = Icons.Filled.SettingsBackupRestore,
+            title = { Text(Localization.get(language, "backup_restore")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsBackup) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.AutoAwesome,
+            title = { Text(Localization.get(language, "wrapped_title")) },
+            description = { Text("${wrappedStats.trackStarts} ${Localization.get(language, "wrapped_tracks")}") },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsWrapped) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Tune,
+            title = { Text(Localization.get(language, "integrations")) },
+            description = {
+                Text(if (DesktopSettings.load().discordRpcEnabled || DesktopSettings.load().lastfmEnabled) Localization.get(language, "integrations_active") else Localization.get(language, "integrations_inactive"))
+            },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsIntegrations) },
+        ),
+        M3SettingsItem(
+            // The Spotify mark rather than a generic library icon: the entry is
+            // "import from Spotify", and the phone has drawn it this way all
+            // along (same path data as its own drawable).
+            icon = SpotifyIcon,
+            title = { Text(Localization.get(language, "spotify_import")) },
+            description = {
+                val name = SpotifyImport.state.collectAsState().value.accountName
+                Text(
+                    if (name.isBlank()) Localization.get(language, "spotify_not_connected")
+                    else Localization.get(language, "spotify_connected_as").format(name),
+                )
+            },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsSpotifyImport) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.DesktopWindows,
+            title = { Text(Localization.get(language, "desktop_features")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsDesktop) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Build,
+            title = { Text(Localization.get(language, "system")) },
+            description = { Text(if (devEnabled) Localization.get(language, "performance_options_enabled") else Localization.get(language, "dev_tools_disabled")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsSystem) },
+        ),
+        M3SettingsItem(
+            icon = Icons.Filled.Info,
+            title = { Text(Localization.get(language, "about")) },
+            trailing = { SettingsChevron() },
+            onClick = { onOpen(Screen.SettingsAbout) },
+        ),
+    )
+
+    val allRows = listOf(
+        "language" to Localization.get(language, "language"),
+        "updates" to Localization.get(language, "updates"),
+        "notifications" to Localization.get(language, "notifications"),
+        "appearance" to Localization.get(language, "appearance"),
+        "player_audio" to Localization.get(language, "player_audio"),
+        "account" to Localization.get(language, "account"),
+        "device_sync" to Localization.get(language, "device_sync"),
+        "content" to Localization.get(language, "content"),
+        "ai_lyrics_translation" to Localization.get(language, "ai_lyrics_translation"),
+        "lyrics" to Localization.get(language, "lyrics"),
+        "privacy" to Localization.get(language, "privacy"),
+        "data_saver" to Localization.get(language, "data_saver"),
+        "storage" to Localization.get(language, "storage"),
+        "backup_restore" to Localization.get(language, "backup_restore"),
+        "wrapped_title" to Localization.get(language, "wrapped_title"),
+        "integrations" to Localization.get(language, "integrations"),
+        "desktop_features" to Localization.get(language, "desktop_features"),
+        "system" to Localization.get(language, "system"),
+        "about" to Localization.get(language, "about"),
+    )
+
+    val rowSearchTerms: Map<String, List<String>> = mapOf(
+        "language" to listOf("choose_language", "content_language", "language"),
+        "updates" to listOf("update_available", "up_to_date", "check_updates", "update_check_interval", "include_prereleases", "update_source", "changelog", "commits", "latest_release", "install_now", "restart_now", "open_release_page"),
+        "notifications" to listOf("notification_duration", "notification_duration_desc", "notification_history", "notification_main_window", "notification_mode", "notification_mode_desc", "notification_native", "notifications", "save_notification_history", "test_notification"),
+        "appearance" to listOf("animations", "animations_desc", "app_font", "appearance", "density_and_grid", "intro", "native_title_bar", "native_title_bar_desc", "native_title_bar_desc_hint", "player_design", "restart_required", "restart_required_title", "right_panel", "right_panel_desc", "screen_transitions", "show_intro_on_startup", "theme_colors", "vivimusic_canvas", "accent_intensity", "add_to_palette", "brightness", "color_palette", "custom_color", "custom_colors", "hue", "pure_black", "remove_custom_color", "saturation", "theme_dark", "theme_light", "theme_mode", "theme_system", "custom_font", "font_google_sans", "font_outfit", "font_plus_jakarta_sans", "font_sans_flex", "font_selection", "font_system", "import_font", "preview_text_quote", "typography_preview", "canvas_source", "vivimusic_canvas_desc", "grid_item_size", "transition_fade", "transition_off", "transition_slide", "mini_player_background", "mini_player_design", "player_background", "pure_black_mini", "pure_black_mini_desc", "rotating_thumbnail", "rotating_thumbnail_desc", "intro_background", "intro_desc", "intro_style", "preview_intro"),
+        "player_audio" to listOf("add_example_profile", "band_count", "delete_profile_confirmation", "delete_profile_desc", "eq_band", "eq_disabled", "eq_edit_profile", "eq_gain", "eq_preamp", "eq_q_factor", "equalizer_header", "import_error_title", "import_profile", "no_profiles", "mini_player_background", "mini_player_design", "player_background", "player_design", "pure_black_mini", "pure_black_mini_desc", "rotating_thumbnail", "rotating_thumbnail_desc", "autoplay_next", "audio_quality", "audio_quality_auto", "audio_quality_high", "audio_quality_low", "persistent_queue", "remember_shuffle_repeat", "sync_vivi_volume", "stream_cache_minutes", "stream_cache_minutes_desc", "stream_cache_forever", "eq_range_sub_bass", "eq_range_bass", "eq_range_low_mid", "eq_range_mid", "eq_range_high_mid", "eq_range_treble"),
+        "account" to listOf("clear_session", "logout", "login", "login_google", "login_manual_title", "logged_in_as", "not_logged_in", "account", "cookie_label", "visitor_data_label", "data_sync_id_label"),
+        "device_sync" to listOf("connection_method", "method_relay", "method_lan", "relay_server", "lan_sync", "connect", "generate_code", "regenerate_pair_code", "code_expires_in", "code_hint", "lan_hint", "pair", "unpair", "scan_qr", "connected", "disconnected", "status", "download_mobile_apk", "how_to_connect", "waiting_for_pairing"),
+        "content" to listOf("content", "content_country", "content_language", "system_default"),
+        "ai_lyrics_translation" to listOf("ai_api_key", "ai_base_url", "ai_deepl_formality", "ai_deepl_formality_default", "ai_deepl_formality_less", "ai_deepl_formality_more", "ai_lyrics_translation", "ai_model", "ai_provider", "ai_target_language", "ai_translation_literal", "ai_translation_mode", "ai_translation_transcribed", "not_set", "ai_setup_guide", "ai_custom_model", "ai_training_note"),
+        "lyrics" to listOf(
+            "lyrics", "lyrics_line_spacing", "lyrics_text_size", "synced_lyrics", "synced_lyrics_desc", "lyrics_focus",
+            // Advanced lyrics (mobile port): animation styles, display options,
+            // romanization and translation.
+            "lyrics_animation_style", "lyrics_animation_style_desc",
+            "lyrics_style_none", "lyrics_style_fade", "lyrics_style_glow", "lyrics_style_slide",
+            "lyrics_style_karaoke", "lyrics_style_apple", "lyrics_style_apple_v2", "lyrics_style_vivimusic",
+            "lyrics_style_lyrics_v2", "lyrics_style_metro", "animation_speed",
+            "lyrics_glow_effect", "lyrics_glow_effect_desc",
+            "lyrics_apple_blur", "lyrics_apple_blur_desc", "lyrics_standard_blur", "lyrics_standard_blur_desc",
+            "lyrics_click_to_seek", "lyrics_click_to_seek_desc", "lyrics_auto_scroll", "lyrics_auto_scroll_desc",
+            "lyrics_text_position", "lyrics_position_left", "lyrics_position_center", "lyrics_position_right",
+            "lyrics_romanize", "lyrics_romanize_desc", "lyrics_romanize_as_main", "lyrics_romanize_as_main_desc",
+            "romanize_japanese", "romanize_korean", "romanize_chinese", "romanize_russian",
+            "romanize_ukrainian", "romanize_serbian", "romanize_bulgarian", "romanize_belarusian",
+            "romanize_kyrgyz", "romanize_macedonian", "romanize_hindi", "romanize_punjabi",
+            "translate_lyrics", "translate_lyrics_desc", "ai_lyrics_translation",
+        ),
+        "privacy" to listOf("clear_search_history", "pause_listen_history", "pause_search_history", "privacy", "privacy_desc"),
+        "data_saver" to listOf("data_saver", "data_saver_desc", "data_saver_turns_off_header", "data_saver_album_canvas", "data_saver_player_canvas", "data_saver_artist_video", "data_saver_artist_bg_video", "data_saver_high_quality_images"),
+        "storage" to listOf(
+            "storage",
+            "cache_size",
+            "clear_cache",
+            "cache_cleared",
+            "delete_installers",
+            "installers_deleted",
+            // Both cards of the screen are searchable, including the installer
+            // one: it is the row a user looks for when the disk is filling up.
+            "installers_downloaded",
+        ),
+        "backup_restore" to listOf("action_backup", "action_restore", "auto_backup", "automatic_backup_desc", "backup_desc", "backup_restore", "backup_restore_desc", "backups_empty", "delete_backup_confirm", "restore_backup_confirm", "restore_desc", "restore_failed", "restore_success", "restore_success_title", "stored_backups"),
+        "wrapped_title" to listOf("wrapped_desc", "wrapped_show_on_home", "wrapped_show_on_home_desc", "wrapped_title"),
+        "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
+        "desktop_features" to listOf("desktop_features", "desktop_features_desc", "media_keys", "media_keys_desc", "now_playing_widget", "now_playing_widget_desc", "requires_accessibility", "tray_menu", "tray_menu_desc"),
+        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "debug_developer_options", "disable_developer_options", "disable_developer_options_desc", "disable_developer_options_confirm", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "detailed_startup_logs", "detailed_startup_logs_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
+        "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
+    )
+
+    val query = searchQuery.trim()
+    val searching = query.isNotEmpty()
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)
+    ) {
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(Localization.get(language, "settings"), style = MaterialTheme.typography.headlineMedium)
+            Spacer(Modifier.width(16.dp))
+            if (searchActive) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    placeholder = { Text(Localization.get(language, "search")) },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    trailingIcon = {
+                        Tooltip(Localization.get(language, "dismiss")) {
+                            IconButton(onClick = { searchActive = false; searchQuery = "" }) {
+                                Icon(Icons.Filled.Close, contentDescription = Localization.get(language, "dismiss"))
+                            }
+                        }
+                    },
+                )
+            } else {
+                Tooltip(Localization.get(language, "search")) {
+                    IconButton(onClick = { searchActive = true }) {
+                        Icon(Icons.Filled.Search, contentDescription = Localization.get(language, "search"))
+                    }
+                }
+            }
+        }
+        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+
+        // The query matches a row when either its own label or any of the
+        // localized labels of the options inside its sub-screen(s) contains it,
+        // so every setting is reachable from the settings search bar.
+        val rowTermsText = { key: String ->
+            (rowSearchTerms[key].orEmpty()).joinToString(" ") { Localization.get(language, it) }
+        }
+        val matches = { key: String ->
+            query.isEmpty() ||
+                allRows.any { it.first == key && it.second.contains(query, ignoreCase = true) } ||
+                rowTermsText(key).contains(query, ignoreCase = true)
+        }
+
+        // Group 1 — account and updates (mobile's first group).
+        val generalKeys = listOf("updates", "account", "notifications")
+        if (!searching || generalKeys.any { matches(it) }) {
+            M3SettingsGroup(
+                title = if (searching) null else Localization.get(language, "general"),
+                items = listOfNotNull(
+                    generalItems[0].takeIf { !searching || matches("updates") },
+                    generalItems[1].takeIf { !searching || matches("account") },
+                    generalItems[2].takeIf { !searching || matches("notifications") },
+                ),
+            )
+        }
+        // Group 2 — media & player experience (mobile's second group; the
+        // lyrics options live in it because that is where mobile keeps them).
+        val mediaKeys = listOf("appearance", "lyrics", "player_audio", "device_sync", "content", "language")
+        if (!searching || mediaKeys.any { matches(it) }) {
+            M3SettingsGroup(
+                title = if (searching) null else Localization.get(language, "appearance"),
+                items = listOfNotNull(
+                    mediaItems[0].takeIf { !searching || matches("appearance") },
+                    mediaItems[1].takeIf { !searching || matches("lyrics") },
+                    mediaItems[2].takeIf { !searching || matches("player_audio") },
+                    mediaItems[3].takeIf { !searching || matches("device_sync") },
+                    mediaItems[4].takeIf { !searching || matches("content") },
+                    mediaItems[5].takeIf { !searching || matches("language") },
+                ),
+            )
+        }
+        // Group 3 — features & data (mobile's third group).
+        val privacyKeys = listOf("ai_lyrics_translation", "privacy", "storage", "data_saver")
+        if (!searching || privacyKeys.any { matches(it) }) {
+            M3SettingsGroup(
+                title = if (searching) null else Localization.get(language, "privacy"),
+                items = listOfNotNull(
+                    privacyItems[0].takeIf { !searching || matches("ai_lyrics_translation") },
+                    privacyItems[1].takeIf { !searching || matches("privacy") },
+                    privacyItems[2].takeIf { !searching || matches("storage") },
+                    privacyItems[3].takeIf { !searching || matches("data_saver") },
+                ),
+            )
+        }
+        // Group 4, system and support (mobile's fourth group). The keys must be
+        // in the SAME order as `aboutItems`: the Spotify import row was inserted
+        // in the middle of the list and the mapping below was not extended, so
+        // every row from that point on was keyed to the wrong item and the last
+        // item (About) was never rendered at all.
+        val aboutKeys = listOf("backup_restore", "wrapped_title", "integrations", "spotify_import", "desktop_features", "system", "about")
+        if (!searching || aboutKeys.any { matches(it) }) {
+            M3SettingsGroup(
+                title = if (searching) null else Localization.get(language, "about"),
+                items = listOfNotNull(
+                    aboutItems[0].takeIf { !searching || matches("backup_restore") },
+                    aboutItems[1].takeIf { !searching || matches("wrapped_title") },
+                    aboutItems[2].takeIf { !searching || matches("integrations") },
+                    aboutItems[3].takeIf { !searching || matches("spotify_import") },
+                    aboutItems[4].takeIf { !searching || matches("desktop_features") },
+                    aboutItems[5].takeIf { !searching || matches("system") },
+                    aboutItems[6].takeIf { !searching || matches("about") },
+                ),
+            )
+        }
+        if (searching && !allRows.any { r -> r.second.contains(query, ignoreCase = true) || rowTermsText(r.first).contains(query, ignoreCase = true) }) {
+            Text(
+                Localization.get(language, "no_results_found"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 24.dp),
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsSystemScreen(
+    language: String,
+    onBack: () -> Unit,
+    showIntroSplash: Boolean,
+    onOpenPerformance: () -> Unit,
+    onOpenDeveloperOptions: () -> Unit,
+    onOpenIntro: () -> Unit,
+) {
+    val developerUnlocked by DeveloperOptions.unlocked.collectAsState()
+
+    // Log export (moved here from Developer options: it belongs under System).
+    var logExporting by remember { mutableStateOf(false) }
+    var logExportDone by remember { mutableStateOf(false) }
+    var logExportPath by remember { mutableStateOf<String?>(null) }
+    val logScope = rememberCoroutineScope()
+
+    SettingsSubScreen(language, onBack) {
+        Text(Localization.get(language, "system"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 12.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Build,
+                    title = { Text(Localization.get(language, "performance_options")) },
+                    description = { Text(Localization.get(language, "performance_options_desc")) },
+                    trailing = { SettingsChevron() },
+                    onClick = onOpenPerformance,
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Movie,
+                    title = { Text(Localization.get(language, "intro")) },
+                    description = {
+                        Text(if (showIntroSplash) Localization.get(language, "integrations_active") else Localization.get(language, "integrations_inactive"))
+                    },
+                    trailing = { SettingsChevron() },
+                    onClick = onOpenIntro,
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Info,
+                    title = { Text(Localization.get(language, "dev_open_live_log")) },
+                    description = { Text(Localization.get(language, "dev_open_live_log_desc")) },
+                    trailing = { SettingsChevron() },
+                    onClick = { DeveloperOptions.setLogWindowVisible(true) },
+                ),
+            ),
+        )
+
+        // Advanced: Developer options is hidden here until the version code in
+        // About is tapped seven times. A section of its own (not a row in the
+        // group above) so the unlock is the only way it can appear.
+        M3SettingsFold(visible = developerUnlocked) {
+            Spacer(Modifier.height(16.dp))
+            M3SettingsGroup(
+                title = Localization.get(language, "advanced"),
+                items = listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Build,
+                        title = { Text(Localization.get(language, "debug_developer_options")) },
+                        description = { Text(Localization.get(language, "developer_options_desc")) },
+                        trailing = { SettingsChevron() },
+                        onClick = onOpenDeveloperOptions,
+                    ),
+                ),
+            )
+        }
+
+        Spacer(Modifier.height(16.dp))
+
+        // Export logs (for support requests)
+        M3SettingsGroup(
+            title = Localization.get(language, "dev_logs_export"),
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Download,
+                    title = { Text(Localization.get(language, "dev_logs_export_desc")) },
+                    trailing = {
+                        Button(
+                            onClick = {
+                                logExporting = true
+                                logExportDone = false
+                                logExportPath = null
+                                logScope.launch {
+                                    val target = withContext(Dispatchers.IO) {
+                                        val dialog = java.awt.FileDialog(
+                                            null as java.awt.Frame?,
+                                            Localization.get(language, "dev_logs_export"),
+                                            java.awt.FileDialog.SAVE,
+                                        )
+                                        dialog.file = LogExporter.defaultFileName()
+                                        dialog.isVisible = true
+                                        val dir = dialog.directory
+                                        val name = dialog.file
+                                        dialog.dispose()
+                                        if (dir != null && name != null) java.io.File(dir, name) else null
+                                    }
+                                    if (target != null) {
+                                        val ok = withContext(Dispatchers.IO) {
+                                            runCatching { LogExporter.export(target); true }.getOrDefault(false)
+                                        }
+                                        if (ok) {
+                                            logExportDone = true
+                                            logExportPath = target.absolutePath
+                                        }
+                                    }
+                                    logExporting = false
+                                }
+                            },
+                            enabled = !logExporting,
+                        ) {
+                            Text(
+                                if (logExporting) Localization.get(language, "dev_logs_exporting")
+                                else Localization.get(language, "dev_logs_export")
+                            )
+                        }
+                    },
+                    onClick = {},
+                ),
+            ),
+        )
+        logExportPath?.let { path ->
+            Text(
+                if (logExportDone) "${Localization.get(language, "dev_logs_exported")}: $path"
+                else Localization.get(language, "dev_logs_export_failed"),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (logExportDone) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 6.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Settings -> Language: the current language, and a menu over the other 48.
+ *
+ * The menu carries a search box: forty-eight rows is not a list to scroll with a
+ * wheel, and "Magyar" is not something to find by reading from the top. The
+ * box matches the language's own name and its code, ignoring case and accents
+ * ([Languages.matching]), so "ital", "cestina" and "de" all land where they
+ * should. It is the same field the Browse screen already uses; a language the
+ * list does not contain is a query that matches nothing, and that says so
+ * instead of drawing an empty menu.
+ */
+@Composable
+fun LanguageSection(language: String, onLanguageChange: (String) -> Unit) {
+    Text(Localization.get(language, "language"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    Text(
+        Localization.get(language, "translation_ai_disclaimer"),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 6.dp),
+    )
+
+    // The list is on the screen, not behind a button: 48 languages read as the
+    // page's own content in the preview, and a menu that had to be opened first
+    // hid the field that narrows it. The field and the rows are
+    // [LanguagePickerRows], the same body `:desktop:languageSearchCheck` reads.
+    Spacer(Modifier.height(10.dp))
+    LanguagePickerRows(
+        language = language,
+        selected = language,
+        onSelect = onLanguageChange,
+    )
+}
+
+/**
+ * The language list: the search field, then the languages that match what is in
+ * it, the current one carrying a check.
+ *
+ * It is a composable of its own because `:desktop:languageSearchCheck` renders
+ * it off screen and reads it back, which is what says the field is drawn and the
+ * list really narrows.
+ */
+@Composable
+internal fun LanguagePickerRows(
+    language: String,
+    selected: String,
+    onSelect: (String) -> Unit,
+    initialQuery: String = "",
+) {
+    var query by remember { mutableStateOf(initialQuery) }
+    val matches = Languages.matching(query)
+
+    OutlinedTextField(
+        value = query,
+        onValueChange = { query = it },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium,
+        placeholder = {
+            Text(
+                Localization.get(language, "language_search"),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        },
+        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+    )
+
+    Spacer(Modifier.height(8.dp))
+    if (matches.isEmpty()) {
+        Text(
+            Localization.get(language, "language_search_none"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 14.dp),
+        )
+    } else {
+        M3SettingsGroup(
+            items = matches.map { lang ->
+                M3SettingsItem(
+                    icon = null,
+                    title = { Text(lang.name) },
+                    trailing = if (lang.code == selected) {
+                        {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    onClick = { onSelect(lang.code) },
+                )
+            },
+        )
+    }
+}
+
