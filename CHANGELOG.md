@@ -28,6 +28,7 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 - [DE] **Sign-in, Spotify import and the account share one shape**: a 64 dp brand tile with one state pill, numbered steps and settings rows. Only one action is on offer at a time, the Spotify head states the session in its title instead of a badge under it, and a Google session hands the screen to the account.
 - [DE] **Names that said the wrong thing are fixed.** The appearance entry is *Player & mini-player design* and its screen is four blocks, the swatch block is *Accent color*, the account's sync row is *Sync now* with the run's `3/12` on its right, and the Data Saver caption names the list it is about.
 - [DE] **The two volume channels on Device sync fold under an *Advanced* header** that is a row of the card, its chevron turning 180 degrees in 200 ms, unrolled on open and writing nothing to disk.
+- [DE] **Animations is a screen of its own.** The master switch, the screen transitions it governs, their style and the speed were three rows of the Appearance hub, so one subject was set in two places and turning Animations on applied no style at all. The hub now carries a destination row, and the screen holds the switch, the transitions switch (the style's *Off* moved there) and the two dropdowns, which fold with the switches they belong to. `transition_style` is new in every table.
 - [APK] **The phone follows the same two names:** *Sync VIVI volume* is drawn only on the device sync screen, and the Data Saver caption reads *When enabled, these are turned off*.
 
 
