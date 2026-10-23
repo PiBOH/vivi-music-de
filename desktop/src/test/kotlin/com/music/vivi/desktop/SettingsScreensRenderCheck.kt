@@ -42,9 +42,11 @@ import java.awt.image.BufferedImage
  *  * **Language**: every language in one card under the search field, its rows
  *    joined by one seam each, the list reaching the bottom of the frame.
  *  * **Privacy**: one card of the two history switches (one seam).
- *  * **AI Lyrics Translation**: six cards - the provider, the three credentials
- *    rows, the two rows of the mode card - with three seams between rows that
- *    share one, and the note between them as text.
+ *  * **AI Lyrics Translation**: six rows in three cards - the provider, the
+ *    three credentials rows, the two rows of the mode card - with three seams
+ *    between rows that share one, and the note between them as text. The two
+ *    providers that fold a row away are read too: four rows under DeepL (the
+ *    mode row leaves) and five under Custom (the model row leaves).
  *
  * A frame is written under `.ignore/settings/` so it can be looked at.
  */
@@ -162,6 +164,62 @@ object SettingsScreensRenderCheck {
         File(outDir, "ai.png").writeBytes(ai)
         val aiBands = bands(ai)
         println("ai: bands=${aiBands.size} ${aiBands.map { "${it.top}..${it.bottom}" }}")
+
+        // The two providers that fold rows away: DeepL has a key and a formality
+        // instead of the catalogue's key/base URL/model, and it is not asked for a
+        // translation mode; Custom keeps the key and the base URL and loses the
+        // model, because the endpoint has no catalogue to pick from.
+        val aiDeepL = render {
+            SettingsAiScreen(
+                language = "en",
+                onBack = {},
+                aiProvider = "DeepL",
+                aiApiKey = "",
+                aiBaseUrl = "",
+                aiModel = "",
+                translateLanguage = "it",
+                translateMode = "Literal",
+                deeplApiKey = "12345678-abcd",
+                deeplFormality = "more",
+                onAiProviderChange = {},
+                onAiApiKeyChange = {},
+                onAiBaseUrlChange = {},
+                onAiModelChange = {},
+                onTranslateLanguageChange = {},
+                onTranslateModeChange = {},
+                onDeeplApiKeyChange = {},
+                onDeeplFormalityChange = {},
+            )
+        }
+        File(outDir, "ai_deepl.png").writeBytes(aiDeepL)
+        val aiDeepLBands = bands(aiDeepL)
+        println("ai (DeepL): bands=${aiDeepLBands.size} ${aiDeepLBands.map { "${it.top}..${it.bottom}" }}")
+
+        val aiCustom = render {
+            SettingsAiScreen(
+                language = "en",
+                onBack = {},
+                aiProvider = "Custom",
+                aiApiKey = "sk-test",
+                aiBaseUrl = "",
+                aiModel = "local-model",
+                translateLanguage = "it",
+                translateMode = "Transcribed",
+                deeplApiKey = "",
+                deeplFormality = "default",
+                onAiProviderChange = {},
+                onAiApiKeyChange = {},
+                onAiBaseUrlChange = {},
+                onAiModelChange = {},
+                onTranslateLanguageChange = {},
+                onTranslateModeChange = {},
+                onDeeplApiKeyChange = {},
+                onDeeplFormalityChange = {},
+            )
+        }
+        File(outDir, "ai_custom.png").writeBytes(aiCustom)
+        val aiCustomBands = bands(aiCustom)
+        println("ai (Custom): bands=${aiCustomBands.size} ${aiCustomBands.map { "${it.top}..${it.bottom}" }}")
 
         val contributors = render { ContributorsSection(language = "en") }
         File(outDir, "contributors.png").writeBytes(contributors)
@@ -330,10 +388,29 @@ object SettingsScreensRenderCheck {
         if (privacyBands.size != 2) failures += "Privacy should read two rows, read ${privacyBands.size}"
         if (privacySeams != 1) failures += "Privacy should join its two switches (1 seam), read $privacySeams"
 
-        // AI: the provider card, then the three credentials rows, then the two
-        // rows of the mode card (the note is no card at all).
-        if (aiCards.size != 6) failures += "AI should read six cards, read ${aiCards.size}"
+        // AI: the provider card, the three credentials rows and the two rows of
+        // the mode card - six rows in three cards, joined by three seams (the
+        // title, the two group labels and the training note are no rows at all).
+        if (aiCards.size != 6) failures += "AI should read six rows, read ${aiCards.size}"
         if (aiSeams != 3) failures += "AI should join its three credentials rows and its two mode rows (3 seams), read $aiSeams"
+
+        // DeepL: the provider row, the DeepL key and the formality (one seam),
+        // then the target language alone - the mode row folds away.
+        val deepLCards = cards(aiDeepLBands)
+        if (deepLCards.size != 4) {
+            failures += "AI under DeepL should read four rows (provider, key, formality, language), read ${deepLCards.size}"
+        }
+        if (seams(deepLCards) != 1) failures += "AI under DeepL should join the key and the formality (1 seam), read ${seams(deepLCards)}"
+
+        // Custom: the model row and the training note fold away; the mode row
+        // stays, because a custom endpoint is still asked what to translate.
+        val customCards = cards(aiCustomBands)
+        if (customCards.size != 5) {
+            failures += "AI under Custom should read five rows (provider, key, base URL, mode, language), read ${customCards.size}"
+        }
+        if (seams(customCards) != 2) {
+            failures += "AI under Custom should join the key and the base URL and the two mode rows (2 seams), read ${seams(customCards)}"
+        }
 
         // Contributors: one card, a row per person (the bundled list is the
         // fallback the frame draws); License is a document, so it is not read
@@ -381,7 +458,8 @@ object SettingsScreensRenderCheck {
                     "Notifications is one card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +
-                    "Privacy is one card of two switches, AI is ${aiCards.size} cards with $aiSeams seams, " +
+                    "Privacy is one card of two switches, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
+                    "(${cards(aiDeepLBands).size} under DeepL, ${cards(aiCustomBands).size} under Custom), " +
                     "Contributors is one card of ${contributorBands.size} rows, " +
                     "About is a head and three cards of 4 + 3 + 2 rows, Desktop features one card of three switches, " +
                     "Canvas's source folds with its switch, App font joins its six rows, Display density is two cards, " +

@@ -16,6 +16,9 @@ import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.ModelTraining
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Tune
@@ -155,6 +158,12 @@ object SettingsDropdownWindowCheck {
         Case("player & audio: audio quality", Kind.INLINE, "Audio quality", "Auto", listOf("Auto", "High", "Low"), Icons.Filled.HighQuality),
         Case("player & audio: stream cache", Kind.INLINE, "Stream cache (minutes)", "10 min", listOf("5 min", "10 min", "30 min", "60 min", "Forever"), Icons.Filled.Bolt),
         Case("player & audio: history duration", Kind.INLINE, "History duration", "30 s", listOf("10 s", "30 s", "60 s", "5 min", "Forever"), Icons.Filled.History),
+        // AI Lyrics Translation: the provider, the model, DeepL's formality and
+        // the translation mode, all rows of the screen's cards.
+        Case("ai: provider", Kind.INLINE, "Provider", "OpenRouter", listOf("OpenRouter", "OpenAI", "Perplexity", "Claude", "Gemini", "XAi", "Mistral", "DeepL", "Custom"), Icons.Filled.SmartToy),
+        Case("ai: model", Kind.INLINE, "Model", "gemini-2.5-flash-lite", listOf("gemini-2.5-flash-lite", "gemini-2.5-flash", "gemini-2.5-pro", "Custom model"), Icons.Filled.ModelTraining),
+        Case("ai: formality", Kind.INLINE, "Formality", "Default", listOf("Default", "More Formal", "Less Formal"), Icons.Filled.Tune),
+        Case("ai: translation mode", Kind.INLINE, "Translation Mode", "Translation", listOf("Translation", "Transcription"), Icons.Filled.Translate),
         // The same row at the floor of the window: it has to open upwards.
         Case("flip: at the floor", Kind.ITEM, "Transition style", "Fade", listOf("Fade", "Slide"), Icons.Filled.AutoAwesome, nearFloor = true),
     )
@@ -314,7 +323,17 @@ object SettingsDropdownWindowCheck {
                 // so a capture never holds the previous case, or a frame of the
                 // composition still moving.
                 var before = settled(robot, panel)
-                val marker = marker(before)
+                var marker = marker(before)
+                // A capture that lands while the window is still settling (or
+                // while the display comes back from idle) has no rule in it yet:
+                // the page is read again before the case is called a failure.
+                var reads = 0
+                while (marker == null && reads++ < 3) {
+                    focus(window, panel)
+                    Thread.sleep(500)
+                    before = settled(robot, panel)
+                    marker = marker(before)
+                }
                 if (marker == null) {
                     save(before, "${case.name}-no-marker")
                     failures += "${case.name}: the row's bottom edge is not on screen"

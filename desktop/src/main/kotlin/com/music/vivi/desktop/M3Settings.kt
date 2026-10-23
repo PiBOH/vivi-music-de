@@ -110,6 +110,13 @@ data class M3Dropdown(
     val options: List<Pair<String, String>>,
     val onSelect: (String) -> Unit,
     val menuWidth: Dp = 280.dp,
+    /**
+     * The option the menu marks as chosen, when the row names the value in a
+     * shorter form than the menu does: the AI model row prints the last segment
+     * of an id (`gemini-2.5-flash`) and the menu lists (and marks) the whole one
+     * (`google/gemini-2.5-flash`). Defaults to [value], which is the usual case.
+     */
+    val selectedKey: String? = null,
 )
 
 @Composable
@@ -517,6 +524,7 @@ private fun M3SettingsItemRow(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 value = dropdown.value,
+                selectedKey = dropdown.selectedKey,
                 options = dropdown.options,
                 onSelect = dropdown.onSelect,
                 menuWidth = dropdown.menuWidth,
@@ -659,7 +667,11 @@ private fun M3DropdownMenu(
     onSelect: (String) -> Unit,
     menuWidth: Dp,
     offsetX: Dp = 0.dp,
+    selectedKey: String? = null,
 ) {
+    // The row may name the value shorter than the menu does (an id's last
+    // segment), so the mark follows `selectedKey` when the caller gives one.
+    val marked = selectedKey ?: value
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
@@ -675,7 +687,7 @@ private fun M3DropdownMenu(
         // shown value. (Comparing `key == value` never matched: callers pass
         // the *translated* value, so the checked row was never highlighted.)
         options.forEach { (key, label) ->
-            val selected = label == value
+            val selected = label == marked
             DropdownMenuItem(
                 text = {
                     Row(verticalAlignment = Alignment.CenterVertically) {

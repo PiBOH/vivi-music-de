@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.55.2] - 2026-10-23
+
+### 🔧 Changed
+- [DE] **AI Lyrics Translation is the page's three cards.** The screen was the provider alone, an 18 dp gap, the credentials rows, the training note and the mode card, and its five choices were drawn by a trailing control of the screen's own, so a menu opened from the value's own little box instead of from the row. It is the page now: the provider card, one *API Credentials* card with the key, the base URL and the model (or, under DeepL, its key and the formality), the training note under it, and one *Translation Mode* card with the mode and the target language. Every choice is the row's own dropdown (`M3SettingsItem.dropdown`), the rows carry the page's icons (`smart_toy`, `key`, `link`, `model_training`, `tune`, `translate`, `language`) and the current value is written under the row it belongs to, the cards are 8 dp apart, and the model row names the id's last segment in the row while the menu marks the whole id (`M3Dropdown.selectedKey`) - which is the pair the page draws. A row the chosen provider has no use for folds away instead of the card being rebuilt without it: the model under *Custom* (no catalogue to pick from) and the translation mode under DeepL (it only translates). Fixes #106.
+
 ## [6.0.8.11_DE-1.55.1] - 2026-10-23
 
 ### 🔧 Changed

@@ -31,7 +31,6 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.Check
@@ -53,6 +52,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.ModelTraining
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Link
@@ -145,6 +145,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SettingsBackupRestore
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Group
 import androidx.compose.material.icons.outlined.Search
@@ -3610,11 +3611,25 @@ fun SettingsDataSaverScreen(
     }
 }
 
+/** The three DeepL formality choices, in the page's order. */
+private val DEEPL_FORMALITY_CHOICES = listOf("default", "more", "less")
+
+private fun deeplFormalityLabel(language: String, formality: String): String = when (formality) {
+    "more" -> Localization.get(language, "ai_deepl_formality_more")
+    "less" -> Localization.get(language, "ai_deepl_formality_less")
+    else -> Localization.get(language, "ai_deepl_formality_default")
+}
+
+/** A key as the row says it: masked when there is one, "Not set" when there is not. */
+private fun maskedKey(key: String, language: String): String =
+    if (key.isNotEmpty()) "•".repeat(minOf(key.length, 8)) else Localization.get(language, "not_set")
+
 /**
- * The trailing control of an AI settings row: the current value with a
- * dropdown arrow, opening the choice list anchored to itself. Rendered through
- * [M3SettingsItem]/[M3SettingsGroup] so these screens read as grouped Material 3
- * cards like the mobile one.
+ * The trailing control the developer options' memory row still uses: the value
+ * with a dropdown arrow, opening the choice list anchored to itself. The AI
+ * screen's choices are their rows' own `M3Dropdown` now (they open under the row
+ * like every other settings choice), so this one is left to the row that carries
+ * a heap size in a card of one.
  */
 @Composable
 private fun AiDropdownTrailing(
@@ -3723,30 +3738,34 @@ fun SettingsAiScreen(
             modifier = Modifier.padding(vertical = 12.dp),
         )
 
-        // Provider
+        // Provider: the choice the rest of the screen hangs off, in the card the
+        // page gives it. Changing it writes that provider's base URL and resets the
+        // model to the first of its own list, so a gpt- id can never stay behind
+        // under Gemini.
         M3SettingsGroup(
             title = Localization.get(language, "ai_provider"),
             items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.Explore,
+                    icon = Icons.Filled.SmartToy,
                     title = { Text(Localization.get(language, "ai_provider")) },
                     description = { Text(aiProvider) },
-                    trailing = {
-                        AiDropdownTrailing(aiProvider, aiProviders.keys.map { it to it }) { p ->
-                            val newBase = if (p == "Custom" || p == "DeepL") "" else (aiProviders[p] ?: "")
-                            onAiBaseUrlChange(newBase)
+                    dropdown = M3Dropdown(
+                        value = aiProvider,
+                        options = aiProviders.keys.map { it to it },
+                        onSelect = { p ->
+                            onAiBaseUrlChange(if (p == "Custom" || p == "DeepL") "" else aiProviders[p] ?: "")
                             onAiProviderChange(p)
-                            val models = modelsByProvider[p] ?: emptyList()
-                            onAiModelChange(models.firstOrNull() ?: "")
-                        }
-                    },
+                            onAiModelChange(modelsByProvider[p]?.firstOrNull() ?: "")
+                        },
+                    ),
                 ),
             ),
         )
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(8.dp))
 
-        // Keys, base URL and model
+        // Keys, base URL and model: one card, titled with the page's own words
+        // (`ai_setup_guide` is "API Credentials").
         M3SettingsGroup(
             title = Localization.get(language, "ai_setup_guide"),
             items = if (aiProvider == "DeepL") {
@@ -3754,39 +3773,26 @@ fun SettingsAiScreen(
                     M3SettingsItem(
                         icon = Icons.Filled.Key,
                         title = { Text("DeepL " + Localization.get(language, "ai_api_key")) },
-                        description = {
-                            Text(if (deeplApiKey.isNotEmpty()) "•".repeat(minOf(deeplApiKey.length, 8)) else Localization.get(language, "not_set"))
-                        },
+                        description = { Text(maskedKey(deeplApiKey, language)) },
                         onClick = { editingKey = "deepl"; keyInput = deeplApiKey },
                     ),
                     M3SettingsItem(
                         icon = Icons.Filled.Tune,
                         title = { Text(Localization.get(language, "ai_deepl_formality")) },
-                        trailing = {
-                            AiDropdownTrailing(
-                                value = when (deeplFormality) {
-                                    "more" -> Localization.get(language, "ai_deepl_formality_more")
-                                    "less" -> Localization.get(language, "ai_deepl_formality_less")
-                                    else -> Localization.get(language, "ai_deepl_formality_default")
-                                },
-                                options = listOf(
-                                    "default" to Localization.get(language, "ai_deepl_formality_default"),
-                                    "more" to Localization.get(language, "ai_deepl_formality_more"),
-                                    "less" to Localization.get(language, "ai_deepl_formality_less"),
-                                ),
-                                onSelect = onDeeplFormalityChange,
-                            )
-                        },
+                        description = { Text(deeplFormalityLabel(language, deeplFormality)) },
+                        dropdown = M3Dropdown(
+                            value = deeplFormalityLabel(language, deeplFormality),
+                            options = DEEPL_FORMALITY_CHOICES.map { it to deeplFormalityLabel(language, it) },
+                            onSelect = onDeeplFormalityChange,
+                        ),
                     ),
                 )
             } else {
-                listOfNotNull(
+                listOf(
                     M3SettingsItem(
                         icon = Icons.Filled.Key,
                         title = { Text(Localization.get(language, "ai_api_key")) },
-                        description = {
-                            Text(if (aiApiKey.isNotEmpty()) "•".repeat(minOf(aiApiKey.length, 8)) else Localization.get(language, "not_set"))
-                        },
+                        description = { Text(maskedKey(aiApiKey, language)) },
                         onClick = { editingKey = "main"; keyInput = aiApiKey },
                     ),
                     M3SettingsItem(
@@ -3795,30 +3801,34 @@ fun SettingsAiScreen(
                         description = { Text(aiBaseUrl.ifBlank { Localization.get(language, "not_set") }) },
                         onClick = { editingBaseUrl = true; baseUrlInput = aiBaseUrl },
                     ),
-                    if (aiProvider != "Custom") {
-                        M3SettingsItem(
-                            icon = Icons.Filled.Tune,
-                            title = { Text(Localization.get(language, "ai_model")) },
-                            description = { Text(aiModel.ifBlank { Localization.get(language, "not_set") }) },
-                            trailing = {
-                                AiDropdownTrailing(
-                                    value = aiModel.substringAfterLast('/').ifBlank { Localization.get(language, "not_set") },
-                                    options = (modelsByProvider[aiProvider] ?: emptyList()).map { it to it } +
-                                        ("__custom__" to Localization.get(language, "ai_custom_model")),
-                                    onSelect = { m ->
-                                        if (m == "__custom__") {
-                                            modelInput = aiModel
-                                            editingModel = true
-                                        } else {
-                                            onAiModelChange(m)
-                                        }
-                                    },
-                                )
+                    M3SettingsItem(
+                        icon = Icons.Filled.ModelTraining,
+                        title = { Text(Localization.get(language, "ai_model")) },
+                        description = { Text(aiModel.ifBlank { Localization.get(language, "not_set") }) },
+                        // A custom endpoint has no catalogue to pick from: the model
+                        // is whatever that endpoint takes, so the row folds away.
+                        visible = aiProvider != "Custom",
+                        dropdown = M3Dropdown(
+                            // The page names the model in full under the row and only
+                            // its last segment in the row, while the menu marks the
+                            // choice by its whole id - so the chip and the mark are
+                            // two values here.
+                            value = aiModel.substringAfterLast('/').ifBlank {
+                                Localization.get(language, "not_set")
                             },
-                        )
-                    } else {
-                        null
-                    },
+                            selectedKey = aiModel,
+                            options = (modelsByProvider[aiProvider] ?: emptyList()).map { it to it } +
+                                ("__custom__" to Localization.get(language, "ai_custom_model")),
+                            onSelect = { m ->
+                                if (m == "__custom__") {
+                                    modelInput = aiModel
+                                    editingModel = true
+                                } else {
+                                    onAiModelChange(m)
+                                }
+                            },
+                        ),
+                    ),
                 )
             },
         )
@@ -3828,52 +3838,55 @@ fun SettingsAiScreen(
                 Localization.get(language, "ai_training_note"),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 6.dp, top = 8.dp, end = 6.dp),
+                modifier = Modifier.padding(horizontal = 4.dp).padding(top = 8.dp),
             )
         }
 
-        Spacer(Modifier.height(18.dp))
+        Spacer(Modifier.height(8.dp))
 
-        // Mode and target language
+        // Translation mode and target language: the page's last card. DeepL is not
+        // asked for a mode (it only translates), so that row folds away for it
+        // instead of the card being rebuilt without it.
         M3SettingsGroup(
             title = Localization.get(language, "ai_translation_mode"),
-            items = buildList {
-                if (aiProvider != "DeepL") {
-                    add(
-                        M3SettingsItem(
-                            icon = Icons.Filled.Translate,
-                            title = { Text(Localization.get(language, "ai_translation_mode")) },
-                            trailing = {
-                                AiDropdownTrailing(
-                                    value = if (translateMode == "Transcribed") {
-                                        Localization.get(language, "ai_translation_transcribed")
-                                    } else {
-                                        Localization.get(language, "ai_translation_literal")
-                                    },
-                                    options = listOf(
-                                        "Literal" to Localization.get(language, "ai_translation_literal"),
-                                        "Transcribed" to Localization.get(language, "ai_translation_transcribed"),
-                                    ),
-                                    onSelect = onTranslateModeChange,
-                                )
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Translate,
+                    title = { Text(Localization.get(language, "ai_translation_mode")) },
+                    description = {
+                        Text(
+                            if (translateMode == "Transcribed") {
+                                Localization.get(language, "ai_translation_transcribed")
+                            } else {
+                                Localization.get(language, "ai_translation_literal")
                             },
-                        ),
-                    )
-                }
-                add(
-                    M3SettingsItem(
-                        icon = Icons.Filled.Language,
-                        title = { Text(Localization.get(language, "ai_target_language")) },
-                        trailing = {
-                            AiDropdownTrailing(
-                                value = LanguageCodeToName[translateLanguage] ?: translateLanguage,
-                                options = LanguageCodeToName.toList().sortedBy { it.second }.map { it.first to it.second },
-                                onSelect = onTranslateLanguageChange,
-                            )
+                        )
+                    },
+                    visible = aiProvider != "DeepL",
+                    dropdown = M3Dropdown(
+                        value = if (translateMode == "Transcribed") {
+                            Localization.get(language, "ai_translation_transcribed")
+                        } else {
+                            Localization.get(language, "ai_translation_literal")
                         },
+                        options = listOf(
+                            "Literal" to Localization.get(language, "ai_translation_literal"),
+                            "Transcribed" to Localization.get(language, "ai_translation_transcribed"),
+                        ),
+                        onSelect = onTranslateModeChange,
                     ),
-                )
-            },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.Language,
+                    title = { Text(Localization.get(language, "ai_target_language")) },
+                    description = { Text(LanguageCodeToName[translateLanguage] ?: translateLanguage) },
+                    dropdown = M3Dropdown(
+                        value = LanguageCodeToName[translateLanguage] ?: translateLanguage,
+                        options = LanguageCodeToName.toList().sortedBy { it.second }.map { it.first to it.second },
+                        onSelect = onTranslateLanguageChange,
+                    ),
+                ),
+            ),
         )
 
         Spacer(Modifier.height(24.dp))
