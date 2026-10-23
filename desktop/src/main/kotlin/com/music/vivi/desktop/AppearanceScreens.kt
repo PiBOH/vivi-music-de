@@ -164,6 +164,9 @@ fun AppearanceSection(
         ),
     )
 
+    // The hub's second card: the preview gives every card 12 dp above it, and
+    // the two cards of the hub were drawn one on top of the other.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             // A destination, not a switch: the master switch, the transitions it

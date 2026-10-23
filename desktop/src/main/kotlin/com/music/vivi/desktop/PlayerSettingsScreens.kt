@@ -1,6 +1,8 @@
 package com.music.vivi.desktop
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.Crossfade
 import androidx.compose.material.icons.filled.Favorite
@@ -103,6 +105,10 @@ fun PlayerSection(
         ),
     )
 
+    // Every card of this screen is its own block, and the earlier ones were
+    // drawn touching: 8 dp is the gap the other settings screens leave between
+    // two cards.
+    Spacer(Modifier.height(8.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.GraphicEq,
         title = Localization.get(language, "audio_quality"),
@@ -116,6 +122,7 @@ fun PlayerSection(
     // that only means something once it is on. The duration used to be a card of
     // its own with a loose `Slider` under it, so a threshold of the switch above
     // read as a setting of its own instead of a part of that switch.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -152,6 +159,7 @@ fun PlayerSection(
     )
 
     // --- History duration -------------------------------------------------
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -170,6 +178,7 @@ fun PlayerSection(
     )
 
     // --- Playback (mobile's "Player" group) ------------------------------
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOfNotNull(
             M3SettingsItem(
@@ -256,6 +265,7 @@ fun PlayerSection(
     // --- Misc (mobile's "Misc" group) ------------------------------------
     // The volume channel is *not* here: it is a device-sync option and lives in
     // Settings -> Device sync, next to the other volume channel, on both editions.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -275,6 +285,7 @@ fun PlayerSection(
 
     // The cache's number is the row's own, so the slider is drawn in the row's
     // text column instead of floating under the card.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -311,4 +322,4 @@ private fun audioQualityLabel(language: String, quality: String): String = when 
     "low" -> Localization.get(language, "audio_quality_low")
     else -> Localization.get(language, "audio_quality_auto")
 }
-
+

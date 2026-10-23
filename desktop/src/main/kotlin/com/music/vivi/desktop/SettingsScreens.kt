@@ -1371,6 +1371,10 @@ fun ContentSection(
         onSelect = onContentCountryChange,
     )
 
+    // The region card and the filters card were drawn touching: 8 dp is the gap
+    // this screen gives every other card (and the one the preview draws).
+    Spacer(Modifier.height(8.dp))
+
     // --- Filters and the artist page, one card -----------------------------
     // The preview draws them as one list of five switches, and they are one
     // subject (what the catalogue shows); two cards split the group in half for
@@ -1535,6 +1539,10 @@ fun LyricsSection(
     // The rows below follow the mobile "Lyrics" group order: position, style,
     // glow, Apple Music blur (VIVI Music style only), standard blur, text size,
     // line spacing, tap-to-seek, auto-scroll.
+    // Every block on this screen is its own card or its own choice, and they
+    // were drawn touching each other: 8 dp is the gap the other settings
+    // screens leave between two cards.
+    Spacer(Modifier.height(8.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.VerticalAlignCenter,
         title = Localization.get(language, "lyrics_text_position"),
@@ -1547,6 +1555,7 @@ fun LyricsSection(
     // Rendered as the same row-style dropdown the player/audio section uses
     // (M3SettingsDropdownItem): consistent look with every other single-choice
     // option, and the current value is highlighted in the menu.
+    Spacer(Modifier.height(8.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.AutoAwesome,
         title = Localization.get(language, "lyrics_animation_style"),
@@ -1557,6 +1566,7 @@ fun LyricsSection(
     )
 
     // --- Display options -------------------------------------------------
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = buildList {
             add(
@@ -1634,6 +1644,7 @@ fun LyricsSection(
     )
 
     // --- Interaction -----------------------------------------------------
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1683,6 +1694,7 @@ fun LyricsSection(
     // mostly a list of twelve languages visible only while the switch was on.
     // They live on their own screen now (`SettingsRomanizeScreen`), reached from
     // here, and this row says whether it is on and which languages it covers.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1712,6 +1724,7 @@ fun LyricsSection(
     // switch with no key behind it is a setting that silently does nothing, and
     // the row said nothing about that. Without a key the row is disabled and its
     // description says why, with the AI screen named as the place to fix it.
+    Spacer(Modifier.height(8.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
