@@ -444,7 +444,7 @@ object EqualizerRenderCheck {
             var pink = 0
             for (x in innerLeft until innerRight step 4) {
                 val rgb = image.getRGB(x, y)
-                if (((rgb shr 16) and 255) - ((rgb shr 8) and 255) - pageTint >= 4) pink++
+                if (((rgb shr 16) and 255) - ((rgb shr 8) and 255) - pageTint >= 2) pink++
             }
             if (pink >= samples * 0.9) {
                 bottom = y

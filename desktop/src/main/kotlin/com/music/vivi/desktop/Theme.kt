@@ -23,6 +23,7 @@ import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -423,6 +424,43 @@ private val spotifyShapes = Shapes(
  * was a design decision at the call site (the settings cards, for example, sit
  * at 24 dp).
  */
+/**
+ * How much of the accent is mixed into the neutral surfaces of the tonal scheme.
+ *
+ * The scheme's neutrals carry the accent at Material's own chroma 6, which on a
+ * light page is a colour the eye reads as plain white: with the default coral the
+ * page came out `#FFF8F7`, the same value the settings preview computes, and the
+ * sidebar (`surfaceContainer`) was no more tinted than that. Mixing a twentieth of
+ * the accent's distance into the page and every container step keeps the scheme's
+ * ordering (a mix is affine, so every distance between two tones shrinks by the
+ * same fraction) and its `onSurface` pairing, and makes the page, the sidebar and
+ * the cards follow the colour the user picked. One number, so it can be turned up
+ * or down here alone: `0.10` is a blush page, `0.05` the least that reads.
+ */
+private const val SURFACE_TINT = 0.06f
+
+/**
+ * Mixes [SURFACE_TINT] of [accent] into the neutral surfaces of [scheme].
+ *
+ * Every component draws its page, its sidebar and its cards from one of these
+ * roles, so one mix tints all three consistently instead of painting an accent
+ * wash over the page and leaving the cards behind.
+ */
+private fun tintNeutralSurfaces(scheme: ColorScheme, accent: Color): ColorScheme {
+    fun tint(color: Color): Color = lerp(color, accent, SURFACE_TINT)
+    return scheme.copy(
+        background = tint(scheme.background),
+        surface = tint(scheme.surface),
+        surfaceContainerLowest = tint(scheme.surfaceContainerLowest),
+        surfaceContainerLow = tint(scheme.surfaceContainerLow),
+        surfaceContainer = tint(scheme.surfaceContainer),
+        surfaceContainerHigh = tint(scheme.surfaceContainerHigh),
+        surfaceContainerHighest = tint(scheme.surfaceContainerHighest),
+        surfaceDim = tint(scheme.surfaceDim),
+        surfaceBright = tint(scheme.surfaceBright),
+    )
+}
+
 private val expressiveShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
@@ -493,11 +531,18 @@ fun AppTheme(
             style = PaletteStyle.TonalSpot,
         )
     }
+    // The tonal neutrals sit at a chroma the eye reads as white, so the page, the
+    // sidebar and the cards are tinted by the accent the user chose
+    // (`tintNeutralSurfaces`). Spotify mode keeps its flat palette: there the
+    // point is to look like Spotify, not to follow the accent.
+    val tonedScheme = remember(colorScheme, spotify, appliedAccent) {
+        if (spotify) colorScheme else tintNeutralSurfaces(colorScheme, appliedAccent)
+    }
     // "Pure black" replaces the tonal dark surfaces with a true black background.
     val effective = if (!spotify && pureBlack && useDark) {
-        colorScheme.copy(background = Color.Black, surface = Color.Black)
+        tonedScheme.copy(background = Color.Black, surface = Color.Black)
     } else {
-        colorScheme
+        tonedScheme
     }
     // Apply the selected app font to every text style (headlines down to labels);
     // in Spotify mode the titles/labels are bolder, like the Spotify UI.

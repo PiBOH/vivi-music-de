@@ -281,6 +281,17 @@ object ChangelogEmojiRenderCheck {
     private fun stats(png: ByteArray, name: String): Stats {
         File(outDir, "$name.png").writeBytes(png)
         val image = javax.imageio.ImageIO.read(png.inputStream())
+        // What is left blank is the page, read off the frame instead of assumed:
+        // the page carries the accent (`Theme.kt` tints it), so the old "whiter
+        // than 245" test counted the whole page as ink the moment it was tinted.
+        // The bottom-right corner, not the top-left: the text is drawn from the
+        // top-left with no padding, so the first pixel can be inside the glyph
+        // itself (the wastebasket covers it) and a glyph colour read as "the
+        // page" makes every pixel of that frame look like ink.
+        val page = image.getRGB(image.width - 1, image.height - 1)
+        val pr = (page shr 16) and 255
+        val pg = (page shr 8) and 255
+        val pb = page and 255
         var ink = 0
         var colour = 0
         for (y in 0 until image.height) {
@@ -289,7 +300,7 @@ object ChangelogEmojiRenderCheck {
                 val r = (rgb shr 16) and 255
                 val g = (rgb shr 8) and 255
                 val b = rgb and 255
-                if (r > 245 && g > 245 && b > 245) continue
+                if (kotlin.math.abs(r - pr) <= 3 && kotlin.math.abs(g - pg) <= 3 && kotlin.math.abs(b - pb) <= 3) continue
                 ink++
                 if (maxOf(r, g, b) - minOf(r, g, b) > 40) colour++
             }

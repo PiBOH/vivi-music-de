@@ -239,7 +239,7 @@ object StorageCommitsRenderCheck {
     private fun frame(png: ByteArray): Frame {
         val image = javax.imageio.ImageIO.read(png.inputStream())
         val colours = Swatch.entries.associateWith { image.getRGB(2 + it.ordinal * 10, image.height - 3) }
-        fun kind(argb: Int): Swatch? = colours.entries.firstOrNull { near(argb, it.value, 16) }?.key
+        fun kind(argb: Int): Swatch? = colours.entries.firstOrNull { near(argb, it.value, 6) }?.key
 
         val blobs = blobRows(image, colours, ::kind)
         // The tile is the first secondaryContainer blob at least 40 px tall.
