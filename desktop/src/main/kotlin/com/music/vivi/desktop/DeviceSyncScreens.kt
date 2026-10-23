@@ -401,7 +401,7 @@ private fun DeviceSyncHowTo(language: String, relayMode: Boolean) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             if (relayMode) {
                 HowToStep(1, Localization.get(language, "how_to_relay_step1"))
                 HowToStep(2, Localization.get(language, "how_to_relay_step2"))

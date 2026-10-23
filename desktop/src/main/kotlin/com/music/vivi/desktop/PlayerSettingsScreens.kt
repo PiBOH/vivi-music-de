@@ -191,8 +191,9 @@ fun PlayerSection(
         ),
     )
 
-    // 8 dp is the gap every settings screen of the DE leaves between two cards.
-    Spacer(Modifier.height(8.dp))
+    // 12 dp is the gap the page gives every card (its `.md-card` margin), and the
+    // gap every settings screen of the DE leaves between two of them.
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         title = Localization.get(language, "queue"),
         items = listOf(
@@ -261,7 +262,7 @@ fun PlayerSection(
     // The tail card: the rows that are the desktop's own. The volume channel is
     // NOT here: it is a device-sync option and lives in Settings -> Device sync,
     // next to the other volume channel, on both editions.
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(

@@ -150,7 +150,7 @@ fun AboutSection(
         }
     }
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
 
     // What this build is: the version and the code that unlocks the developer
     // options. Both figures are the row's own description (the page says them
@@ -219,7 +219,7 @@ fun AboutSection(
         ),
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
 
     // The three doors out of the app, under the page's own label for them: all
     // three open a browser, which the arrow says (a chevron would promise
@@ -233,7 +233,7 @@ fun AboutSection(
         ),
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
 
     // The two documents.
     M3SettingsGroup(

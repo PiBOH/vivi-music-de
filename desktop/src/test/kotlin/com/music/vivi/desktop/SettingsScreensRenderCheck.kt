@@ -378,11 +378,10 @@ object SettingsScreensRenderCheck {
         if (updateBands.size != 6) failures += "Updates should read six bands, read ${updateBands.size}"
         if (updateSeams != 2) failures += "Updates should join its two two-row cards (2 seams), read $updateSeams"
 
-        // Notifications: the three rows of one card, joined by its two seams. The
-        // two dropdown cards and the button sit closer to the page than the
-        // 6-unit threshold this scan uses, so they are not bands; the card is
-        // what the seams are for.
-        if (notificationBands.size != 3) failures += "Notifications should read the three rows of its card, read ${notificationBands.size}"
+        // Notifications: the mode's own card, the three rows of the card under it
+        // (two seams) and the action. The mode used to be a bare dropdown row on
+        // the page's background, which this scan could not see as a card at all.
+        if (notificationBands.size != 5) failures += "Notifications should read its mode card, three rows and the action, read ${notificationBands.size}"
         if (notificationSeams != 2) failures += "Notifications should join its three rows (2 seams), read $notificationSeams"
 
         // Content: the two dropdown cards stand alone, the five switches are one
@@ -408,18 +407,19 @@ object SettingsScreensRenderCheck {
 
         // Lyrics: the page's order. The screen opens on the card of the three
         // switches it lists first (synced, tap a line, auto scroll), one 3-px seam
-        // apart, then the two sliders as rows of their own, and it ends on the
-        // Romanization and translation cards.
+        // apart, then the two sliders as rows of their own, then the two choices -
+        // one card each, like every dropdown - then the display card the page does
+        // not draw, and it ends on the Romanization row.
         val lyricsFirstCard = lyricsBands.take(3)
-        if (lyricsBands.size != 11) failures += "Lyrics should read eleven rows, read ${lyricsBands.size}"
+        if (lyricsBands.size != 12) failures += "Lyrics should read twelve rows, read ${lyricsBands.size}"
         if (lyricsFirstCard.size != 3 || seams(lyricsFirstCard) != 2) {
             failures += "Lyrics should open on one card of three switches, read ${lyricsFirstCard.size} row(s) and ${seams(lyricsFirstCard)} seam(s)"
         }
         if (lyricsBands.getOrNull(3)?.height?.let { it < 80 } != false || lyricsBands.getOrNull(4)?.height?.let { it < 80 } != false) {
             failures += "Lyrics' two sliders should be tall rows, read ${lyricsBands.getOrNull(3)?.height}/${lyricsBands.getOrNull(4)?.height}"
         }
-        if (lyricsBands.drop(lyricsBands.size - 2).any { it.height > 60 }) {
-            failures += "Lyrics should end on two single-row cards, read ${lyricsBands.drop(lyricsBands.size - 2).map { it.height }}"
+        if (lyricsBands.getOrNull(5)?.height?.let { it > 60 } != false || lyricsBands.getOrNull(6)?.height?.let { it > 60 } != false) {
+            failures += "Lyrics' two choices should be cards of one row, read ${lyricsBands.getOrNull(5)?.height}/${lyricsBands.getOrNull(6)?.height}"
         }
 
         // Privacy: the two history switches in one card, joined by one seam, and
@@ -513,7 +513,7 @@ object SettingsScreensRenderCheck {
             println()
             println(
                 "OK: Updates is six bands with the two seams of its two-row cards, " +
-                    "Notifications is one card of three rows joined by two seams, " +
+                    "Notifications is the mode card over a card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +
                     "Privacy is one card of two switches with its action under them, Lyrics is ${lyricsBands.size} rows in the page order, Debug & Developer Options is ${developerCards.size} rows, the four of Advanced in one card, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +

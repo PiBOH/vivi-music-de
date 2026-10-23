@@ -582,7 +582,19 @@ fun M3SettingsDropdownItem(
     description: String? = null,
     menuWidth: Dp = 280.dp,
 ) {
-    Box(modifier = modifier.fillMaxWidth()) {
+    // A settings choice is a block of the page like any other: it used to be a
+    // bare row on the page's own background, so on every screen that offers a
+    // choice the row floated without the card its neighbours wear - the one thing
+    // a block of a single element could be missing. It is the group card's fill
+    // and corner now, the same [M3SettingsDropdownCard] draws.
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    ) {
         M3SettingsDropdownRow(
             icon = icon,
             title = title,

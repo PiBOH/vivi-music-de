@@ -29,6 +29,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.MusicNote
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.filled.GTranslate
 import androidx.compose.material.icons.filled.FormatSize
@@ -878,7 +884,7 @@ fun SettingsIntroScreen(
             onSelect = onIntroStyleChange,
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         M3SettingsDropdownItem(
             icon = Icons.Filled.Palette,
@@ -1038,43 +1044,75 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
 
         // Automatic backups
         Text(Localization.get(language, "auto_backup"), style = MaterialTheme.typography.titleMedium)
-        Text(
-            Localization.get(language, "automatic_backup_desc"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 2.dp),
-        )
 
-        BackupToggleRow(
-            language = language,
-            titleKey = "enable_automatic_backup",
-            checked = autoBackupEnabled,
-            onCheckedChange = {
-                autoBackupEnabled = it
-                DesktopSettings.update { s -> s.copy(autoBackupEnabled = it) }
-            },
-        )
-        BackupToggleRow(
-            language = language,
-            titleKey = "weekly_backup",
-            descKey = "weekly_backup_desc",
-            checked = autoBackupWeekly,
-            enabled = autoBackupEnabled,
-            onCheckedChange = {
-                autoBackupWeekly = it
-                DesktopSettings.update { s -> s.copy(autoBackupWeekly = it) }
-            },
-        )
-        BackupToggleRow(
-            language = language,
-            titleKey = "backup_before_update",
-            descKey = "backup_before_update_desc",
-            checked = autoBackupBeforeUpdate,
-            enabled = autoBackupEnabled,
-            onCheckedChange = {
-                autoBackupBeforeUpdate = it
-                DesktopSettings.update { s -> s.copy(autoBackupBeforeUpdate = it) }
-            },
+        // The three switches are one card: they are one subject, and a row of a
+        // settings screen wears the card every other setting wears instead of
+        // standing on the page's own background. The two that depend on the
+        // automatic backup fold away with it.
+        Spacer(Modifier.height(12.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Schedule,
+                    title = { Text(Localization.get(language, "enable_automatic_backup")) },
+                    description = { Text(Localization.get(language, "automatic_backup_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = autoBackupEnabled,
+                            onCheckedChange = { v ->
+                                autoBackupEnabled = v
+                                DesktopSettings.update { s -> s.copy(autoBackupEnabled = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        autoBackupEnabled = !autoBackupEnabled
+                        DesktopSettings.update { s ->
+                            s.copy(autoBackupEnabled = !autoBackupEnabled)
+                        }
+                    },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.DateRange,
+                    title = { Text(Localization.get(language, "weekly_backup")) },
+                    description = { Text(Localization.get(language, "weekly_backup_desc")) },
+                    visible = autoBackupEnabled,
+                    trailing = {
+                        Switch(
+                            checked = autoBackupWeekly,
+                            onCheckedChange = { v ->
+                                autoBackupWeekly = v
+                                DesktopSettings.update { s -> s.copy(autoBackupWeekly = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        autoBackupWeekly = !autoBackupWeekly
+                        DesktopSettings.update { s -> s.copy(autoBackupWeekly = !autoBackupWeekly) }
+                    },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.SystemUpdate,
+                    title = { Text(Localization.get(language, "backup_before_update")) },
+                    description = { Text(Localization.get(language, "backup_before_update_desc")) },
+                    visible = autoBackupEnabled,
+                    trailing = {
+                        Switch(
+                            checked = autoBackupBeforeUpdate,
+                            onCheckedChange = { v ->
+                                autoBackupBeforeUpdate = v
+                                DesktopSettings.update { s -> s.copy(autoBackupBeforeUpdate = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        autoBackupBeforeUpdate = !autoBackupBeforeUpdate
+                        DesktopSettings.update { s ->
+                            s.copy(autoBackupBeforeUpdate = !autoBackupBeforeUpdate)
+                        }
+                    },
+                ),
+            ),
         )
 
         // Stored automatic backups
@@ -1181,37 +1219,6 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
     }
 }
 
-/** A labelled switch row used by the backup screen (title + optional description). */
-@Composable
-private fun BackupToggleRow(
-    language: String,
-    titleKey: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    enabled: Boolean = true,
-    descKey: String? = null,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp)
-            .clickable(enabled = enabled) { onCheckedChange(!checked) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
-        Column(Modifier.weight(1f)) {
-            Text(Localization.get(language, titleKey))
-            if (descKey != null) {
-                Text(
-                    Localization.get(language, descKey),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
 
 /** Extracts a display date + a type key (`backup_type_weekly`/`backup_type_before_update`) from a backup filename. */
 private fun parseAutoBackupName(name: String): Pair<String, String> {
@@ -1400,9 +1407,10 @@ fun ContentSection(
         onSelect = onContentCountryChange,
     )
 
-    // The region card and the filters card were drawn touching: 8 dp is the gap
-    // this screen gives every other card (and the one the preview draws).
-    Spacer(Modifier.height(8.dp))
+    // The region card and the filters card were drawn touching: 12 dp is the gap
+    // the page gives every card (its `.md-card` margin), and this screen gives it
+    // the same.
+    Spacer(Modifier.height(12.dp))
 
     // --- Filters and the artist page, one card -----------------------------
     // The preview draws them as one list of five switches, and they are one
@@ -1556,7 +1564,7 @@ fun LyricsSection(
         style = MaterialTheme.typography.titleLarge,
         modifier = Modifier.padding(top = 12.dp),
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
 
     // The card the page opens with: the three switches that decide what the
     // lyrics do while a song plays, in its order - synced, tap a line, auto
@@ -1599,7 +1607,7 @@ fun LyricsSection(
     // The two sizes are cards of one row each, the way the page draws them: the
     // row carries the name and its value, the track sits under them in the row's
     // own text column (no floating bar and no label above it).
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1623,7 +1631,7 @@ fun LyricsSection(
             ),
         ),
     )
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1648,7 +1656,7 @@ fun LyricsSection(
     )
 
     // --- Animation style -------------------------------------------------
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.Animation,
         title = Localization.get(language, "lyrics_animation_style"),
@@ -1658,7 +1666,7 @@ fun LyricsSection(
     )
 
     // --- Text position ---------------------------------------------------
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsDropdownItem(
         icon = Icons.AutoMirrored.Filled.FormatAlignLeft,
         title = Localization.get(language, "lyrics_text_position"),
@@ -1672,7 +1680,7 @@ fun LyricsSection(
     // above, so they stay one card under it instead of being spread through the
     // screen. The Apple Music blur only exists for the style that applies it
     // (`visible`, so choosing another style folds the row away).
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1735,7 +1743,7 @@ fun LyricsSection(
     // mostly a list of twelve languages visible only while the switch was on.
     // They live on their own screen now (`SettingsRomanizeScreen`), reached from
     // here, and this row says whether it is on and which languages it covers.
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1765,7 +1773,7 @@ fun LyricsSection(
     // switch with no key behind it is a setting that silently does nothing, and
     // the row said nothing about that. Without a key the row is disabled and its
     // description says why, with the AI screen named as the place to fix it.
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -2171,7 +2179,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
             modifier = Modifier.padding(horizontal = 4.dp).padding(top = 8.dp),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Android-style "turn off developer options" sits first, exactly like
         // Android's own developer-options screen: it hides this screen, locks it
@@ -2197,7 +2205,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
             ),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // The page's Advanced card: the heap the app asks for, the two logging
         // switches and the hidden APK button, one row each. The heap is a choice
@@ -2574,7 +2582,7 @@ fun SettingsNotificationsScreen(
             modifier = Modifier.padding(top = 6.dp, start = 6.dp, end = 6.dp),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         // The mobile app's notification-permission row. It is shown on every
         // desktop platform (the options belong in the UI everywhere): on macOS
         // it asks UNUserNotificationCenter for the permission, on Windows and
@@ -2602,7 +2610,7 @@ fun SettingsNotificationsScreen(
             ),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.AccessTime,
             title = Localization.get(language, "notification_duration"),
@@ -2652,7 +2660,7 @@ fun NotificationHistoryScreen(
                 modifier = Modifier.padding(vertical = 24.dp),
             )
         } else {
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             M3SettingsGroup(
                 items = history.map { record ->
                     M3SettingsItem(
@@ -2759,7 +2767,7 @@ fun SettingsPrivacyScreen(
 
     SettingsSubScreen(language, onBack) {
         Text(Localization.get(language, "privacy"), style = MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         M3SettingsGroup(
             items = listOf(
@@ -2815,12 +2823,19 @@ fun SettingsIntegrationsScreen(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 16.dp),
         )
-        BackupToggleRow(
-            language = language,
-            titleKey = "discord_presence_enable",
-            descKey = "discord_presence_desc",
-            checked = discordEnabled,
-            onCheckedChange = onDiscordEnabledChange,
+        Spacer(Modifier.height(12.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Forum,
+                    title = { Text(Localization.get(language, "discord_presence_enable")) },
+                    description = { Text(Localization.get(language, "discord_presence_desc")) },
+                    trailing = {
+                        Switch(checked = discordEnabled, onCheckedChange = onDiscordEnabledChange)
+                    },
+                    onClick = { onDiscordEnabledChange(!discordEnabled) },
+                ),
+            ),
         )
         OutlinedTextField(
             value = discordClientId,
@@ -2845,12 +2860,19 @@ fun SettingsIntegrationsScreen(
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BackupToggleRow(
-            language = language,
-            titleKey = "lastfm_enable",
-            descKey = "lastfm_enable_desc",
-            checked = lastfmEnabled,
-            onCheckedChange = onLastfmEnabledChange,
+        Spacer(Modifier.height(12.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.MusicNote,
+                    title = { Text(Localization.get(language, "lastfm_enable")) },
+                    description = { Text(Localization.get(language, "lastfm_enable_desc")) },
+                    trailing = {
+                        Switch(checked = lastfmEnabled, onCheckedChange = onLastfmEnabledChange)
+                    },
+                    onClick = { onLastfmEnabledChange(!lastfmEnabled) },
+                ),
+            ),
         )
         // The session field and the Now Playing switch belong to the switch above
         // them, so they fold away with it instead of vanishing in one frame.
@@ -2868,12 +2890,22 @@ fun SettingsIntegrationsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
-            BackupToggleRow(
-                language = language,
-                titleKey = "lastfm_now_playing",
-                descKey = "lastfm_now_playing_desc",
-                checked = lastfmNowPlaying,
-                onCheckedChange = onLastfmNowPlayingChange,
+            Spacer(Modifier.height(12.dp))
+            M3SettingsGroup(
+                items = listOf(
+                    M3SettingsItem(
+                        icon = Icons.Filled.PlayCircle,
+                        title = { Text(Localization.get(language, "lastfm_now_playing")) },
+                        description = { Text(Localization.get(language, "lastfm_now_playing_desc")) },
+                        trailing = {
+                            Switch(
+                                checked = lastfmNowPlaying,
+                                onCheckedChange = onLastfmNowPlayingChange,
+                            )
+                        },
+                        onClick = { onLastfmNowPlayingChange(!lastfmNowPlaying) },
+                    ),
+                ),
             )
         }
         Spacer(Modifier.height(16.dp))
@@ -3210,7 +3242,7 @@ fun SettingsEqualizerScreen(
                     var draftPreamp by remember { mutableStateOf(profile.preamp) }
                     fun commit() = onUpdateProfile(profile.id, draftBands, draftPreamp)
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     EqualizerResponseCard(
                         language = language,
                         profile = profile,
@@ -3228,7 +3260,7 @@ fun SettingsEqualizerScreen(
                         },
                     )
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     M3SettingsGroup(
                         items = listOf(
                             M3SettingsItem(
@@ -3253,7 +3285,7 @@ fun SettingsEqualizerScreen(
                         ),
                     )
 
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(12.dp))
                     M3SettingsGroup(
                         items = draftBands.mapIndexed { index, band ->
                             M3SettingsItem(
@@ -3612,7 +3644,7 @@ fun SettingsDataSaverScreen(
             ),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         Text(
             Localization.get(language, "data_saver_turns_off_header"),
@@ -3741,7 +3773,7 @@ fun SettingsAiScreen(
             ),
         )
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Keys, base URL and model: one card, titled with the page's own words
         // (`ai_setup_guide` is "API Credentials").
@@ -3821,7 +3853,7 @@ fun SettingsAiScreen(
             )
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         // Translation mode and target language: the page's last card. DeepL is not
         // asked for a mode (it only translates), so that row folds away for it
@@ -4520,7 +4552,7 @@ internal fun LanguagePickerRows(
         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     if (matches.isEmpty()) {
         Text(
             Localization.get(language, "language_search_none"),

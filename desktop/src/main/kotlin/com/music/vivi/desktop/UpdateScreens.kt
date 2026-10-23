@@ -106,7 +106,7 @@ fun UpdateSection(
         ),
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.Schedule,
         title = Localization.get(language, "update_check_interval"),
@@ -115,7 +115,7 @@ fun UpdateSection(
         onSelect = { picked -> picked.toIntOrNull()?.let(onIntervalChange) },
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsDropdownItem(
         icon = Icons.Filled.CloudDownload,
         title = Localization.get(language, "update_source"),
@@ -124,7 +124,7 @@ fun UpdateSection(
         onSelect = onUpdateSourceChange,
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -142,7 +142,7 @@ fun UpdateSection(
         ),
     )
 
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
 
     when (status) {
         is UpdateStatus.Checking -> Text(Localization.get(language, "checking"), modifier = Modifier.padding(top = 8.dp))

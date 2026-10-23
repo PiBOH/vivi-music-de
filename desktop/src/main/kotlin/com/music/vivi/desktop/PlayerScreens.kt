@@ -4187,7 +4187,7 @@ fun PlayerDesignScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -4210,7 +4210,7 @@ fun PlayerDesignScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -4286,7 +4286,7 @@ fun PlayerDesignScreen(
                 emptyList()
             },
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(

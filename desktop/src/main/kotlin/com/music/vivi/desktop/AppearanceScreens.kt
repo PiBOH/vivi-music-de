@@ -166,7 +166,7 @@ fun AppearanceSection(
 
     // The hub's second card: the preview gives every card 12 dp above it, and
     // the two cards of the hub were drawn one on top of the other.
-    Spacer(Modifier.height(8.dp))
+    Spacer(Modifier.height(12.dp))
     M3SettingsGroup(
         items = listOf(
             // A destination, not a switch: the master switch, the transitions it
@@ -1065,7 +1065,7 @@ fun TransitionsScreen(
         )
 
         // Both choices belong to the switches above and fold with them.
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsFold(visible = animationsEnabled && transitionsOn) {
             M3SettingsDropdownItem(
                 icon = Icons.Filled.Movie,
@@ -1197,7 +1197,7 @@ fun FontSection(
         // here never reached them even though the theme carries it everywhere
         // else. This is the switch that decides it, on by default: a font chosen
         // on this screen is expected to be the app's font, lyrics included.
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -1244,7 +1244,7 @@ fun CanvasSection(
 ) {
     Column(Modifier.fillMaxWidth()) {
         Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         // The page's row is the name and the switch, with nothing under them: the
         // sentence that stood here said what the Canvas is to someone who has
         // already opened its screen.
@@ -1261,7 +1261,7 @@ fun CanvasSection(
         // The source only means something while the Canvas is on (the preview
         // hides it otherwise), and it folds away with the switch it belongs to.
         M3SettingsFold(visible = canvasEnabled) {
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.Palette,
             title = Localization.get(language, "canvas_source"),
@@ -1305,7 +1305,7 @@ fun DensityScreen(
             options = DENSITY_PRESETS.map { it.toString() to densityLabel(it) },
             onSelect = { s -> onDensityScaleChange(s.toFloatOrNull() ?: densityScale) },
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.ViewAgenda,
             title = Localization.get(language, "grid_item_size"),
