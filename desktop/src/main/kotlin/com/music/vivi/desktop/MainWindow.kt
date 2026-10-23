@@ -163,8 +163,6 @@ fun main(args: Array<String>) {
     // session, which is why it is the very first thing here.
     SettingsFile.start()
 
-    // Configure the shared YouTube client exactly like the Android App.onCreate() does,
-    // honouring the saved content language/region (or the OS default).
     val initialSettings = DesktopSettings.load()
     startupStage("settings loaded")
 
@@ -174,11 +172,24 @@ fun main(args: Array<String>) {
     // restart.
     val settingsRevision = settingsFileRevision()
 
-    YouTube.locale = resolveYouTubeLocale(
+    // Configure the shared YouTube client exactly like the Android App.onCreate()
+    // does, honouring the saved content language/region (or the OS default).
+    val startupLocale = resolveYouTubeLocale(
         initialSettings.contentLanguage,
         initialSettings.contentCountry,
         initialSettings.language,
     )
+    // The Innertube client IS the whole HTTP stack (Ktor, OkHttp, the TLS and
+    // keystore providers) and building it loads hundreds of classes: measured
+    // at 0.9-1.2 s right on the AWT thread, on the way to the first frame,
+    // because touching `YouTube` initialises `InnerTube` and its client.
+    // Nothing before the first frame needs a request, so the client is built on
+    // its own thread; a request that arrives first simply waits on the class
+    // initialisation, which the JVM serialises for us.
+    Thread({ runCatching { YouTube.locale = startupLocale } }, "vivi-innertube-warmup").apply {
+        isDaemon = true
+        start()
+    }
 
     // The shared Compose strings (the text-selection context menu above all)
     // localise from the platform locale, not from the app's own table: on an

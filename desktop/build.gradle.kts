@@ -1014,3 +1014,19 @@ tasks.register<JavaExec>("settingsDropdownWindowCheck") {
     // chasing one row without pressing the other twenty.
     (project.findProperty("case") as String?)?.let { args(it) }
 }
+
+/**
+ * Manual: one cold start of the real app against a throwaway home
+ * (`.ignore/startup-home`), stopped after 20 s, so the `startup:` lines in its
+ * `app.log` can be read. Opens a window, needs a display.
+ */
+tasks.register<JavaExec>("startupProbe") {
+    group = "verification"
+    description = "Launches the app against a throwaway home and stops it, to read its startup stages"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.StartupProbeKt")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+    workingDir = rootProject.projectDir
+    args(".ignore/startup-home", "20")
+    jvmArgs("-XX:StartFlightRecording=filename=.ignore/startup.jfr,duration=14s,settings=profile,dumponexit=true")
+}

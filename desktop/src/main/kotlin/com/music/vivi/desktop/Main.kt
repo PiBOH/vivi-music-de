@@ -125,6 +125,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -219,6 +220,19 @@ fun WindowScope.App(
     onMaximize: () -> Unit = {},
     onClose: () -> Unit = {},
 ) {
+    // Startup timing: the first frame the window actually puts on screen,
+    // measured from the JVM's own start, so "it takes N seconds to open" is a
+    // number in `app.log` instead of an impression. Gated like the stages in
+    // main(): nothing is written unless DetailedStartupLogs is on.
+    LaunchedEffect(Unit) {
+        withFrameNanos { }
+        if (DesktopSettings.load().detailedStartupLogs) {
+            val since = ProcessHandle.current().info().startInstant().orElse(null)
+            val elapsed = if (since == null) -1L else java.time.Duration.between(since, java.time.Instant.now()).toMillis()
+            AppLog.log("app", "startup: first frame at +${elapsed}ms after the JVM started")
+        }
+    }
+
     var backStack by remember { mutableStateOf(listOf<Screen>(Screen.Home)) }
     val player = remember { PlayerController() }
     val playerState by player.state.collectAsState()
