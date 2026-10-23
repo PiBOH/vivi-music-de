@@ -108,8 +108,11 @@ fun AboutSection(
     // and what this build is, so the answer is on the screen before any row.
     Card(
         shape = RoundedCornerShape(24.dp),
+        // The fill every settings card wears (the page's `md-card`, a 30 % mix of
+        // `surface-variant`), not the accent tint a hero would take: the head is a
+        // card of this screen, and a tinted one read as a different kind of block.
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.30f),
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth(),
