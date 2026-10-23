@@ -205,6 +205,16 @@ fun M3SettingsGroup(
  */
 @Composable
 fun M3SettingsFold(visible: Boolean, content: @Composable () -> Unit) {
+    // The fold exists only with the Animations switch on. `rowEnter()` returns
+    // `EnterTransition.None` when it is off, which is the same frame in the end,
+    // but it depends on a transition table cached by a plain flag: branching here
+    // makes the rule the screen's own, so a block that belongs to a switch (the
+    // performance reader's panels, the developer options' group) is added and
+    // dropped in one frame when animations are off, whatever the table holds.
+    if (!Animations.enabled) {
+        if (visible) Column(Modifier.fillMaxWidth()) { content() }
+        return
+    }
     AnimatedVisibility(
         visible = visible,
         enter = Animations.rowEnter(),

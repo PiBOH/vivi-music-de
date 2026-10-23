@@ -29,6 +29,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.GTranslate
+import androidx.compose.material.icons.filled.FormatSize
+import androidx.compose.material.icons.filled.FormatLineSpacing
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RocketLaunch
@@ -89,6 +95,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -1544,7 +1551,17 @@ fun LyricsSection(
 ) {
     val romanize = options.romanize
 
-    Text(Localization.get(language, "lyrics"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    Text(
+        Localization.get(language, "lyrics"),
+        style = MaterialTheme.typography.titleLarge,
+        modifier = Modifier.padding(top = 12.dp),
+    )
+    Spacer(Modifier.height(8.dp))
+
+    // The card the page opens with: the three switches that decide what the
+    // lyrics do while a song plays, in its order - synced, tap a line, auto
+    // scroll. Only the first one explains itself; the other two are their own
+    // sentence, and the page gives them no description.
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
@@ -1554,125 +1571,9 @@ fun LyricsSection(
                 trailing = { Switch(checked = syncedLyrics, onCheckedChange = onToggleSyncedLyrics) },
                 onClick = { onToggleSyncedLyrics(!syncedLyrics) },
             ),
-        ),
-    )
-
-    // --- Text position ---------------------------------------------------
-    // The rows below follow the mobile "Lyrics" group order: position, style,
-    // glow, Apple Music blur (VIVI Music style only), standard blur, text size,
-    // line spacing, tap-to-seek, auto-scroll.
-    // Every block on this screen is its own card or its own choice, and they
-    // were drawn touching each other: 8 dp is the gap the other settings
-    // screens leave between two cards.
-    Spacer(Modifier.height(8.dp))
-    M3SettingsDropdownItem(
-        icon = Icons.Filled.VerticalAlignCenter,
-        title = Localization.get(language, "lyrics_text_position"),
-        value = lyricsPositionLabel(language, options.position),
-        options = LyricsPosition.entries.map { it.name to lyricsPositionLabel(language, it) },
-        onSelect = { name -> onOptionsChange(options.copy(position = LyricsPosition.from(name))) },
-    )
-
-    // --- Animation style -------------------------------------------------
-    // Rendered as the same row-style dropdown the player/audio section uses
-    // (M3SettingsDropdownItem): consistent look with every other single-choice
-    // option, and the current value is highlighted in the menu.
-    Spacer(Modifier.height(8.dp))
-    M3SettingsDropdownItem(
-        icon = Icons.Filled.AutoAwesome,
-        title = Localization.get(language, "lyrics_animation_style"),
-        description = Localization.get(language, "lyrics_animation_style_desc"),
-        value = lyricsStyleLabel(language, options.style),
-        options = LyricsAnimationStyle.entries.map { it.id to lyricsStyleLabel(language, it) },
-        onSelect = { id -> onOptionsChange(options.copy(style = LyricsAnimationStyle.from(id))) },
-    )
-
-    // --- Display options -------------------------------------------------
-    Spacer(Modifier.height(8.dp))
-    M3SettingsGroup(
-        items = buildList {
-            add(
-                M3SettingsItem(
-                    icon = Icons.Filled.AutoAwesome,
-                    title = { Text(Localization.get(language, "lyrics_glow_effect")) },
-                    description = { Text(Localization.get(language, "lyrics_glow_effect_desc")) },
-                    trailing = {
-                        Switch(
-                            checked = options.glowEffect,
-                            onCheckedChange = { onOptionsChange(options.copy(glowEffect = it)) },
-                        )
-                    },
-                    onClick = { onOptionsChange(options.copy(glowEffect = !options.glowEffect)) },
-                ),
-            )
-            // Mobile hides the Apple Music blur for every style but VIVI Music:
-            // the renderer only applies it there, so the row is shown only then
-            // instead of offering a switch that would change nothing. It is
-            // `visible`, not an `if`, so choosing another style folds it away.
-            add(
-                M3SettingsItem(
-                    icon = Icons.Filled.BlurOn,
-                    title = { Text(Localization.get(language, "lyrics_apple_blur")) },
-                    description = { Text(Localization.get(language, "lyrics_apple_blur_desc")) },
-                    visible = options.style == LyricsAnimationStyle.VIVIMUSIC_1,
-                    trailing = {
-                        Switch(
-                            checked = options.appleMusicBlur,
-                            onCheckedChange = { onOptionsChange(options.copy(appleMusicBlur = it)) },
-                        )
-                    },
-                    onClick = { onOptionsChange(options.copy(appleMusicBlur = !options.appleMusicBlur)) },
-                ),
-            )
-            add(
-                M3SettingsItem(
-                    icon = Icons.Filled.BlurOn,
-                    title = { Text(Localization.get(language, "lyrics_standard_blur")) },
-                    description = { Text(Localization.get(language, "lyrics_standard_blur_desc")) },
-                    trailing = {
-                        Switch(
-                            checked = options.standardBlur,
-                            onCheckedChange = { onOptionsChange(options.copy(standardBlur = it)) },
-                        )
-                    },
-                    onClick = { onOptionsChange(options.copy(standardBlur = !options.standardBlur)) },
-                ),
-            )
-        },
-    )
-
-    Text(
-        "${Localization.get(language, "lyrics_text_size")}: ${lyricsTextSize.toInt()} sp",
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(top = 16.dp),
-    )
-    M3SettingsSlider(
-        value = lyricsTextSize,
-        onValueChange = onLyricsTextSizeChange,
-        valueRange = 12f..32f,
-        modifier = Modifier.fillMaxWidth(),
-    )
-
-    Text(
-        "${Localization.get(language, "lyrics_line_spacing")}: ${String.format("%.2f", lyricsLineSpacing)}",
-        style = MaterialTheme.typography.titleMedium,
-        modifier = Modifier.padding(top = 16.dp),
-    )
-    M3SettingsSlider(
-        value = lyricsLineSpacing,
-        onValueChange = onLyricsLineSpacingChange,
-        valueRange = 1.0f..2.0f,
-        modifier = Modifier.fillMaxWidth(),
-    )
-
-    // --- Interaction -----------------------------------------------------
-    Spacer(Modifier.height(8.dp))
-    M3SettingsGroup(
-        items = listOf(
             M3SettingsItem(
                 icon = Icons.Filled.TouchApp,
                 title = { Text(Localization.get(language, "lyrics_click_to_seek")) },
-                description = { Text(Localization.get(language, "lyrics_click_to_seek_desc")) },
                 trailing = {
                     Switch(
                         checked = options.clickToSeek,
@@ -1682,9 +1583,8 @@ fun LyricsSection(
                 onClick = { onOptionsChange(options.copy(clickToSeek = !options.clickToSeek)) },
             ),
             M3SettingsItem(
-                icon = Icons.Filled.VerticalAlignCenter,
+                icon = Icons.Filled.SwapVert,
                 title = { Text(Localization.get(language, "lyrics_auto_scroll")) },
-                description = { Text(Localization.get(language, "lyrics_auto_scroll_desc")) },
                 trailing = {
                     Switch(
                         checked = options.autoScroll,
@@ -1692,6 +1592,125 @@ fun LyricsSection(
                     )
                 },
                 onClick = { onOptionsChange(options.copy(autoScroll = !options.autoScroll)) },
+            ),
+        ),
+    )
+
+    // The two sizes are cards of one row each, the way the page draws them: the
+    // row carries the name and its value, the track sits under them in the row's
+    // own text column (no floating bar and no label above it).
+    Spacer(Modifier.height(8.dp))
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.FormatSize,
+                title = { Text(Localization.get(language, "lyrics_text_size")) },
+                trailing = {
+                    Text(
+                        "${lyricsTextSize.toInt()} sp",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                slider = {
+                    M3SettingsSlider(
+                        value = lyricsTextSize,
+                        onValueChange = onLyricsTextSizeChange,
+                        valueRange = 12f..30f,
+                        steps = 17,
+                    )
+                },
+            ),
+        ),
+    )
+    Spacer(Modifier.height(8.dp))
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.FormatLineSpacing,
+                title = { Text(Localization.get(language, "lyrics_line_spacing")) },
+                trailing = {
+                    Text(
+                        String.format("%.2f", lyricsLineSpacing),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+                slider = {
+                    M3SettingsSlider(
+                        value = lyricsLineSpacing,
+                        onValueChange = onLyricsLineSpacingChange,
+                        valueRange = 1f..2.4f,
+                    )
+                },
+            ),
+        ),
+    )
+
+    // --- Animation style -------------------------------------------------
+    Spacer(Modifier.height(8.dp))
+    M3SettingsDropdownItem(
+        icon = Icons.Filled.Animation,
+        title = Localization.get(language, "lyrics_animation_style"),
+        value = lyricsStyleLabel(language, options.style),
+        options = LyricsAnimationStyle.entries.map { it.id to lyricsStyleLabel(language, it) },
+        onSelect = { id -> onOptionsChange(options.copy(style = LyricsAnimationStyle.from(id))) },
+    )
+
+    // --- Text position ---------------------------------------------------
+    Spacer(Modifier.height(8.dp))
+    M3SettingsDropdownItem(
+        icon = Icons.AutoMirrored.Filled.FormatAlignLeft,
+        title = Localization.get(language, "lyrics_text_position"),
+        value = lyricsPositionLabel(language, options.position),
+        options = LyricsPosition.entries.map { it.name to lyricsPositionLabel(language, it) },
+        onSelect = { name -> onOptionsChange(options.copy(position = LyricsPosition.from(name))) },
+    )
+
+    // --- The display options the page does not draw ----------------------
+    // Glow, the two blurs and the thumbnail's play/pause belong to the style
+    // above, so they stay one card under it instead of being spread through the
+    // screen. The Apple Music blur only exists for the style that applies it
+    // (`visible`, so choosing another style folds the row away).
+    Spacer(Modifier.height(8.dp))
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.AutoAwesome,
+                title = { Text(Localization.get(language, "lyrics_glow_effect")) },
+                description = { Text(Localization.get(language, "lyrics_glow_effect_desc")) },
+                trailing = {
+                    Switch(
+                        checked = options.glowEffect,
+                        onCheckedChange = { onOptionsChange(options.copy(glowEffect = it)) },
+                    )
+                },
+                onClick = { onOptionsChange(options.copy(glowEffect = !options.glowEffect)) },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.BlurOn,
+                title = { Text(Localization.get(language, "lyrics_apple_blur")) },
+                description = { Text(Localization.get(language, "lyrics_apple_blur_desc")) },
+                visible = options.style == LyricsAnimationStyle.VIVIMUSIC_1,
+                trailing = {
+                    Switch(
+                        checked = options.appleMusicBlur,
+                        onCheckedChange = { onOptionsChange(options.copy(appleMusicBlur = it)) },
+                    )
+                },
+                onClick = { onOptionsChange(options.copy(appleMusicBlur = !options.appleMusicBlur)) },
+            ),
+            M3SettingsItem(
+                icon = Icons.Filled.BlurOn,
+                title = { Text(Localization.get(language, "lyrics_standard_blur")) },
+                description = { Text(Localization.get(language, "lyrics_standard_blur_desc")) },
+                trailing = {
+                    Switch(
+                        checked = options.standardBlur,
+                        onCheckedChange = { onOptionsChange(options.copy(standardBlur = it)) },
+                    )
+                },
+                onClick = { onOptionsChange(options.copy(standardBlur = !options.standardBlur)) },
             ),
             // Mobile "Show play/pause on thumbnail": clicking the artwork in the
             // player starts/stops the song instead of doing nothing.
@@ -1750,7 +1769,7 @@ fun LyricsSection(
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
-                icon = Icons.Filled.Translate,
+                icon = Icons.Filled.GTranslate,
                 title = { Text(Localization.get(language, "translate_lyrics")) },
                 description = {
                     Text(
@@ -2760,8 +2779,11 @@ fun SettingsPrivacyScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(12.dp))
-        OutlinedButton(onClick = { showClearDialog = true }) {
+        // The page's one action is a tonal button 16 dp under the card, not an
+        // outlined one: on this screen it is the action, and the outline read as
+        // a second, quieter card.
+        Spacer(Modifier.height(16.dp))
+        FilledTonalButton(onClick = { showClearDialog = true }) {
             Text(Localization.get(language, "clear_search_history"))
         }
         Spacer(Modifier.height(16.dp))

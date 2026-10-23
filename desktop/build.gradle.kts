@@ -936,6 +936,27 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
 }
 
 /**
+ * Headless check of the fold's own rule:
+ *
+ *     ./gradlew :desktop:foldAnimationCheck
+ *
+ * `M3SettingsFold` is the block every row that belongs to a switch is drawn
+ * through, and it must move only while the Animations switch is on. The check
+ * renders the fold alone over a 200 dp box, flips it off and reads the box's
+ * painted height at nine moments: with animations on it must be drawn part-way
+ * at least twice (a tween, not a jump), with them off every frame must be either
+ * the whole box or nothing. See
+ * `desktop/src/test/kotlin/com/music/vivi/desktop/FoldAnimationCheck.kt`.
+ */
+tasks.register<JavaExec>("foldAnimationCheck") {
+    group = "verification"
+    description = "Checks that a settings fold animates only with the Animations switch on"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.FoldAnimationCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Headless check of the Updates and Notifications screens:
  *
  *     ./gradlew :desktop:settingsScreensRenderCheck

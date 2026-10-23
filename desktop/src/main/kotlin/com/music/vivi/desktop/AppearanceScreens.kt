@@ -1244,13 +1244,15 @@ fun CanvasSection(
 ) {
     Column(Modifier.fillMaxWidth()) {
         Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
+        // The page's row is the name and the switch, with nothing under them: the
+        // sentence that stood here said what the Canvas is to someone who has
+        // already opened its screen.
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.Movie,
                     title = { Text(Localization.get(language, "vivimusic_canvas")) },
-                    description = { Text(Localization.get(language, "vivimusic_canvas_desc")) },
                     trailing = { Switch(checked = canvasEnabled, onCheckedChange = onCanvasEnabledChange) },
                     onClick = { onCanvasEnabledChange(!canvasEnabled) },
                 ),

@@ -139,6 +139,23 @@ object SettingsScreensRenderCheck {
         val privacyBands = bands(privacy)
         println("privacy: bands=${privacyBands.size} ${privacyBands.map { "${it.top}..${it.bottom}" }}")
 
+        val lyrics = render {
+            SettingsLyricsScreen(
+                language = "en",
+                onBack = {},
+                syncedLyrics = true,
+                onToggleSyncedLyrics = {},
+                lyricsTextSize = 18f,
+                onLyricsTextSizeChange = {},
+                lyricsLineSpacing = 1.35f,
+                onLyricsLineSpacingChange = {},
+                translationAvailable = true,
+            )
+        }
+        File(outDir, "lyrics.png").writeBytes(lyrics)
+        val lyricsBands = bands(lyrics)
+        println("lyrics: bands=${lyricsBands.size} ${lyricsBands.map { "${it.top}..${it.bottom}" }}")
+
         val ai = render {
             SettingsAiScreen(
                 language = "en",
@@ -389,9 +406,32 @@ object SettingsScreensRenderCheck {
             failures += "Language's rows must be one card (${languageBands.size - 1} seams), read $languageSeams"
         }
 
-        // Privacy: the two history switches in one card, joined by one seam.
-        if (privacyBands.size != 2) failures += "Privacy should read two rows, read ${privacyBands.size}"
+        // Lyrics: the page's order. The screen opens on the card of the three
+        // switches it lists first (synced, tap a line, auto scroll), one 3-px seam
+        // apart, then the two sliders as rows of their own, and it ends on the
+        // Romanization and translation cards.
+        val lyricsFirstCard = lyricsBands.take(3)
+        if (lyricsBands.size != 11) failures += "Lyrics should read eleven rows, read ${lyricsBands.size}"
+        if (lyricsFirstCard.size != 3 || seams(lyricsFirstCard) != 2) {
+            failures += "Lyrics should open on one card of three switches, read ${lyricsFirstCard.size} row(s) and ${seams(lyricsFirstCard)} seam(s)"
+        }
+        if (lyricsBands.getOrNull(3)?.height?.let { it < 80 } != false || lyricsBands.getOrNull(4)?.height?.let { it < 80 } != false) {
+            failures += "Lyrics' two sliders should be tall rows, read ${lyricsBands.getOrNull(3)?.height}/${lyricsBands.getOrNull(4)?.height}"
+        }
+        if (lyricsBands.drop(lyricsBands.size - 2).any { it.height > 60 }) {
+            failures += "Lyrics should end on two single-row cards, read ${lyricsBands.drop(lyricsBands.size - 2).map { it.height }}"
+        }
+
+        // Privacy: the two history switches in one card, joined by one seam, and
+        // the page's one action as a tonal button 16 dp under the card - a band
+        // of its own, outside the two rows.
+        if (privacyBands.size != 3) {
+            failures += "Privacy should read its two switches and the action under them, read ${privacyBands.size}"
+        }
         if (privacySeams != 1) failures += "Privacy should join its two switches (1 seam), read $privacySeams"
+        if (privacyBands.lastOrNull()?.let { it.bottom - it.top }?.let { it !in 24..44 } != false) {
+            failures += "Privacy's action should be one button row, read ${privacyBands.lastOrNull()?.let { it.bottom - it.top }}"
+        }
 
         // AI: the provider card, the three credentials rows and the two rows of
         // the mode card - six rows in three cards, joined by three seams (the
@@ -476,7 +516,7 @@ object SettingsScreensRenderCheck {
                     "Notifications is one card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +
-                    "Privacy is one card of two switches, Debug & Developer Options is ${developerCards.size} rows, the four of Advanced in one card, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
+                    "Privacy is one card of two switches with its action under them, Lyrics is ${lyricsBands.size} rows in the page order, Debug & Developer Options is ${developerCards.size} rows, the four of Advanced in one card, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
                     "(${cards(aiDeepLBands).size} under DeepL, ${cards(aiCustomBands).size} under Custom), " +
                     "Contributors is one card of ${contributorBands.size} rows, " +
                     "About is a head and three cards of 3 + 3 + 2 rows under its Community label, Desktop features one card of three switches, " +
