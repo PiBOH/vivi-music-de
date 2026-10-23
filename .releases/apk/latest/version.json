@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.11",
+  "versionCode": 149,
+  "channel": "beta",
+  "title": "v6.0.8.11_DE-1.55.0-beta: 12 dp card gaps, lone blocks carded",
+  "builtAt": "2026-10-23T20:56:59Z",
+  "commit": "b1d03ab499b2067fb1e7612c3a6389a75a4e05fe",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30133916,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
