@@ -278,6 +278,11 @@ object SettingsScreensRenderCheck {
         val aboutBands = bands(about)
         println("about: bands=${aboutBands.size} ${aboutBands.map { "${it.top}..${it.bottom}" }}")
 
+        val developer = render { DeveloperOptionsSection(language = "en") }
+        File(outDir, "developer_options.png").writeBytes(developer)
+        val developerBands = bands(developer)
+        println("developer: bands=${developerBands.size} ${developerBands.map { "${it.top}..${it.bottom}" }}")
+
         val desktopFeatures = render {
             SettingsDesktopScreen(
                 language = "en",
@@ -431,9 +436,22 @@ object SettingsScreensRenderCheck {
             failures += "Player design without the swipe should lose its sensitivity row (8), read ${designNoSwipeCards.size}"
         }
 
-        // About: the head card, then three cards of four, three and two rows.
-        if (aboutCards.size != 10) failures += "About should read ten rows (the head plus 4 + 3 + 2), read ${aboutCards.size}"
-        if (seams(aboutCards) != 6) failures += "About should join 4 + 3 + 2 rows (6 seams), read ${seams(aboutCards)}"
+        // About: the head card, then three cards of three, three and two rows
+        // (what this build is, the ways out under the Community label, and the
+        // two documents).
+        if (aboutCards.size != 9) failures += "About should read nine rows (the head plus 3 + 3 + 2), read ${aboutCards.size}"
+        if (seams(aboutCards) != 5) failures += "About should join 3 + 3 + 2 rows (5 seams), read ${seams(aboutCards)}"
+
+        // Debug & Developer Options: the switch that locks the screen again, then
+        // the Advanced card of the heap and the three switches.
+        // The sentence under the title is a note, not a row: `cards` drops it.
+        val developerCards = cards(developerBands)
+        if (developerCards.size != 5) {
+            failures += "Debug & Developer Options should read five rows (the lock row plus 4), read ${developerCards.size}"
+        }
+        if (seams(developerCards) != 3) {
+            failures += "Debug & Developer Options should join the four Advanced rows (3 seams), read ${seams(developerCards)}"
+        }
 
         // Desktop features: one card of the three switches.
         if (desktopBands.size != 3) failures += "Desktop features should read three rows, read ${desktopBands.size}"
@@ -458,10 +476,10 @@ object SettingsScreensRenderCheck {
                     "Notifications is one card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +
-                    "Privacy is one card of two switches, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
+                    "Privacy is one card of two switches, Debug & Developer Options is ${developerCards.size} rows, the four of Advanced in one card, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
                     "(${cards(aiDeepLBands).size} under DeepL, ${cards(aiCustomBands).size} under Custom), " +
                     "Contributors is one card of ${contributorBands.size} rows, " +
-                    "About is a head and three cards of 4 + 3 + 2 rows, Desktop features one card of three switches, " +
+                    "About is a head and three cards of 3 + 3 + 2 rows under its Community label, Desktop features one card of three switches, " +
                     "Canvas's source folds with its switch, App font joins its six rows, Display density is two cards, " +
                     "and Player & mini-player design is five cards whose sensitivity row leaves with the swipe",
             )

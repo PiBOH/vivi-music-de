@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.LocalScrollbarStyle
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,6 +31,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.RocketLaunch
+import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Description
@@ -90,6 +97,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.key
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -373,17 +381,33 @@ fun resolveYouTubeLocale(
     return YouTubeLocale(gl = gl, hl = hl)
 }
 
-/** Shared scaffold for settings sub-screens: back button + scrollable content. */
+/**
+ * Shared scaffold for settings sub-screens: back button + scrollable content.
+ *
+ * The content pane carries the app's own scrollbar, as the page does: a settings
+ * screen is taller than the window often enough that where you are in it has to
+ * be visible, and the bare `verticalScroll` draws nothing (the page's own bar
+ * was the one thing a screen could be missing while everything else matched).
+ */
 @Composable
 fun SettingsSubScreen(language: String, onBack: () -> Unit, content: @Composable () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(14.dp),
-    ) {
-        BackButton(language, onBack)
-        content()
+    val scrollState = rememberScrollState()
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(14.dp),
+        ) {
+            BackButton(language, onBack)
+            content()
+        }
+        CompositionLocalProvider(LocalScrollbarStyle provides themedScrollbarStyle()) {
+            VerticalScrollbar(
+                adapter = rememberScrollbarAdapter(scrollState),
+                modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            )
+        }
     }
 }
 
@@ -2119,17 +2143,16 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     Column(Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 24.dp)) {
         Text(
             Localization.get(language, "debug_developer_options"),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleLarge,
         )
         Text(
             Localization.get(language, "developer_options_desc"),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(horizontal = 4.dp).padding(top = 8.dp),
         )
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(8.dp))
 
         // Android-style "turn off developer options" sits first, exactly like
         // Android's own developer-options screen: it hides this screen, locks it
@@ -2155,9 +2178,12 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
             ),
         )
 
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(8.dp))
 
-        // JVM heap: applied at the next start (a JVM cannot change -Xmx live).
+        // The page's Advanced card: the heap the app asks for, the two logging
+        // switches and the hidden APK button, one row each. The heap is a choice
+        // with a fixed set of sizes, so it is the row's own dropdown (its menu
+        // opens under the row); the restart it needs is asked when it changes.
         M3SettingsGroup(
             title = Localization.get(language, "advanced"),
             items = listOf(
@@ -2170,47 +2196,25 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                                 .format(JvmMemory.label(currentMb)),
                         )
                     },
-                    trailing = {
-                        AiDropdownTrailing(
-                            value = currentLabel,
-                            options = heapOptions,
-                            onSelect = { key ->
-                                val mb = key.toIntOrNull() ?: 0
-                                heapMb = mb
-                                // Stored at once, and then the app offers to apply
-                                // it: the heap is a JVM start-up option, so it can
-                                // only come from a restart, and the user has to be
-                                // told that rather than have the app close on them.
-                                DesktopSettings.update { it.copy(jvmHeapMb = mb) }
-                                pendingHeap = mb
-                            },
-                        )
-                    },
+                    dropdown = M3Dropdown(
+                        value = currentLabel,
+                        options = heapOptions,
+                        onSelect = { key ->
+                            val mb = key.toIntOrNull() ?: 0
+                            heapMb = mb
+                            // Stored at once, and then the app offers to apply it:
+                            // the heap is a JVM start-up option, so it can only come
+                            // from a restart, and the user has to be told that
+                            // rather than have the app close on them.
+                            DesktopSettings.update { it.copy(jvmHeapMb = mb) }
+                            pendingHeap = mb
+                        },
+                    ),
                 ),
-            ),
-        )
-
-        Spacer(Modifier.height(8.dp))
-        Text(
-            Localization.get(language, "jvm_memory_restart"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 4.dp, top = 2.dp, bottom = 8.dp),
-        )
-
-        M3SettingsGroup(
-            items = listOf(
-                // `detailed_playback_logging` and `detailed_startup_logs` hold a
-                // raw setting identifier in all 52 languages (the literal text
-                // "DetailedPlaybackLogging"), which is what the radical
-                // translation sweep found: the two rows were labelled with a name
-                // no user should ever read. The
-                // descriptions beside them WERE translated everywhere, so the row
-                // shows that text and nothing else, instead of shipping 104 new
-                // strings.
                 M3SettingsItem(
-                    icon = Icons.Filled.Description,
-                    title = { Text(Localization.get(language, "detailed_playback_logging_desc")) },
+                    icon = Icons.Filled.ReceiptLong,
+                    title = { Text(Localization.get(language, "detailed_playback_logging")) },
+                    description = { Text(Localization.get(language, "detailed_playback_logging_desc")) },
                     trailing = {
                         Switch(
                             checked = detailedLogs,
@@ -2226,8 +2230,9 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     },
                 ),
                 M3SettingsItem(
-                    icon = Icons.Filled.History,
-                    title = { Text(Localization.get(language, "detailed_startup_logs_desc")) },
+                    icon = Icons.Filled.RocketLaunch,
+                    title = { Text(Localization.get(language, "detailed_startup_logs")) },
+                    description = { Text(Localization.get(language, "detailed_startup_logs_desc")) },
                     trailing = {
                         Switch(
                             checked = startupLogs,
@@ -2243,7 +2248,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     },
                 ),
                 M3SettingsItem(
-                    icon = Icons.Filled.Download,
+                    icon = Icons.Filled.Android,
                     title = { Text(Localization.get(language, "hide_custom_apk_download_button")) },
                     description = { Text(Localization.get(language, "hide_custom_apk_download_button_desc")) },
                     trailing = {
@@ -3624,54 +3629,6 @@ private fun deeplFormalityLabel(language: String, formality: String): String = w
 private fun maskedKey(key: String, language: String): String =
     if (key.isNotEmpty()) "•".repeat(minOf(key.length, 8)) else Localization.get(language, "not_set")
 
-/**
- * The trailing control the developer options' memory row still uses: the value
- * with a dropdown arrow, opening the choice list anchored to itself. The AI
- * screen's choices are their rows' own `M3Dropdown` now (they open under the row
- * like every other settings choice), so this one is left to the row that carries
- * a heap size in a card of one.
- */
-@Composable
-private fun AiDropdownTrailing(
-    value: String,
-    options: List<Pair<String, String>>,
-    onSelect: (String) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        Row(
-            modifier = Modifier.clickable { expanded = true },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                value,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Icon(
-                Icons.Filled.ArrowDropDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier
-                .width(320.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh),
-        ) {
-            options.forEach { (key, label) ->
-                DropdownMenuItem(
-                    text = { Text(label) },
-                    onClick = { expanded = false; onSelect(key) },
-                )
-            }
-        }
-    }
-}
-
 /** AI lyrics translation settings (provider, keys, model, target language…). */
 @Composable
 fun SettingsAiScreen(
@@ -4219,7 +4176,7 @@ fun SettingsScreen(
         "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
         "desktop_features" to listOf("desktop_features", "desktop_features_desc", "media_keys", "media_keys_desc", "now_playing_widget", "now_playing_widget_desc", "requires_accessibility", "tray_menu", "tray_menu_desc"),
         "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "debug_developer_options", "disable_developer_options", "disable_developer_options_desc", "disable_developer_options_confirm", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "detailed_startup_logs", "detailed_startup_logs_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
-        "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
+        "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
     )
 
     val query = searchQuery.trim()
@@ -4573,4 +4530,4 @@ internal fun LanguagePickerRows(
         )
     }
 }
-
+

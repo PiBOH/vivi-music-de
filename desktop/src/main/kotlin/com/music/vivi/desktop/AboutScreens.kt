@@ -16,12 +16,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,9 +56,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import java.io.File
 import java.net.URI
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /** GitHub mark (octocat) taken from the mobile app's drawable, so it tints
  *  with the accent color and adapts to dark/light mode like a normal icon. */
@@ -78,10 +78,10 @@ private const val GITHUB_MARK_PATH =
     "M12,2A10,10 0,0 0,2 12c0,4.42 2.87,8.17 6.84,9.5c0.5,0.08 0.66,-0.23 0.66,-0.5c0,-0.23 0,-0.86 0,-1.69c-2.77,0.6 -3.36,-1.34 -3.36,-1.34c-0.46,-1.16 -1.11,-1.47 -1.11,-1.47c-0.91,-0.62 0.07,-0.6 0.07,-0.6c1,0.07 1.53,1.03 1.53,1.03c0.87,1.52 2.34,1.07 2.91,0.83c0.09,-0.65 0.35,-1.09 0.63,-1.34c-2.22,-0.25 -4.55,-1.11 -4.55,-4.92c0,-1.11 0.38,-2 1.03,-2.71c-0.1,-0.25 -0.45,-1.29 0.1,-2.64c0,0 0.84,-0.27 2.75,1.02c0.79,-0.22 1.65,-0.33 2.5,-0.33c0.85,0 1.71,0.11 2.5,0.33c1.91,-1.29 2.75,-1.02 2.75,-1.02c0.55,1.35 0.2,2.39 0.1,2.64c0.65,0.71 1.03,1.6 1.03,2.71c0,3.82 -2.34,4.66 -4.57,4.91c0.36,0.31 0.69,0.92 0.69,1.85c0,1.34 0,2.42 0,2.74c0,0.27 0.16,0.59 0.67,0.5C19.14,20.16 22,16.42 22,12A10,10 0,0 0,12 2Z"
 
 /**
- * Settings -> About, as the preview draws it: the app's own mark and name on a
- * card, then what this build is (the version, the version code that unlocks the
- * developer options, the developer, the install date), then the three doors out
- * of the app, then the two documents.
+ * Settings -> About, as the preview draws it: the app's own mark, name and
+ * tagline on a card, then what this build is (the version, the version code that
+ * unlocks the developer options and the author of this edition), then the three
+ * doors out of the app under *Community*, then the two documents.
  *
  * The three blocks are the three subjects of the screen, which is why they are
  * three cards instead of one column of loose rows.
@@ -92,7 +92,6 @@ fun AboutSection(
     onOpenContributors: () -> Unit,
     onOpenLicense: () -> Unit,
 ) {
-    val firstLaunchDate = remember { DesktopSettings.load().firstLaunchDate }
     var versionCodeTaps by remember { mutableStateOf(0) }
     val devUnlocked by DeveloperOptions.unlocked.collectAsState()
     val authorImage = remember { loadResourceImage("author.png") }
@@ -140,7 +139,7 @@ fun AboutSection(
             Column {
                 Text("VIVI Music DE", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "${AppInfo.FULL_VERSION} • ${AppInfo.CHANNEL.uppercase()}",
+                    Localization.get(language, "app_tagline"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -150,35 +149,40 @@ fun AboutSection(
 
     Spacer(Modifier.height(8.dp))
 
+    // What this build is: the version and the code that unlocks the developer
+    // options. Both figures are the row's own description (the page says them
+    // there, not in a chip).
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
-                icon = Icons.Filled.Info,
+                icon = Icons.Filled.Sell,
                 title = { Text(Localization.get(language, "current_version")) },
-                trailing = {
-                    Text(
-                        AppInfo.FULL_VERSION,
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                },
+                description = { Text(AppInfo.FULL_VERSION) },
             ),
             M3SettingsItem(
                 icon = Icons.Filled.Fingerprint,
                 title = { Text(Localization.get(language, "version_code")) },
                 description = {
-                    // The hint only exists while the tapping does (or once it
-                    // worked), so the gesture is never advertised to someone who
-                    // never starts it.
-                    val hint = when {
-                        devUnlocked -> Localization.get(language, "developer_options_unlocked")
-                        versionCodeTaps > 0 ->
-                            Localization.get(language, "tap_version_code_hint") + " (${7 - versionCodeTaps})"
-                        else -> AppInfo.VERSION_CODE.toString()
+                    Column {
+                        Text(AppInfo.VERSION_CODE.toString())
+                        // The hint only exists while the tapping does (or once it
+                        // worked), so the gesture is never advertised to someone
+                        // who never starts it.
+                        val hint = when {
+                            devUnlocked -> Localization.get(language, "developer_options_unlocked")
+                            versionCodeTaps > 0 ->
+                                Localization.get(language, "tap_version_code_hint") + " (${7 - versionCodeTaps})"
+                            else -> null
+                        }
+                        if (hint != null) {
+                            Text(
+                                hint,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
                     }
-                    Text(hint)
                 },
-                trailing = { SettingsChevron() },
                 onClick = {
                     if (!devUnlocked) {
                         versionCodeTaps++
@@ -189,6 +193,9 @@ fun AboutSection(
                     }
                 },
             ),
+            // The person behind this edition: kept on purpose, one row more than
+            // the page draws, because a fork of this size has one author and the
+            // credit belongs on the screen that names the build.
             M3SettingsItem(
                 icon = null,
                 leading = authorImage?.let { image ->
@@ -203,62 +210,39 @@ fun AboutSection(
                 },
                 title = { Text("PiBOH") },
                 description = { Text(Localization.get(language, "app_developer") + " (DE)") },
-                trailing = { SettingsChevron() },
+                trailing = { LeavesTheAppMark() },
                 onClick = { openUrl("https://github.com/PiBOH") },
             ),
-            M3SettingsItem(
-                icon = Icons.Filled.DateRange,
-                title = { Text(Localization.get(language, "installed_date_title")) },
-                trailing = {
-                    Text(
-                        formatInstalledDate(firstLaunchDate, language),
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                },
-            ),
         ),
     )
 
     Spacer(Modifier.height(8.dp))
 
-    // The three doors out: all three open a browser, which is why they are one
-    // card and not one row each beside the documents.
+    // The three doors out of the app, under the page's own label for them: all
+    // three open a browser, which the arrow says (a chevron would promise
+    // another screen of the app).
     M3SettingsGroup(
+        title = Localization.get(language, "community"),
         items = listOf(
-            M3SettingsItem(
-                icon = GithubIcon,
-                title = { Text(Localization.get(language, "github_repository")) },
-                trailing = { SettingsChevron() },
-                onClick = { openUrl("https://github.com/PiBOH/vivi-music-de") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.Send,
-                title = { Text(Localization.get(language, "telegram_channel")) },
-                trailing = { SettingsChevron() },
-                onClick = { openUrl("https://t.me/vivimusicde") },
-            ),
-            M3SettingsItem(
-                icon = Icons.Filled.Public,
-                title = { Text(Localization.get(language, "website")) },
-                trailing = { SettingsChevron() },
-                onClick = { openUrl("https://piboh.github.io/vivi-music-de/") },
-            ),
+            aboutLinkRow(Icons.Filled.Code, "github_repository", language, "https://github.com/PiBOH/vivi-music-de"),
+            aboutLinkRow(Icons.Filled.Send, "telegram_channel", language, "https://t.me/vivimusicde"),
+            aboutLinkRow(Icons.Filled.Public, "website", language, "https://piboh.github.io/vivi-music-de/"),
         ),
     )
 
     Spacer(Modifier.height(8.dp))
 
+    // The two documents.
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(
-                icon = Icons.Filled.Group,
+                icon = Icons.Filled.Groups,
                 title = { Text(Localization.get(language, "contributors_section")) },
                 trailing = { SettingsChevron() },
                 onClick = onOpenContributors,
             ),
             M3SettingsItem(
-                icon = Icons.Filled.Description,
+                icon = Icons.Filled.Gavel,
                 title = { Text(Localization.get(language, "license")) },
                 trailing = { SettingsChevron() },
                 onClick = onOpenLicense,
@@ -268,6 +252,26 @@ fun AboutSection(
 
     Spacer(Modifier.height(24.dp))
 }
+
+/** The mark of a row that leaves the app for a browser page (`open_in_new`). */
+@Composable
+private fun LeavesTheAppMark() {
+    Icon(
+        Icons.Filled.OpenInNew,
+        contentDescription = null,
+        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(18.dp),
+    )
+}
+
+/** A row of the About screen's links: one label, one address, the page's mark. */
+private fun aboutLinkRow(icon: ImageVector, titleKey: String, language: String, url: String): M3SettingsItem =
+    M3SettingsItem(
+        icon = icon,
+        title = { Text(Localization.get(language, titleKey)) },
+        trailing = { LeavesTheAppMark() },
+        onClick = { openUrl(url) },
+    )
 
 /**
  * Dedicated Contributors sub-screen (Settings -> About -> Contributors). The list
@@ -537,11 +541,3 @@ private fun loadResourceImage(name: String): ImageBitmap? = runCatching {
     stream.use { s -> javax.imageio.ImageIO.read(s)?.toComposeImageBitmap() }
 }.getOrNull()
 
-private fun formatInstalledDate(epochMs: Long, language: String): String {
-    if (epochMs <= 0) return Localization.get(language, "unknown")
-    return try {
-        SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(epochMs))
-    } catch (_: Exception) {
-        "-"
-    }
-}

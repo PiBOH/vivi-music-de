@@ -190,7 +190,7 @@ fun LiveLogWindowContent(language: String, onClose: () -> Unit) {
  * non-composable slot, so this is built where the theme is in scope.
  */
 @Composable
-private fun themedScrollbarStyle(): ScrollbarStyle {
+internal fun themedScrollbarStyle(): ScrollbarStyle {
     val base = defaultScrollbarStyle()
     val fg = MaterialTheme.colorScheme.onSurface
     return base.copy(

@@ -21,8 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_zh_rCN(): Map<String, String> =
     mapOf(
+        "app_tagline" to "开启音乐世界",
         "commits_count" to "%d 次提交",
         "commits_one" to "1 次提交",
+        "community" to "社区",
         "font_in_lyrics" to "歌词使用应用字体",
         "font_in_lyrics_desc" to "用上方选择的字体绘制歌词。关闭后使用渲染器自带的字体。",
         "google_connected_title" to "已连接 Google",

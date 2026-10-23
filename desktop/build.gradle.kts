@@ -306,7 +306,13 @@ dependencies {
 
 compose.desktop {
     application {
-        mainClass = "com.music.vivi.desktop.MainKt"
+        // The entry point lives in `MainWindow.kt` (the window, the bar and the
+        // queue were moved out of `Main.kt`), so this is `MainWindowKt`. It was
+        // left on `MainKt` for one release and the packaged app died on launch
+        // with "main method not found in class com.music.vivi.desktop.MainKt" -
+        // the dev checks call `MainWindowKt.main` by name and never read this
+        // setting, so only the installer was broken.
+        mainClass = "com.music.vivi.desktop.MainWindowKt"
 
         // JVM tuning for glitch-free audio (issue #3).
         //

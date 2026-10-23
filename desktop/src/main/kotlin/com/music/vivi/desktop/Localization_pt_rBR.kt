@@ -21,8 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_pt_rBR(): Map<String, String> =
     mapOf(
+        "app_tagline" to "Abra o mundo da música",
         "commits_count" to "%d commits",
         "commits_one" to "1 commit",
+        "community" to "Comunidade",
         "font_in_lyrics" to "Usar a fonte do app nas letras",
         "font_in_lyrics_desc" to "Desenhar as letras com a fonte escolhida acima. Desativado, usam a fonte própria do visualizador.",
         "google_connected_title" to "Conectado ao Google",
