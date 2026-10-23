@@ -333,6 +333,7 @@ internal fun strings_sk(): Map<String, String> =
         "generate_code" to "Vygenerovať kód",
         "generate_new_code" to "Vygenerovať nový kód",
         "github_repository" to "Úložisko GitHub",
+        "google_connected_title" to "Pripojené ku Google",
         "gpu" to "GPU",
         "grid_item_size" to "Veľkosť položiek mriežky",
         "grid_item_size_desc" to "Veľkosť kariet pre mriežky albumov, interpretov a zoznamov skladieb.",

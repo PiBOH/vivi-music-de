@@ -25,6 +25,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "commits_one" to "1 次提交",
         "font_in_lyrics" to "歌词使用应用字体",
         "font_in_lyrics_desc" to "用上方选择的字体绘制歌词。关闭后使用渲染器自带的字体。",
+        "google_connected_title" to "已连接 Google",
         "storage_desc" to "VIVI 在此计算机上保留的所有内容，以及清空每一部分的唯一操作。",
         "storage_total" to "缓存与安装包",
         "transition_style" to "过渡样式",

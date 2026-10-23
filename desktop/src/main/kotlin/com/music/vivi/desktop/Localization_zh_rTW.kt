@@ -25,6 +25,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "commits_one" to "1 次提交",
         "font_in_lyrics" to "歌詞使用應用程式字型",
         "font_in_lyrics_desc" to "以上方選擇的字型繪製歌詞。關閉後使用渲染器自帶的字型。",
+        "google_connected_title" to "已連結 Google",
         "storage_desc" to "VIVI 在此電腦上保留的所有內容，以及清空每一部分的唯一操作。",
         "storage_total" to "快取與安裝檔",
         "transition_style" to "過場樣式",

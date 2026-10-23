@@ -102,7 +102,6 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
         AccountSection(
             language = language,
             isLoggedIn = true,
-            accountName = accountName,
             onOpenLogin = {},
             onLogout = {
                 scope.launch(Dispatchers.IO) {
@@ -291,42 +290,43 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
 
 /**
  * The head of the sign-in content: the Google mark on its tile, what the screen
- * is for and, when a session exists, who it belongs to - the same shape
- * `Import from Spotify` has, so the two sign-ins read as one family.
+ * is for and, when a session exists, the state as the title - the same shape
+ * `Import from Spotify` has ([SpotifyHero]), so the two sign-ins read as one
+ * family.
  *
- * With no session there is no pill: the card under the head is the sign-in and
- * the head already says what the screen is for, so "Not logged in" only repeated
- * the absence. Import from Spotify follows the same rule.
+ * The state is the title, not a pill: with no session the head carries the
+ * name of the sign-in (`login_google`), and with one it says the account is
+ * connected (`google_connected_title`), which is what the screen is then for.
+ * The "Logged in as ..." badge it used to draw repeated in one more line what
+ * the title and the sidebar already say, and it was the only screen in this
+ * family with a badge.
  */
 @Composable
 internal fun GoogleSignInHero(language: String, accountName: String) {
     SignInHero(
-        title = Localization.get(language, "login_google"),
+        title = Localization.get(
+            language,
+            if (accountName.isNotBlank()) "google_connected_title" else "login_google",
+        ),
         promise = Localization.get(language, "login_promise"),
-        // Who the session belongs to, and nothing at all without one. Signed in
-        // this screen is not reachable from the app (the account card replaces
-        // it), but the composable is also the standalone Login screen, so it tells
-        // the truth there.
-        stateText = accountName.takeIf { it.isNotBlank() }
-            ?.let { "${Localization.get(language, "logged_in_as")}: $it" },
-        active = true,
+        stateText = null,
+        active = accountName.isNotBlank(),
         mark = { GoogleMark(30.dp) },
     )
 }
 
 /**
  * The head of the signed-in Account screen, in the same shape as the sign-in
- * screens: the mark on its tile, what the section is, and the session as one pill.
- * It replaces a loose "Account" title with a "Logged in as ..." line under it,
- * which was the only screen in this family without a head of its own.
+ * screens: the mark on its tile, what the section is, and the session as good
+ * news rather than as a badge (`google_connected_title`, the same wording the
+ * Spotify screen uses for its own session).
  */
 @Composable
-internal fun AccountHero(language: String, accountName: String) {
+internal fun AccountHero(language: String) {
     SignInHero(
-        title = Localization.get(language, "account"),
+        title = Localization.get(language, "google_connected_title"),
         promise = Localization.get(language, "login_signed_in_hint"),
-        stateText = "${Localization.get(language, "logged_in_as")}: " +
-            accountName.ifBlank { "YouTube" },
+        stateText = null,
         active = true,
         mark = { GoogleMark(30.dp) },
     )

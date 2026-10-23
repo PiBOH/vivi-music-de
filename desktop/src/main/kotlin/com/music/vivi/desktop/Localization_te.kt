@@ -333,6 +333,7 @@ internal fun strings_te(): Map<String, String> =
         "generate_code" to "కోడ్ను రూపొందించు",
         "generate_new_code" to "కొత్త కోడ్‌ను సృష్టించు",
         "github_repository" to "GitHub రిపోజిటరీ",
+        "google_connected_title" to "Googleకు కనెక్ట్ చేయబడింది",
         "gpu" to "GPU",
         "grid_item_size" to "గ్రిడ్ అంశం పరిమాణం",
         "grid_item_size_desc" to "ఆల్బమ్లు, కళాకారులు మరియు ప్లేజాబితా గ్రిడ్ల కోసం కార్డ్ పరిమాణం.",

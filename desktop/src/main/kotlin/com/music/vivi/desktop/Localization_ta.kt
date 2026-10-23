@@ -333,6 +333,7 @@ internal fun strings_ta(): Map<String, String> =
         "generate_code" to "குறியீட்டை உருவாக்கு",
         "generate_new_code" to "புதிய குறியீட்டை உருவாக்கு",
         "github_repository" to "GitHub களஞ்சியம்",
+        "google_connected_title" to "Google உடன் இணைக்கப்பட்டது",
         "gpu" to "GPU",
         "grid_item_size" to "கட்டிட உருப்படி அளவு",
         "grid_item_size_desc" to "ஆல்பங்கள், கலைஞர்கள் மற்றும் பிளேலிஸ்ட் கட்டங்களுக்கான அட்டை அளவு.",

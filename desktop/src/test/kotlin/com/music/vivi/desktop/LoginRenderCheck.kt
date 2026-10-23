@@ -33,7 +33,7 @@ import java.io.File
  *     ./gradlew :desktop:loginRenderCheck
  *
  * The screen is now a hero (the Google mark on a filled tile, what the screen is
- * for, the state as one pill) plus one card that numbers the three steps it
+ * for, the state as its title) plus one card that numbers the three steps it
  * already printed and carries the single button. Both pieces are rendered into
  * an off-screen `ImageComposeScene` (no window, no GPU) and the pixels are
  * measured, because "it compiles" says nothing about a layout:
@@ -44,7 +44,8 @@ import java.io.File
  *  * the same fill appears again lower down, which is the button: the tile and
  *    the action share `primary`, so a card whose button silently lost its
  *    container fails here;
- *  * the pill tells the truth: the "logged in as" state must change the pixels.
+ *  * the head tells the truth: the session must change its title, and no badge
+ *    may come back in either state (the rule `Import from Spotify` follows).
  *  * **the switch-over is one movement of two halves.** Opening the manual-cookie
  *    card takes the window button away (upwards, with its row) while the form
  *    unfolds downwards, and both have to be moving in the same frame, so an
@@ -129,7 +130,7 @@ object LoginRenderCheck {
 
         println("== named      ink=${ink(javax.imageio.ImageIO.read(named.inputStream()))}, differs=${!same(signedOut, named)}")
         if (same(signedOut, named)) {
-            failures += "the state pill does not change with the account (two renders are identical)"
+            failures += "the head's title does not change with the session (two renders are identical)"
         }
         // Same input, same pixels: a render that drifts makes every other
         // comparison here meaningless.
@@ -137,18 +138,19 @@ object LoginRenderCheck {
             failures += "the same input rendered two different images"
         }
 
-        // The pill is the identity, not the absence: with no session the head must
-        // carry no badge at all, and with one it must carry the account. The pill's
-        // fill is read off the theme, so the check never guesses which primitive it
-        // is; Import from Spotify follows the same rule (see the Spotify check).
+        // No badge in either state: with no session the head says
+        // `login_google`, with one it says `google_connected_title` - the same
+        // rule `Import from Spotify` follows (see the Spotify check). The pill's
+        // fill is read off the theme, so the check never guesses which primitive
+        // it is.
         val outPill = pillInHero(signedOut)
         val namedPill = pillInHero(named)
         println("== badge     signed out=$outPill px  named=$namedPill px")
         if (outPill != 0) {
             failures += "the head without a session must draw no badge, read $outPill px of the pill's fill"
         }
-        if (namedPill <= 0) {
-            failures += "the head with a session must show who it belongs to, read no pill ($namedPill px)"
+        if (namedPill != 0) {
+            failures += "the head with a session must draw no badge either, read $namedPill px of the pill's fill"
         }
 
         // ------------------------------------------------------- sign-in hand-overs

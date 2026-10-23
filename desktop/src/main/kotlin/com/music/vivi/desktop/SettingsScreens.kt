@@ -683,13 +683,12 @@ fun SettingsAccountScreen(
     language: String,
     onBack: () -> Unit,
     isLoggedIn: Boolean,
-    accountName: String,
     onOpenLogin: () -> Unit,
     onLogout: () -> Unit,
     onLoggedIn: () -> Unit,
 ) {
     SettingsSubScreen(language, onBack) {
-        AccountSection(language, isLoggedIn, accountName, onOpenLogin, onLogout, onLoggedIn)
+        AccountSection(language, isLoggedIn, onOpenLogin, onLogout, onLoggedIn)
     }
 }
 

@@ -333,6 +333,7 @@ internal fun strings_sr(): Map<String, String> =
         "generate_code" to "Generiši kôd",
         "generate_new_code" to "Generiši novi kod",
         "github_repository" to "GitHub repozitorijum",
+        "google_connected_title" to "Povezano sa Google-om",
         "gpu" to "GPU",
         "grid_item_size" to "Величина ставки мреже",
         "grid_item_size_desc" to "Величина картица за мреже албума, извођача и плејлиста.",

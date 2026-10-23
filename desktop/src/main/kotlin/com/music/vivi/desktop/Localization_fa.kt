@@ -333,6 +333,7 @@ internal fun strings_fa(): Map<String, String> =
         "generate_code" to "ایجاد کد",
         "generate_new_code" to "تولید کد جدید",
         "github_repository" to "مخزن گیت‌هاب",
+        "google_connected_title" to "متصل به Google",
         "gpu" to "گرافیک",
         "grid_item_size" to "اندازه آیتم شبکه",
         "grid_item_size_desc" to "اندازه کارت برای شبکه آلبوم‌ها، هنرمندان و فهرست‌ها.",

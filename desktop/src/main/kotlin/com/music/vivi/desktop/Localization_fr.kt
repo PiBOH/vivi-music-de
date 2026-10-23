@@ -333,6 +333,7 @@ internal fun strings_fr(): Map<String, String> =
         "generate_code" to "Générer un code",
         "generate_new_code" to "Générer un nouveau code",
         "github_repository" to "Dépôt GitHub",
+        "google_connected_title" to "Connecté à Google",
         "gpu" to "GPU",
         "grid_item_size" to "Taille des éléments de la grille",
         "grid_item_size_desc" to "Taille des cartes pour les grilles d'albums, d'artistes et de listes de lecture.",

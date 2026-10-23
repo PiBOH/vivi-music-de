@@ -28,16 +28,15 @@ import androidx.compose.ui.unit.dp
 fun AccountSection(
     language: String,
     isLoggedIn: Boolean,
-    accountName: String,
     onOpenLogin: () -> Unit,
     onLogout: () -> Unit,
     onLoggedIn: () -> Unit,
 ) {
     if (isLoggedIn) {
-        // The head this screen never had: the same hero as the two sign-ins, with
-        // the session as its pill, instead of a title and a "Logged in as" line
-        // that were the only two loose texts left in this family.
-        AccountHero(language = language, accountName = accountName)
+        // The head this screen never had: the same hero as the two sign-ins, and
+        // the session said by its title (`google_connected_title`) instead of a
+        // "Logged in as" pill that repeated what the sidebar already shows.
+        AccountHero(language = language)
         // Mobile's "Auto sync with account": the account's playlists are
         // mirrored into the local store, so they can be played, queued and
         // edited offline instead of only being listed by the sidebar.

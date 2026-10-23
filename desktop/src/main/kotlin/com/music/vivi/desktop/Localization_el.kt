@@ -333,6 +333,7 @@ internal fun strings_el(): Map<String, String> =
         "generate_code" to "Δημιουργία κωδικού",
         "generate_new_code" to "Δημιουργία νέου κωδικού",
         "github_repository" to "Αποθετήριο GitHub",
+        "google_connected_title" to "Συνδεδεμένο με την Google",
         "gpu" to "GPU",
         "grid_item_size" to "Μέγεθος στοιχείων πλέγματος",
         "grid_item_size_desc" to "Μέγεθος καρτών για πλέγματα άλμπουμ, καλλιτεχνών και λιστών αναπαραγωγής.",

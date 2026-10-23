@@ -333,6 +333,7 @@ internal fun strings_az(): Map<String, String> =
         "generate_code" to "Kod yarat",
         "generate_new_code" to "Yeni kod yarat",
         "github_repository" to "GitHub deposu",
+        "google_connected_title" to "Google ilə bağlıdır",
         "gpu" to "GPU",
         "grid_item_size" to "Şəbəkə elementinin ölçüsü",
         "grid_item_size_desc" to "Albom, sənətçi və pleylist şəbəkələri üçün kart ölçüsü.",

@@ -41,8 +41,9 @@ import java.io.File
  *    selected rows carry `primary` ink - the checkbox fill. That is the thing a
  *    redesign of this screen can break silently: a checkbox that stops following
  *    `selected`, or a row that stops toggling.
- *  * **the Account head states the account.** The same tile, and the name in the
- *    pill changes the pixels.
+ *  * **the Account head states the account.** The same tile, a title of its own
+ *    (`google_connected_title`, not the signed-out `login_google`) and no badge,
+ *    which is the same rule the Spotify head follows.
  *  * **the manual-cookie card folds.** `M3CollapsibleCard` is the one new
  *    component: folded it is the header row alone (at least the 56 dp of a list
  *    row), open it is the header plus one body card joined by the 3 dp seam, which
@@ -121,9 +122,8 @@ object SpotifyAccountRenderCheck {
         }
 
         // --------------------------------------------------------------- account
-        val account = renderAccount("Vivi Listener")
+        val account = renderAccount()
         File(outDir, "account.png").writeBytes(account)
-        val anonymous = renderAccount("")
         val accountImage = javax.imageio.ImageIO.read(account.inputStream())
         val accountTile = dominantFill(accountImage, 0 until 260)
         val accountRegion = if (accountTile == null) null else largestRegion(accountImage, accountTile, 0 until 260)
@@ -137,9 +137,18 @@ object SpotifyAccountRenderCheck {
                 failures += "the Account head's tile is ${side}x$height px, not the 64 dp square"
             }
         }
-        println("account: name changes the pixels=${!same(account, anonymous)}")
-        if (same(account, anonymous)) {
-            failures += "the Account head does not change with the account name (two renders are identical)"
+        // The head says the session exists in its title, carries no badge, and is
+        // not the signed-out head: the name is the sidebar's job (it used to be
+        // the Account head's pill, which only repeated the state in one more line).
+        val accountBand = bands(account).bands.firstOrNull()
+        val accountPill = accountBand?.let { count(accountImage, pillFill, it) } ?: -1
+        val signedOutHead = renderGoogleHead("")
+        println("account: badge $accountPill px, title differs from the signed-out head=${!same(account, signedOutHead)}")
+        if (accountPill != 0) {
+            failures += "the Account head must draw no badge, read $accountPill px of the pill's fill"
+        }
+        if (same(account, signedOutHead)) {
+            failures += "the Account head must not read like the signed-out one (its title did not change)"
         }
 
         // ------------------------------------------------------- the head's badge
@@ -239,9 +248,16 @@ object SpotifyAccountRenderCheck {
         }
     }
 
-    private fun renderAccount(name: String): ByteArray = render {
+    private fun renderAccount(): ByteArray = render {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
-            AccountHero(language = "en", accountName = name)
+            AccountHero(language = "en")
+        }
+    }
+
+    /** The Google head as the sign-in screen draws it, for the title comparison. */
+    private fun renderGoogleHead(accountName: String): ByteArray = render {
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            GoogleSignInHero(language = "en", accountName = accountName)
         }
     }
 

@@ -333,6 +333,7 @@ internal fun strings_hi(): Map<String, String> =
         "generate_code" to "कोड बनाएं",
         "generate_new_code" to "नया कोड बनाएं",
         "github_repository" to "GitHub रिपॉजिटरी",
+        "google_connected_title" to "Google से कनेक्टेड",
         "gpu" to "GPU",
         "grid_item_size" to "ग्रिड आइटम का आकार",
         "grid_item_size_desc" to "एल्बम, कलाकार और प्लेलिस्ट ग्रिड के लिए कार्ड का आकार।",

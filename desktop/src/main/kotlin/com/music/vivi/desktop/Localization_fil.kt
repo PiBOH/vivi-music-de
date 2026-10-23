@@ -333,6 +333,7 @@ internal fun strings_fil(): Map<String, String> =
         "generate_code" to "Bumuo ng code",
         "generate_new_code" to "Gumawa ng bagong code",
         "github_repository" to "GitHub repository",
+        "google_connected_title" to "Nakakonekta sa Google",
         "gpu" to "GPU",
         "grid_item_size" to "Laki ng mga item sa grid",
         "grid_item_size_desc" to "Laki ng mga card para sa mga grid ng album, artist at playlist.",

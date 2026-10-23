@@ -333,6 +333,7 @@ internal fun strings_ar(): Map<String, String> =
         "generate_code" to "إنشاء رمز",
         "generate_new_code" to "إنشاء رمز جديد",
         "github_repository" to "مستودع GitHub",
+        "google_connected_title" to "متصل بـ Google",
         "gpu" to "GPU",
         "grid_item_size" to "حجم عناصر الشبكة",
         "grid_item_size_desc" to "حجم البطاقات لشبكات الألبومات والفنانين وقوائم التشغيل.",

@@ -333,6 +333,7 @@ internal fun strings_pa(): Map<String, String> =
         "generate_code" to "ਕੋਡ ਬਣਾਓ",
         "generate_new_code" to "ਨਵਾਂ ਕੋਡ ਬਣਾਓ",
         "github_repository" to "GitHub ਰਿਪੋਜ਼ਟਰੀ",
+        "google_connected_title" to "Google ਨਾਲ ਕਨੈਕਟ ਕੀਤਾ",
         "gpu" to "GPU",
         "grid_item_size" to "ਗਰਿੱਡ ਆਈਟਮ ਦਾ ਆਕਾਰ",
         "grid_item_size_desc" to "ਐਲਬਮਾਂ, ਕਲਾਕਾਰਾਂ ਅਤੇ ਪਲੇਲਿਸਟ ਗਰਿੱਡਾਂ ਲਈ ਕਾਰਡ ਦਾ ਆਕਾਰ।",

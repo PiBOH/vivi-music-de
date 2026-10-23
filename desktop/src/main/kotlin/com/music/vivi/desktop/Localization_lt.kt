@@ -333,6 +333,7 @@ internal fun strings_lt(): Map<String, String> =
         "generate_code" to "Generuoti kodą",
         "generate_new_code" to "Sukurti naują kodą",
         "github_repository" to "„GitHub“ saugykla",
+        "google_connected_title" to "Prijungta prie Google",
         "gpu" to "GPU",
         "grid_item_size" to "Tinklelio elementų dydis",
         "grid_item_size_desc" to "Kortelių dydis albumų, atlikėjų ir grojaraščių tinkleliams.",

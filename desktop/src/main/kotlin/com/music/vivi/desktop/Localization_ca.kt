@@ -333,6 +333,7 @@ internal fun strings_ca(): Map<String, String> =
         "generate_code" to "Genera un codi",
         "generate_new_code" to "Genera un codi nou",
         "github_repository" to "Repositori de GitHub",
+        "google_connected_title" to "Connectat a Google",
         "gpu" to "GPU",
         "grid_item_size" to "Mida dels elements de la quadrícula",
         "grid_item_size_desc" to "Mida de les targetes per a les quadrícules d'àlbums, artistes i llistes.",

@@ -333,6 +333,7 @@ internal fun strings_bn(): Map<String, String> =
         "generate_code" to "কোড তৈরি করুন",
         "generate_new_code" to "নতুন কোড তৈরি করুন",
         "github_repository" to "GitHub রিপোজিটরি",
+        "google_connected_title" to "Google-এর সাথে সংযুক্ত",
         "gpu" to "GPU",
         "grid_item_size" to "গ্রিড আইটেমের আকার",
         "grid_item_size_desc" to "অ্যালবাম, শিল্পী এবং প্লেলিস্ট গ্রিডের জন্য কার্ডের আকার।",

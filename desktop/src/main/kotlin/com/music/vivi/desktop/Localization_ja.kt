@@ -333,6 +333,7 @@ internal fun strings_ja(): Map<String, String> =
         "generate_code" to "コードを生成",
         "generate_new_code" to "新しいコードを生成",
         "github_repository" to "GitHubリポジトリ",
+        "google_connected_title" to "Google に接続済み",
         "gpu" to "GPU",
         "grid_item_size" to "グリッド項目のサイズ",
         "grid_item_size_desc" to "アルバム、アーティスト、プレイリストのグリッドのカードサイズ。",

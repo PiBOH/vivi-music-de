@@ -333,6 +333,7 @@ internal fun strings_as(): Map<String, String> =
         "generate_code" to "ক'ড সৃষ্টি কৰক",
         "generate_new_code" to "নতুন ক'ড সৃষ্টি কৰক",
         "github_repository" to "GitHub ৰিপজিটৰি",
+        "google_connected_title" to "Google-ৰ সৈতে সংযুক্ত",
         "gpu" to "GPU",
         "grid_item_size" to "গ্ৰিড আইটেমৰ আকাৰ",
         "grid_item_size_desc" to "এলবাম, শিল্পী আৰু প্লেলিষ্ট গ্ৰিডৰ বাবে কাৰ্ডৰ আকাৰ।",

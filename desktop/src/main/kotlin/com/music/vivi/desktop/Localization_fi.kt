@@ -333,6 +333,7 @@ internal fun strings_fi(): Map<String, String> =
         "generate_code" to "Luo koodi",
         "generate_new_code" to "Luo uusi koodi",
         "github_repository" to "GitHub-säilö",
+        "google_connected_title" to "Yhdistetty Googleen",
         "gpu" to "GPU",
         "grid_item_size" to "Ruudukon kohteiden koko",
         "grid_item_size_desc" to "Korttien koko albumien, artistien ja soittolistojen ruudukoille.",

@@ -333,6 +333,7 @@ internal fun strings_ru(): Map<String, String> =
         "generate_code" to "Создать код",
         "generate_new_code" to "Создать новый код",
         "github_repository" to "Репозиторий GitHub",
+        "google_connected_title" to "Подключено к Google",
         "gpu" to "GPU",
         "grid_item_size" to "Размер элементов сетки",
         "grid_item_size_desc" to "Размер карточек для сеток альбомов, исполнителей и плейлистов.",

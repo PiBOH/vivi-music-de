@@ -333,6 +333,7 @@ internal fun strings_nl(): Map<String, String> =
         "generate_code" to "Code genereren",
         "generate_new_code" to "Nieuwe code genereren",
         "github_repository" to "GitHub-repository",
+        "google_connected_title" to "Verbonden met Google",
         "gpu" to "GPU",
         "grid_item_size" to "Grootte van rasteritems",
         "grid_item_size_desc" to "Kaartgrootte voor rasters van albums, artiesten en afspeellijsten.",

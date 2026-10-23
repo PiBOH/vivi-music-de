@@ -333,6 +333,7 @@ internal fun strings_ms(): Map<String, String> =
         "generate_code" to "Jana kod",
         "generate_new_code" to "Jana kod baharu",
         "github_repository" to "Repositori GitHub",
+        "google_connected_title" to "Disambungkan ke Google",
         "gpu" to "GPU",
         "grid_item_size" to "Saiz item grid",
         "grid_item_size_desc" to "Saiz kad untuk grid album, artis dan senarai main.",

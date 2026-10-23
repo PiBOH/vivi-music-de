@@ -3139,7 +3139,6 @@ fun WindowScope.App(
                         language = language,
                         onBack = goBack,
                         isLoggedIn = isLoggedIn,
-                        accountName = accountName,
                         onOpenLogin = { navigate(Screen.Login) },
                         onLogout = {
                             LoginManager.logout()

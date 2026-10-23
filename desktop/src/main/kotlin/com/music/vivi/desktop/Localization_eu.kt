@@ -333,6 +333,7 @@ internal fun strings_eu(): Map<String, String> =
         "generate_code" to "Sortu kodea",
         "generate_new_code" to "Sortu kode berria",
         "github_repository" to "GitHub biltegia",
+        "google_connected_title" to "Google-ra konektatuta",
         "gpu" to "GPU",
         "grid_item_size" to "Sareko elementuen tamaina",
         "grid_item_size_desc" to "Album, artista eta erreprodukzio-zerrenden sareetarako txartelen tamaina.",

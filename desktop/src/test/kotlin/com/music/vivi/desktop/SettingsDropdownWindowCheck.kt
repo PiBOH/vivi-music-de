@@ -247,7 +247,20 @@ object SettingsDropdownWindowCheck {
             composeWindow.contentPane.add(composePanel, BorderLayout.CENTER)
             composeWindow.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
             composeWindow.setSize(WIDTH, HEIGHT)
-            composeWindow.setLocation(120, 20)
+            // Centred on the display the machine boots on (the laptop panel), never
+            // at a fixed offset: `setLocation(120, 20)` is a point in the whole
+            // virtual desktop, so on a desk with a second monitor to the left of
+            // the laptop it opened this window on that monitor instead. The
+            // centring is clamped to that display's own corner, because the window
+            // is 1000 px tall and a laptop panel is often shorter: without the
+            // clamp its title bar landed above the screen (measured `at 241,-85`
+            // here), and a check whose window is half off screen measures nothing.
+            val primary = GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .defaultScreenDevice.defaultConfiguration.bounds
+            composeWindow.setLocation(
+                (primary.x + (primary.width - WIDTH) / 2).coerceAtLeast(primary.x),
+                (primary.y + (primary.height - HEIGHT) / 2).coerceAtLeast(primary.y),
+            )
             // Nothing may cover the window: the frame is read from the screen.
             composeWindow.isAlwaysOnTop = true
             composeWindow.isVisible = true

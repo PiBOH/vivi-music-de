@@ -333,6 +333,7 @@ internal fun strings_tr(): Map<String, String> =
         "generate_code" to "Kod oluştur",
         "generate_new_code" to "Yeni kod oluştur",
         "github_repository" to "GitHub Deposu",
+        "google_connected_title" to "Google'a bağlı",
         "gpu" to "GPU",
         "grid_item_size" to "Izgara öğesi boyutu",
         "grid_item_size_desc" to "Albüm, sanatçı ve çalma listesi ızgaraları için kart boyutu.",

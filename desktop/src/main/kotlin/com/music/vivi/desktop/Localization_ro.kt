@@ -333,6 +333,7 @@ internal fun strings_ro(): Map<String, String> =
         "generate_code" to "Generează cod",
         "generate_new_code" to "Generează un cod nou",
         "github_repository" to "Depozit GitHub",
+        "google_connected_title" to "Conectat la Google",
         "gpu" to "GPU",
         "grid_item_size" to "Dimensiunea elementelor grilei",
         "grid_item_size_desc" to "Dimensiunea cardurilor pentru grilele de albume, artiști și liste de redare.",

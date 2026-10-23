@@ -333,6 +333,7 @@ internal fun strings_ko(): Map<String, String> =
         "generate_code" to "코드 생성",
         "generate_new_code" to "새 코드 생성",
         "github_repository" to "GitHub 저장소",
+        "google_connected_title" to "Google에 연결됨",
         "gpu" to "GPU",
         "grid_item_size" to "그리드 항목 크기",
         "grid_item_size_desc" to "앨범, 아티스트, 재생 목록 그리드의 카드 크기입니다.",

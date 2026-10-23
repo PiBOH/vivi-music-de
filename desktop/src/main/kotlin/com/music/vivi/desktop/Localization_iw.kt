@@ -333,6 +333,7 @@ internal fun strings_iw(): Map<String, String> =
         "generate_code" to "צור קוד",
         "generate_new_code" to "צור קוד חדש",
         "github_repository" to "מאגר GitHub",
+        "google_connected_title" to "מחובר ל-Google",
         "gpu" to "GPU",
         "grid_item_size" to "גודל פריט רשת",
         "grid_item_size_desc" to "גודל כרטיס לרשתות אלבומים, אמנים ורשימות השמעה.",

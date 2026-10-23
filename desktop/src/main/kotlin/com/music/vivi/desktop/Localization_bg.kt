@@ -333,6 +333,7 @@ internal fun strings_bg(): Map<String, String> =
         "generate_code" to "Генериране на код",
         "generate_new_code" to "Генериране на нов код",
         "github_repository" to "GitHub хранилище",
+        "google_connected_title" to "Свързано с Google",
         "gpu" to "GPU",
         "grid_item_size" to "Размер на елементите на мрежата",
         "grid_item_size_desc" to "Размер на картите за мрежите от албуми, изпълнители и плейлисти.",

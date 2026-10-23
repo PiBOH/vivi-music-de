@@ -333,6 +333,7 @@ internal fun strings_ml(): Map<String, String> =
         "generate_code" to "കോഡ് സൃഷ്ടിക്കുക",
         "generate_new_code" to "പുതിയ കോഡ് സൃഷ്ടിക്കുക",
         "github_repository" to "GitHub റിപ്പോസിറ്ററി",
+        "google_connected_title" to "Google-ലേക്ക് ബന്ധിപ്പിച്ചു",
         "gpu" to "GPU",
         "grid_item_size" to "ഗ്രിഡ് ഇനങ്ങളുടെ വലുപ്പം",
         "grid_item_size_desc" to "ആൽബം, കലാകാരന്മാർ, പ്ലേലിസ്റ്റ് ഗ്രിഡുകൾക്കുള്ള കാർഡ് വലുപ്പം.",

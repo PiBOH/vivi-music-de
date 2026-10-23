@@ -333,6 +333,7 @@ internal fun strings_hu(): Map<String, String> =
         "generate_code" to "Kód generálása",
         "generate_new_code" to "Új kód létrehozása",
         "github_repository" to "GitHub-tárhely",
+        "google_connected_title" to "Csatlakozva a Google-höz",
         "gpu" to "GPU",
         "grid_item_size" to "Rácselemek mérete",
         "grid_item_size_desc" to "Kártyaméret az albumok, előadók és lejátszási listák rácsaiban.",

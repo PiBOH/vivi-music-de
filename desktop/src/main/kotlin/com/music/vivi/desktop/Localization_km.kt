@@ -333,6 +333,7 @@ internal fun strings_km(): Map<String, String> =
         "generate_code" to "បង្កើតកូដ",
         "generate_new_code" to "បង្កើតកូដថ្មី",
         "github_repository" to "ឃ្លាំង GitHub",
+        "google_connected_title" to "បានភ្ជាប់ទៅ Google",
         "gpu" to "GPU",
         "grid_item_size" to "ទំហំធាតុក្រឡាចត្រង្គ",
         "grid_item_size_desc" to "ទំហំកាតសម្រាប់ក្រឡាចត្រង្គអាល់ប៊ុម សិល្បករ និងបញ្ជីចាក់។",

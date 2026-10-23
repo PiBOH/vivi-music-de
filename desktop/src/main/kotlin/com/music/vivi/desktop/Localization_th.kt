@@ -333,6 +333,7 @@ internal fun strings_th(): Map<String, String> =
         "generate_code" to "สร้างรหัส",
         "generate_new_code" to "สร้างรหัสใหม่",
         "github_repository" to "ที่เก็บ GitHub",
+        "google_connected_title" to "เชื่อมต่อกับ Google แล้ว",
         "gpu" to "GPU",
         "grid_item_size" to "ขนาดของรายการในกริด",
         "grid_item_size_desc" to "ขนาดการ์ดสำหรับกริดอัลบั้ม ศิลปิน และเพลย์ลิสต์",

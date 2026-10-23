@@ -333,6 +333,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "generate_code" to "Generer kode",
         "generate_new_code" to "Generer ny kode",
         "github_repository" to "GitHub-repositorium",
+        "google_connected_title" to "Koblet til Google",
         "gpu" to "GPU",
         "grid_item_size" to "Størrelse på rutenettelementer",
         "grid_item_size_desc" to "Kortstørrelse for rutenett med album, artister og spillelister.",

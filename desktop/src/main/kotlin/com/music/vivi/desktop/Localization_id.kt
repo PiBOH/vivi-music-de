@@ -333,6 +333,7 @@ internal fun strings_id(): Map<String, String> =
         "generate_code" to "Buat kode",
         "generate_new_code" to "Buat kode baru",
         "github_repository" to "Repositori GitHub",
+        "google_connected_title" to "Terhubung ke Google",
         "gpu" to "GPU",
         "grid_item_size" to "Ukuran item kisi-kisi",
         "grid_item_size_desc" to "Ukuran kartu untuk kisi-kisi album, artis, dan daftar putar.",

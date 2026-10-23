@@ -333,6 +333,7 @@ internal fun strings_hr(): Map<String, String> =
         "generate_code" to "Generiraj kôd",
         "generate_new_code" to "Generiraj novi kod",
         "github_repository" to "GitHub repozitorij",
+        "google_connected_title" to "Povezano s Googleom",
         "gpu" to "GPU",
         "grid_item_size" to "Veličina stavki mreže",
         "grid_item_size_desc" to "Veličina kartica za mreže albuma, izvođača i popisa pjesama.",

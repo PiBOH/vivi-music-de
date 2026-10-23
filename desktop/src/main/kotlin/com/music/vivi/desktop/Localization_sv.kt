@@ -333,6 +333,7 @@ internal fun strings_sv(): Map<String, String> =
         "generate_code" to "Generera kod",
         "generate_new_code" to "Generera ny kod",
         "github_repository" to "GitHub-repositorium",
+        "google_connected_title" to "Ansluten till Google",
         "gpu" to "GPU",
         "grid_item_size" to "Storlek på rutnätsobjekt",
         "grid_item_size_desc" to "Kortstorlek för rutnät med album, artister och spellistor.",

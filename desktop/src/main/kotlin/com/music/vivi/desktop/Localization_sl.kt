@@ -333,6 +333,7 @@ internal fun strings_sl(): Map<String, String> =
         "generate_code" to "Ustvari kodo",
         "generate_new_code" to "Ustvari novo kodo",
         "github_repository" to "Repozitorij GitHub",
+        "google_connected_title" to "Povezano z Googlom",
         "gpu" to "GPU",
         "grid_item_size" to "Velikost elementov mreže",
         "grid_item_size_desc" to "Velikost kartic za mreže albumov, izvajalcev in seznamov predvajanja.",

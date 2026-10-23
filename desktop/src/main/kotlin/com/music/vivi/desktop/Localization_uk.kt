@@ -333,6 +333,7 @@ internal fun strings_uk(): Map<String, String> =
         "generate_code" to "Створити код",
         "generate_new_code" to "Створити новий код",
         "github_repository" to "Репозиторій GitHub",
+        "google_connected_title" to "Підключено до Google",
         "gpu" to "GPU",
         "grid_item_size" to "Розмір елементів сітки",
         "grid_item_size_desc" to "Розмір карток для сіток альбомів, виконавців і плейлистів.",

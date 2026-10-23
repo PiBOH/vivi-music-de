@@ -333,6 +333,7 @@ internal fun strings_vi(): Map<String, String> =
         "generate_code" to "Tạo mã",
         "generate_new_code" to "Tạo mã mới",
         "github_repository" to "Kho GitHub",
+        "google_connected_title" to "Đã kết nối với Google",
         "gpu" to "GPU",
         "grid_item_size" to "Kích thước mục lưới",
         "grid_item_size_desc" to "Kích thước thẻ cho lưới album, nghệ sĩ và danh sách phát.",
