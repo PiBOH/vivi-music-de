@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.HighQuality
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
@@ -64,7 +66,9 @@ import kotlin.math.abs
  * control at the row's right end (the value and its chevron), and asserts:
  *
  *  * the menu opens **under the row that was pressed**, its top 0..24 px below
- *    the row's bottom edge and its left edge on the row's;
+ *    the row's bottom edge, right-aligned to the value that was pressed (a row
+ *    is the width of the page, so a menu hung off its left edge opened at the
+ *    window's margin, nowhere near the value);
  *  * the menu is the row's own width of menu (at least 200 px wide), so a menu
  *    collapsed into a stripe fails;
  *  * near the floor of the window the same menu opens **above** the row.
@@ -86,8 +90,12 @@ object SettingsDropdownWindowCheck {
     /** A menu margin of 8 dp plus its own 4 dp top padding. */
     private const val MENU_GAP_MAX = 24
 
-    /** How far the menu's shadow may pull its read left edge from the row's. */
-    private const val MENU_LEFT_SLACK = 20
+    /**
+     * How far the menu's right edge may sit from the row's own right edge: the
+     * row keeps 17 dp of trailing padding after the value, so the menu ends
+     * there, and a shadow can pull the read edge a little further.
+     */
+    private const val MENU_RIGHT_SLACK = 44
 
     private const val MENU_MIN_WIDTH = 200
 
@@ -142,8 +150,11 @@ object SettingsDropdownWindowCheck {
         Case("player design: mini player design", Kind.INLINE, "Mini player design", "Default", listOf("Default", "Compact"), Icons.Filled.Tune),
         Case("player design: mini player background", Kind.INLINE, "Mini player background", "Default", listOf("Default", "Gradient", "Solid"), Icons.Filled.Palette),
         Case("player design: slider style", Kind.INLINE, "Slider style", "Slim", listOf("Slim", "Thick"), Icons.Filled.Tune),
-        // Player & audio -> audio quality (a loose row).
-        Case("player & audio: audio quality", Kind.ITEM, "Audio quality", "Auto", listOf("Auto", "High", "Low"), Icons.Filled.GraphicEq),
+        // Player & audio -> audio quality, the stream cache and the history
+        // duration: rows of the player card.
+        Case("player & audio: audio quality", Kind.INLINE, "Audio quality", "Auto", listOf("Auto", "High", "Low"), Icons.Filled.HighQuality),
+        Case("player & audio: stream cache", Kind.INLINE, "Stream cache (minutes)", "10 min", listOf("5 min", "10 min", "30 min", "60 min", "Forever"), Icons.Filled.Bolt),
+        Case("player & audio: history duration", Kind.INLINE, "History duration", "30 s", listOf("10 s", "30 s", "60 s", "5 min", "Forever"), Icons.Filled.History),
         // The same row at the floor of the window: it has to open upwards.
         Case("flip: at the floor", Kind.ITEM, "Transition style", "Fade", listOf("Fade", "Slide"), Icons.Filled.AutoAwesome, nearFloor = true),
     )
@@ -236,6 +247,17 @@ object SettingsDropdownWindowCheck {
         val failures = mutableListOf<String>()
         val active = mutableStateOf(selected.first())
 
+        // The window is never taller than the display it opens on: the floor case
+        // puts its row on the window's own bottom edge, so a window that hangs
+        // under the screen hides exactly the row that case measures (read as
+        // "the row's bottom edge is not on screen" on a 1280x800 panel, where a
+        // 1000 px window ends below the framebuffer). The clamp keeps the 40 dp
+        // of page above it and the row's own height.
+        val display = GraphicsEnvironment.getLocalGraphicsEnvironment()
+            .defaultScreenDevice.defaultConfiguration.bounds
+        val windowWidth = minOf(WIDTH, display.width - 40)
+        val windowHeight = minOf(HEIGHT, display.height - 80)
+
         // A `ComposePanel` may only be built on the AWT event dispatch thread.
         var panelHolder: ComposePanel? = null
         var windowHolder: JFrame? = null
@@ -246,7 +268,7 @@ object SettingsDropdownWindowCheck {
             composeWindow.contentPane.layout = BorderLayout()
             composeWindow.contentPane.add(composePanel, BorderLayout.CENTER)
             composeWindow.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
-            composeWindow.setSize(WIDTH, HEIGHT)
+            composeWindow.setSize(windowWidth, windowHeight)
             // Centred on the display the machine boots on (the laptop panel), never
             // at a fixed offset: `setLocation(120, 20)` is a point in the whole
             // virtual desktop, so on a desk with a second monitor to the left of
@@ -255,11 +277,9 @@ object SettingsDropdownWindowCheck {
             // is 1000 px tall and a laptop panel is often shorter: without the
             // clamp its title bar landed above the screen (measured `at 241,-85`
             // here), and a check whose window is half off screen measures nothing.
-            val primary = GraphicsEnvironment.getLocalGraphicsEnvironment()
-                .defaultScreenDevice.defaultConfiguration.bounds
             composeWindow.setLocation(
-                (primary.x + (primary.width - WIDTH) / 2).coerceAtLeast(primary.x),
-                (primary.y + (primary.height - HEIGHT) / 2).coerceAtLeast(primary.y),
+                (display.x + (display.width - windowWidth) / 2).coerceAtLeast(display.x),
+                (display.y + (display.height - windowHeight) / 2).coerceAtLeast(display.y),
             )
             // Nothing may cover the window: the frame is read from the screen.
             composeWindow.isAlwaysOnTop = true
@@ -296,6 +316,7 @@ object SettingsDropdownWindowCheck {
                 var before = settled(robot, panel)
                 val marker = marker(before)
                 if (marker == null) {
+                    save(before, "${case.name}-no-marker")
                     failures += "${case.name}: the row's bottom edge is not on screen"
                     return@forEach
                 }
@@ -356,8 +377,9 @@ object SettingsDropdownWindowCheck {
                     if (gap > MENU_GAP_MAX) {
                         failures += "${case.name}: the menu is not attached to the row, its first pixel is $gap px below it"
                     }
-                    if (abs(opened.left - marker.left) > MENU_LEFT_SLACK) {
-                        failures += "${case.name}: the menu must start at the row's left edge (${marker.left}), read ${opened.left}"
+                    if (abs(opened.right - marker.right) > MENU_RIGHT_SLACK) {
+                        failures += "${case.name}: the menu must be right-aligned to the row's value " +
+                            "(the row ends at ${marker.right}), read ${opened.right}"
                     }
                     if (opened.right - opened.left < MENU_MIN_WIDTH) {
                         failures += "${case.name}: the menu must be at least $MENU_MIN_WIDTH px wide, read ${opened.right - opened.left}"
@@ -374,7 +396,7 @@ object SettingsDropdownWindowCheck {
         if (failures.isEmpty()) {
             println(
                 "OK: ${selected.count { !it.nearFloor }} settings dropdown(s) open their menu under the row " +
-                    "that was pressed, on the row's left edge, ${selected.count { it.nearFloor }} at the floor " +
+                    "that was pressed, right-aligned to its value, ${selected.count { it.nearFloor }} at the floor " +
                     "of a real window opens above it",
             )
             return

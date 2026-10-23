@@ -223,7 +223,6 @@ object PlayerAudioCardCheck {
                         onToggleRememberShuffleRepeat = {},
                         persistentQueue = true,
                         onTogglePersistentQueue = {},
-                        onOpenPlayerDesign = {},
                         onOpenEqualizer = {},
                         streamCacheMinutes = 10,
                         onStreamCacheMinutesChange = {},

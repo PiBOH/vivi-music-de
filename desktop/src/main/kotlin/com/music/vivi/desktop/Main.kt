@@ -2206,7 +2206,6 @@ fun WindowScope.App(
                             persistentQueue = checked
                             DesktopSettings.update { it.copy(persistentQueue = checked) }
                         },
-                        onOpenPlayerDesign = { navigate(Screen.SettingsPlayerDesign) },
                         onOpenEqualizer = { navigate(Screen.SettingsEqualizer) },
                         streamCacheMinutes = streamCacheMinutes,
                         onStreamCacheMinutesChange = { m ->

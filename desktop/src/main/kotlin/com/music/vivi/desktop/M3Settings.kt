@@ -45,6 +45,10 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -401,7 +405,27 @@ private fun M3SettingsItemRow(
 ) {
     val dropdown = item.dropdown
     var expanded by remember(dropdown) { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
+    // The menu hangs off the row's trailing control, not off its left edge: the
+    // row is the width of the page, so a menu aligned to the row's start opened
+    // half a screen away from the value that was pressed - on a two-card screen
+    // like Content it read as "the menu opens on the left" (the second card's
+    // menu started at the window's left edge). The anchor is therefore the
+    // trailing slot (value + arrow) and the menu is right-aligned to it, which is
+    // what Material's own exposed menus do. Both edges are read in window
+    // coordinates so a row inside a scroll column measures the same way.
+    val density = LocalDensity.current
+    var rowLeftPx by remember { mutableStateOf(0f) }
+    var trailingRightPx by remember { mutableStateOf(0f) }
+    val menuOffsetX = if (dropdown != null && rowLeftPx != 0f && trailingRightPx != 0f) {
+        with(density) { (trailingRightPx - rowLeftPx).toDp() - dropdown.menuWidth }
+    } else {
+        0.dp
+    }
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .onGloballyPositioned { rowLeftPx = it.boundsInWindow().left },
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -478,10 +502,14 @@ private fun M3SettingsItemRow(
 
             if (item.trailing != null) {
                 Spacer(Modifier.width(7.dp))
-                item.trailing()
+                Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
+                    item.trailing()
+                }
             } else if (dropdown != null) {
                 Spacer(Modifier.width(7.dp))
-                M3DropdownTrailing(dropdown.value)
+                Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
+                    M3DropdownTrailing(dropdown.value)
+                }
             }
         }
         if (dropdown != null) {
@@ -492,6 +520,7 @@ private fun M3SettingsItemRow(
                 options = dropdown.options,
                 onSelect = dropdown.onSelect,
                 menuWidth = dropdown.menuWidth,
+                offsetX = menuOffsetX,
             )
         }
     }
@@ -587,7 +616,14 @@ fun M3SettingsDropdownCard(
     }
 }
 
-/** The row plus its inline menu, shared by the two entry points above. */
+/**
+ * The row plus its inline menu, shared by the two entry points above.
+ *
+ * The menu is the item's own ([M3SettingsItem.dropdown]), so a choice in a card
+ * opens exactly where a choice in a group does: under the row, right-aligned to
+ * the value that was pressed. It used to hang off this row's own full-width box,
+ * which put the menu at the window's left edge whatever row had been pressed.
+ */
 @Composable
 private fun M3SettingsDropdownRow(
     icon: ImageVector?,
@@ -598,28 +634,19 @@ private fun M3SettingsDropdownRow(
     description: String?,
     menuWidth: Dp,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth()) {
-        M3SettingsItemRow(
-            item = M3SettingsItem(
-                icon = icon,
-                title = { Text(title) },
-                description = {
-                    Text(description ?: value)
-                },
-                trailing = { M3DropdownTrailing(value) },
-                onClick = { expanded = true },
+    M3SettingsItemRow(
+        item = M3SettingsItem(
+            icon = icon,
+            title = { Text(title) },
+            description = { Text(description ?: value) },
+            dropdown = M3Dropdown(
+                value = value,
+                options = options,
+                onSelect = onSelect,
+                menuWidth = menuWidth,
             ),
-        )
-        M3DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            value = value,
-            options = options,
-            onSelect = onSelect,
-            menuWidth = menuWidth,
-        )
-    }
+        ),
+    )
 }
 
 /** The menu a dropdown row opens: one option per line, the current one marked. */
@@ -631,10 +658,12 @@ private fun M3DropdownMenu(
     options: List<Pair<String, String>>,
     onSelect: (String) -> Unit,
     menuWidth: Dp,
+    offsetX: Dp = 0.dp,
 ) {
     DropdownMenu(
         expanded = expanded,
         onDismissRequest = onDismissRequest,
+        offset = DpOffset(offsetX, 0.dp),
         modifier = Modifier
             .width(menuWidth)
             .clip(RoundedCornerShape(18.dp))

@@ -998,7 +998,8 @@ tasks.register<JavaExec>("dropdownPositionCheck") {
  * off-screen. This one opens a real OS window on the machine's display (a
  * `ComposePanel` in a `JFrame`), presses each settings dropdown with the real
  * pointer, captures the screen and reads the menu back from the pixels: under
- * the row that was pressed, starting on the row's left edge, and above it when
+ * the row that was pressed, right-aligned to the value that opened it, and above
+ * it when
  * the row sits at the floor of the window. Every dropdown the settings screens
  * draw is a case, in the shape its own screen gives it. Needs a display: with
  * none it prints `NOT RUN` and verifies nothing. A manual check, not part of

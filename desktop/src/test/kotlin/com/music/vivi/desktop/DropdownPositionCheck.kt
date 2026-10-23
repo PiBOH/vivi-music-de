@@ -39,7 +39,9 @@ import kotlin.math.abs
  *
  *  * with room under the row the menu opens **below** it, its first option
  *    starting a menu margin under the row (not at the window corner, not halfway
- *    down the page) and its left edge on the row's left edge;
+ *    down the page) and its right edge on the right edge of the value that was
+ *    pressed - a row is the width of the page, so a menu aligned to the row's
+ *    left edge opened at the window's margin, away from the value;
  *  * with the row near the floor of the scene the same menu opens **above** it,
  *    because a menu that does not fit below is flipped instead of being drawn off
  *    the window.
@@ -99,11 +101,16 @@ object DropdownPositionCheck {
             if (gap > MENU_GAP_MAX) {
                 failures += "the menu must be attached to the row, its first option is ${gap.toInt()} px below it"
             }
-            if (abs(optionRect.left - rowRect.left) > 20) {
-                failures += "the menu must start at the row's left edge (${rowRect.left.toInt()}), read ${optionRect.left.toInt()}"
+            // The menu hangs off the trailing control, so its right edge is the
+            // row's own right edge less the row's 17 dp of trailing padding.
+            val rightGap = rowRect.right - optionRect.right
+            if (rightGap < -20 || rightGap > 44) {
+                failures += "the menu must be right-aligned to the row's trailing value: the row ends " +
+                    "at ${rowRect.right.toInt()}, the menu at ${optionRect.right.toInt()}"
             }
-            if (optionRect.right < rowRect.left + 120) {
-                failures += "the menu must be drawn under the row's own width, read ${optionRect.right.toInt()}"
+            if (optionRect.left < rowRect.left + 120) {
+                failures += "the menu must open under the value that was pressed, not at the row's " +
+                    "left edge (${rowRect.left.toInt()}): it starts at ${optionRect.left.toInt()}"
             }
         }
 
@@ -176,9 +183,10 @@ object DropdownPositionCheck {
         if (failures.isEmpty()) {
             println()
             println(
-                "OK: the menu opens under the row that owns it (first option ${optionRect?.top?.toInt()} " +
-                    "against the row's bottom ${rowRect.bottom.toInt()}, left ${optionRect?.left?.toInt()} " +
-                    "against ${rowRect.left.toInt()}) and above it when it does not fit below " +
+                "OK: the menu opens under the row that owns it, right-aligned to its value (first " +
+                    "option ${optionRect?.top?.toInt()} against the row's bottom ${rowRect.bottom.toInt()}, " +
+                    "right ${optionRect?.right?.toInt()} against ${rowRect.right.toInt()}) and above it " +
+                    "when it does not fit below " +
                     "(last option ends ${lastOptionRect?.bottom?.toInt()}, row starts ${lowRowRect.top.toInt()})",
             )
             return
