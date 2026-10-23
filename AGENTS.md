@@ -992,7 +992,11 @@ desktop module carries a set of **manual** Gradle checks that render the real
 composables into an off-screen `androidx.compose.ui.ImageComposeScene` (no
 window, no GPU) and look at the pixels or at the state they produce. Every one is
 registered at the end of `desktop/build.gradle.kts`; the table is the ones that
-are written down here, newest last:
+are written down here, newest last. One of them is the exception to the
+no-window rule: `settingsDropdownWindowCheck` opens a real window on the display
+(a popup cannot be read off screen, and the ui-test scene is not what a user
+sees), so on a machine without a display it prints `NOT RUN` and verifies
+nothing.
 
 | task | what it proves |
 | --- | --- |
@@ -1009,6 +1013,7 @@ are written down here, newest last:
 | `:desktop:sliderRenderCheck` | the settings slider (`M3SettingsSlider`, the one every bar in Settings is drawn with): the track's centre row read off screen at rest (`X1 P92 X1 N6 P4 N6 X1 I288 X1` - `primary` to the cut, 6 px of page, the 4 px handle, 6 px of page, then `secondaryContainer`; the 1 px `X` runs are the capsule's antialiased ends and are dropped by `Row.significant()`), pressed 300 px along the strip (handle widened to 8 px, the 40 dp state layer tinting 43 px around it, the press reporting `0.755`), released back to a 4 px handle, and a slider with `steps = 3` reporting `0.5, 1.0, 0.0` for presses at 60 %, 90 % and 2 %. Each state is settled frame by frame (`settle`, 4 frames 150 ms apart) because a pointer event is read a pass after it is dispatched and a tween starts on the frame after that |
 | `:desktop:languageSearchCheck` | the language picker's search box: `Languages.matching` on a blank query, a name, an accented name, the schwa, a code and a query that matches nothing, and `LanguagePickerRows` rendered in those three states inside the menu's own `IntrinsicSize.Max` measurement (the field is drawn 200..300 px wide and the list below it narrows, 48 rows against one against the no-result line) |
 | `:desktop:storageCommitsRenderCheck` | the head the Storage and Commits screens share (`M3ScreenHero`, `M3SegmentedBar`, `M3SegmentedLegend`): a 56x56 `secondaryContainer` tile in both, Storage's bar as the proportion of its parts (`358 / 178 / 58 px`, 6 : 3 : 1) with one 8 dp legend dot per part in the bar's own colour and two names per line, and Commits' three chips (one tonal on `secondaryContainer`, two on `surfaceContainerHigh`) over two day rules and three rows. A rule is counted by the row it sits on, because a 1 px line can break into two runs where the layout splits its width |
+| `:desktop:settingsDropdownWindowCheck` | every settings dropdown in a **real window** on the machine's display (a `ComposePanel` in a `JFrame`): the row is pressed with the real pointer (`java.awt.Robot`) at its trailing value and chevron, the screen is captured and the menu read back from the pixels against the row's own bottom rule. 21 dropdowns are cases - the loose rows (`M3SettingsDropdownItem`), Content's two cards (`M3SettingsDropdownCard`) and the five choices Player & mini-player design carries as rows of one card (`M3SettingsItem` with `M3Dropdown`) - each opening 3 px under its row with its left edge on the row's (`17..300` against a row at `20..863`), 280 or 320 px wide, the 48-language list clamped to the window; the same row at the floor of the window opens above it (`767..891` under a row whose rule is at `960`, `gap -193`). The one check that needs a display: with none it prints `NOT RUN` and verifies nothing |
 
 They live in `desktop/src/test/kotlin/com/music/vivi/desktop/`, write their PNGs
 under `.ignore/`, are registered at the end of `desktop/build.gradle.kts`, and
