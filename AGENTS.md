@@ -407,6 +407,48 @@ together because makepkg requires the hook next to the PKGBUILD, and a loose
   instead. The JavaFX WebView jars (`javafx-web`, `icudtl.dat`) are required by
 the working sign-in WebView and are **never** trimmed for size.
 
+### Class-data sharing (the startup archive)
+
+The runtime jpackage builds is a jlinked image and jlink writes no CDS archive
+into it, so every JDK class the app touches is parsed out of `lib/modules` on
+each start. `:desktop:cdsArchive` dumps those classes into `classes.jsa` beside
+the runtime's own JVM library (`bin/server` on Windows, `lib/server` elsewhere),
+which is the file the JVM reads by default: no `-XX:SharedArchiveFile` is passed
+anywhere, and the archive is found wherever the app is installed because it
+travels inside the runtime installed with it. Every jpackage invocation
+(`createDistributable`, `packageMsi`, `packageDeb`, ...) waits for that task,
+because each one copies the runtime.
+
+- **The dump must be run by the runtime that ships.** An archive records the
+  `lib/modules` image it was built from, and a jlinked image is a different one:
+  dumped with the build JDK and copied in, the file maps and is then discarded
+  (`This file is not the one used while building the shared archive file ... size
+  has changed`) and every class is loaded from `modules` anyway. `cdsArchive`
+  therefore copies the build JDK's launcher into the runtime, dumps with it and
+  removes it again.
+- **No classpath in the dump.** A CDS archive records the classpath it was built
+  with and the JVM discards it when the classpath differs, which it always does
+  on an installed machine. The task passes only the class list, so the archive is
+  accepted from any directory, and only JDK classes go in it (the app's own
+  classes would record the classpath again).
+- **The list is `desktop/cds/classlist.txt`,** the JDK classes a real start
+  loads: refresh it with `./gradlew :desktop:startupProbe
+  -PcdsList=.ignore/cds-classlist.txt` when a screen starts using new parts of
+  the JDK. The committed list was recorded on Windows, so it names the AWT peers
+  of that platform (`sun/awt/windows/...`); on Linux and macOS the dump reports
+  them as missing and skips them, which leaves the archive smaller there. A
+  class the runtime does not have is never an error, only a skipped line.
+- **Verify a build with `-Xlog:class+load` and `-Xlog:cds`:** classes must come
+  from `shared objects file`, and the log must not name the modules file. The
+  archive is ~23 MB; a start that reads everything from `jrt:` means the dump did
+  not come from the shipped runtime.
+- **The probe measures it:** `:desktop:startupProbe -Pcds=<file.jsa>` runs the
+  same start with the archive and nothing else different (`-PcdsList=` records a
+  class list instead, `-Pheadless=true` is not usable for this app because
+  Compose fails before the first stage without a display). The stages land in the
+  throwaway home's `app.log`; `DetailedStartupLogs` is the settings.json key, not
+  `detailedStartupLogs`.
+
 ### Commit language and co-author rules — MANDATORY (do not violate)
 
 - **Language — English only**: every commit message — **title and body/description
