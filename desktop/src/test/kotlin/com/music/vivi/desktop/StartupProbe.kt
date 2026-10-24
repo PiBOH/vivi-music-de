@@ -15,6 +15,21 @@ fun main(args: Array<String>) {
     val home = File(args.getOrElse(0) { ".ignore/startup-home" }).absoluteFile
     home.mkdirs()
     System.setProperty("user.home", home.path)
+    // Two options have to be pinned for a run to be readable and comparable:
+    //  - DetailedStartupLogs on (Developer options, off by default), because the
+    //    `startup:` lines this probe exists to read are only written with it;
+    //  - the heap the probe's own JVM already has, because a stored size that
+    //    differs makes the app start itself again at the top of `main` (see
+    //    JvmMemory), and that second process is written into the same log: the
+    //    stages would be read twice, from two different processes.
+    // The file is rewritten on every run, so both arms of a measurement start
+    // from the same one.
+    val heapMb = (Runtime.getRuntime().maxMemory() / (1024L * 1024L)).toInt()
+    val settings = File(home, ".vivimusic/settings.json")
+    settings.parentFile?.mkdirs()
+    // The key is the store's own serial name (`DetailedStartupLogs`), which is
+    // what settings.json mirrors; the live option adopts it at startup.
+    settings.writeText("{\n    \"DetailedStartupLogs\": true,\n    \"jvmHeapMb\": $heapMb\n}\n")
     val seconds = args.getOrElse(1) { "20" }.toLongOrNull() ?: 20L
     Thread {
         Thread.sleep(seconds * 1000)

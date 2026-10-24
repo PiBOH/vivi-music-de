@@ -1,4 +1,6 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask
+import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -303,6 +305,155 @@ dependencies {
         ),
     )
 }
+
+// --- Class-data sharing: the JVM's part of the start ------------------------
+// The runtime jpackage bundles is a jlinked image, and jlink writes no CDS
+// archive into it: next to the runtime's JVM library (`bin/server` on Windows,
+// `lib/server` elsewhere) there is nothing but the library itself. Every JDK
+// class the app touches is therefore parsed out of `lib/modules` on each start -
+// AWT for the first window, `javax.sound` for the audio line, java.base's
+// collections - before a single frame is drawn.
+//
+// This task dumps those classes once, at build time, into the archive the JVM
+// reads by default (`classes.jsa`, beside its own library), so every installer
+// carries it and no `-XX:SharedArchiveFile` has to be passed to anything: the
+// archive is found wherever the app is installed, because it travels inside the
+// runtime installed with it.
+//
+// Two properties make that work for every user's install path:
+//  - it is dumped with NO classpath (`-Xshare:dump` plus the class list, nothing
+//    else). A CDS archive records the classpath it was built with, and the JVM
+//    discards it when the classpath at start differs - which it always does when
+//    the installed directory is not the build machine's. With no classpath
+//    recorded, the archive is accepted from any directory;
+//  - only JDK classes are in `cds/classlist.txt`, i.e. the ones that come from
+//    `modules` instead of the jars on that classpath. Archiving the app's own
+//    classes would record the classpath again and tie the archive to this
+//    machine.
+//
+// The list is the JDK classes a real start loads, recorded with
+// `./gradlew :desktop:startupProbe -PcdsList=...` (see that task): regenerate it
+// when the app starts using parts of the JDK it did not touch before. A class in
+// the list that this JDK does not have is reported by the dump and skipped, so a
+// list recorded on Windows still dumps on Linux and macOS.
+//
+// The dump has to be run BY the runtime that ships, not by the build JDK: an
+// archive records the `lib/modules` image it was dumped from (`This file is not
+// the one used while building the shared archive file ... size has changed`) and
+// a jlinked image is a different, smaller one. Dumping with the build JDK and
+// copying the file in was measured and does nothing at all: the JVM maps the
+// archive, sees the image does not match and loads every class from `modules`
+// anyway. jlink leaves the runtime without a launcher, so the build JDK's `java`
+// is put in the runtime for the dump and taken away again.
+abstract class CdsArchiveTask : DefaultTask() {
+
+    /** The classes the archive holds, one `java/lang/Object` per line. */
+    @get:InputFile
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val classList: RegularFileProperty
+
+    /** The JDK the launcher comes from, as `<version>|<java.home>`. */
+    @get:Input
+    abstract val javaRuntime: Property<String>
+
+    /** The runtime image jpackage copies into every image it builds. */
+    @get:Internal
+    abstract val runtimeImageDir: DirectoryProperty
+
+    /** `classes.jsa`, in the directory of the runtime's own JVM library. */
+    @get:OutputFile
+    abstract val archive: RegularFileProperty
+
+    @TaskAction
+    fun dump() {
+        val runtime = runtimeImageDir.get().asFile
+        // The JVM looks for its archive beside its own library. That directory
+        // is found rather than guessed, so a layout change can never leave an
+        // archive behind that no JVM would open.
+        val jvmLibrary = runtime.walkTopDown().firstOrNull {
+            it.name == "jvm.dll" || it.name == "libjvm.so" || it.name == "libjvm.dylib"
+        } ?: throw GradleException(
+            "The runtime image has no JVM library under ${runtime.path}: there is no " +
+                "directory the JVM would look in for a CDS archive.",
+        )
+        val target = File(jvmLibrary.parentFile, "classes.jsa")
+        target.delete() // -Xshare:dump writes a new file and refuses a stale one
+
+        val javaHome = File(javaRuntime.get().substringAfter('|'))
+        val copied = mutableListOf<File>()
+        try {
+            val launcher = File(javaHome, "bin/java.exe").takeIf { it.exists() }
+                ?: File(javaHome, "bin/java")
+            val deployed = File(runtime, "bin/${launcher.name}").also {
+                launcher.copyTo(it, overwrite = true)
+                copied += it
+            }
+            var result = runDump(deployed, target)
+            if (result.first != 0) {
+                // The launcher's own support library is part of the jlinked image
+                // on Windows; where it is not, the launcher cannot start at all,
+                // so it is taken along and the dump tried once more.
+                listOf("bin/jli.dll", "lib/libjli.so", "lib/libjli.dylib").forEach { path ->
+                    val from = File(javaHome, path)
+                    val to = File(runtime, path)
+                    if (from.exists() && !to.exists()) {
+                        to.parentFile.mkdirs()
+                        from.copyTo(to, overwrite = true)
+                        copied += to
+                    }
+                }
+                result = runDump(deployed, target)
+            }
+            val (exit, output) = result
+            if (exit != 0 || !target.exists()) {
+                throw GradleException(
+                    "The CDS archive could not be dumped (exit $exit):\n" + output.takeLast(4000),
+                )
+            }
+            logger.lifecycle("CDS archive: ${target.length() / 1024} KB at ${target.path}")
+        } finally {
+            copied.forEach { it.delete() }
+        }
+    }
+
+    /** Runs `-Xshare:dump` with [java] and answers `exit code to output`. */
+    private fun runDump(java: File, target: File): Pair<Int, String> {
+        val process = ProcessBuilder(
+            java.absolutePath,
+            "-Xshare:dump",
+            "-XX:SharedClassListFile=${classList.get().asFile.absolutePath}",
+            "-XX:SharedArchiveFile=${target.absolutePath}",
+        ).directory(target.parentFile).redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        return process.waitFor() to output
+    }
+}
+
+val cdsArchive = tasks.register<CdsArchiveTask>("cdsArchive") {
+    group = "build"
+    description = "Dumps the class-data-sharing archive that ships inside the runtime"
+    // The runtime image has to exist first: the archive goes beside its JVM.
+    dependsOn(tasks.matching { it.name == "createRuntimeImage" })
+    classList.set(layout.projectDirectory.file("cds/classlist.txt"))
+    javaRuntime.set(
+        javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }.map {
+            "${it.metadata.languageVersion.asInt()}|${it.metadata.installationPath.asFile.absolutePath}"
+        },
+    )
+    runtimeImageDir.set(layout.buildDirectory.dir("compose/tmp/main/runtime"))
+    archive.set(
+        layout.buildDirectory.file(
+            "compose/tmp/main/runtime/" +
+                (if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true)) "bin" else "lib") +
+                "/server/classes.jsa",
+        ),
+    )
+}
+
+// Every jpackage invocation copies that runtime image into the image it builds
+// (createDistributable, packageMsi, packageDeb, packageDmg, packagePkg, the
+// AppImage, the rpm), so each one waits for the archive to be in it.
+tasks.withType<AbstractJPackageTask>().configureEach { dependsOn(cdsArchive) }
 
 compose.desktop {
     application {
@@ -1047,6 +1198,23 @@ tasks.register<JavaExec>("settingsDropdownWindowCheck") {
  * Manual: one cold start of the real app against a throwaway home
  * (`.ignore/startup-home`), stopped after 20 s, so the `startup:` lines in its
  * `app.log` can be read. Opens a window, needs a display.
+ *
+ * The CDS archive's effect is measured with this probe, the way the installers
+ * get it:
+ *
+ *     ./gradlew :desktop:startupProbe                      # no archive
+ *     ./gradlew :desktop:startupProbe -Pcds=<file.jsa>     # same run, archive on
+ *
+ * `-Pcds` adds the `-XX:SharedArchiveFile` the installers pass and nothing
+ * else, so the two runs differ by the archive alone. `-PcdsList=<file>` records
+ * the classes the run loads instead (`.ignore/cds-classlist.txt`), which is the
+ * list the archive is dumped from. `-Phome=<dir>` and `-Pseconds=<n>` move the
+ * throwaway home and the run length; a warm home is what makes two runs
+ * comparable (a fresh one would show the first-run flow instead).
+ *
+ * The run opens a window: `-Djava.awt.headless=true` is not an option here,
+ * because Compose asks the screen device for its density before the first stage
+ * is written and dies with a `HeadlessException` on a machine with no display.
  */
 tasks.register<JavaExec>("startupProbe") {
     group = "verification"
@@ -1055,6 +1223,13 @@ tasks.register<JavaExec>("startupProbe") {
     mainClass.set("com.music.vivi.desktop.StartupProbeKt")
     classpath = sourceSets.getByName("test").runtimeClasspath
     workingDir = rootProject.projectDir
-    args(".ignore/startup-home", "20")
+    args(
+        (project.findProperty("home") as String?) ?: ".ignore/startup-home",
+        (project.findProperty("seconds") as String?) ?: "20",
+    )
+    (project.findProperty("cds") as String?)?.let {
+        jvmArgs("-XX:SharedArchiveFile=$it", "-Xshare:auto")
+    }
+    (project.findProperty("cdsList") as String?)?.let { jvmArgs("-XX:DumpLoadedClassList=$it") }
     jvmArgs("-XX:StartFlightRecording=filename=.ignore/startup.jfr,duration=14s,settings=profile,dumponexit=true")
 }
