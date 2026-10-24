@@ -34,14 +34,21 @@ import javax.imageio.ImageIO
  * read at a fixed set of times after the switch is flipped. A painted box is a run
  * of pixels that is not the page, so the run's height is the block's height:
  *
- *  * animations ON: the box is drawn part-way at least twice on the way in and on
- *    the way out, which is the tween being drawn and not a jump;
- *  * animations OFF: every frame is either the full box or nothing at all, at the
- *    same times.
+ *  * animations ON, closing: the box is drawn part-way at least twice and is gone
+ *    at the end;
+ *  * animations ON, opening: the box is drawn part-way at least twice and stands
+ *    at its full height at the end;
+ *  * animations OFF: every frame is either the full box or nothing at all, in both
+ *    directions, at the same times.
  *
- * The frames are written under `.ignore/foldanim/` so the two runs can be looked
- * at. What is measured is the movement; the easing curve and the switch's own
- * round trip are not.
+ * Both directions are measured because the fold is one tween run forwards or
+ * backwards, and only one side of it being read would leave the other free to
+ * move in a way nobody looked at: a tween that opens instantly and closes over
+ * 200 ms reads the same as a working one when only the closing samples exist.
+ *
+ * The frames are written under `.ignore/foldanim/` so the runs can be looked
+ * at. What is measured is the movement in each direction; the easing curve is
+ * not.
  */
 object FoldAnimationCheck {
 
@@ -59,37 +66,58 @@ object FoldAnimationCheck {
     fun main(args: Array<String>) {
         val failures = mutableListOf<String>()
 
-        val animated = measure(enabled = true, name = "on")
-        val instant = measure(enabled = false, name = "off")
+        val closingOn = measure(enabled = true, startVisible = true, name = "on-close")
+        val openingOn = measure(enabled = true, startVisible = false, name = "on-open")
+        val closingOff = measure(enabled = false, startVisible = true, name = "off-close")
+        val openingOff = measure(enabled = false, startVisible = false, name = "off-open")
 
-        println("animations on:  closing=$animated")
-        println("animations off: closing=$instant")
+        println("animations on:  closing=$closingOn")
+        println("animations on:  opening=$openingOn")
+        println("animations off: closing=$closingOff")
+        println("animations off: opening=$openingOff")
 
-        // With the switch on, the box has to be SEEN between its two states: a run
-        // that is neither the full box nor nothing proves the tween is drawn.
-        val partialOn = animated.count { it in 1 until BOX_DP }
-        if (partialOn < 2) {
-            failures += "with animations on the fold should be drawn part-way at least twice, read $partialOn frame(s)"
+        // With the switch on, the box has to be SEEN between its two states in each
+        // direction: a run that is neither the full box nor nothing proves the tween
+        // is drawn, and the end of the run says it arrived where it was going.
+        val partialCloseOn = closingOn.count { it in 1 until BOX_DP }
+        if (partialCloseOn < 2) {
+            failures += "closing with animations on: drawn part-way at least twice, read $partialCloseOn frame(s)"
         }
-        if (animated.last() != 0) {
-            failures += "with animations on the fold should be gone at the end, read ${animated.last()} dp"
+        if (closingOn.last() != 0) {
+            failures += "closing with animations on: gone at the end, read ${closingOn.last()} dp"
+        }
+        val partialOpenOn = openingOn.count { it in 1 until BOX_DP }
+        if (partialOpenOn < 2) {
+            failures += "opening with animations on: drawn part-way at least twice, read $partialOpenOn frame(s)"
+        }
+        if (openingOn.last() != BOX_DP) {
+            failures += "opening with animations on: at $BOX_DP dp at the end, read ${openingOn.last()} dp"
         }
 
         // With it off, every sample is one of the two states and never anything in
-        // between: the block is dropped in the frame the switch flips.
-        val partialOff = instant.count { it in 1 until BOX_DP }
-        if (partialOff != 0) {
-            failures += "with animations off the fold must never be drawn part-way, read $instant"
+        // between, in both directions: the block is dropped or shown in the frame
+        // the switch flips.
+        val partialCloseOff = closingOff.count { it in 1 until BOX_DP }
+        if (partialCloseOff != 0) {
+            failures += "closing with animations off: never drawn part-way, read $closingOff"
         }
-        if (instant.last() != 0) {
-            failures += "with animations off the fold should be gone at once, read ${instant.last()} dp"
+        if (closingOff.last() != 0) {
+            failures += "closing with animations off: gone at once, read ${closingOff.last()} dp"
+        }
+        val partialOpenOff = openingOff.count { it in 1 until BOX_DP }
+        if (partialOpenOff != 0) {
+            failures += "opening with animations off: never drawn part-way, read $openingOff"
+        }
+        if (openingOff.first() != BOX_DP) {
+            failures += "opening with animations off: there in the frame the switch flips, read ${openingOff.first()} dp"
         }
 
         if (failures.isEmpty()) {
             println()
             println(
-                "OK: the fold is drawn part-way $partialOn time(s) with animations on ($animated) " +
-                    "and never with them off ($instant), where it is dropped in the frame the switch flips",
+                "OK: the fold is drawn part-way $partialCloseOn time(s) closing and $partialOpenOn opening " +
+                    "with animations on ($closingOn / $openingOn) and never with them off " +
+                    "($closingOff / $openingOff), where it is dropped and shown in the frame the switch flips",
             )
         } else {
             println()
@@ -101,13 +129,14 @@ object FoldAnimationCheck {
 
     /**
      * The height of the box in dp, sampled at [SAMPLES_MS] after the switch was
-     * flipped off. `Animations.enabled` is set before the scene exists, so the
-     * first composition already reads the state being measured.
+     * flipped, starting from [startVisible] so the same scene measures the fold
+     * closing and the fold opening. `Animations.enabled` is set before the scene
+     * exists, so the first composition already reads the state being measured.
      */
-    private fun measure(enabled: Boolean, name: String): List<Int> {
+    private fun measure(enabled: Boolean, startVisible: Boolean, name: String): List<Int> {
         Animations.speed = "normal"
         Animations.enabled = enabled
-        val visible = mutableStateOf(true)
+        val visible = mutableStateOf(startVisible)
         val scene = ImageComposeScene(WIDTH, HEIGHT) {
             AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564), language = "en") {
                 Column(Modifier.fillMaxWidth().padding(24.dp)) {
@@ -123,10 +152,10 @@ object FoldAnimationCheck {
             }
         }
         try {
-            // One frame with the block open, then the flip: the samples below are
-            // times after it.
+            // One frame in the starting state, then the flip: the samples below
+            // are times after it.
             scene.render(0L)
-            visible.value = false
+            visible.value = !startVisible
             val heights = SAMPLES_MS.map { ms ->
                 val bytes = scene.render(ms * 1_000_000L).encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
                 File(outDir, "$name-$ms.png").writeBytes(bytes)

@@ -1093,10 +1093,12 @@ tasks.register<JavaExec>("storageCommitsRenderCheck") {
  *
  * `M3SettingsFold` is the block every row that belongs to a switch is drawn
  * through, and it must move only while the Animations switch is on. The check
- * renders the fold alone over a 200 dp box, flips it off and reads the box's
- * painted height at nine moments: with animations on it must be drawn part-way
- * at least twice (a tween, not a jump), with them off every frame must be either
- * the whole box or nothing. See
+ * renders the fold alone over a 200 dp box and reads the box's painted height at
+ * nine moments after the switch is flipped, in BOTH directions: closing (from the
+ * full box to nothing) and opening (from nothing to the full box). With
+ * animations on each direction must be drawn part-way at least twice (a tween,
+ * not a jump) and must arrive at its end state; with them off every frame must be
+ * either the whole box or nothing, in both directions. See
  * `desktop/src/test/kotlin/com/music/vivi/desktop/FoldAnimationCheck.kt`.
  */
 tasks.register<JavaExec>("foldAnimationCheck") {
