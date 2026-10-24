@@ -93,7 +93,7 @@ fun PlayerSection(
     Text(
         Localization.get(language, "player_audio"),
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 12.dp),
+        modifier = Modifier.padding(top = 16.dp),
     )
 
     // The player card. Crossfade's two rows and skip silence's one row are rows
@@ -191,9 +191,9 @@ fun PlayerSection(
         ),
     )
 
-    // 12 dp is the gap the page gives every card (its `.md-card` margin), and the
-    // gap every settings screen of the DE leaves between two of them.
-    Spacer(Modifier.height(12.dp))
+    // 16 dp is the gap the page gives every card (`.md-group`'s `margin-top`), and
+    // the gap every settings screen of the DE leaves between two of them.
+    Spacer(Modifier.height(16.dp))
     M3SettingsGroup(
         title = Localization.get(language, "queue"),
         items = listOf(
@@ -262,7 +262,7 @@ fun PlayerSection(
     // The tail card: the rows that are the desktop's own. The volume channel is
     // NOT here: it is a device-sync option and lives in Settings -> Device sync,
     // next to the other volume channel, on both editions.
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
     M3SettingsGroup(
         items = listOf(
             M3SettingsItem(

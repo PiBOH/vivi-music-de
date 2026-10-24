@@ -111,7 +111,7 @@ fun AppearanceSection(
 ) {
     var showRestartDialog by remember { mutableStateOf(false) }
 
-    Text(Localization.get(language, "appearance"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    Text(Localization.get(language, "appearance"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
 
     // Hub rows: each opens its M3 sub-screen, where the single-choice options
     // are picked from anchored dropdowns (CRITICAL FIX 1.49.1 — the sub-screens
@@ -164,9 +164,10 @@ fun AppearanceSection(
         ),
     )
 
-    // The hub's second card: the preview gives every card 12 dp above it, and
-    // the two cards of the hub were drawn one on top of the other.
-    Spacer(Modifier.height(12.dp))
+    // The hub's second card: the preview gives every card 16 dp above it
+    // (`.md-group`'s `margin-top`), and the two cards of the hub were drawn one on
+    // top of the other.
+    Spacer(Modifier.height(16.dp))
     M3SettingsGroup(
         items = listOf(
             // A destination, not a switch: the master switch, the transitions it
@@ -261,7 +262,7 @@ fun ThemeSection(
     onRemoveCustomAccent: (Int) -> Unit = {},
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "theme_colors"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+        Text(Localization.get(language, "theme_colors"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
 
         // Live preview card (uses the currently applied theme).
         ThemePreviewCard(Modifier.fillMaxWidth().padding(top = 16.dp).height(140.dp))
@@ -1033,9 +1034,9 @@ fun TransitionsScreen(
         Text(
             Localization.get(language, "animations"),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(top = 12.dp),
+            modifier = Modifier.padding(top = 16.dp),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         // The master switch and the transitions it governs, in one card: the
         // second row folds away with the first instead of sitting further down
@@ -1065,7 +1066,7 @@ fun TransitionsScreen(
         )
 
         // Both choices belong to the switches above and fold with them.
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsFold(visible = animationsEnabled && transitionsOn) {
             M3SettingsDropdownItem(
                 icon = Icons.Filled.Movie,
@@ -1113,7 +1114,7 @@ fun FontSection(
     val activeFamily = AppFonts.familyFor(selectedFont, customFontPath)
 
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "app_font"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+        Text(Localization.get(language, "app_font"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
 
         Card(
             shape = MaterialTheme.shapes.large,
@@ -1146,7 +1147,7 @@ fun FontSection(
             }
         }
 
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
 
         // One card of fonts, each row drawn in the face it offers, the radio in
         // the row's own trailing slot; the import is the list's last row, so the
@@ -1197,7 +1198,7 @@ fun FontSection(
         // here never reached them even though the theme carries it everywhere
         // else. This is the switch that decides it, on by default: a font chosen
         // on this screen is expected to be the app's font, lyrics included.
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -1243,8 +1244,8 @@ fun CanvasSection(
     onCanvasSourceChange: (CanvasSource) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
-        Spacer(Modifier.height(12.dp))
+        Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+        Spacer(Modifier.height(16.dp))
         // The page's row is the name and the switch, with nothing under them: the
         // sentence that stood here said what the Canvas is to someone who has
         // already opened its screen.
@@ -1261,7 +1262,7 @@ fun CanvasSection(
         // The source only means something while the Canvas is on (the preview
         // hides it otherwise), and it folds away with the switch it belongs to.
         M3SettingsFold(visible = canvasEnabled) {
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.Palette,
             title = Localization.get(language, "canvas_source"),
@@ -1292,7 +1293,7 @@ fun DensityScreen(
     onGridItemSizeChange: (Int) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "density_and_grid"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+        Text(Localization.get(language, "density_and_grid"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
         Spacer(Modifier.height(4.dp))
         // Single selector for the UI density: the duplicate info row was folded
         // into this dropdown's description so the screen offers exactly one
@@ -1305,7 +1306,7 @@ fun DensityScreen(
             options = DENSITY_PRESETS.map { it.toString() to densityLabel(it) },
             onSelect = { s -> onDensityScaleChange(s.toFloatOrNull() ?: densityScale) },
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.ViewAgenda,
             title = Localization.get(language, "grid_item_size"),

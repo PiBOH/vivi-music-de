@@ -145,7 +145,7 @@ fun SettingsSpotifyImportScreen(language: String, onBack: () -> Unit) {
                     if (!SpotifyImport.loginWithWindow(language)) manualFallback = true
                 },
             )
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(16.dp))
             M3CollapsibleCard(
                 title = Localization.get(language, "login_manual_title"),
                 expanded = manualFallback,

@@ -86,7 +86,7 @@ fun DeviceSyncSection(
     }
     val remainingMs = (pairCodeExpiresAt - nowMs).coerceAtLeast(0L)
 
-    Text(Localization.get(language, "device_sync"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 12.dp))
+    Text(Localization.get(language, "device_sync"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
 
     // Connection method selector: the relay (recommended, works from any
     // network) or the local LAN server (same Wi-Fi). The how-to steps and the
@@ -379,7 +379,7 @@ fun DeviceSyncSection(
     Text("${Localization.get(language, "status")}: $connectionState — $statusText", modifier = Modifier.padding(top = 8.dp))
 
     if (syncedSettings.isNotEmpty()) {
-        Text(Localization.get(language, "synced_settings"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+        Text(Localization.get(language, "synced_settings"), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
         Column(Modifier.padding(top = 4.dp)) {
             syncedSettings.entries.sortedBy { it.key }.forEach { (k, v) ->
                 Text("$k = $v", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 1.dp))

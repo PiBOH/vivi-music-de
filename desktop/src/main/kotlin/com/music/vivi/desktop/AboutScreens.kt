@@ -100,9 +100,9 @@ fun AboutSection(
     Text(
         Localization.get(language, "about"),
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 12.dp),
+        modifier = Modifier.padding(top = 16.dp),
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     // The head: the app's own logo (the intro's, not a letter standing in for it)
     // and what this build is, so the answer is on the screen before any row.
@@ -150,7 +150,7 @@ fun AboutSection(
         }
     }
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     // What this build is: the version and the code that unlocks the developer
     // options. Both figures are the row's own description (the page says them
@@ -219,7 +219,7 @@ fun AboutSection(
         ),
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     // The three doors out of the app, under the page's own label for them: all
     // three open a browser, which the arrow says (a chevron would promise
@@ -233,7 +233,7 @@ fun AboutSection(
         ),
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     // The two documents.
     M3SettingsGroup(
@@ -295,9 +295,9 @@ fun ContributorsSection(language: String) {
     Text(
         Localization.get(language, "contributors_section"),
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 12.dp),
+        modifier = Modifier.padding(top = 16.dp),
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
     if (contributors.isEmpty()) {
         Text(
             Localization.get(language, "library_empty"),
@@ -432,9 +432,9 @@ fun LicenseSection(language: String) {
     Text(
         Localization.get(language, "license"),
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 12.dp),
+        modifier = Modifier.padding(top = 16.dp),
     )
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
     if (text.isBlank()) {
         // No bundled copy and no network: say it instead of showing nothing.
         Text(

@@ -4163,7 +4163,7 @@ fun PlayerDesignScreen(
         Text(
             Localization.get(language, "player_and_mini_player_design"),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(top = 12.dp),
+            modifier = Modifier.padding(top = 16.dp),
         )
         Spacer(Modifier.height(4.dp))
         M3SettingsGroup(
@@ -4187,7 +4187,7 @@ fun PlayerDesignScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -4210,7 +4210,7 @@ fun PlayerDesignScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -4286,7 +4286,7 @@ fun PlayerDesignScreen(
                 emptyList()
             },
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(

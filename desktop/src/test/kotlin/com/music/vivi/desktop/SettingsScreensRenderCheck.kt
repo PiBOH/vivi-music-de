@@ -104,7 +104,10 @@ object SettingsScreensRenderCheck {
         val notificationBands = bands(notifications)
         println("notifications: bands=${notificationBands.size} ${notificationBands.map { "${it.top}..${it.bottom}" }}")
 
-        val content = render {
+        // A taller frame than the page is the only way to see the whole card:
+        // the fourteen bands of this screen no longer fit the 1200 px one, and a
+        // row cut off by the frame's edge is read as a missing seam.
+        val content = render(height = 1400) {
             ContentSection(
                 language = "en",
                 contentLanguage = "",
@@ -532,8 +535,8 @@ object SettingsScreensRenderCheck {
     }
 
     /** One frame of [content], in the light scheme, on the app's own surface. */
-    private fun render(content: @Composable () -> Unit): ByteArray {
-        val scene = ImageComposeScene(WIDTH, HEIGHT) {
+    private fun render(height: Int = HEIGHT, content: @Composable () -> Unit): ByteArray {
+        val scene = ImageComposeScene(WIDTH, height) {
             AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564), language = "en") {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
                     Column(Modifier.padding(start = 20.dp, top = 4.dp).width(600.dp)) { content() }
@@ -553,7 +556,7 @@ object SettingsScreensRenderCheck {
      *
      * The card is `surfaceVariant` at 30 % over the page, so "not the page
      * colour" is the test: an icon tile, a switch and a label inside the row all
-     * differ from the page, and the 3 dp seam and the 8 dp gap between cards are
+     * differ from the page, and the 3 dp seam and the 16 dp gap between cards are
      * the only places where the page shows through again.
      */
     private fun bands(png: ByteArray, column: Int = 40): List<Band> {

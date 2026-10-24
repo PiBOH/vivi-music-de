@@ -165,7 +165,7 @@ fun StorageSection(language: String) {
         },
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     // One row per kind, as the preview draws it: the number and the action that
     // empties it belong to the same row - they were two rows per kind, a size
@@ -221,7 +221,7 @@ fun StorageSection(language: String) {
         ),
     )
 
-    Spacer(Modifier.height(12.dp))
+    Spacer(Modifier.height(16.dp))
 
     M3SettingsGroup(
         title = Localization.get(language, "installers_downloaded"),
