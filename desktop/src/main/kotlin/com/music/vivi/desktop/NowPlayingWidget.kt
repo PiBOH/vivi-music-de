@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -196,7 +195,7 @@ fun NowPlayingWidgetWindow(
                     // media keys).
                     val transportOff = transportLocked()
                     Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
-                        IconButton(
+                        M3IconButton(
                             onClick = { player.previous() },
                             enabled = !transportOff,
                             modifier = Modifier.size(30.dp).dimmedWhenLocked(),
@@ -209,7 +208,7 @@ fun NowPlayingWidgetWindow(
                         }
                     }
                     Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
-                        IconButton(
+                        M3IconButton(
                             onClick = { player.toggle() },
                             enabled = !transportOff,
                             modifier = Modifier
@@ -226,7 +225,7 @@ fun NowPlayingWidgetWindow(
                         }
                     }
                     Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                        IconButton(
+                        M3IconButton(
                             onClick = { player.next() },
                             enabled = !transportOff,
                             modifier = Modifier.size(30.dp).dimmedWhenLocked(),
@@ -240,7 +239,7 @@ fun NowPlayingWidgetWindow(
                     }
                     Spacer(Modifier.width(2.dp))
                     Tooltip(Localization.get(language, "close")) {
-                        IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
+                        M3IconButton(onClick = onClose, modifier = Modifier.size(24.dp)) {
                             Icon(
                                 Icons.Filled.Close,
                                 contentDescription = Localization.get(language, "close"),

@@ -17,7 +17,6 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -86,7 +85,7 @@ fun UpdateSection(
                 },
                 trailing = {
                     Tooltip(Localization.get(language, "check_updates")) {
-                        IconButton(onClick = onCheckUpdates, enabled = status != UpdateStatus.Checking) {
+                        M3IconButton(onClick = onCheckUpdates, enabled = status != UpdateStatus.Checking) {
                             Icon(
                                 if (status == UpdateStatus.Checking) Icons.Filled.Sync else Icons.Filled.Refresh,
                                 contentDescription = null,

@@ -54,7 +54,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -1364,7 +1363,7 @@ internal fun LtInRoom(
                     // phone's long-press dialog takes, so a row stays a row.
                     if (isHost && user.userId != room.hostId) {
                         Box {
-                            IconButton(onClick = { menu = true }) {
+                            M3IconButton(onClick = { menu = true }) {
                                 Icon(
                                     Icons.Filled.MoreVert,
                                     contentDescription = Localization.get(language, "settings"),
@@ -1448,14 +1447,14 @@ internal fun LtInRoom(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        IconButton(onClick = { onApproveJoin(req.userId) }) {
+                        M3IconButton(onClick = { onApproveJoin(req.userId) }) {
                             Icon(
                                 Icons.Filled.Check,
                                 contentDescription = Localization.get(language, "lt_approve"),
                                 tint = MaterialTheme.colorScheme.primary,
                             )
                         }
-                        IconButton(onClick = { onRejectJoin(req.userId) }) {
+                        M3IconButton(onClick = { onRejectJoin(req.userId) }) {
                             Icon(
                                 Icons.Filled.Close,
                                 contentDescription = Localization.get(language, "lt_reject"),
@@ -1521,14 +1520,14 @@ internal fun LtInRoom(
                                     )
                                 }
                             }
-                            IconButton(onClick = { onApproveSuggestion(s.suggestionId) }) {
+                            M3IconButton(onClick = { onApproveSuggestion(s.suggestionId) }) {
                                 Icon(
                                     Icons.Filled.Check,
                                     contentDescription = Localization.get(language, "lt_approve"),
                                     tint = MaterialTheme.colorScheme.primary,
                                 )
                             }
-                            IconButton(onClick = { onRejectSuggestion(s.suggestionId) }) {
+                            M3IconButton(onClick = { onRejectSuggestion(s.suggestionId) }) {
                                 Icon(
                                     Icons.Filled.Close,
                                     contentDescription = Localization.get(language, "lt_reject"),

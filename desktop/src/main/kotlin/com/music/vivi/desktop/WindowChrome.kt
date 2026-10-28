@@ -52,7 +52,6 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -163,7 +162,7 @@ fun WindowScope.SpotifyTopHeader(
                 // collapsed by clicking the "VIVI Music" title (and, collapsed,
                 // the logo) at its top.
                 Tooltip(Localization.get(language, "tooltip_back")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onBack,
                         enabled = canGoBack,
                         modifier = Modifier.size(32.dp),
@@ -184,7 +183,7 @@ fun WindowScope.SpotifyTopHeader(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Tooltip(Localization.get(language, "tooltip_home")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenHome,
                         modifier = Modifier.size(36.dp),
                     ) {
@@ -253,7 +252,7 @@ fun WindowScope.SpotifyTopHeader(
                         }
                         if (searchQuery.isNotEmpty()) {
                             Tooltip(Localization.get(language, "tooltip_clear")) {
-                                IconButton(
+                                M3IconButton(
                                     onClick = { onSearchQueryChange("") },
                                     modifier = Modifier.size(24.dp),
                                 ) {
@@ -393,7 +392,7 @@ fun WindowScope.SpotifyTopHeader(
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Tooltip(Localization.get(language, "tooltip_output_device")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = { showOutputPicker = true },
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -420,7 +419,7 @@ fun WindowScope.SpotifyTopHeader(
                     )
                 }
                 Tooltip(Localization.get(language, "tooltip_lyrics")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenLyrics,
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -433,7 +432,7 @@ fun WindowScope.SpotifyTopHeader(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_queue")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenQueue,
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -446,7 +445,7 @@ fun WindowScope.SpotifyTopHeader(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_history")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenHistory,
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -459,7 +458,7 @@ fun WindowScope.SpotifyTopHeader(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_wrapped")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenStats,
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -472,7 +471,7 @@ fun WindowScope.SpotifyTopHeader(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_listen_together")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenListenTogether,
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -485,7 +484,7 @@ fun WindowScope.SpotifyTopHeader(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_settings")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = onOpenSettings,
                         modifier = Modifier.size(32.dp),
                     ) {

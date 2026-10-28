@@ -18,7 +18,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
@@ -746,12 +745,12 @@ fun LocalPlaylistsScreen(
                             )
                         }
                         Tooltip(Localization.get(language, "rename")) {
-                            IconButton(onClick = { renameTarget = p }) {
+                            M3IconButton(onClick = { renameTarget = p }) {
                                 Icon(Icons.Filled.Edit, contentDescription = Localization.get(language, "rename"))
                             }
                         }
                         Tooltip(Localization.get(language, "delete")) {
-                            IconButton(onClick = { deleteTarget = p }) {
+                            M3IconButton(onClick = { deleteTarget = p }) {
                                 Icon(Icons.Filled.Delete, contentDescription = Localization.get(language, "delete"), tint = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -930,7 +929,7 @@ fun LocalPlaylistScreen(
                                 val isHostRole by ListenTogetherGate.isHost
                                 if (inRoom && !isHostRole) {
                                     Tooltip(Localization.get(language, "lt_suggest")) {
-                                        IconButton(onClick = {
+                                        M3IconButton(onClick = {
                                             ListenTogetherBridge.manager?.suggestTrack(
                                                 LtTrackInfo(
                                                     id = song.id,

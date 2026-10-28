@@ -24,7 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -118,14 +117,14 @@ fun LiveLogWindowContent(language: String, onClose: () -> Unit) {
                 // The two ends of the log, next to the log itself: the newest
                 // line is what a live report is about, the first one is where a
                 // session that went wrong from the start begins.
-                IconButton(onClick = jumpToTop, enabled = entries.isNotEmpty()) {
+                M3IconButton(onClick = jumpToTop, enabled = entries.isNotEmpty()) {
                     Icon(
                         Icons.Filled.ArrowUpward,
                         contentDescription = null,
                         modifier = Modifier.width(20.dp),
                     )
                 }
-                IconButton(onClick = jumpToBottom, enabled = entries.isNotEmpty()) {
+                M3IconButton(onClick = jumpToBottom, enabled = entries.isNotEmpty()) {
                     Icon(
                         Icons.Filled.ArrowDownward,
                         contentDescription = null,

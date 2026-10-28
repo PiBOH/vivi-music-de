@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -784,7 +783,7 @@ internal fun WindowControls(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tooltip(Localization.get(language, "tooltip_minimize")) {
-            IconButton(
+            M3IconButton(
                 onClick = onMinimize,
                 modifier = Modifier.size(32.dp),
             ) {
@@ -797,7 +796,7 @@ internal fun WindowControls(
             }
         }
         Tooltip(Localization.get(language, if (isMaximized) "tooltip_restore" else "tooltip_maximize")) {
-            IconButton(
+            M3IconButton(
                 onClick = onMaximize,
                 modifier = Modifier.size(32.dp),
             ) {
@@ -810,7 +809,7 @@ internal fun WindowControls(
             }
         }
         Tooltip(Localization.get(language, "close")) {
-            IconButton(
+            M3IconButton(
                 onClick = onClose,
                 modifier = Modifier.size(32.dp),
             ) {

@@ -97,7 +97,6 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.draw.alpha
@@ -857,7 +856,7 @@ private fun M3EPlayerContent(
                             // The lyrics options, reachable from the lyrics panel
                             // itself (the expressive player has no lyric buttons).
                             Box(Modifier.align(Alignment.TopEnd)) {
-                                IconButton(onClick = { lyricsMenuOpen = true }) {
+                                M3IconButton(onClick = { lyricsMenuOpen = true }) {
                                     Icon(
                                         Icons.Filled.Tune,
                                         contentDescription = Localization.get(language, "lyrics_options"),
@@ -1914,7 +1913,7 @@ fun AppleUpNextQueueScreen(
                 // next recomposition reset — which is why switching it off here
                 // used to leave autoplay on anyway.
                 Tooltip(Localization.get(language, "tooltip_autoplay")) {
-                    IconButton(
+                    M3IconButton(
                         onClick = { onToggleAutoPlayNext(!autoPlayNext) },
                         modifier = Modifier.size(32.dp),
                     ) {
@@ -2314,7 +2313,7 @@ fun QueueScreen(
                                     }
                                 }
                                 Tooltip(Localization.get(language, "add_to_playlist")) {
-                                    IconButton(onClick = { onAddToPlaylist(item) }) {
+                                    M3IconButton(onClick = { onAddToPlaylist(item) }) {
                                         Icon(
                                             Icons.AutoMirrored.Filled.PlaylistAdd,
                                             contentDescription = Localization.get(language, "add_to_playlist"),
@@ -2588,7 +2587,7 @@ fun SpotifyRightNowPlayingPanel(
                     )
                 }
                 Tooltip(Localization.get(language, "close")) {
-                    IconButton(onClick = onClose) {
+                    M3IconButton(onClick = onClose) {
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = Localization.get(language, "close"),
@@ -2641,7 +2640,7 @@ fun SpotifyRightNowPlayingPanel(
                 }
                 if (onAddToPlaylist != null) {
                     Tooltip(Localization.get(language, "add_to_playlist")) {
-                        IconButton(onClick = { onAddToPlaylist(np) }) {
+                        M3IconButton(onClick = { onAddToPlaylist(np) }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.PlaylistAdd,
                                 contentDescription = Localization.get(language, "add_to_playlist"),
@@ -3040,7 +3039,7 @@ fun ClassicDesktopMiniPlayer(
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
                             Tooltip(Localization.get(language, "shuffle")) {
-                                IconButton(onClick = onToggleShuffle) {
+                                M3IconButton(onClick = onToggleShuffle) {
                                     Icon(
                                         Icons.Filled.Shuffle,
                                         contentDescription = Localization.get(language, "shuffle"),
@@ -3051,7 +3050,7 @@ fun ClassicDesktopMiniPlayer(
                             }
                             val transportOff = transportLocked()
                             Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
-                                IconButton(onClick = onPrevious, enabled = !transportOff) {
+                                M3IconButton(onClick = onPrevious, enabled = !transportOff) {
                                     Icon(
                                         Icons.Filled.SkipPrevious,
                                         contentDescription = Localization.get(language, "previous"),
@@ -3082,7 +3081,7 @@ fun ClassicDesktopMiniPlayer(
                                 }
                             }
                             Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                                IconButton(onClick = onNext, enabled = !transportOff) {
+                                M3IconButton(onClick = onNext, enabled = !transportOff) {
                                     Icon(
                                         Icons.Filled.SkipNext,
                                         contentDescription = Localization.get(language, "next"),
@@ -3092,7 +3091,7 @@ fun ClassicDesktopMiniPlayer(
                                 }
                             }
                             Tooltip(Localization.get(language, "repeat")) {
-                                IconButton(onClick = onCycleRepeat) {
+                                M3IconButton(onClick = onCycleRepeat) {
                                     Icon(
                                         repeatIcon(repeatMode),
                                         contentDescription = Localization.get(language, "repeat"),
@@ -3173,7 +3172,7 @@ fun ClassicDesktopMiniPlayer(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Tooltip(Localization.get(language, "tooltip_lyrics")) {
-                            IconButton(onClick = onOpenLyrics) {
+                            M3IconButton(onClick = onOpenLyrics) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.Subject,
                                     contentDescription = Localization.get(language, "lyrics"),
@@ -3183,7 +3182,7 @@ fun ClassicDesktopMiniPlayer(
                             }
                         }
                         Tooltip(Localization.get(language, "tooltip_queue")) {
-                            IconButton(onClick = onOpenQueue) {
+                            M3IconButton(onClick = onOpenQueue) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.QueueMusic,
                                     contentDescription = Localization.get(language, "queue"),
@@ -3213,7 +3212,7 @@ fun ClassicDesktopMiniPlayer(
                         }
                         Spacer(Modifier.width(4.dp))
                         Tooltip(Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel")) {
-                            IconButton(onClick = onToggleRightSidebar) {
+                            M3IconButton(onClick = onToggleRightSidebar) {
                                 Icon(
                                     Icons.Filled.VerticalSplit,
                                     contentDescription = Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel"),
@@ -3223,7 +3222,7 @@ fun ClassicDesktopMiniPlayer(
                             }
                         }
                         Tooltip(Localization.get(language, "tooltip_open_full_player")) {
-                            IconButton(onClick = onOpenPlayer) {
+                            M3IconButton(onClick = onOpenPlayer) {
                                 Icon(
                                     Icons.Filled.Fullscreen,
                                     contentDescription = "Open full player",
@@ -3393,7 +3392,7 @@ fun NewDesktopMiniPlayer(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Tooltip(Localization.get(language, "tooltip_output_device")) {
-                    IconButton(onClick = { showOutputPicker = true }) {
+                    M3IconButton(onClick = { showOutputPicker = true }) {
                         Icon(
                             Icons.Filled.SpeakerGroup,
                             contentDescription = Localization.get(language, "output_device"),
@@ -3417,7 +3416,7 @@ fun NewDesktopMiniPlayer(
                 // actual account instead of a local, lost-on-exit flag.
                 val liked = SongActions.isLiked(nowPlaying.videoId)
                 Tooltip(Localization.get(language, "tooltip_favorite")) {
-                    IconButton(onClick = {
+                    M3IconButton(onClick = {
                         val next = !liked
                         SongActions.setLiked(
                             nowPlaying.videoId,
@@ -3437,7 +3436,7 @@ fun NewDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "shuffle")) {
-                    IconButton(onClick = onToggleShuffle) {
+                    M3IconButton(onClick = onToggleShuffle) {
                         Icon(
                             Icons.Filled.Shuffle,
                             contentDescription = Localization.get(language, "shuffle"),
@@ -3447,7 +3446,7 @@ fun NewDesktopMiniPlayer(
                     }
                 }
                 Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                    IconButton(onClick = onNext, enabled = !transportOff) {
+                    M3IconButton(onClick = onNext, enabled = !transportOff) {
                         Icon(
                             Icons.Filled.SkipNext,
                             contentDescription = Localization.get(language, "next"),
@@ -3457,7 +3456,7 @@ fun NewDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "repeat")) {
-                    IconButton(onClick = onCycleRepeat) {
+                    M3IconButton(onClick = onCycleRepeat) {
                         Icon(
                             repeatIcon(repeatMode),
                             contentDescription = Localization.get(language, "repeat"),
@@ -3467,7 +3466,7 @@ fun NewDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_queue")) {
-                    IconButton(onClick = onOpenQueue) {
+                    M3IconButton(onClick = onOpenQueue) {
                         Icon(
                             Icons.AutoMirrored.Filled.QueueMusic,
                             contentDescription = Localization.get(language, "queue"),
@@ -3477,7 +3476,7 @@ fun NewDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_open_full_player")) {
-                    IconButton(onClick = onOpenPlayer) {
+                    M3IconButton(onClick = onOpenPlayer) {
                         Icon(
                             Icons.Filled.Fullscreen,
                             contentDescription = Localization.get(language, "tooltip_open_full_player"),
@@ -3625,7 +3624,7 @@ fun AppleDesktopMiniPlayer(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Tooltip(Localization.get(language, "shuffle")) {
-                    IconButton(onClick = onToggleShuffle) {
+                    M3IconButton(onClick = onToggleShuffle) {
                         Icon(
                             Icons.Filled.Shuffle,
                             contentDescription = Localization.get(language, "shuffle"),
@@ -3635,7 +3634,7 @@ fun AppleDesktopMiniPlayer(
                     }
                 }
                 Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                    IconButton(onClick = onNext, enabled = !transportOff) {
+                    M3IconButton(onClick = onNext, enabled = !transportOff) {
                         Icon(
                             Icons.Filled.SkipNext,
                             contentDescription = Localization.get(language, "next"),
@@ -3645,7 +3644,7 @@ fun AppleDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "repeat")) {
-                    IconButton(onClick = onCycleRepeat) {
+                    M3IconButton(onClick = onCycleRepeat) {
                         Icon(
                             repeatIcon(repeatMode),
                             contentDescription = Localization.get(language, "repeat"),
@@ -3655,7 +3654,7 @@ fun AppleDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_lyrics")) {
-                    IconButton(onClick = onOpenLyrics) {
+                    M3IconButton(onClick = onOpenLyrics) {
                         Icon(
                             Icons.AutoMirrored.Filled.Subject,
                             contentDescription = Localization.get(language, "lyrics"),
@@ -3665,7 +3664,7 @@ fun AppleDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_queue")) {
-                    IconButton(onClick = onOpenQueue) {
+                    M3IconButton(onClick = onOpenQueue) {
                         Icon(
                             Icons.AutoMirrored.Filled.QueueMusic,
                             contentDescription = Localization.get(language, "queue"),
@@ -3675,7 +3674,7 @@ fun AppleDesktopMiniPlayer(
                     }
                 }
                 Tooltip(Localization.get(language, "tooltip_open_full_player")) {
-                    IconButton(onClick = onOpenPlayer) {
+                    M3IconButton(onClick = onOpenPlayer) {
                         Icon(
                             Icons.Filled.Fullscreen,
                             contentDescription = Localization.get(language, "tooltip_open_full_player"),
@@ -4048,7 +4047,7 @@ fun LyricsFocusScreen(
             // Listen Together: a guest's transport bar is grey and inert.
             val transportOff = transportLocked()
             Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_previous")) {
-                IconButton(onClick = onPrevious, enabled = !transportOff) {
+                M3IconButton(onClick = onPrevious, enabled = !transportOff) {
                     Icon(
                         Icons.Filled.SkipPrevious,
                         contentDescription = Localization.get(language, "previous"),
@@ -4067,16 +4066,18 @@ fun LyricsFocusScreen(
                         containerColor = MaterialTheme.colorScheme.primary,
                     ),
                 ) {
-                    Icon(
-                        if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                        contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                        modifier = Modifier.size(30.dp),
-                    )
+                    LiftedGlyph(enabled = !transportOff) {
+                        Icon(
+                            if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                            contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
+                            modifier = Modifier.size(30.dp),
+                        )
+                    }
                 }
             }
             Spacer(Modifier.width(20.dp))
             Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                IconButton(onClick = onNext, enabled = !transportOff) {
+                M3IconButton(onClick = onNext, enabled = !transportOff) {
                     Icon(
                         Icons.Filled.SkipNext,
                         contentDescription = Localization.get(language, "next"),

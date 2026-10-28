@@ -26,7 +26,7 @@ import androidx.compose.ui.window.PopupPositionProvider
  *
  * Usage:
  *   Tooltip("Play") {
- *       IconButton(onClick = ...) { Icon(...) }
+ *       M3IconButton(onClick = ...) { Icon(...) }
  *   }
  *
  * Pass `null` to disable the tooltip.

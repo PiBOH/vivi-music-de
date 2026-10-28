@@ -99,7 +99,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.OutlinedTextField
@@ -1469,7 +1468,7 @@ fun ContentSection(
                 trailing = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Tooltip("Move up") {
-                            IconButton(
+                            M3IconButton(
                                 onClick = {
                                     if (index > 0) {
                                         val next = providerOrder.toMutableList()
@@ -1484,7 +1483,7 @@ fun ContentSection(
                             }
                         }
                         Tooltip("Move down") {
-                            IconButton(
+                            M3IconButton(
                                 onClick = {
                                     if (index < providerOrder.lastIndex) {
                                         val next = providerOrder.toMutableList()
@@ -3198,7 +3197,7 @@ fun SettingsEqualizerScreen(
                                 ) {
                                     RadioButton(selected = activeProfileId == profile.id, onClick = null)
                                     Tooltip(Localization.get(language, "delete_profile_desc")) {
-                                        IconButton(
+                                        M3IconButton(
                                             onClick = { deleteTarget = profile },
                                             modifier = Modifier.size(40.dp),
                                         ) {
@@ -4279,7 +4278,7 @@ fun SettingsScreen(
                     leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                     trailingIcon = {
                         Tooltip(Localization.get(language, "dismiss")) {
-                            IconButton(onClick = { searchActive = false; searchQuery = "" }) {
+                            M3IconButton(onClick = { searchActive = false; searchQuery = "" }) {
                                 Icon(Icons.Filled.Close, contentDescription = Localization.get(language, "dismiss"))
                             }
                         }
@@ -4287,7 +4286,7 @@ fun SettingsScreen(
                 )
             } else {
                 Tooltip(Localization.get(language, "search")) {
-                    IconButton(onClick = { searchActive = true }) {
+                    M3IconButton(onClick = { searchActive = true }) {
                         Icon(Icons.Filled.Search, contentDescription = Localization.get(language, "search"))
                     }
                 }

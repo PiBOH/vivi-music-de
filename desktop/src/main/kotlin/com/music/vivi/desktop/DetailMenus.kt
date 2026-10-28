@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,7 +72,7 @@ fun DetailMenu(
     var expanded by remember { mutableStateOf(false) }
     Box {
         Tooltip(Localization.get(language, "tooltip_more")) {
-            IconButton(onClick = { expanded = true }) {
+            M3IconButton(onClick = { expanded = true }) {
                 Icon(
                     Icons.Filled.MoreVert,
                     contentDescription = Localization.get(language, "more"),

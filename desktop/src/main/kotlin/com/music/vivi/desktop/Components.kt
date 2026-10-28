@@ -46,7 +46,6 @@ import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Button
@@ -473,7 +472,7 @@ fun SongRow(
         }
         if (onAddToPlaylist != null) {
             Tooltip(Localization.get(language, "add_to_playlist")) {
-                IconButton(onClick = onAddToPlaylist) {
+                M3IconButton(onClick = onAddToPlaylist) {
                     Icon(
                         Icons.AutoMirrored.Filled.PlaylistAdd,
                         contentDescription = Localization.get(language, "add_to_playlist"),

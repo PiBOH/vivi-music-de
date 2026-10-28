@@ -29,7 +29,6 @@ import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -186,7 +185,7 @@ fun ListenTogetherChatWindowContent(
             // already has: the window is opened from the room and from a
             // keyboard shortcut, so it has to be as easy to put away as it is
             // to bring up (the shortcut toggles it too).
-            IconButton(onClick = onClose) {
+            M3IconButton(onClick = onClose) {
                 Icon(
                     Icons.Filled.Close,
                     contentDescription = Localization.get(language, "close"),
@@ -252,7 +251,7 @@ fun ListenTogetherChatWindowContent(
                             )
                         }
                     }
-                    IconButton(onClick = { replyTarget = null }) {
+                    M3IconButton(onClick = { replyTarget = null }) {
                         Icon(
                             Icons.Filled.Close,
                             contentDescription = Localization.get(language, "cancel"),
@@ -298,10 +297,12 @@ fun ListenTogetherChatWindowContent(
                     containerColor = MaterialTheme.colorScheme.primary,
                 ),
             ) {
-                Icon(
-                    Icons.Filled.Send,
-                    contentDescription = Localization.get(language, "lt_send_message"),
-                )
+                LiftedGlyph(enabled = input.isNotBlank()) {
+                    Icon(
+                        Icons.Filled.Send,
+                        contentDescription = Localization.get(language, "lt_send_message"),
+                    )
+                }
             }
         }
     }
@@ -531,7 +532,7 @@ private fun ReplyAffordance(
 ) {
     Box(Modifier.size(32.dp), contentAlignment = Alignment.Center) {
         if (hovered) {
-            IconButton(onClick = onReply, modifier = Modifier.size(28.dp)) {
+            M3IconButton(onClick = onReply, modifier = Modifier.size(28.dp)) {
                 Icon(
                     Icons.AutoMirrored.Filled.Reply,
                     contentDescription = Localization.get(language, "lt_reply"),

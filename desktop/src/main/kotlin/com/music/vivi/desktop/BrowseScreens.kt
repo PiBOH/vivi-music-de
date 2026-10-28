@@ -68,7 +68,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import java.time.LocalTime
 
@@ -251,7 +250,7 @@ fun HomeScreen(
                     }
 
                     Tooltip(Localization.get(language, "tooltip_notifications")) {
-                        IconButton(
+                        M3IconButton(
                             onClick = { AppLog.click("Home notifications") /* Home hub / notifications */ },
                             colors = IconButtonDefaults.iconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -455,7 +454,7 @@ fun HomeScreen(
                             val endpoint = section.endpoint
                             if (endpoint != null) {
                                 Tooltip(Localization.get(language, "see_all")) {
-                                    IconButton(
+                                    M3IconButton(
                                         onClick = {
                                             AppLog.click("Home see all '${section.title}'")
                                             onOpenBrowse(endpoint.browseId, endpoint.params)

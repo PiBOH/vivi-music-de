@@ -104,7 +104,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -3873,7 +3872,7 @@ fun MiniPlayer(
                         Spacer(Modifier.width(6.dp))
                     }
                     Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, if (isPlaying) "pause" else "play")) {
-                        IconButton(onClick = onTogglePlay, enabled = !transportOff) {
+                        M3IconButton(onClick = onTogglePlay, enabled = !transportOff) {
                             if (isLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
@@ -3893,7 +3892,7 @@ fun MiniPlayer(
                         }
                     }
                     Tooltip(if (transportOff) guestLockTooltip(language) else Localization.get(language, "tooltip_next")) {
-                        IconButton(onClick = onNext, enabled = !transportOff) {
+                        M3IconButton(onClick = onNext, enabled = !transportOff) {
                             Icon(
                                 Icons.Filled.SkipNext,
                                 contentDescription = "Next",
@@ -3905,7 +3904,7 @@ fun MiniPlayer(
                         }
                     }
                     Tooltip(Localization.get(language, "tooltip_queue")) {
-                        IconButton(onClick = onOpenQueue) {
+                        M3IconButton(onClick = onOpenQueue) {
                             Icon(
                                 Icons.AutoMirrored.Filled.QueueMusic,
                                 contentDescription = "Queue",
@@ -4091,7 +4090,7 @@ fun BoxScope.UpdateNotification(
                 )
             }
             Tooltip(Localization.get(language, "dismiss")) {
-                IconButton(onClick = onDismiss) {
+                M3IconButton(onClick = onDismiss) {
                     Icon(Icons.Filled.Close, contentDescription = Localization.get(language, "dismiss"))
                 }
             }

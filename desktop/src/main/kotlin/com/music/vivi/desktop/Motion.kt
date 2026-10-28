@@ -10,6 +10,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -320,6 +324,48 @@ fun Modifier.iconHoverLift(
 ): Modifier = graphicsLayer {
     translationY = -lift.toPx() * progress
     rotationZ = degrees * progress
+}
+
+/**
+ * The glyph movement of one icon button, wrapped around its content.
+ *
+ * Every icon button in the DE draws its glyph through this: the movement is one
+ * composable instead of a modifier copied into seventy call sites, and a glyph
+ * added later cannot be drawn without it. It is what [M3IconButton] uses, and
+ * the two `FilledIconButton`s that are not that wrapper use it directly.
+ */
+@Composable
+fun LiftedGlyph(enabled: Boolean = true, content: @Composable () -> Unit) {
+    Box(Modifier.iconHoverLift(enabled = enabled, label = "iconGlyph")) { content() }
+}
+
+/**
+ * Material's `IconButton` with the glyph movement every icon in the DE makes.
+ *
+ * Same click target, ripple, state layers, colours and content padding as
+ * `IconButton` (it is the same composable underneath); the only thing this adds
+ * is [LiftedGlyph] around the content, so the pointer lifts and turns the glyph
+ * the way Orion-Store's `.rel-icon` does. It exists because the icon buttons were
+ * the one surface where the pointer did nothing to the glyph at all.
+ */
+@Composable
+fun M3IconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        colors = colors,
+        interactionSource = interactionSource,
+    ) {
+        LiftedGlyph(enabled = enabled, content = content)
+    }
 }
 
 /**

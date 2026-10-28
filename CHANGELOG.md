@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.3-beta] - 2026-10-28
+
+### ✨ Added
+- [DE] **Every icon button in the desktop edition lifts and turns its glyph under the pointer.** The movement existed only on the player's transport and the round glass buttons, so the app's icon buttons - the top bar, the rows' trailing actions, the dialogs' close buttons, Listen Together's approve and reject, the window controls - were the one surface where the pointer did nothing to the glyph. All 76 `IconButton` call sites in the 16 files that held them are drawn through `M3IconButton` now: the same composable underneath, with the same click target, ripple, state layers, colours and padding, whose content sits inside `LiftedGlyph` (2 dp up and -6 degrees on the 0,6 s decelerating curve, `Modifier.iconHoverLift`). One wrapper decides the movement instead of a modifier copied 76 times, and a glyph added later cannot be drawn without it; the two buttons that are not that wrapper (Listen Together's send and the Basic player's play, both `FilledIconButton`) wrap their glyph in `LiftedGlyph` themselves, with the same `enabled` their button has. The unused `androidx.compose.material3.IconButton` imports went with the rename. **Measured:** `:desktop:compileKotlin` and `:desktop:compileTestKotlin` pass, `:desktop:motionCheck` exits 0 with `icon hover: 416 px differ between rest and lifted`, and the UI preview mirrors it: a `:is(...)` rule over its icon-button classes reads 0,6 s / `cubic-bezier(0.05, 0.7, 0.1, 1)` on a top-bar icon, a labelled `rail-row` keeps a still glyph, and `motion_check.mjs` and `styles_check.mjs` exit 0. **Watch:** a new icon button is an `M3IconButton`, never a bare `IconButton`, and a button of another M3 family wraps its glyph in `LiftedGlyph`. **Open sub-item:** nothing here can hover a button headlessly, so the movement is verified through its rendered end state and the preview's computed style, not by moving a pointer over every one of the 78 buttons.
+
 ## [6.0.8.11_DE-1.56.2-beta] - 2026-10-28
 
 ### 🐛 Fixed
