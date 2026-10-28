@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -140,9 +141,13 @@ internal fun LtAvatar(
 ) {
     val file = LT_AVATARS.getOrNull(avatarIndex).orEmpty()
     val bitmap = if (file.isEmpty()) null else remember(file) { LtAvatarImages.load(file) }
+    // The clover answers the pointer on its own: a room's avatar is a small
+    // target inside a list, so it grows a little when the mouse is on it.
+    val interaction = remember { MutableInteractionSource() }
     Box(
         Modifier
             .size(size.dp)
+            .hoverGrow(interaction, grow = 0.06f, label = "ltAvatarHover")
             .clip(CookieShapes.clover)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer

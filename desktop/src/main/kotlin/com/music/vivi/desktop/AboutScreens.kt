@@ -202,11 +202,18 @@ fun AboutSection(
                 icon = null,
                 leading = authorImage?.let { image ->
                     {
+                        // The author's cookie is inside the row, so it answers the
+                        // pointer where the row does: hovering anywhere on it grows
+                        // the face, not only the 34 dp the picture covers.
+                        val grow = Motion.hoverProgress(LocalRowHovered.current, label = "authorCookieHover")
                         Image(
                             bitmap = image,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(34.dp).clip(CookieShapes.nineSided),
+                            modifier = Modifier
+                                .size(34.dp)
+                                .hoverGrow(grow, grow = 0.08f)
+                                .clip(CookieShapes.nineSided),
                         )
                     }
                 },
@@ -337,7 +344,10 @@ private fun contributorRow(contributor: ContributorEntry): M3SettingsItem {
  */
 @Composable
 private fun ContributorAvatar(username: String, realName: String?, title: String) {
-    Box(Modifier.size(34.dp), contentAlignment = Alignment.Center) {
+    // Hovering the person's row grows the cookie by the same movement everywhere
+    // on the row: the shape is what says "a person", so it is what answers.
+    val grow = Motion.hoverProgress(LocalRowHovered.current, label = "contributorCookieHover")
+    Box(Modifier.size(34.dp).hoverGrow(grow, grow = 0.08f), contentAlignment = Alignment.Center) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

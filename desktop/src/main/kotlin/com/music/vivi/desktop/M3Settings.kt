@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +40,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -442,6 +444,16 @@ private fun M3SettingsItemRow(
     // trailing slot (value + arrow) and the menu is right-aligned to it, which is
     // what Material's own exposed menus do. Both edges are read in window
     // coordinates so a row inside a scroll column measures the same way.
+    // The pointer's acknowledgement: M3's 8 % hover state layer, faded in and out
+    // on the effects spring. The row is the one surface a settings screen repeats
+    // dozens of times, so the layer is what tells the pointer it is on a control
+    // before the click; `LocalRowHovered` carries the same state to what the row
+    // draws (a person's cookie grows, a cover lifts a little).
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val interactive = item.enabled && (dropdown != null || item.onClick != null)
+    val hover = Motion.hoverProgress(hovered, enabled = interactive, label = "settingsRowHover")
+
     val density = LocalDensity.current
     var rowLeftPx by remember { mutableStateOf(0f) }
     var trailingRightPx by remember { mutableStateOf(0f) }
@@ -455,89 +467,94 @@ private fun M3SettingsItemRow(
             .fillMaxWidth()
             .onGloballyPositioned { rowLeftPx = it.boundsInWindow().left },
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    enabled = item.enabled && (dropdown != null || item.onClick != null),
-                    onClick = {
-                        if (dropdown != null) expanded = true else item.onClick?.invoke()
-                    },
-                )
-                .let {
-                    if (minHeight != null) it.heightIn(min = minHeight) else it
-                }
-                .padding(horizontal = 17.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (item.leading != null) {
-                item.leading()
-                Spacer(Modifier.width(13.dp))
-            } else if (item.icon != null) {
-                Box(
-                    modifier = Modifier
-                        .size(34.dp)
-                        .clip(MaterialTheme.shapes.small)
-                        .background(
-                            MaterialTheme.colorScheme.primary.copy(alpha = if (item.enabled) 0.1f else 0.05f),
-                        ),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = item.icon,
-                        contentDescription = null,
-                        tint = if (!item.enabled) {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        } else {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+        CompositionLocalProvider(LocalRowHovered provides (hovered && interactive)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        enabled = interactive,
+                        interactionSource = interaction,
+                        indication = ripple(),
+                        onClick = {
+                            if (dropdown != null) expanded = true else item.onClick?.invoke()
                         },
-                        modifier = Modifier.size(20.dp),
                     )
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f * hover))
+                    .let {
+                        if (minHeight != null) it.heightIn(min = minHeight) else it
+                    }
+                    .padding(horizontal = 17.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (item.leading != null) {
+                    item.leading()
+                    Spacer(Modifier.width(13.dp))
+                } else if (item.icon != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = if (item.enabled) 0.1f else 0.05f),
+                            ),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = null,
+                            tint = if (!item.enabled) {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.9f)
+                            },
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    Spacer(Modifier.width(13.dp))
                 }
-                Spacer(Modifier.width(13.dp))
-            }
 
-            Column(Modifier.weight(1f)) {
-                ProvideTextStyle(
-                    MaterialTheme.typography.titleMedium.copy(
-                        color = if (!item.enabled) {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                    ),
-                ) {
-                    item.title()
-                }
-                item.description?.let { desc ->
-                    Spacer(Modifier.height(2.dp))
+                Column(Modifier.weight(1f)) {
                     ProvideTextStyle(
-                        MaterialTheme.typography.bodyMedium.copy(
+                        MaterialTheme.typography.titleMedium.copy(
                             color = if (!item.enabled) {
                                 MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                             } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
+                                MaterialTheme.colorScheme.onSurface
                             },
                         ),
                     ) {
-                        desc()
+                        item.title()
+                    }
+                    item.description?.let { desc ->
+                        Spacer(Modifier.height(2.dp))
+                        ProvideTextStyle(
+                            MaterialTheme.typography.bodyMedium.copy(
+                                color = if (!item.enabled) {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            ),
+                        ) {
+                            desc()
+                        }
+                    }
+                    item.slider?.let { control ->
+                        Spacer(Modifier.height(4.dp))
+                        control()
                     }
                 }
-                item.slider?.let { control ->
-                    Spacer(Modifier.height(4.dp))
-                    control()
-                }
-            }
 
-            if (item.trailing != null) {
-                Spacer(Modifier.width(7.dp))
-                Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
-                    item.trailing()
-                }
-            } else if (dropdown != null) {
-                Spacer(Modifier.width(7.dp))
-                Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
-                    M3DropdownTrailing(dropdown.value)
+                if (item.trailing != null) {
+                    Spacer(Modifier.width(7.dp))
+                    Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
+                        item.trailing()
+                    }
+                } else if (dropdown != null) {
+                    Spacer(Modifier.width(7.dp))
+                    Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
+                        M3DropdownTrailing(dropdown.value)
+                    }
                 }
             }
         }

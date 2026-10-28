@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -517,7 +518,10 @@ internal fun NowPlayingBars(
         val animated by transition.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart),
+            animationSpec = infiniteRepeatable(
+                tween(Animations.ms(Motion.EXTRA_LONG3), easing = Motion.linear),
+                RepeatMode.Restart,
+            ),
             label = "npBarsPhase",
         )
         animated
@@ -1104,14 +1108,17 @@ fun M3SettingsSlider(
     var pressed by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val hovered by interactionSource.collectIsHoveredAsState()
+    // The state layer is an effect (it must not overshoot), the handle's own
+    // growth is a movement (the spatial spring gives a press its trace of
+    // overshoot). Both are off with the master switch, like every transition.
     val stateLayer by animateFloatAsState(
         targetValue = if (pressed) 0.10f else if (hovered && enabled) 0.08f else 0f,
-        animationSpec = tween(120),
+        animationSpec = if (Animations.instant) snap() else Motion.effectsFast<Float>(),
         label = "sliderStateLayer",
     )
     val handleWidth by animateFloatAsState(
         targetValue = if (pressed) 8f else 4f,
-        animationSpec = tween(120),
+        animationSpec = if (Animations.instant) snap() else Motion.spatialFast<Float>(),
         label = "sliderHandleWidth",
     )
 

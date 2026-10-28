@@ -2,10 +2,8 @@ package com.music.vivi.desktop
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
@@ -20,15 +18,22 @@ import androidx.compose.ui.unit.IntSize
 import kotlin.math.roundToInt
 
 /**
- * Global UI animation-speed control ("Animation speed": Fast / Normal / Slow).
+ * The app's transitions, built out of the Material 3 motion tokens in [Motion].
  *
- * The value is cached in memory ([speed]) so scaling an animation duration never
- * touches the settings file: it is loaded once at startup and refreshed by the
- * settings screen when the user changes it. [ms] scales a base duration, [f] a
- * tween/spring fraction, so any transition can opt in.
+ * Two settings reach all of them. "Animation speed" (Fast / Normal / Slow) is a
+ * multiplier on every duration: the value is cached in memory ([speed]) so
+ * scaling a duration never touches the settings file, loaded once at startup
+ * and refreshed by the settings screen. "Animations" is the master switch
+ * ([enabled]): off makes every transition below instant instead of merely
+ * faster.
  *
- * [enabled] mirrors the master "Animations" switch: when it is off, the panel
- * and player transitions below become instant instead of being merely faster.
+ * The durations here are token steps ([Motion.SHORT3], [Motion.SHORT4],
+ * [Motion.MEDIUM1], ...), never a number of its own, and the direction of a
+ * movement picks the curve: something arriving decelerates into place
+ * ([Motion.emphasizedDecelerate]), something leaving accelerates out of it
+ * ([Motion.emphasizedAccelerate]). A movement that does both - a size that
+ * changes under the pointer - stays on the emphasized curve, which begins and
+ * ends on screen.
  */
 object Animations {
 
@@ -62,30 +67,34 @@ object Animations {
     fun ms(base: Long): Long = ms(base.toInt()).toLong()
 
     /**
-     * Material 3 Expressive "emphasized decelerate": the curve the expressive
-     * motion system uses for anything arriving on screen. It leaves the start
-     * quickly and settles slowly, which is what makes a panel feel like it
-     * belongs to the finger that pulled it. Plain Material 3 used
-     * `FastOutSlowInEasing` here, whose slow start is the part the expressive
-     * style replaced.
+     * The emphasized-decelerate token: what a surface arriving on screen uses.
+     *
+     * This used to be `CubicBezierEasing(0.2, 0, 0, 1)`, which is the plain
+     * `emphasized` curve; the decelerating token is a different curve, and it is
+     * the one that leaves quickly and settles slowly - the part that makes a
+     * panel feel like it belongs to the pointer that pulled it.
      */
-    val emphasizedDecelerate: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    val emphasizedDecelerate: Easing = Motion.emphasizedDecelerate
+
+    /** The curve of something leaving the screen. */
+    val emphasizedAccelerate: Easing = Motion.emphasizedAccelerate
 
     /**
-     * Material-expressive spring for the panels: a light overshoot on the way
-     * in and no bounce on the way out. [damping] < 1 makes it expressive.
+     * Material-expressive spring for the panels.
+     *
+     * It is [Motion.spatialDefault] with the caller's own threshold, kept as a
+     * named entry point because the panels pass visibility thresholds of their
+     * own (`IntSize(1, 0)`, `IntOffset(0, 24)`): a threshold is what tells the
+     * animation when it has arrived, so a panel does not keep springing for a
+     * pixel it cannot show.
      */
-    fun <T> expressiveSpring(damping: Float = 0.75f, stiffness: Float = 380f, threshold: T? = null): FiniteAnimationSpec<T> =
-        spring(
-            dampingRatio = damping,
-            stiffness = stiffness,
-            visibilityThreshold = threshold,
-        )
+    fun <T> expressiveSpring(threshold: T? = null): FiniteAnimationSpec<T> =
+        Motion.spatialDefault(threshold)
 
     // ------------------------------------------------------------------
     // Shared panel transitions (sidebar, right panel, bottom bar, player)
     // ------------------------------------------------------------------
-    // Before this, each surface animated with its own default spec — the
+    // Before this, each surface animated with its own default spec - the
     // sidebar used a bare `expandHorizontally()`, the right Now Playing panel
     // appeared and disappeared with no transition at all, and none of them
     // followed either the master switch or the speed setting. They all go
@@ -98,15 +107,15 @@ object Animations {
         else expandHorizontally(
             animationSpec = expressiveSpring(threshold = IntSize(1, 0)),
             expandFrom = androidx.compose.ui.Alignment.Start,
-        ) + fadeIn(animationSpec = tween(ms(180)))
+        ) + fadeIn(animationSpec = tween(ms(Motion.SHORT4), easing = Motion.standardDecelerate))
 
     /** Collapses a panel sideways. */
     fun panelExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else shrinkHorizontally(
-            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
+            animationSpec = tween(ms(Motion.SHORT3), easing = emphasizedAccelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Start,
-        ) + fadeOut(animationSpec = tween(ms(140)))
+        ) + fadeOut(animationSpec = tween(ms(Motion.SHORT2), easing = Motion.standardAccelerate))
 
     /** Raises a surface from the bottom (the player expanding out of the bar). */
     fun playerEnter(): EnterTransition =
@@ -114,7 +123,7 @@ object Animations {
         else slideInVertically(
             animationSpec = expressiveSpring(threshold = IntOffset(0, 24)),
             initialOffsetY = { it / 8 },
-        ) + fadeIn(animationSpec = tween(ms(200))) + expandVertically(
+        ) + fadeIn(animationSpec = tween(ms(Motion.SHORT4), easing = Motion.standardDecelerate)) + expandVertically(
             animationSpec = expressiveSpring(threshold = IntSize(0, 12)),
             expandFrom = androidx.compose.ui.Alignment.Bottom,
         )
@@ -123,10 +132,10 @@ object Animations {
     fun playerExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else slideOutVertically(
-            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedAccelerate),
             targetOffsetY = { it / 8 },
-        ) + fadeOut(animationSpec = tween(ms(160))) + shrinkVertically(
-            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
+        ) + fadeOut(animationSpec = tween(ms(Motion.SHORT3))) + shrinkVertically(
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedAccelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Bottom,
         )
 
@@ -142,15 +151,15 @@ object Animations {
         else expandVertically(
             animationSpec = expressiveSpring(threshold = IntSize(0, 1)),
             expandFrom = androidx.compose.ui.Alignment.Top,
-        ) + fadeIn(animationSpec = tween(ms(160)))
+        ) + fadeIn(animationSpec = tween(ms(Motion.SHORT3), easing = Motion.standardDecelerate))
 
     /** Collapses a section that grows downwards. */
     fun sectionExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else shrinkVertically(
-            animationSpec = tween(ms(150), easing = emphasizedDecelerate),
+            animationSpec = tween(ms(Motion.SHORT3), easing = emphasizedAccelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Top,
-        ) + fadeOut(animationSpec = tween(ms(120)))
+        ) + fadeOut(animationSpec = tween(ms(Motion.SHORT2)))
 
     /**
      * A settings row that belongs to a switch, opening and closing inside its card.
@@ -159,10 +168,14 @@ object Animations {
      * once; a row that folds under the user's finger is measured against the row
      * under it, and a spring that settles on its own clock after the height looks
      * finished makes the card's bottom edge creep for another 250 ms. These two are
-     * one tween each, both [rowMs] long and on the same curve as the fade, so the
-     * height and the opacity land together: the row is never a half-height strip
-     * already painted at full strength. [rowMs] is also what the card's bottom
-     * corners animate over, so the two movements are one.
+     * one tween each, both [rowMs] long, so the height and the opacity land
+     * together: the row is never a half-height strip already painted at full
+     * strength. [rowMs] is also what the card's bottom corners animate over, so
+     * the two movements are one.
+     *
+     * The two directions keep the token rule: the row unfolds on the
+     * decelerating curve and folds on the accelerating one. Same duration
+     * either way, which is what keeps the reverse a reverse.
      */
     /**
      * The two row transitions, built once per value of [enabled].
@@ -183,7 +196,7 @@ object Animations {
         return rowEnterTransition
     }
 
-    /** A settings row folding away: the same 200 ms as [rowEnter], in reverse. */
+    /** A settings row folding away: the same [rowMs] as [rowEnter], in reverse. */
     fun rowExit(): ExitTransition {
         buildRowTransitions()
         return rowExitTransition
@@ -204,14 +217,14 @@ object Animations {
             ExitTransition.None
         } else {
             shrinkVertically(
-                animationSpec = tween(rowMs(), easing = emphasizedDecelerate),
+                animationSpec = tween(rowMs(), easing = emphasizedAccelerate),
                 shrinkTowards = androidx.compose.ui.Alignment.Top,
-            ) + fadeOut(animationSpec = tween(rowMs(), easing = emphasizedDecelerate))
+            ) + fadeOut(animationSpec = tween(rowMs(), easing = emphasizedAccelerate))
         }
     }
 
     /** How long a settings row takes to fold (0 with the master switch off). */
-    fun rowMs(): Int = if (enabled) ms(200) else 0
+    fun rowMs(): Int = if (enabled) ms(Motion.SHORT4) else 0
 
     /**
      * The sign-in window button taking its leave.
@@ -231,10 +244,10 @@ object Animations {
     fun signInActionExit(): ExitTransition =
         if (!enabled) ExitTransition.None
         else slideOutVertically(
-            animationSpec = tween(ms(180), easing = emphasizedDecelerate),
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedAccelerate),
             targetOffsetY = { -it / 3 },
-        ) + fadeOut(animationSpec = tween(ms(140))) + shrinkVertically(
-            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+        ) + fadeOut(animationSpec = tween(ms(Motion.SHORT3))) + shrinkVertically(
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedAccelerate),
             shrinkTowards = androidx.compose.ui.Alignment.Top,
         )
 
@@ -242,15 +255,15 @@ object Animations {
     fun signInActionEnter(): EnterTransition =
         if (!enabled) EnterTransition.None
         else slideInVertically(
-            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedDecelerate),
             initialOffsetY = { -it / 3 },
-        ) + fadeIn(animationSpec = tween(ms(160))) + expandVertically(
-            animationSpec = tween(ms(200), easing = emphasizedDecelerate),
+        ) + fadeIn(animationSpec = tween(ms(Motion.SHORT3))) + expandVertically(
+            animationSpec = tween(ms(Motion.SHORT4), easing = emphasizedDecelerate),
             expandFrom = androidx.compose.ui.Alignment.Top,
         )
 
     /** Duration for an `animateDpAsState`/`animateFloatAsState` panel size (0 = instant). */
-    fun sizeMs(): Int = if (enabled) ms(220) else 0
+    fun sizeMs(): Int = if (enabled) ms(Motion.SHORT4) else 0
 
     /** True when a transition can be skipped entirely (master switch off). */
     val instant: Boolean get() = !enabled

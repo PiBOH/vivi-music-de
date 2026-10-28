@@ -738,6 +738,27 @@ tasks.register<JavaExec>("cookieShapesCheck") {
 }
 
 /**
+ * Headless check of the Material 3 motion tokens:
+ *
+ *     ./gradlew :desktop:motionCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/MotionCheck.kt`. The whole
+ * app moves on `Motion`, and a table that drifted from the published durations
+ * or curves would keep compiling and simply move differently. The check samples
+ * every easing token against its published control points, walks the sixteen
+ * duration steps, proves the Animation-speed setting still scales them, and
+ * paints `Modifier.hoverGrow` at rest and at its hovered end (the hovered shape
+ * must cover strictly more pixels).
+ */
+tasks.register<JavaExec>("motionCheck") {
+    group = "verification"
+    description = "Checks the M3 motion tokens and the hover movement headlessly"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.MotionCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Headless check of the Listen Together chat list:
  *
  *     ./gradlew :desktop:chatWindowRenderCheck
