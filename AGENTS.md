@@ -274,6 +274,23 @@ dependencies there, or you break the desktop build.
   the button's name. This applies to all new buttons and to existing buttons
   when touched; use the localized label when one exists, otherwise a short
   English name. Never show raw localization keys.
+- **A cut text says the whole of itself on hover (always):** a text the layout
+  has to truncate (an ellipsized line, a clamped title, a row too narrow for its
+  name) shows the full string while the pointer is on it, through the same
+  `Tooltip` composable as the bullet above, with the whole string as its text.
+  This applies to all new text and to existing text when touched: an ellipsis
+  with nothing behind it, or a name cut in half with no way to read the rest, is
+  a defect rather than a layout detail. The UI preview does it for every cut
+  text through `cutTextOf` (`js/chrome.js`), and `scroll_check.mjs` fails
+  when one has no tooltip.
+- **No visible scrollbar (always):** Compose's `verticalScroll`/`LazyColumn`
+  draw no bar, so the DE does not add one (the live log's own 10 dp bar is the
+  one deliberate exception, because it scrolls a stream of lines with no other
+  way to tell position). A pane or a list that needs a bar to be usable is the
+  wrong answer - the content is sized instead, and a text that does not fit
+  follows the hover rule above. The UI preview hides every bar for the same
+  reason (`css/base.css`), and `scroll_check.mjs` fails when one takes room in a
+  scroll box.
 - **Distinct icons for distinct actions (always):** do not reuse the same icon
   for different meanings in the DE. When a concept already has an icon, keep
   that icon everywhere it appears; when adding a new action, pick a new icon
@@ -284,6 +301,44 @@ dependencies there, or you break the desktop build.
   playlist entries/filter → `PlaylistPlay`, add-to-playlist → `PlaylistAdd`,
   right Now-Playing panel → `VerticalSplit`, library/albums → `LibraryMusic`,
   menu (⋯) → `MoreVert`, settings → `Settings`.
+- **Button emphasis: filled first, outlined last (always):** a clickable button
+  is never an `OutlinedButton` (or `md-button--outlined` in the UI preview)
+  unless the owner asks for one. Material 3 gives the hierarchy, and the DE
+  follows it:
+  - the main action of a screen, a card or an empty state → `Button` (filled,
+    `md-button--filled`);
+  - a peer action with no primary next to it, or the trigger of a menu/sheet
+    (`FilledTonalButton`, `md-button--tonal`);
+  - the second action beside a filled one (Play all + Shuffle all, Copy code +
+    Copy link, Continue + Back, New playlist + the bulk upload) → `TextButton`
+    (`md-button--text`): one filled button per action group, the rest are text
+    so the hierarchy does not flatten;
+  - a dismiss action in a dialog (Later, Cancel) → `TextButton`;
+  - a destructive action that stands alone (Clear history) → `TextButton`, as
+    the rest of the app draws its deletes in the `error` colour.
+  This rule is about buttons. Sliders, switches, chips, segmented buttons and
+  the drag handles of the sliders are not buttons and keep their own style.
+- **Icons, shape and colour come from the three Material 3 sources (always):**
+  where the design can use them, it uses these and nothing homemade.
+  - **Icons** - <https://fonts.google.com/icons> (Material Symbols), by name:
+    `canvas_art`, `queue_music`, `cloud_upload`. A name that is not in that
+    catalog is drawn as the words of the name, so a new icon is picked from the
+    catalog and never invented; the map of which icon means what is the bullet
+    above, and the UI preview proves every glyph ligates (`glyph_check.mjs`).
+  - **Shape** - <https://m3.material.io/styles/shape>: a corner comes from the
+    shape scale, which for this project is `MaterialTheme.shapes`
+    (`Shapes.extraSmall` 8, `small` 12, `medium` 16, `large` 20, `extraLarge`
+    28, plus `none` and `full`), or from the component's own token where the app
+    fixes the corner itself (the 24 dp settings card). A bare `14.dp` corner is
+    a defect: it is a level nobody can find again.
+  - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
+    role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
+    `outlineVariant`, ...), never with a literal value. Raw colours live in the
+    theme's palette alone (the UI preview's `css/tokens.css`), which is where
+    the generated palette and the content colours are declared with their
+    reason - the ink an artwork carries over an arbitrary hue, the colour
+    wheel's own spectrum, the theme-mode circles. `styles_check.mjs` fails on a
+    corner that is not a scale level and on a colour outside `tokens.css`.
 - **Expressive theme rule (always):** don't move away from expressive theme.
   You design it like the way the Spotify, Apple, etc. do, but don't move away
   from Material theme color.
