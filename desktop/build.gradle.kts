@@ -386,6 +386,20 @@ abstract class CdsArchiveTask : DefaultTask() {
                 ?: File(javaHome, "bin/java")
             val deployed = File(runtime, "bin/${launcher.name}").also {
                 launcher.copyTo(it, overwrite = true)
+                // `Files.copy` copies the bytes, not the mode: the copy lands with
+                // the process umask (644 on a runner), and a launcher that is not
+                // executable cannot be spawned at all. On Linux and macOS that made
+                // the very first `-Xshare:dump` fail with an IOException before the
+                // JVM printed anything, which is what held both desktop releases
+                // back. The bit is set for every user and not only the owner: the
+                // runtime image is shipped as it is, and the JVM inside it is
+                // expected to be startable by whoever unpacks the installer.
+                if (!it.setExecutable(true, false)) {
+                    throw GradleException(
+                        "The copied JDK launcher ${it.path} could not be made executable, so " +
+                            "-Xshare:dump cannot start.",
+                    )
+                }
                 copied += it
             }
             var result = runDump(deployed, target)

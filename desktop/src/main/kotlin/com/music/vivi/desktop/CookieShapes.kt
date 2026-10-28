@@ -1,5 +1,10 @@
 package com.music.vivi.desktop
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -37,6 +42,21 @@ import kotlin.math.tan
  */
 object CookieShapes {
 
+    /** Where a square's first vertex sits: 45 degrees of a flat edge, tilted 12. */
+    const val FOUR_SIDED_FIRST_VERTEX = 45f + 12f
+
+    /** A nonagon reads with a vertex up. */
+    const val NINE_SIDED_FIRST_VERTEX = 0f
+
+    /** Corner radius of the square, as a fraction of its side. */
+    const val SQUARE_CORNER = 0.30f
+
+    /** Corner radius of the nonagon, as a fraction of its side. */
+    const val COOKIE_CORNER = 0.52f
+
+    /** The clover's lobe at rest, as a fraction of the box. */
+    const val CLOVER_LOBE = 0.27f
+
     /**
      * The library's 4-sided cookie: a square with a nearly flat top, tilted 12
      * degrees. A square whose vertices point up is a diamond, which is the one
@@ -44,19 +64,103 @@ object CookieShapes {
      */
     val fourSided: Shape = RoundedPolygon(
         sides = 4,
-        firstVertexDegrees = 45f + 12f,
-        corner = 0.30f,
+        firstVertexDegrees = FOUR_SIDED_FIRST_VERTEX,
+        corner = SQUARE_CORNER,
     )
 
     /** The library's 9-sided cookie: a nonagon, one vertex up, corners rounded. */
     val nineSided: Shape = RoundedPolygon(
         sides = 9,
-        firstVertexDegrees = 0f,
-        corner = 0.52f,
+        firstVertexDegrees = NINE_SIDED_FIRST_VERTEX,
+        corner = COOKIE_CORNER,
     )
 
     /** The library's 4-leaf clover: four discs, one per side, met in the middle. */
-    val clover: Shape = FourLeafClover
+    val clover: Shape = FourLeafClover(CLOVER_LOBE)
+}
+
+/**
+ * How the cookies and the clover change under the pointer and when chosen.
+ *
+ * A cookie is a shape the app can *bend*, and that is what these three numbers
+ * are: a hover rounds its corners a little, so the shape softens toward whoever
+ * is looking at it, and a selected one both tightens its corners and turns by
+ * half a segment, so "this is the one" reads as a different shape and not only a
+ * different colour. The clover instead fills its lobes out, because its corners
+ * are a union rather than a polygon and it has no corner to round.
+ */
+private const val HOVER_ROUNDING = 0.55f
+private const val SELECTED_TIGHTENING = 0.30f
+private const val SELECTED_TURN = 0.50f
+private const val CLOVER_HOVER_GROWTH = 0.030f
+private const val CLOVER_SELECTED_GROWTH = 0.045f
+
+/**
+ * The 9-sided cookie of a person, morphed by the pointer and by selection.
+ *
+ * The two states ride different springs on purpose: a hover is an effect and
+ * answers at once on [Motion.effectsDefault], while a selection is a movement
+ * and settles on [Motion.spatialDefault]. Both are off with the `Animations`
+ * master switch, and the shape is rebuilt only when the geometry really moved,
+ * so a still row recomposes nothing.
+ */
+@Composable
+fun rememberPersonCookie(hovered: Boolean, selected: Boolean = false, label: String = "personCookie"): Shape =
+    rememberCookieShape(
+        sides = 9,
+        firstVertexDegrees = CookieShapes.NINE_SIDED_FIRST_VERTEX,
+        corner = CookieShapes.COOKIE_CORNER,
+        hovered = hovered,
+        selected = selected,
+        label = label,
+    )
+
+/** The 4-sided cookie of an artist, morphed by the pointer. */
+@Composable
+fun rememberArtistCookie(hovered: Boolean, selected: Boolean = false, label: String = "artistCookie"): Shape =
+    rememberCookieShape(
+        sides = 4,
+        firstVertexDegrees = CookieShapes.FOUR_SIDED_FIRST_VERTEX,
+        corner = CookieShapes.SQUARE_CORNER,
+        hovered = hovered,
+        selected = selected,
+        label = label,
+    )
+
+/** A regular polygon cookie at one point of its morph. */
+@Composable
+fun rememberCookieShape(
+    sides: Int,
+    firstVertexDegrees: Float,
+    corner: Float,
+    hovered: Boolean,
+    selected: Boolean = false,
+    label: String = "cookie",
+): Shape {
+    val hover = Motion.hoverProgress(hovered, label = "$label-hover")
+    val picked by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = if (Animations.instant) snap() else Motion.spatialDefault<Float>(),
+        label = "$label-selected",
+    )
+    val morphed = corner * (1f + HOVER_ROUNDING * hover - SELECTED_TIGHTENING * picked)
+    val turn = 360f / sides * SELECTED_TURN * picked
+    return remember(sides, firstVertexDegrees, morphed, turn) {
+        RoundedPolygon(sides, firstVertexDegrees + turn, morphed)
+    }
+}
+
+/** A Listen Together avatar's clover, morphed by the pointer and by selection. */
+@Composable
+fun rememberCloverShape(hovered: Boolean, selected: Boolean = false, label: String = "clover"): Shape {
+    val hover = Motion.hoverProgress(hovered, label = "$label-hover")
+    val picked by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = if (Animations.instant) snap() else Motion.spatialDefault<Float>(),
+        label = "$label-selected",
+    )
+    val lobe = CookieShapes.CLOVER_LOBE + CLOVER_HOVER_GROWTH * hover + CLOVER_SELECTED_GROWTH * picked
+    return remember(lobe) { FourLeafClover(lobe) }
 }
 
 /**
@@ -87,8 +191,15 @@ private class RoundedPolygon(
         val side = hypot(vertices[0].x - vertices[1].x, vertices[0].y - vertices[1].y)
         // The tangent a corner of radius r takes on a regular polygon's interior
         // angle: t = r / tan(interior / 2), with r as a fraction of the side.
+        //
+        // A morphed shape can ask for a very round corner, and past a point the
+        // two tangents of one side meet and cross: the outline would fold over
+        // itself. The fraction is capped where they would: 2t <= side, i.e.
+        // corner <= tan(interior / 2) / 2, which for a square is 0.49 and for a
+        // nonagon is over 1 and never reached.
         val interior = PI.toFloat() * (sides - 2) / sides
-        val tangent = (side * corner) / tan(interior / 2f)
+        val safeCorner = corner.coerceIn(0.02f, tan(interior / 2f) / 2f * 0.98f)
+        val tangent = (side * safeCorner) / tan(interior / 2f)
 
         val corners = vertices.mapIndexed { index, vertex ->
             Triple(
@@ -134,11 +245,11 @@ private class RoundedPolygon(
  * the box: that is what leaves a notch between two leaves (at a third of the
  * box the discs overlap so far that the silhouette reads as one blob).
  */
-private object FourLeafClover : Shape {
+private class FourLeafClover(private val fraction: Float) : Shape {
 
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
         if (size.width <= 0f || size.height <= 0f) return Outline.Generic(Path())
-        val lobe = min(size.width, size.height) * 0.27f
+        val lobe = min(size.width, size.height) * fraction
         val centres = listOf(
             Offset(size.width / 2f, lobe),
             Offset(size.width - lobe, size.height / 2f),

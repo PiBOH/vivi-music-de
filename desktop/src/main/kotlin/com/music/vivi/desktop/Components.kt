@@ -348,16 +348,20 @@ private fun subtitleOf(item: YTItem): String = when (item) {
 @Composable
 fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier: Modifier = Modifier) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
-    Column(root.then(modifier).clickable(onClick = {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val artistCookie = rememberArtistCookie(hovered, label = "artistCardCookie")
+    Column(root.then(modifier).hoverable(interaction).clickable(onClick = {
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
         // An artist is a cookie, a song and an album are the scale's own corner:
-        // the shape is what says "this is a person" before the name is read.
+        // the shape is what says "this is a person" before the name is read, and
+        // the cookie rounds its corners while the pointer is on the card.
         Thumbnail(
             item.thumbnail,
             Modifier.fillMaxWidth().aspectRatio(1f),
-            shape = if (item is ArtistItem) CookieShapes.fourSided else MaterialTheme.shapes.extraSmall,
+            shape = if (item is ArtistItem) artistCookie else MaterialTheme.shapes.extraSmall,
         )
         Tooltip(item.title) {
             Text(
@@ -405,9 +409,16 @@ fun SongRow(
     val playback = LocalPlayback.current
     val isCurrent = song.id == playback.videoId
     val accent = MaterialTheme.colorScheme.primary
+    // A song's cover is the 4-sided cookie, and it rounds its corners under the
+    // pointer: the row is the hover target, so the shape answers wherever on the
+    // row the mouse is rather than only over its 48 dp.
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val cover = rememberArtistCookie(hovered, label = "songCookie")
     Row(
         Modifier
             .fillMaxWidth()
+            .hoverable(interaction)
             .clickable(onClick = {
                 AppLog.click("song '${song.title}'")
                 onClick()
@@ -422,7 +433,7 @@ fun SongRow(
         // that is already tinted it was hard to tell the song was the one
         // playing.
         Box(Modifier.size(48.dp)) {
-            Thumbnail(song.thumbnail, Modifier.fillMaxSize(), shape = CookieShapes.fourSided)
+            Thumbnail(song.thumbnail, Modifier.fillMaxSize(), shape = cover)
             if (isCurrent) {
                 NowPlayingBars(
                     audioLevel = playback.audioLevel,

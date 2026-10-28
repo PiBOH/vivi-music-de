@@ -6,7 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -141,21 +143,27 @@ internal fun LtAvatar(
 ) {
     val file = LT_AVATARS.getOrNull(avatarIndex).orEmpty()
     val bitmap = if (file.isEmpty()) null else remember(file) { LtAvatarImages.load(file) }
-    // The clover answers the pointer on its own: a room's avatar is a small
-    // target inside a list, so it grows a little when the mouse is on it.
+    // The clover answers the pointer on its own (a room's avatar is a small
+    // target inside a list), and it changes shape rather than only size: hover
+    // fills its lobes out, and the chosen one fills them further, so the picker
+    // says which face is selected by its silhouette too.
     val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val grow = Motion.hoverProgress(hovered, label = "ltAvatarHover")
+    val clover = rememberCloverShape(hovered = hovered, selected = selected, label = "ltAvatarClover")
     Box(
         Modifier
             .size(size.dp)
-            .hoverGrow(interaction, grow = 0.06f, label = "ltAvatarHover")
-            .clip(CookieShapes.clover)
+            .hoverable(interaction)
+            .hoverGrow(grow, grow = 0.06f)
+            .clip(clover)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerHighest,
             )
             .then(
-                if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CookieShapes.clover)
-                else Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, CookieShapes.clover),
+                if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, clover)
+                else Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, clover),
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -169,7 +177,7 @@ internal fun LtAvatar(
                 // a reduced face look pixelated; High is trilinear, so the small
                 // circle is a smooth reduction of the big file.
                 filterQuality = FilterQuality.High,
-                modifier = Modifier.fillMaxSize().clip(CookieShapes.clover),
+                modifier = Modifier.fillMaxSize().clip(clover),
             )
             // Index 0, and the fallback for a picture that could not be read.
             avatarIndex == 0 || file.isEmpty() -> Text(

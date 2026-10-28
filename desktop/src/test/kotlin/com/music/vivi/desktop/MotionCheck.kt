@@ -139,9 +139,21 @@ object MotionCheck {
             failures += "the hovered cookie covers $atHover px, not more than the $atRest px at rest"
         }
 
+        // 5. The morph itself: the outline has to change, not only the size.
+        //    Each state is painted at the same 80 dp in the same box, with no
+        //    scale modifier, so any difference between two renders is the shape.
+        val stillShape = painted(renderMorphed("cookie-morph-rest", hovered = false, selected = false))
+        val hoverShape = painted(renderMorphed("cookie-morph-hovered", hovered = true, selected = false))
+        val chosenShape = painted(renderMorphed("cookie-morph-selected", hovered = false, selected = true))
+        println("morph: rest=$stillShape px, hovered=$hoverShape px, selected=$chosenShape px")
+        if (stillShape <= 0) failures += "the morphed cookie painted nothing at rest, so the morph is untested"
+        if (hoverShape == stillShape) failures += "a hover left the cookie's outline unchanged ($stillShape px both times)"
+        if (chosenShape == stillShape) failures += "a selection left the cookie's outline unchanged ($stillShape px both times)"
+        if (chosenShape == hoverShape) failures += "a selection and a hover draw the same cookie ($hoverShape px both times)"
+
         if (failures.isEmpty()) {
             println()
-            println("OK: the M3 duration and easing tokens, the speed setting and the hover grow")
+            println("OK: the M3 duration and easing tokens, the speed setting, the hover grow and the shape morph")
             return
         }
         println()
@@ -160,6 +172,34 @@ object MotionCheck {
                             .size(80.dp)
                             .hoverGrow(progress, grow = 0.08f)
                             .clip(CookieShapes.nineSided)
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
+        }
+        val png = try {
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, "$name.png").writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    /**
+     * The person cookie at one of its three states, at the same size every time.
+     *
+     * No `hoverGrow` here on purpose: the question is whether the *shape* moved,
+     * and a scale would answer it for the wrong reason.
+     */
+    private fun renderMorphed(name: String, hovered: Boolean, selected: Boolean): BufferedImage {
+        val scene = ImageComposeScene(SIZE, SIZE) {
+            AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564)) {
+                Box(Modifier.size(SIZE.dp).background(MaterialTheme.colorScheme.surface)) {
+                    Box(
+                        Modifier
+                            .size(80.dp)
+                            .clip(rememberPersonCookie(hovered, selected, label = "checkCookie"))
                             .background(MaterialTheme.colorScheme.primary),
                     )
                 }
