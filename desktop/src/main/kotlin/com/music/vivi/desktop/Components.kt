@@ -74,6 +74,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Path
@@ -293,8 +294,12 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
  * cover and the full player does not show a blurry 120 px one.
  */
 @Composable
-fun Thumbnail(url: String?, modifier: Modifier = Modifier, sizePx: Int = 544) {
-    val shape = MaterialTheme.shapes.extraSmall
+fun Thumbnail(
+    url: String?,
+    modifier: Modifier = Modifier,
+    sizePx: Int = 544,
+    shape: Shape = MaterialTheme.shapes.extraSmall,
+) {
     // Data saver is part of the URL (it changes the requested tier), so the
     // resolved URL is remembered against the settings revision too.
     val revision = settingsFileRevision()
@@ -346,7 +351,13 @@ fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier:
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
-        Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f))
+        // An artist is a cookie, a song and an album are the scale's own corner:
+        // the shape is what says "this is a person" before the name is read.
+        Thumbnail(
+            item.thumbnail,
+            Modifier.fillMaxWidth().aspectRatio(1f),
+            shape = if (item is ArtistItem) CookieShapes.fourSided else MaterialTheme.shapes.extraSmall,
+        )
         Tooltip(item.title) {
             Text(
                 item.title,
@@ -410,7 +421,7 @@ fun SongRow(
         // that is already tinted it was hard to tell the song was the one
         // playing.
         Box(Modifier.size(48.dp)) {
-            Thumbnail(song.thumbnail, Modifier.fillMaxSize())
+            Thumbnail(song.thumbnail, Modifier.fillMaxSize(), shape = CookieShapes.fourSided)
             if (isCurrent) {
                 NowPlayingBars(
                     audioLevel = playback.audioLevel,

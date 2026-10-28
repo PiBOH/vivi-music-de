@@ -330,7 +330,13 @@ dependencies there, or you break the desktop build.
     (`Shapes.extraSmall` 8, `small` 12, `medium` 16, `large` 20, `extraLarge`
     28, plus `none` and `full`), or from the component's own token where the app
     fixes the corner itself (the 24 dp settings card). A bare `14.dp` corner is
-    a defect: it is a level nobody can find again.
+    a defect: it is a level nobody can find again. A shape that is not a corner
+    but a *family* comes from the same page, through `CookieShapes` (the
+    library's cookies and clover), and the map is: an artist's artwork and a
+    song's cover in a row → the 4-sided cookie; a person (the Contributors
+    list, the author of this edition) → the 7-sided cookie; a Listen Together
+    avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
+    never hand-rolls one of these three.
   - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
     role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
     `outlineVariant`, ...), never with a literal value. Raw colours live in the

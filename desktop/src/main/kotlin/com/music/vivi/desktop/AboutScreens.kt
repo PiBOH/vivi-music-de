@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -207,7 +206,7 @@ fun AboutSection(
                             bitmap = image,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(34.dp).clip(CircleShape),
+                            modifier = Modifier.size(34.dp).clip(CookieShapes.sevenSided),
                         )
                     }
                 },
@@ -342,7 +341,7 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(CircleShape)
+                .clip(CookieShapes.sevenSided)
                 .background(contributorAvatarColor(username)),
             contentAlignment = Alignment.Center,
         ) {
@@ -356,7 +355,7 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
             model = "https://github.com/$username.png?size=96",
             contentDescription = title,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().clip(CircleShape),
+            modifier = Modifier.fillMaxSize().clip(CookieShapes.sevenSided),
         )
     }
 }

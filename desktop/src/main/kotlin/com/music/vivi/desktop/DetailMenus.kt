@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -119,6 +120,8 @@ fun GradientHeader(
     subtitle: String? = null,
     meta: String? = null,
     modifier: Modifier = Modifier,
+    /** The artwork's shape: an artist's keeps the cookie, the rest the scale. */
+    artworkShape: Shape = MaterialTheme.shapes.extraSmall,
 ) {
     val fade = MaterialTheme.colorScheme.background
     Box(modifier.fillMaxWidth()) {
@@ -145,7 +148,7 @@ fun GradientHeader(
             Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Thumbnail(thumbnailUrl, Modifier.size(128.dp), sizePx = 256)
+            Thumbnail(thumbnailUrl, Modifier.size(128.dp), sizePx = 256, shape = artworkShape)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Tooltip(title) {

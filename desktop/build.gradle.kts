@@ -719,6 +719,25 @@ tasks.register<JavaExec>("firstRunRenderCheck") {
 }
 
 /**
+ * Headless check of the Material 3 Expressive shapes:
+ *
+ *     ./gradlew :desktop:cookieShapesCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/CookieShapesCheck.kt`. The
+ * 4-sided cookie, the 7-sided cookie and the clover are arithmetic, so each is
+ * painted off screen and probed where the three differ: the flat top of the
+ * first, the apex of the second, the lobe of every side of the third, and the
+ * empty corners all three leave.
+ */
+tasks.register<JavaExec>("cookieShapesCheck") {
+    group = "verification"
+    description = "Paints the cookie and clover shapes headlessly and checks their outlines"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.CookieShapesCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Headless check of the Listen Together chat list:
  *
  *     ./gradlew :desktop:chatWindowRenderCheck

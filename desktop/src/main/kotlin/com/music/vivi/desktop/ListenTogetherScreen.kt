@@ -143,14 +143,14 @@ internal fun LtAvatar(
     Box(
         Modifier
             .size(size.dp)
-            .clip(CircleShape)
+            .clip(CookieShapes.clover)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer
                 else MaterialTheme.colorScheme.surfaceContainerHighest,
             )
             .then(
-                if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-                else Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                if (selected) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, CookieShapes.clover)
+                else Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, CookieShapes.clover),
             ),
         contentAlignment = Alignment.Center,
     ) {
@@ -164,7 +164,7 @@ internal fun LtAvatar(
                 // a reduced face look pixelated; High is trilinear, so the small
                 // circle is a smooth reduction of the big file.
                 filterQuality = FilterQuality.High,
-                modifier = Modifier.fillMaxSize().clip(CircleShape),
+                modifier = Modifier.fillMaxSize().clip(CookieShapes.clover),
             )
             // Index 0, and the fallback for a picture that could not be read.
             avatarIndex == 0 || file.isEmpty() -> Text(
