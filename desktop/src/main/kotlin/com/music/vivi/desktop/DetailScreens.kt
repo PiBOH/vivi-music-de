@@ -227,7 +227,6 @@ fun ArtistScreen(
                     subtitle = if (showSubscribers) page!!.subscriberCountText else null,
                     thumbnailUrl = artist.thumbnail,
                     language = language,
-                    artworkShape = CookieShapes.fourSided,
                     menuEntries = listOfNotNull(
                         if (artistSongs.isNotEmpty()) {
                             DetailMenuEntry(Localization.get(language, "play"), Icons.Filled.PlayArrow) {

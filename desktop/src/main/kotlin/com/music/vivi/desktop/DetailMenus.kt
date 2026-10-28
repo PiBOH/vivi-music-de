@@ -1,6 +1,9 @@
 package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -119,10 +121,17 @@ fun GradientHeader(
     subtitle: String? = null,
     meta: String? = null,
     modifier: Modifier = Modifier,
-    /** The artwork's shape: the 4-sided cookie, like every other cover in the DE. */
-    artworkShape: Shape = CookieShapes.fourSided,
 ) {
     val fade = MaterialTheme.colorScheme.background
+    // The header's artwork is a cover like the row's and the card's, so it answers
+    // the pointer the same way: the 4-sided cookie rounds its corners while the
+    // pointer is anywhere on the header, not only over its 128 dp. The row owns
+    // the state, which is the app's rule for a shape inside a hoverable surface
+    // (`SongRow`, `YtItemCard`), because the picture is the smallest part of the
+    // thing the pointer is on.
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val artwork = rememberArtistCookie(hovered, label = "headerCookie")
     Box(modifier.fillMaxWidth()) {
         CachedBlurBackdrop(
             artworkUrl = thumbnailUrl,
@@ -144,10 +153,10 @@ fun GradientHeader(
                 )
         )
         Row(
-            Modifier.fillMaxWidth().padding(16.dp),
+            Modifier.fillMaxWidth().hoverable(interaction).padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Thumbnail(thumbnailUrl, Modifier.size(128.dp), sizePx = 256, shape = artworkShape)
+            Thumbnail(thumbnailUrl, Modifier.size(128.dp), sizePx = 256, shape = artwork)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
                 Tooltip(title) {

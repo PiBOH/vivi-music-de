@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.7-beta] - 2026-10-28
+
+### 🔧 Changed
+- [DE] **An album's, a playlist's and an artist's artwork rounds its corners under the pointer, like a card's does.** The 128 dp cover of a detail header was the one cookie in the app that never moved: `GradientHeader` drew it with the fixed shape (`artworkShape = CookieShapes.fourSided`, passed in by the artist screen and defaulted everywhere else), while every card and every song row already took `rememberArtistCookie` and morphed. The header holds the hover state now and hands it to `rememberArtistCookie`, so the corner rounds toward the pointer anywhere on the header, not only over the picture's 128 dp - the app's own rule for a shape inside a hoverable surface, which is why `SongRow` and `YtItemCard` own theirs. The `artworkShape` parameter went with it: a shape that only ever had one value and could not morph was a parameter that said nothing, and the caller that passed it was the same static cookie. **Measured:** `:desktop:compileKotlin` passes. **Watch:** a cover takes its shape from `rememberArtistCookie`, not from a fixed `CookieShapes` value, when the surface it sits in has a pointer state. **Open sub-item:** no check here renders a detail header with a pointer on it, so the morph is verified as the wire from the header's interaction source to the shape, not as pixels; the card and row cases are the ones `:desktop:motionCheck` paints.
+
 ## [6.0.8.11_DE-1.56.6-beta] - 2026-10-28
 
 ### ✨ Added
