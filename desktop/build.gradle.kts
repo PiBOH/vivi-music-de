@@ -1309,3 +1309,81 @@ tasks.register<JavaExec>("startupProbe") {
     (project.findProperty("cdsList") as String?)?.let { jvmArgs("-XX:DumpLoadedClassList=$it") }
     jvmArgs("-XX:StartFlightRecording=filename=.ignore/startup.jfr,duration=14s,settings=profile,dumponexit=true")
 }
+
+/**
+ * Fails when a bare Material `IconButton` appears in the DE's sources:
+ *
+ *     ./gradlew :desktop:iconButtonCheck
+ *
+ * Every icon button in the desktop edition is drawn through `M3IconButton`
+ * (`Motion.kt`), which puts `LiftedGlyph` around the glyph so the pointer lifts
+ * and turns it; a bare `IconButton` is a button whose glyph does nothing, and
+ * this is the rule 76 call sites had to be converted by hand to. The one place
+ * allowed to name `IconButton` is the wrapper's own body - a single call and a
+ * single import, in `Motion.kt` - because that is what the wrapper is made of.
+ * Anything else fails the build with the file and the line. The two
+ * `FilledIconButton`s that are not that wrapper are a different Material family
+ * (they take a container colour of their own) and are not matched here.
+ *
+ * It reads the sources instead of the compiled output on purpose: this is a rule
+ * about what the code says, and a source scan needs neither a display nor a
+ * fixture. Unlike the pixel checks above, every `compileKotlin` of this module
+ * depends on it (and so does `check`), so a bare `IconButton` fails the build
+ * instead of waiting for someone to remember to run it.
+ */
+val iconButtonCheck = tasks.register("iconButtonCheck") {
+    group = "verification"
+    description = "Fails when a bare IconButton is used instead of M3IconButton"
+    val sourcesRoot = layout.projectDirectory.dir("src/main/kotlin").asFile
+    val sources = fileTree("src/main/kotlin") { include("**/*.kt") }
+    inputs.files(sources).withPropertyName("kotlinSources")
+    doLast {
+        // A call is `IconButton(`, not `M3IconButton(` and not `FilledIconButton(`:
+        // the lookbehind rejects every name that ends with those words.
+        val call = Regex("""(?<![A-Za-z0-9_])IconButton\s*\(""")
+        val throughWrapper = Regex("""M3IconButton\s*\(""")
+        val import = Regex("""^\s*import\s+androidx\.compose\.material3\.IconButton\s*$""")
+        val wrapper = "com/music/vivi/desktop/Motion.kt"
+        val problems = mutableListOf<String>()
+        var wrapperCalls = 0
+        var wrapperImports = 0
+        var callSites = 0
+        inputs.files.files.sortedBy { it.path }.forEach { file ->
+            val rel = file.relativeTo(sourcesRoot).invariantSeparatorsPath
+            file.readLines().forEachIndexed { index, line ->
+                if (throughWrapper.containsMatchIn(line) && !line.contains("fun M3IconButton(")) callSites++
+                if (call.containsMatchIn(line)) {
+                    if (rel == wrapper) {
+                        wrapperCalls++
+                    } else {
+                        problems += "src/main/kotlin/$rel:${index + 1}: IconButton(...)"
+                    }
+                }
+                if (import.containsMatchIn(line)) {
+                    if (rel == wrapper) {
+                        wrapperImports++
+                    } else {
+                        problems += "src/main/kotlin/$rel:${index + 1}: import androidx.compose.material3.IconButton"
+                    }
+                }
+            }
+        }
+        if (!File(sourcesRoot, wrapper).readText().contains("fun M3IconButton(")) {
+            problems += "src/main/kotlin/$wrapper: M3IconButton is gone"
+        }
+        if (wrapperCalls != 1) problems += "src/main/kotlin/$wrapper: expected 1 IconButton( inside M3IconButton, found $wrapperCalls"
+        if (wrapperImports != 1) problems += "src/main/kotlin/$wrapper: expected 1 IconButton import, found $wrapperImports"
+        if (problems.isNotEmpty()) {
+            throw GradleException(
+                buildString {
+                    append("A bare IconButton is not allowed in the DE: draw it with M3IconButton ")
+                    append("so the glyph lifts and turns under the pointer.\n")
+                    problems.forEach { append("  $it\n") }
+                },
+            )
+        }
+        println("OK: no bare IconButton; $callSites icon button(s) go through M3IconButton, and the wrapper's own body is the one allowed IconButton")
+    }
+}
+
+tasks.named("compileKotlin") { dependsOn(iconButtonCheck) }

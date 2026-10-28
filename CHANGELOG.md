@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.6-beta] - 2026-10-28
+
+### ✨ Added
+- [DE] **A bare `IconButton` fails the build now, so the rule "an icon button is an `M3IconButton`" is enforced instead of remembered.** The rule was written in `AGENTS.md` and had been applied by hand, which is why the icon buttons were converted in one sweep: nothing stopped the next one from being a bare `IconButton`, and its glyph would simply not lift or turn under the pointer, with nothing in the build to say so. The new `:desktop:iconButtonCheck` reads the module's Kotlin sources instead of the compiled output - this is a rule about what the code says - and fails naming the file and the line for any `IconButton(` call or any `import androidx.compose.material3.IconButton` outside the wrapper's own body in `Motion.kt`, which is the one call and the one import that `M3IconButton` is actually made of. It also fails if that wrapper disappears or if a second bare call is added next to it, so the single allowed occurrence cannot quietly become two. It is wired into `compileKotlin` rather than offered as a task alone, so a build of the module stops on it. **Measured:** `:desktop:iconButtonCheck` prints `OK: no bare IconButton; 74 icon button(s) go through M3IconButton` on the tree as it stands; a probe file holding a bare `IconButton` and its import makes `:desktop:compileKotlin` fail with `A bare IconButton is not allowed in the DE` and both lines named, and deleting the probe makes it pass again (the probe was not committed). `:desktop:compileKotlin` passes. **Watch:** the two `FilledIconButton`s (Listen Together's send and the Basic player's play) are a different Material family that takes its own container colour, are not matched here, and keep wrapping their glyph in `LiftedGlyph` themselves. **Open sub-item:** `:desktop:test` fails on its own, before and after this change (`There are test sources present and no filters are applied, but the test task did not discover any tests to execute`), which is why the rule is attached to the compile instead of `check`: a `check`-only wiring would sit behind a task that already fails for a reason that has nothing to do with it.
+
 ## [6.0.8.11_DE-1.56.5-beta] - 2026-10-28
 
 ### 🔧 Changed
