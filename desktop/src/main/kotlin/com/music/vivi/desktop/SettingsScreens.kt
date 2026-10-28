@@ -1968,6 +1968,21 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
     val movable by DeveloperOptions.overlayMovable.collectAsState()
     val titleBar by DeveloperOptions.showInTitleBar.collectAsState()
     val stats by SystemMonitor.stats.collectAsState()
+    // "Title bar only" and "Show in title bar" write into the OS window title,
+    // which only exists while the native title bar is in use: with the custom bar
+    // the window is undecorated and the app draws its own, so the two options
+    // would offer a title bar the window does not have. They are therefore drawn
+    // only with the native bar, and a mode saved as TITLE_BAR while it was on
+    // goes back to the overlay once it is off, so the stats keep a place to
+    // draw instead of vanishing with the title they were written into.
+    val revision = settingsFileRevision()
+    val nativeTitleBar = remember(revision) { DesktopSettings.load().nativeTitleBar }
+    LaunchedEffect(nativeTitleBar, mode) {
+        if (!nativeTitleBar && mode == DevToolsMode.TITLE_BAR) {
+            DeveloperOptions.setMode(DevToolsMode.OVERLAY)
+            AppLog.log("dev", "title bar only needs the native title bar: the reader is back on the overlay")
+        }
+    }
     val peerName = syncManager.peerDeviceName.collectAsState().value.orEmpty()
     val paired = syncManager.paired.collectAsState().value == true
 
@@ -2074,12 +2089,16 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
                         selected = mode == DevToolsMode.WINDOW,
                         onClick = { DeveloperOptions.setMode(DevToolsMode.WINDOW) },
                     )
-                    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                    DevRadioRow(
-                        title = Localization.get(language, "dev_tools_title_bar_only"),
-                        selected = mode == DevToolsMode.TITLE_BAR,
-                        onClick = { DeveloperOptions.setMode(DevToolsMode.TITLE_BAR) },
-                    )
+                    // The title bar options exist only with the native title bar
+                    // (see `nativeTitleBar` above).
+                    if (nativeTitleBar) {
+                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                        DevRadioRow(
+                            title = Localization.get(language, "dev_tools_title_bar_only"),
+                            selected = mode == DevToolsMode.TITLE_BAR,
+                            onClick = { DeveloperOptions.setMode(DevToolsMode.TITLE_BAR) },
+                        )
+                    }
                 }
             }
 
@@ -2107,7 +2126,9 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
                 }
             }
 
-            if (mode == DevToolsMode.OVERLAY) {
+            // Folds like every other block that belongs to a choice: switching the
+            // display mode closes or opens this card instead of dropping it.
+            M3SettingsFold(visible = mode == DevToolsMode.OVERLAY) {
                 Spacer(Modifier.height(24.dp))
 
                 // Overlay behaviour (only relevant in overlay mode)
@@ -2123,13 +2144,17 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
                             checked = movable,
                             onCheckedChange = { DeveloperOptions.setOverlayMovable(it) },
                         )
-                        HorizontalDivider(Modifier.padding(horizontal = 16.dp))
-                        DevSwitchRow(
-                            title = Localization.get(language, "dev_tools_title_bar"),
-                            desc = Localization.get(language, "dev_tools_title_bar_desc"),
-                            checked = titleBar,
-                            onCheckedChange = { DeveloperOptions.setShowInTitleBar(it) },
-                        )
+                        // The window title is the OS one: with the custom bar there
+                        // is no title to write the stats into.
+                        if (nativeTitleBar) {
+                            HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+                            DevSwitchRow(
+                                title = Localization.get(language, "dev_tools_title_bar"),
+                                desc = Localization.get(language, "dev_tools_title_bar_desc"),
+                                checked = titleBar,
+                                onCheckedChange = { DeveloperOptions.setShowInTitleBar(it) },
+                            )
+                        }
                     }
                 }
             }
