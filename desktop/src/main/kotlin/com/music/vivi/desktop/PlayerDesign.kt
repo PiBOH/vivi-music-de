@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -466,10 +465,9 @@ fun QueueRowArtwork(
     thumbnail: String?,
     isCurrent: Boolean,
     size: Dp = 46.dp,
-    corner: Dp = 8.dp,
 ) {
     Box(Modifier.size(size)) {
-        PlayerThumbnail(thumbnail, size, corner, false)
+        PlayerThumbnail(thumbnail, size, false)
         if (isCurrent) {
             val playback = LocalPlayback.current
             NowPlayingBars(
@@ -478,7 +476,7 @@ fun QueueRowArtwork(
                 color = PaletteInk,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .background(PaletteBlack.copy(alpha = 0.5f), RoundedCornerShape(corner))
+                    .background(PaletteBlack.copy(alpha = 0.5f), CookieShapes.fourSided)
                     .padding(horizontal = 5.dp, vertical = 4.dp),
             )
         }
@@ -493,7 +491,6 @@ fun QueueRowArtwork(
 fun PlayerThumbnail(
     url: String?,
     size: Dp,
-    corner: Dp,
     rotating: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -505,7 +502,10 @@ fun PlayerThumbnail(
         Box(
             modifier
                 .size(size)
-                .clip(RoundedCornerShape(corner))
+                // The 4-sided cookie, the shape every other cover in the DE has:
+                // the player's artwork is a song's picture like a row's, and the
+                // rotating switch turns it, it does not decide what shape it is.
+                .clip(CookieShapes.fourSided)
                 .background(PaletteBlack.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
@@ -529,7 +529,7 @@ fun PlayerThumbnail(
                 scaleX = 1f + 0.02f * kotlin.math.sin(angle * kotlin.math.PI / 180.0).toFloat()
                 scaleY = 1f + 0.02f * kotlin.math.sin(angle * kotlin.math.PI / 180.0).toFloat()
             }
-            .clip(RoundedCornerShape(corner))
+            .clip(CookieShapes.fourSided)
             .background(PaletteBlack.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {

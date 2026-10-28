@@ -119,8 +119,8 @@ fun GradientHeader(
     subtitle: String? = null,
     meta: String? = null,
     modifier: Modifier = Modifier,
-    /** The artwork's shape: an artist's keeps the cookie, the rest the scale. */
-    artworkShape: Shape = MaterialTheme.shapes.extraSmall,
+    /** The artwork's shape: the 4-sided cookie, like every other cover in the DE. */
+    artworkShape: Shape = CookieShapes.fourSided,
 ) {
     val fade = MaterialTheme.colorScheme.background
     Box(modifier.fillMaxWidth()) {

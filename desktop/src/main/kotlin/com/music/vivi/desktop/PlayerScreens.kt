@@ -488,9 +488,9 @@ private fun M3EPlayerContent(
                     Box(
                         Modifier
                             .offset(x = artworkOffsetX, y = artworkOffsetY)
-                            .shadow(20.dp, MaterialTheme.shapes.small)
+                            .shadow(20.dp, CookieShapes.fourSided)
                     ) {
-                        PlayerThumbnail(artworkUrl ?: np.thumbnail, artworkSize, 12.dp, rotatingThumbnail)
+                        PlayerThumbnail(artworkUrl ?: np.thumbnail, artworkSize, rotatingThumbnail)
                     }
 
                     Spacer(Modifier.height(14.dp))
@@ -1303,7 +1303,7 @@ private fun PlayerArtworkBlock(
                 Modifier
             }
             val blockModifier = Modifier
-                .shadow(24.dp, RoundedCornerShape(metrics.artCorner))
+                .shadow(24.dp, CookieShapes.fourSided)
                 .then(swipeModifier)
                 .pointerInput(np.videoId, canSeek, canToggle) {
                     if (!canSeek && !canToggle) return@pointerInput
@@ -1335,12 +1335,12 @@ private fun PlayerArtworkBlock(
                 }
             Box(blockModifier) {
                 Box {
-                    PlayerThumbnail(art, metrics.artSize, metrics.artCorner, rotatingThumbnail)
+                    PlayerThumbnail(art, metrics.artSize, rotatingThumbnail)
                     if (metrics.overlayTitle) {
                         Box(
                             Modifier
                                 .matchParentSize()
-                                .clip(RoundedCornerShape(metrics.artCorner))
+                                .clip(CookieShapes.fourSided)
                                 .background(
                                     Brush.verticalGradient(
                                         0.5f to Color.Transparent,
@@ -1412,7 +1412,7 @@ private fun PlayerArtworkBlock(
                         .fillMaxSize()
                         .graphicsLayer { scaleY = -1f }
                         .blur(12.dp)
-                        .clip(RoundedCornerShape(metrics.artCorner)),
+                        .clip(CookieShapes.fourSided),
                 )
             }
         }
@@ -2090,9 +2090,9 @@ fun QueueHistoryScreen(
                             Box(
                                 Modifier
                                     .size(46.dp)
-                                    .clip(MaterialTheme.shapes.extraSmall)
+                                    .clip(CookieShapes.fourSided)
                             ) {
-                                PlayerThumbnail(item.thumbnail, 46.dp, 8.dp, false)
+                                PlayerThumbnail(item.thumbnail, 46.dp, false)
                             }
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
@@ -2437,7 +2437,7 @@ fun LyricsScreen(
             // Thumbnail play/pause (port of the mobile advanced-lyrics control).
             np?.let {
                 Box {
-                    Thumbnail(it.thumbnail, Modifier.size(40.dp).clip(MaterialTheme.shapes.extraSmall))
+                    Thumbnail(it.thumbnail, Modifier.size(40.dp).clip(CookieShapes.fourSided))
                     // Small play/pause overlay.
                     Box(
                         Modifier
@@ -2604,10 +2604,10 @@ fun SpotifyRightNowPlayingPanel(
                 Modifier
                     .fillMaxWidth()
                     .height(278.dp)
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(CookieShapes.fourSided)
                     .background(PaletteBlack.copy(alpha = 0.2f)),
             ) {
-                PlayerThumbnail(np.thumbnail, 278.dp, 16.dp, false, Modifier.fillMaxSize())
+                PlayerThumbnail(np.thumbnail, 278.dp, false, Modifier.fillMaxSize())
             }
 
             Spacer(Modifier.height(16.dp))

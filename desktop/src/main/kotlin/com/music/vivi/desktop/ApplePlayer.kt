@@ -156,7 +156,6 @@ fun AppleMusicPlayer(
                 PlayerThumbnail(
                     url = np.thumbnail,
                     size = cover,
-                    corner = ShapeRadii.small,
                     rotating = rotatingThumbnail,
                 )
                 Spacer(Modifier.height(18.dp))

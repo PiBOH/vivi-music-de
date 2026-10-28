@@ -3826,7 +3826,7 @@ fun MiniPlayer(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (style == MiniPlayerStyle.APPLE) {
-                        Box(Modifier.clip(MaterialTheme.shapes.small)) {
+                        Box(Modifier.clip(CookieShapes.fourSided)) {
                             Thumbnail(np.thumbnail, Modifier.size(40.dp))
                         }
                     } else {

@@ -163,7 +163,7 @@ fun NowPlayingWidgetWindow(
                     Box(
                         Modifier
                             .size(58.dp)
-                            .clip(MaterialTheme.shapes.small)
+                            .clip(CookieShapes.fourSided)
                             .background(PaletteBlack.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center,
                     ) {

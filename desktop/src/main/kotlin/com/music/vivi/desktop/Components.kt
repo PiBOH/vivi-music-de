@@ -298,7 +298,12 @@ fun Thumbnail(
     url: String?,
     modifier: Modifier = Modifier,
     sizePx: Int = 544,
-    shape: Shape = MaterialTheme.shapes.extraSmall,
+    // Every artwork in the DE is the 4-sided cookie (`CookieShapes`), the same
+    // shape the UI preview gives every cover: an artist's, a song's, an album's,
+    // a playlist's and a player's big artwork alike. It is the default here so a
+    // new call site inherits it instead of starting from a corner, and a caller
+    // that needs the morphing one (`rememberArtistCookie`) still passes its own.
+    shape: Shape = CookieShapes.fourSided,
 ) {
     // Data saver is part of the URL (it changes the requested tier), so the
     // resolved URL is remembered against the settings revision too.
@@ -357,13 +362,16 @@ fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier:
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
-        // An artist is a cookie, a song and an album are the scale's own corner:
-        // the shape is what says "this is a person" before the name is read, and
-        // the cookie rounds its corners while the pointer is on the card.
+        // Every card's artwork is the cookie - an artist's, a song's, an album's
+        // and a playlist's alike - and it rounds its corners while the pointer is
+        // on the card. What a card holds is said by its glyph, its title and its
+        // subtitle, not by the shape: a corner on three of the four made the
+        // artist the only cookie in a row of cards, which read as a different
+        // kind of object instead of the same cover of a different thing.
         Thumbnail(
             item.thumbnail,
             Modifier.fillMaxWidth().aspectRatio(1f),
-            shape = if (item is ArtistItem) artistCookie else MaterialTheme.shapes.extraSmall,
+            shape = artistCookie,
         )
         Tooltip(item.title) {
             Text(
