@@ -156,6 +156,7 @@ internal fun LtAvatar(
             .size(size.dp)
             .hoverable(interaction)
             .hoverGrow(grow, grow = 0.06f)
+            .pointerTilt(label = "ltAvatarTilt")
             .clip(clover)
             .background(
                 if (selected) MaterialTheme.colorScheme.primaryContainer

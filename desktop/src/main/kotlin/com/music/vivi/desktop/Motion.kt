@@ -4,15 +4,24 @@ import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /**
  * The Material 3 motion token table, and the one hover movement the DE shares.
@@ -116,6 +125,55 @@ object Motion {
     fun <T> effectsSlow(threshold: T? = null): FiniteAnimationSpec<T> =
         spring(dampingRatio = EFFECTS_DAMPING, stiffness = 800f, visibilityThreshold = threshold)
 
+    // --- Pointer movement ----------------------------------------------------
+
+    /**
+     * How far the pointer turns a shape, in degrees per axis.
+     *
+     * Orion-Store's `data-tilt` reads `-(y / height - .5) * 9` on rotateX and
+     * `(x / width - .5) * 9` on rotateY, so a pointer at an edge of the box is
+     * `4.5` degrees off flat and the middle is 0.
+     */
+    const val TILT_MAX_DEGREES = 4.5f
+
+    /**
+     * The perspective the tilt is seen through, in px: Orion sets
+     * `transformPerspective: 900`, and a smaller value would make the same 4.5
+     * degrees read as a wobble rather than as a surface turning.
+     */
+    const val TILT_PERSPECTIVE = 900f
+
+    /**
+     * How far an icon lifts and turns under the pointer, after Orion-Store's
+     * `.rel-icon` (`translateY(-2px) rotate(-6deg)`).
+     */
+    const val ICON_LIFT_DP = 2f
+    const val ICON_TURN_DEGREES = -6f
+
+    /**
+     * How long the pointer tilt takes to reach the pointer, after Orion-Store's
+     * `data-tilt`: its `gsap.quickTo` runs the two axes over `duration: 0.8`,
+     * which is [EXTRA_LONG2].
+     */
+    const val POINTER_TILT_MS = EXTRA_LONG2
+
+    /**
+     * How long the icon's lift and turn take, after Orion-Store's `.rel-icon`
+     * (`transition: transform .6s`), which is [LONG4].
+     */
+    const val ICON_HOVER_MS = LONG4
+
+    /**
+     * The angle of one tilt axis for a pointer at [position] of the box (0..1):
+     * the middle is flat and the edges are [maxDegrees] off it.
+     *
+     * It is the expression Orion-Store's `data-tilt` runs,
+     * `(x / width - .5) * 9`, with the 9 split into the `2 * 4.5` above so the
+     * number here is the angle a reader can check rather than half of it.
+     */
+    fun tiltPosition(position: Float, maxDegrees: Float = TILT_MAX_DEGREES): Float =
+        (position - 0.5f) * 2f * maxDegrees
+
     /**
      * Hover progress of one surface, 0 when the pointer is elsewhere and 1 when
      * it is on it.
@@ -134,6 +192,18 @@ object Motion {
         )
         return progress
     }
+
+    /**
+     * The pointer movement's own spec: [ms] on the emphasized-decelerate curve.
+     *
+     * The cookies and the icons follow the pointer with a movement that leaves
+     * at once and settles slowly, which is what Orion-Store's `power3.out` and
+     * its `--ease` token both are; the published decelerating token is the same
+     * shape, so the table keeps one curve. The `Animations` master switch still
+     * makes it instant, and the speed setting still scales it.
+     */
+    fun pointerSpec(ms: Int = POINTER_TILT_MS): FiniteAnimationSpec<Float> =
+        if (Animations.instant) snap() else tween(Animations.ms(ms), easing = emphasizedDecelerate)
 }
 
 /**
@@ -174,4 +244,101 @@ fun Modifier.hoverGrow(
     val hovered by interactionSource.collectIsHoveredAsState()
     val progress = Motion.hoverProgress(hovered, enabled = enabled, label = label)
     return this.hoverable(interactionSource, enabled = enabled).hoverGrow(progress, grow)
+}
+
+/**
+ * The pointer tilt, after Orion-Store's `data-tilt`: a shape turns in 3D toward
+ * the place the pointer is, up to [Motion.TILT_MAX_DEGREES] per axis, seen
+ * through [Motion.TILT_PERSPECTIVE].
+ *
+ * The middle of the surface is flat and the edges are not, so the movement
+ * follows the pointer instead of repeating the same spin wherever on the shape
+ * it lands, and leaving the shape returns it to flat. That is the difference
+ * between this and a hover scale: the cookies and the clover already round their
+ * corners and grow, and this is the movement that says the surface knows where
+ * the mouse is.
+ *
+ * The two axes travel over [POINTER_TILT_MS] on the decelerating curve, which is
+ * Orion's own 0.8 s `power3.out`: the surface starts turning the moment the
+ * pointer moves and settles slowly behind it, and it is back to flat by the time
+ * the pointer has left.
+ */
+@Composable
+fun Modifier.pointerTilt(
+    enabled: Boolean = true,
+    maxDegrees: Float = Motion.TILT_MAX_DEGREES,
+    label: String = "pointerTilt",
+): Modifier {
+    // Where in the box (0..1 on each axis) the pointer is, and the middle when it
+    // is not on the shape at all.
+    val pointer = remember { mutableStateOf(Offset(0.5f, 0.5f)) }
+    val track = Modifier.pointerInput(enabled) {
+        if (!enabled) return@pointerInput
+        awaitPointerEventScope {
+            while (true) {
+                val event = awaitPointerEvent()
+                when (event.type) {
+                    PointerEventType.Move -> {
+                        val at = event.changes.firstOrNull()?.position ?: continue
+                        pointer.value = Offset(
+                            (at.x / size.width.coerceAtLeast(1)).coerceIn(0f, 1f),
+                            (at.y / size.height.coerceAtLeast(1)).coerceIn(0f, 1f),
+                        )
+                    }
+                    PointerEventType.Exit -> pointer.value = Offset(0.5f, 0.5f)
+                    else -> Unit
+                }
+            }
+        }
+    }
+    val x by animateFloatAsState(pointer.value.x, Motion.pointerSpec(), label = "$label-x")
+    val y by animateFloatAsState(pointer.value.y, Motion.pointerSpec(), label = "$label-y")
+    return this.then(track).graphicsLayer {
+        // The signs are Orion's: the edge under the pointer turns away from the
+        // viewer on the vertical axis and toward it on the horizontal one, which
+        // is what makes the surface read as following the mouse instead of
+        // rocking the same way wherever it is entered.
+        rotationX = -Motion.tiltPosition(y, maxDegrees)
+        rotationY = Motion.tiltPosition(x, maxDegrees)
+        cameraDistance = Motion.TILT_PERSPECTIVE * density
+    }
+}
+
+/**
+ * The icon micro-hover, after Orion-Store's `.rel-icon`: under the pointer the
+ * glyph lifts [lift] and turns [degrees], and it settles back on its own when the
+ * pointer leaves.
+ *
+ * [progress] is 0..1 (see [Motion.hoverProgress]). A glyph is too small to see a
+ * 3D tilt on, which is why Orion gives its icons this movement and keeps the tilt
+ * for the surfaces that carry them.
+ */
+fun Modifier.iconHoverLift(
+    progress: Float,
+    lift: Dp = Motion.ICON_LIFT_DP.dp,
+    degrees: Float = Motion.ICON_TURN_DEGREES,
+): Modifier = graphicsLayer {
+    translationY = -lift.toPx() * progress
+    rotationZ = degrees * progress
+}
+
+/**
+ * [Modifier.iconHoverLift] plus the interaction source that drives it, for an
+ * icon that is not inside a row with a hover state of its own.
+ */
+@Composable
+fun Modifier.iconHoverLift(
+    enabled: Boolean = true,
+    lift: Dp = Motion.ICON_LIFT_DP.dp,
+    degrees: Float = Motion.ICON_TURN_DEGREES,
+    label: String = "iconHoverLift",
+): Modifier {
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val progress by animateFloatAsState(
+        targetValue = if (hovered && enabled) 1f else 0f,
+        animationSpec = Motion.pointerSpec(Motion.ICON_HOVER_MS),
+        label = label,
+    )
+    return this.hoverable(interaction, enabled = enabled).iconHoverLift(progress, lift, degrees)
 }

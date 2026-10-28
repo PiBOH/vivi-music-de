@@ -115,6 +115,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -1766,6 +1767,8 @@ private fun GlassCircleButton(
     // the same Animation speed / master switch as every other transition.
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    val hovered by interaction.collectIsHoveredAsState()
+    val hover = Motion.hoverProgress(hovered, enabled = enabled, label = "glassHover")
     val pressScale by androidx.compose.animation.core.animateFloatAsState(
         targetValue = if (pressed) 0.88f else 1f,
         animationSpec = androidx.compose.animation.core.spring(
@@ -1782,6 +1785,11 @@ private fun GlassCircleButton(
         interactionSource = interaction,
         modifier = Modifier
             .size(size)
+            // The circle turns with the pointer and its glyph lifts and turns, the
+            // two hover movements of Orion-Store: the control answers the mouse
+            // before it is pressed, which is what the desktop transport was
+            // missing (it only pressed in).
+            .pointerTilt(enabled = enabled, label = "glassTilt")
             .graphicsLayer { scaleX = pressScale; scaleY = pressScale }
             .alpha(if (enabled) 1f else LOCKED_CONTROL_ALPHA),
     ) {
@@ -1804,7 +1812,7 @@ private fun GlassCircleButton(
                 icon,
                 contentDescription = contentDescription,
                 tint = tint,
-                modifier = Modifier.size(iconSize),
+                modifier = Modifier.size(iconSize).iconHoverLift(hover),
             )
         }
     }

@@ -216,6 +216,7 @@ fun AboutSection(
                             modifier = Modifier
                                 .size(34.dp)
                                 .hoverGrow(grow, grow = 0.08f)
+                                .pointerTilt()
                                 .clip(cookie),
                         )
                     }
@@ -353,7 +354,10 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
     val rowHovered = LocalRowHovered.current
     val grow = Motion.hoverProgress(rowHovered, label = "contributorCookieHover")
     val cookie = rememberPersonCookie(rowHovered, label = "contributorCookie")
-    Box(Modifier.size(34.dp).hoverGrow(grow, grow = 0.08f), contentAlignment = Alignment.Center) {
+    Box(
+        Modifier.size(34.dp).hoverGrow(grow, grow = 0.08f).pointerTilt(),
+        contentAlignment = Alignment.Center,
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

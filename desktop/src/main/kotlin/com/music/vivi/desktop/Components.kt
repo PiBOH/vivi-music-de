@@ -351,7 +351,10 @@ fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier:
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val artistCookie = rememberArtistCookie(hovered, label = "artistCardCookie")
-    Column(root.then(modifier).hoverable(interaction).clickable(onClick = {
+    // The card turns with the pointer (the 3D tilt of Orion-Store's `data-tilt`)
+    // as well as the cookie rounding its corners: the shape and the card under it
+    // answer the same movement.
+    Column(root.then(modifier).hoverable(interaction).pointerTilt().clickable(onClick = {
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
@@ -432,7 +435,7 @@ fun SongRow(
         // draws it: beside the cover it read as one more list icon, and on a row
         // that is already tinted it was hard to tell the song was the one
         // playing.
-        Box(Modifier.size(48.dp)) {
+        Box(Modifier.size(48.dp).pointerTilt(label = "songCookieTilt")) {
             Thumbnail(song.thumbnail, Modifier.fillMaxSize(), shape = cover)
             if (isCurrent) {
                 NowPlayingBars(

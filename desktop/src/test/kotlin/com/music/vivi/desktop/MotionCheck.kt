@@ -4,13 +4,18 @@ package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import org.jetbrains.skia.EncodedImageFormat
 import java.awt.image.BufferedImage
@@ -151,9 +156,39 @@ object MotionCheck {
         if (chosenShape == stillShape) failures += "a selection left the cookie's outline unchanged ($stillShape px both times)"
         if (chosenShape == hoverShape) failures += "a selection and a hover draw the same cookie ($hoverShape px both times)"
 
+        // 6. The pointer tilt (Orion-Store's `data-tilt`): the angles it produces
+        //    from a pointer position, and that those angles are visible at the
+        //    perspective the DE uses. An off-screen scene delivers no pointer, so
+        //    what is measured is the arithmetic and the picture it asks for.
+        val middle = Motion.tiltPosition(0.5f)
+        val near = Motion.tiltPosition(0f)
+        val far = Motion.tiltPosition(1f)
+        println("tilt: middle %.2f, edges %.2f / %.2f (max %.1f)".format(middle, near, far, Motion.TILT_MAX_DEGREES))
+        if (abs(middle) > 0.001f) failures += "the middle of a surface is tilted %.2f degrees, not flat".format(middle)
+        if (abs(near) != Motion.TILT_MAX_DEGREES || abs(far) != Motion.TILT_MAX_DEGREES) {
+            failures += "the edges tilt %.2f / %.2f degrees, not +/-%.1f".format(near, far, Motion.TILT_MAX_DEGREES)
+        }
+        val level = renderTilted("tilt-flat", degrees = 0f)
+        val turned = renderTilted("tilt-edge", degrees = Motion.TILT_MAX_DEGREES)
+        val turnedPixels = differing(level, turned)
+        println("tilt: $turnedPixels px differ between flat and %.1f degrees".format(Motion.TILT_MAX_DEGREES))
+        if (turnedPixels < 20) {
+            failures += "a %.1f degree tilt drew almost the same picture ($turnedPixels px differ): the perspective is too far to see".format(Motion.TILT_MAX_DEGREES)
+        }
+
+        // 7. The icon micro-hover: the glyph lifts and turns, so the picture at the
+        //    end of the movement differs from the one at rest.
+        val stillIcon = renderIcon("icon-rest", progress = 0f)
+        val liftedIcon = renderIcon("icon-hovered", progress = 1f)
+        val iconPixels = differing(stillIcon, liftedIcon)
+        println("icon hover: $iconPixels px differ between rest and lifted")
+        if (iconPixels < 20) {
+            failures += "the icon hover lifted the glyph by nothing visible ($iconPixels px differ)"
+        }
+
         if (failures.isEmpty()) {
             println()
-            println("OK: the M3 duration and easing tokens, the speed setting, the hover grow and the shape morph")
+            println("OK: the M3 duration and easing tokens, the speed setting, the hover grow, the shape morph, the pointer tilt and the icon hover")
             return
         }
         println()
@@ -212,6 +247,79 @@ object MotionCheck {
         }
         File(outDir, "$name.png").writeBytes(png)
         return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    /**
+     * The cookie turned by [degrees] on one axis, at [Motion.TILT_PERSPECTIVE].
+     *
+     * The same transform [Modifier.pointerTilt] ends on at an edge of the shape:
+     * what has to be true of it is that the angle is visible at that perspective,
+     * which is what the two renders tell.
+     */
+    private fun renderTilted(name: String, degrees: Float): BufferedImage {
+        val scene = ImageComposeScene(SIZE, SIZE) {
+            AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564)) {
+                Box(Modifier.size(SIZE.dp).background(MaterialTheme.colorScheme.surface)) {
+                    Box(
+                        Modifier
+                            .size(80.dp)
+                            .graphicsLayer {
+                                rotationX = degrees
+                                cameraDistance = Motion.TILT_PERSPECTIVE * density
+                            }
+                            .clip(CookieShapes.nineSided)
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
+        }
+        val png = try {
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, "$name.png").writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    /** A Material icon at [progress] of the icon hover lift. */
+    private fun renderIcon(name: String, progress: Float): BufferedImage {
+        val scene = ImageComposeScene(SIZE, SIZE) {
+            AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564)) {
+                Box(Modifier.size(SIZE.dp).background(MaterialTheme.colorScheme.surface)) {
+                    Box(
+                        Modifier
+                            .size(80.dp)
+                            .iconHoverLift(progress),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+        }
+        val png = try {
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, "$name.png").writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    /** Pixels that differ between two renders of the same box. */
+    private fun differing(a: BufferedImage, b: BufferedImage): Int {
+        var count = 0
+        for (y in 0 until a.height) {
+            for (x in 0 until a.width) {
+                if (a.getRGB(x, y) != b.getRGB(x, y)) count++
+            }
+        }
+        return count
     }
 
     private fun painted(image: BufferedImage): Int {

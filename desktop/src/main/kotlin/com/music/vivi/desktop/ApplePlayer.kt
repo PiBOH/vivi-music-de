@@ -417,6 +417,7 @@ private fun AppleTransport(
                 tint = PaletteInk.copy(alpha = if (isShuffle) 1f else 0.65f),
                 modifier = Modifier
                     .size(19.dp)
+                    .iconHoverLift(enabled = !locked, label = "appleShuffle")
                     .clickable(enabled = !locked) { onToggleShuffle() },
             )
         }
@@ -427,6 +428,7 @@ private fun AppleTransport(
                 tint = PaletteInk.copy(alpha = if (locked) 0.4f else 1f),
                 modifier = Modifier
                     .size(30.dp)
+                    .iconHoverLift(enabled = !locked, label = "applePrevious")
                     .clickable(enabled = !locked) { onPrevious() },
             )
         }
@@ -435,7 +437,7 @@ private fun AppleTransport(
             enabled = !locked,
             shape = CircleShape,
             color = PaletteInk.copy(alpha = if (locked) 0.5f else 1f),
-            modifier = Modifier.size(52.dp),
+            modifier = Modifier.size(52.dp).pointerTilt(enabled = !locked, label = "applePlayTilt"),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -456,6 +458,7 @@ private fun AppleTransport(
                 tint = PaletteInk.copy(alpha = if (locked) 0.4f else 1f),
                 modifier = Modifier
                     .size(30.dp)
+                    .iconHoverLift(enabled = !locked, label = "appleNext")
                     .clickable(enabled = !locked) { onNext() },
             )
         }
@@ -466,6 +469,7 @@ private fun AppleTransport(
                 tint = PaletteInk.copy(alpha = if (repeatMode == RepeatMode.OFF) 0.65f else 1f),
                 modifier = Modifier
                     .size(19.dp)
+                    .iconHoverLift(enabled = !locked, label = "appleRepeat")
                     .clickable(enabled = !locked) { onCycleRepeat() },
             )
         }

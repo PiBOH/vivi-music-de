@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.1-beta] - 2026-10-28
+
+### ✨ Added
+- [DE] **The cookies, the clover and the icons move the way the Orion-Store site moves them: a 3D tilt that follows the pointer, and a glyph that lifts and turns.** `Motion.kt` now carries the same three numbers the site's own `data-tilt` and `.rel-icon` use (`TILT_MAX_DEGREES` 4.5 degrees per axis, `TILT_PERSPECTIVE` 900, `ICON_LIFT_DP` / `ICON_TURN_DEGREES` 2 dp and -6 degrees) and the same travel times (`Modifier.pointerTilt` 0.8 s, `Modifier.iconHoverLift` 0.6 s), both on the published decelerating curve instead of a spring, so the movement leaves at once and settles slowly like the site's `power3.out`. `pointerTilt` is what a person's cookie, an artist's card, a song's row cover, a Listen Together clover, the round glass player buttons and the Apple Music transport turn with, and `iconHoverLift` is the glyph's own half of the same rule. Both read `Motion.pointerSpec`, so the Animations master switch still makes them instant and the Animation-speed setting still scales them. **Measured:** `:desktop:compileKotlin` and `:desktop:compileTestKotlin` pass, `:desktop:motionCheck` exits 0 with its new cases reading `tilt: middle 0.00, edges -4.50 / 4.50`, `tilt: 202 px differ between flat and 4.5 degrees` and `icon hover: 416 px differ between rest and lifted`; the UI preview mirrors it, with `.md-avatar` carrying `perspective(900px) rotateX(...) rotateY(...)` and `js/chrome.js` writing the two angles from the pointer's place inside the cookie, and `motion_check.mjs` driving the real pointer path reads the corner flat, 3.60 / -3.60 degrees from a point inside its outline and flat again once the pointer has left, against `matrix(0.994522, -0.104528, 0.104528, 0.994522, 0, -2)` for the lifted glyph; `styles_check.mjs` still exits 0. **Watch:** a new surface takes the movement from `Modifier.pointerTilt` and a new glyph from `Modifier.iconHoverLift`, never from a hand-rolled rotation. **Open sub-item:** the glyph movement reaches the transport and glass controls, not every `IconButton` in the app, which keeps the state layer as its only pointer feedback.
+
 ## [6.0.8.11_DE-1.56.0-beta] - 2026-10-28
 
 ### ✨ Added
