@@ -34,7 +34,7 @@ import java.io.File
  *    from one corner to the next, so the middle of the top is painted just under
  *    it and bare above it, which a diamond (the same square turned 45 degrees)
  *    would fail;
- *  * the 7-sided cookie has an *apex*: the middle of its top is painted close to
+ *  * the 9-sided cookie has an *apex*: the middle of its top is painted close to
  *    the edge, where the 4-sided one is bare;
  *  * the clover has a lobe at the middle of each side, so all four midpoints are
  *    painted and the diagonals between them are not.
@@ -53,10 +53,10 @@ object CookieShapesCheck {
         val failures = mutableListOf<String>()
 
         val cookie4 = render("cookie4", CookieShapes.fourSided)
-        val cookie7 = render("cookie7", CookieShapes.sevenSided)
+        val cookie9 = render("cookie9", CookieShapes.nineSided)
         val clover = render("clover", CookieShapes.clover)
 
-        for ((name, image) in listOf("cookie4" to cookie4, "cookie7" to cookie7, "clover" to clover)) {
+        for ((name, image) in listOf("cookie4" to cookie4, "cookie9" to cookie9, "clover" to clover)) {
             if (!image.filled(0.5, 0.5)) failures += "$name: the middle of the shape is not painted"
             for ((x, y) in CORNERS) {
                 if (image.filled(x, y)) failures += "$name: the box corner at ($x, $y) is painted, so the shape fills its box"
@@ -67,9 +67,9 @@ object CookieShapesCheck {
         if (!cookie4.filled(0.5, 0.12)) failures += "cookie4: the middle of its top edge is not painted (no flat top)"
         if (cookie4.filled(0.5, 0.01)) failures += "cookie4: it is painted at the very top of the box, which a tilted square is not"
 
-        // The 7-sided cookie: an apex at the middle of the top.
-        if (!cookie7.filled(0.5, 0.06)) failures += "cookie7: no apex at the middle of its top"
-        if (cookie7.filled(0.02, 0.02)) failures += "cookie7: it is painted in the box's corner"
+        // The 9-sided cookie: an apex at the middle of the top.
+        if (!cookie9.filled(0.5, 0.06)) failures += "cookie9: no apex at the middle of its top"
+        if (cookie9.filled(0.02, 0.02)) failures += "cookie9: it is painted in the box's corner"
 
         // The clover: a lobe on every side, nothing between them.
         for ((x, y) in LOBES) {
@@ -80,14 +80,14 @@ object CookieShapesCheck {
         }
 
         // The three are three shapes, not one drawn three times.
-        if (differing(cookie4, cookie7) <= 0) failures += "the 4-sided and the 7-sided cookie draw the same pixels"
-        if (differing(cookie7, clover) <= 0) failures += "the 7-sided cookie and the clover draw the same pixels"
+        if (differing(cookie4, cookie9) <= 0) failures += "the 4-sided and the 9-sided cookie draw the same pixels"
+        if (differing(cookie9, clover) <= 0) failures += "the 9-sided cookie and the clover draw the same pixels"
 
-        println("colours: cookie4=${painted(cookie4)}, cookie7=${painted(cookie7)}, clover=${painted(clover)}")
+        println("colours: cookie4=${painted(cookie4)}, cookie9=${painted(cookie9)}, clover=${painted(clover)}")
 
         if (failures.isEmpty()) {
             println()
-            println("OK: a cookie with a flat top, a cookie with an apex and a clover with four lobes")
+            println("OK: a 4-sided cookie with a flat top, a 9-sided cookie with an apex and a clover with four lobes")
             return
         }
         println()

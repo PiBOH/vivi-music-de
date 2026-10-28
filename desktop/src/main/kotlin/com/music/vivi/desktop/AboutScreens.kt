@@ -206,7 +206,7 @@ fun AboutSection(
                             bitmap = image,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.size(34.dp).clip(CookieShapes.sevenSided),
+                            modifier = Modifier.size(34.dp).clip(CookieShapes.nineSided),
                         )
                     }
                 },
@@ -341,7 +341,7 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(CookieShapes.sevenSided)
+                .clip(CookieShapes.nineSided)
                 .background(contributorAvatarColor(username)),
             contentAlignment = Alignment.Center,
         ) {
@@ -355,7 +355,7 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
             model = "https://github.com/$username.png?size=96",
             contentDescription = title,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize().clip(CookieShapes.sevenSided),
+            modifier = Modifier.fillMaxSize().clip(CookieShapes.nineSided),
         )
     }
 }

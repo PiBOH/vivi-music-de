@@ -27,8 +27,8 @@ import kotlin.math.tan
  * picture, so the screen reads at a glance:
  *
  *  - [fourSided] - an artist's artwork and a song's cover in a row;
- *  - [sevenSided] - a person in the Contributors list and the author of this
- *    edition;
+ *  - [nineSided] - a person: the Contributors list (developers and community
+ *    alike) and the author of this edition;
  *  - [clover] - a Listen Together avatar.
  *
  * A cookie is drawn from the same numbers as the UI preview's `clipPath`
@@ -48,11 +48,11 @@ object CookieShapes {
         corner = 0.30f,
     )
 
-    /** The library's 7-sided cookie: a heptagon, one vertex up, corners rounded. */
-    val sevenSided: Shape = RoundedPolygon(
-        sides = 7,
+    /** The library's 9-sided cookie: a nonagon, one vertex up, corners rounded. */
+    val nineSided: Shape = RoundedPolygon(
+        sides = 9,
         firstVertexDegrees = 0f,
-        corner = 0.45f,
+        corner = 0.52f,
     )
 
     /** The library's 4-leaf clover: four discs, one per side, met in the middle. */
@@ -66,7 +66,7 @@ object CookieShapes {
  * o'clock, which is what decides whether the shape reads as a cookie or as a
  * diamond. Each corner is a quadratic whose tangents are the radius the
  * polygon's own side asks for, so one [corner] fraction reads the same on a
- * square and on a heptagon. The turned shape is then scaled to fit the box
+ * square and on a nonagon. The turned shape is then scaled to fit the box
  * keeping its proportions: a square tilted 12 degrees is wider than the circle
  * it came from, and letting the box clip it would eat the corners the shape
  * exists for.
