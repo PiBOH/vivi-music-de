@@ -334,8 +334,8 @@ dependencies there, or you break the desktop build.
     but a *family* comes from the same page, through `CookieShapes` (the
     library's cookies and clover), and the map is: an artist's artwork and a
     song's cover in a row → the 4-sided cookie; a person (the Contributors
-    list, the author of this edition) → the 7-sided cookie; a Listen Together
-    avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
+    list, developers and community alike, and the author of this edition) → the
+    9-sided cookie; a Listen Together avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
     never hand-rolls one of these three.
   - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
     role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
