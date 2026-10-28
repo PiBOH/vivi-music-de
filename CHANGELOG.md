@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.5-beta] - 2026-10-28
+
+### 🔧 Changed
+- [DE] **The Apple Music player's artwork casts the same shadow as the Basic player's, and that shadow is the cookie.** The cover on the Apple Music screen had no shadow at all, so the largest artwork of the two designs was the one that sat flat on the backdrop while the Basic player put a 24 dp shadow under its own. It is wrapped in `Modifier.shadow(24.dp, CookieShapes.fourSided)` now: the same elevation as the Basic player, drawn from the cookie's own outline, because a rounded rectangle there would put a square back around a shape that is not one (and would clip the rotated cover with a corner when the rotating-artwork option is on). The shape itself was already the 4-sided cookie in both designs through `PlayerThumbnail`. **Measured:** `:desktop:compileKotlin` passes and `:desktop:applePlayerRenderCheck` exits 0 (`1280x800: mean brightness 0,06, 7518 ink px in the column, 8857 in the lyrics`, `640x800: 0 ink px right of the column`). **Watch:** an artwork's shadow is `shadow(elevation, CookieShapes.fourSided)`, never a `RoundedCornerShape` around it. **Open sub-item:** the render check paints the screen without a cover in its fixture, so the shadow is verified as the modifier over the cookie and by the compile, not as measured pixels under the artwork.
+
 ## [6.0.8.11_DE-1.56.4-beta] - 2026-10-28
 
 ### 🔧 Changed

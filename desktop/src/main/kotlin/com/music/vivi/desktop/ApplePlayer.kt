@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -153,11 +154,17 @@ fun AppleMusicPlayer(
                     .width(cover)
                     .verticalScroll(rememberScrollState()),
             ) {
-                PlayerThumbnail(
-                    url = np.thumbnail,
-                    size = cover,
-                    rotating = rotatingThumbnail,
-                )
+                // The artwork's shadow comes from the cookie's own outline. A
+                // rounded rectangle here would put the square back around a
+                // shape that is not one, which is what the Basic player already
+                // does with the same elevation.
+                Box(Modifier.shadow(24.dp, CookieShapes.fourSided)) {
+                    PlayerThumbnail(
+                        url = np.thumbnail,
+                        size = cover,
+                        rotating = rotatingThumbnail,
+                    )
+                }
                 Spacer(Modifier.height(18.dp))
                 Text(
                     np.title,
