@@ -221,7 +221,7 @@ fun ListenTogetherChatWindowContent(
         replyTarget?.let { target ->
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+                shape = RoundedCornerShape(topStart = ShapeRadii.small, topEnd = ShapeRadii.small),
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
@@ -232,7 +232,7 @@ fun ListenTogetherChatWindowContent(
                         Modifier
                             .width(3.dp)
                             .height(30.dp)
-                            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp))
+                            .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.extraSmall)
                     )
                     Spacer(Modifier.width(10.dp))
                     Column(Modifier.weight(1f)) {
@@ -242,13 +242,15 @@ fun ListenTogetherChatWindowContent(
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
                         )
-                        Text(
-                            target.message,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Tooltip(target.message) {
+                            Text(
+                                target.message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     IconButton(onClick = { replyTarget = null }) {
                         Icon(
@@ -402,7 +404,7 @@ private fun DaySeparator(startOfDay: Long, language: String) {
     Box(Modifier.fillMaxWidth().padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.small,
         ) {
             Text(
                 dayLabel(startOfDay, language),
@@ -470,7 +472,7 @@ private fun MessageBubble(
                 message.replyTo?.let { quote ->
                     Surface(
                         color = quoteColor,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = MaterialTheme.shapes.extraSmall,
                         modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth(),
                     ) {
                         Row(Modifier.padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -478,7 +480,7 @@ private fun MessageBubble(
                                 Modifier
                                     .width(3.dp)
                                     .height(24.dp)
-                                    .background(content.copy(alpha = 0.7f), RoundedCornerShape(2.dp))
+                                    .background(content.copy(alpha = 0.7f), MaterialTheme.shapes.extraSmall)
                             )
                             Spacer(Modifier.width(8.dp))
                             Column {
@@ -488,13 +490,15 @@ private fun MessageBubble(
                                     fontWeight = FontWeight.SemiBold,
                                     color = content.copy(alpha = 0.9f),
                                 )
-                                Text(
-                                    quote.message,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = content.copy(alpha = 0.8f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(quote.message) {
+                                    Text(
+                                        quote.message,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = content.copy(alpha = 0.8f),
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }

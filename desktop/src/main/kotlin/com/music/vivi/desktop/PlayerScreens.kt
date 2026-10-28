@@ -94,12 +94,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawWithContent
@@ -488,7 +488,7 @@ private fun M3EPlayerContent(
                     Box(
                         Modifier
                             .offset(x = artworkOffsetX, y = artworkOffsetY)
-                            .shadow(20.dp, RoundedCornerShape(12.dp))
+                            .shadow(20.dp, MaterialTheme.shapes.small)
                     ) {
                         PlayerThumbnail(artworkUrl ?: np.thumbnail, artworkSize, 12.dp, rotatingThumbnail)
                     }
@@ -500,35 +500,39 @@ private fun M3EPlayerContent(
                         Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(
-                            np.title,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = titleFontSize,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .offset(x = titleOffsetX, y = titleOffsetY)
-                                .basicMarquee()
-                        )
+                        Tooltip(np.title) {
+                            Text(
+                                np.title,
+                                style = MaterialTheme.typography.headlineMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = titleFontSize,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .offset(x = titleOffsetX, y = titleOffsetY)
+                                    .basicMarquee()
+                            )
+                        }
                         Spacer(Modifier.height(2.dp))
-                        Text(
-                            np.artist,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontSize = artistFontSize,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .offset(x = artistOffsetX, y = artistOffsetY)
-                        )
+                        Tooltip(np.artist) {
+                            Text(
+                                np.artist,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontSize = artistFontSize,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .offset(x = artistOffsetX, y = artistOffsetY)
+                            )
+                        }
                     }
 
                     Spacer(Modifier.height(14.dp))
@@ -793,7 +797,7 @@ private fun M3EPlayerContent(
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(MaterialTheme.shapes.large)
                         // Two finishes for the same panel (Settings → Player
                         // design → "Translucent tab"): the opaque card the
                         // player shipped with, or a translucent one that lets
@@ -812,7 +816,7 @@ private fun M3EPlayerContent(
                                     alpha = if (tabTranslucent) 0.22f else 0.08f
                                 ),
                             ),
-                            RoundedCornerShape(20.dp),
+                            MaterialTheme.shapes.large,
                         )
                         .padding(16.dp)
                 ) {
@@ -895,7 +899,7 @@ private fun M3EPlayerContent(
 
                     // Floating Bottom Segmented Pill Toolbar (Queue, Lyrics, History)
                     Surface(
-                        shape = RoundedCornerShape(16.dp),
+                        shape = MaterialTheme.shapes.medium,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.95f),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         shadowElevation = 8.dp,
@@ -912,7 +916,7 @@ private fun M3EPlayerContent(
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(if (activeTab == M3ETab.QUEUE) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                                     .clickable { selectTab(M3ETab.QUEUE) },
                                 contentAlignment = Alignment.Center,
@@ -929,7 +933,7 @@ private fun M3EPlayerContent(
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(if (activeTab == M3ETab.LYRICS) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                                     .clickable { selectTab(M3ETab.LYRICS) },
                                 contentAlignment = Alignment.Center,
@@ -946,7 +950,7 @@ private fun M3EPlayerContent(
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(if (activeTab == M3ETab.HISTORY) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
                                     .clickable { selectTab(M3ETab.HISTORY) },
                                 contentAlignment = Alignment.Center,
@@ -1305,7 +1309,7 @@ private fun PlayerArtworkBlock(
                                 .background(
                                     Brush.verticalGradient(
                                         0.5f to Color.Transparent,
-                                        1f to Color.Black.copy(alpha = 0.72f),
+                                        1f to PaletteBlack.copy(alpha = 0.72f),
                                     )
                                 )
                         )
@@ -1315,23 +1319,27 @@ private fun PlayerArtworkBlock(
                                 .padding(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Text(
-                                np.title,
-                                style = MaterialTheme.typography.titleLarge,
-                                color = Color.White,
-                                textAlign = TextAlign.Center,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(np.title) {
+                                Text(
+                                    np.title,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = PaletteInk,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                             Spacer(Modifier.height(4.dp))
-                            Text(
-                                np.artist,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.85f),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(np.artist) {
+                                Text(
+                                    np.artist,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = PaletteInk.copy(alpha = 0.85f),
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -1352,7 +1360,7 @@ private fun PlayerArtworkBlock(
                             Brush.verticalGradient(
                                 0f to Color.Transparent,
                                 0.4f to Color.Transparent,
-                                1f to Color.White,
+                                1f to PaletteInk,
                             ),
                             blendMode = BlendMode.DstIn,
                         )
@@ -1376,38 +1384,42 @@ private fun PlayerArtworkBlock(
 
         if (!metrics.overlayTitle) {
             Spacer(Modifier.height(16.dp))
-            Text(
-                np.title,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .basicMarquee(),
-            )
+            Tooltip(np.title) {
+                Text(
+                    np.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .basicMarquee(),
+                )
+            }
             Spacer(Modifier.height(6.dp))
-            Text(
-                np.artist,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Tooltip(np.artist) {
+                Text(
+                    np.artist,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
 
         // Under the song text: add-to-playlist + queue, side by side.
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             if (onAddToPlaylist != null) {
-                OutlinedButton(onClick = onAddToPlaylist) {
+                FilledTonalButton(onClick = onAddToPlaylist) {
                     Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(Localization.get(language, "add_to_playlist"))
                 }
             }
-            OutlinedButton(onClick = onOpenQueue) {
+            FilledTonalButton(onClick = onOpenQueue) {
                 Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("${Localization.get(language, "queue")} ($queueSize)")
@@ -1564,7 +1576,7 @@ private fun PlayerControlPanel(
             Button(
                 onClick = onTogglePlay,
                 enabled = !transportOff,
-                shape = RoundedCornerShape(50),
+                shape = CircleShape,
                 modifier = Modifier.dimmedWhenLocked(),
             ) {
                 Icon(
@@ -1655,13 +1667,13 @@ private fun PlayerControlPanel(
 
     // Secondary actions.
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        OutlinedButton(onClick = onOpenLyrics) {
+        FilledTonalButton(onClick = onOpenLyrics) {
             Icon(Icons.AutoMirrored.Filled.Subject, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(Localization.get(language, "lyrics"))
         }
         if (onOpenLyricsFocus != null) {
-            OutlinedButton(onClick = onOpenLyricsFocus) {
+            FilledTonalButton(onClick = onOpenLyricsFocus) {
                 Icon(Icons.Filled.Lyrics, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(Localization.get(language, "lyrics_focus"))
@@ -1670,7 +1682,7 @@ private fun PlayerControlPanel(
         // The mobile lyrics menu, right where the lyrics are: style, position,
         // glow/blur, tap-to-seek, auto-scroll, size and spacing, applied live.
         Box {
-            OutlinedButton(onClick = { lyricsMenuOpen = true }) {
+            FilledTonalButton(onClick = { lyricsMenuOpen = true }) {
                 Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text(Localization.get(language, "lyrics_options"))
@@ -1744,7 +1756,7 @@ private fun GlassCircleButton(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color.White.copy(alpha = 0.14f),
+                            PaletteInk.copy(alpha = 0.14f),
                             background,
                             background.copy(alpha = 0.8f),
                         )
@@ -1923,22 +1935,23 @@ fun AppleUpNextQueueScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                     ) {
-                                        Text(
-                                            text = item.title,
-                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 15.sp,
-                                            ),
-                                            color = if (isCurrent) accent else MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f, fill = false),
-                                        )
+                                        Tooltip(text = item.title, modifier = Modifier.weight(1f, fill = false)) {
+                                            Text(
+                                                text = item.title,
+                                                style = MaterialTheme.typography.bodyLarge.copy(
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 15.sp,
+                                                ),
+                                                color = if (isCurrent) accent else MaterialTheme.colorScheme.onSurface,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
 
                                         // Explicit badge if title contains explicit/live/acoustic indicators
                                         if (item.title.contains("Explicit", ignoreCase = true) || item.title.contains("Live", ignoreCase = true) && item.title.contains("Acoustic", ignoreCase = true)) {
                                             Surface(
-                                                shape = RoundedCornerShape(3.dp),
+                                                shape = MaterialTheme.shapes.extraSmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f),
                                             ) {
                                                 Text(
@@ -1956,13 +1969,15 @@ fun AppleUpNextQueueScreen(
 
                                     Spacer(Modifier.height(2.dp))
 
-                                    Text(
-                                        text = "${item.title} - ${item.artist}",
-                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Tooltip(text = "${item.title} - ${item.artist}") {
+                                        Text(
+                                            text = "${item.title} - ${item.artist}",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                             }
 
@@ -2033,30 +2048,34 @@ fun QueueHistoryScreen(
                             Box(
                                 Modifier
                                     .size(46.dp)
-                                    .clip(RoundedCornerShape(8.dp))
+                                    .clip(MaterialTheme.shapes.extraSmall)
                             ) {
                                 PlayerThumbnail(item.thumbnail, 46.dp, 8.dp, false)
                             }
                             Spacer(Modifier.width(14.dp))
                             Column(Modifier.weight(1f)) {
-                                Text(
-                                    item.title,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 15.sp,
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(item.title) {
+                                    Text(
+                                        item.title,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                                 Spacer(Modifier.height(2.dp))
-                                Text(
-                                    "${item.artist} - ${item.artist}",
-                                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip("${item.artist} - ${item.artist}") {
+                                    Text(
+                                        "${item.artist} - ${item.artist}",
+                                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 13.sp),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                         Box(
@@ -2160,7 +2179,7 @@ fun QueueScreen(
                             val progress = (kotlin.math.abs(dragX) / threshold).coerceIn(0f, 1f)
                             Box(
                                 Modifier
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f))
                                     .graphicsLayer { alpha = progress }
                                     .matchParentSize(),
@@ -2220,32 +2239,36 @@ fun QueueScreen(
                                         NowPlayingBars(
                                             audioLevel = playback.audioLevel,
                                             isPlaying = playback.isPlaying,
-                                            color = Color.White,
+                                            color = PaletteInk,
                                             modifier = Modifier
                                                 .align(Alignment.Center)
-                                                .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                                .background(PaletteBlack.copy(alpha = 0.5f), MaterialTheme.shapes.extraSmall)
                                                 .padding(horizontal = 5.dp, vertical = 4.dp),
                                         )
                                     }
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(
-                                        item.title,
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        item.artist,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Tooltip(item.title) {
+                                        Text(
+                                            item.title,
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                    Tooltip(item.artist) {
+                                        Text(
+                                            item.artist,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                                 Tooltip(Localization.get(language, "add_to_playlist")) {
                                     IconButton(onClick = { onAddToPlaylist(item) }) {
@@ -2365,20 +2388,20 @@ fun LyricsScreen(
             // Thumbnail play/pause (port of the mobile advanced-lyrics control).
             np?.let {
                 Box {
-                    Thumbnail(it.thumbnail, Modifier.size(40.dp).clip(RoundedCornerShape(8.dp)))
+                    Thumbnail(it.thumbnail, Modifier.size(40.dp).clip(MaterialTheme.shapes.extraSmall))
                     // Small play/pause overlay.
                     Box(
                         Modifier
                             .size(40.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.Black.copy(alpha = 0.45f))
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(PaletteBlack.copy(alpha = 0.45f))
                             .clickable(enabled = !transportOff, onClick = onTogglePlay),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = null,
-                            tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                            tint = PaletteInk.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -2481,7 +2504,7 @@ fun SpotifyRightNowPlayingPanel(
         modifier = modifier.fillMaxHeight().width(310.dp),
         // Theme panel color (was hardcoded #121212 — broken in light mode).
         color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
     ) {
         if (np == null) {
             Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -2506,13 +2529,14 @@ fun SpotifyRightNowPlayingPanel(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(
-                    Localization.get(language, "now_playing"),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Tooltip(Localization.get(language, "now_playing"), modifier = Modifier.weight(1f)) {
+                    Text(
+                        Localization.get(language, "now_playing"),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Tooltip(Localization.get(language, "close")) {
                     IconButton(onClick = onClose) {
                         Icon(
@@ -2531,8 +2555,8 @@ fun SpotifyRightNowPlayingPanel(
                 Modifier
                     .fillMaxWidth()
                     .height(278.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.Black.copy(alpha = 0.2f)),
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(PaletteBlack.copy(alpha = 0.2f)),
             ) {
                 PlayerThumbnail(np.thumbnail, 278.dp, 16.dp, false, Modifier.fillMaxSize())
             }
@@ -2546,20 +2570,24 @@ fun SpotifyRightNowPlayingPanel(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text(
-                        np.title,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Tooltip(np.title) {
+                        Text(
+                            np.title,
+                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                     Spacer(Modifier.height(2.dp))
-                    Text(
-                        np.artist,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Tooltip(np.artist) {
+                        Text(
+                            np.artist,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 if (onAddToPlaylist != null) {
                     Tooltip(Localization.get(language, "add_to_playlist")) {
@@ -2602,7 +2630,7 @@ fun SpotifyRightNowPlayingPanel(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             ) {
                 Column(Modifier.padding(16.dp)) {
@@ -2620,7 +2648,7 @@ fun SpotifyRightNowPlayingPanel(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .padding(vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
@@ -2642,18 +2670,20 @@ fun SpotifyRightNowPlayingPanel(
                                         Text(
                                             initials,
                                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                                            color = Color.White,
+                                            color = PaletteInk,
                                         )
                                     }
                                 }
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(
-                                        artistName,
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Tooltip(artistName) {
+                                        Text(
+                                            artistName,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                     Text(
                                         if (index == 0) "Primary Artist" else "Featured Artist",
                                         style = MaterialTheme.typography.bodySmall,
@@ -2672,10 +2702,10 @@ fun SpotifyRightNowPlayingPanel(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(MaterialTheme.shapes.medium)
                     .clickable(onClick = onOpenLyrics),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
             ) {
                 Column(Modifier.padding(16.dp)) {
@@ -2731,7 +2761,7 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
     modifier: Modifier = Modifier,
 ) {
     val dark = isAppInDarkTheme()
-    val baseSurface = if (pureBlack && dark) Color.Black else MaterialTheme.colorScheme.surfaceContainerHigh
+    val baseSurface = if (pureBlack && dark) PaletteBlack else MaterialTheme.colorScheme.surfaceContainerHigh
     var extractedColors by remember(thumbnailUrl) { mutableStateOf<List<Color>>(emptyList()) }
 
     LaunchedEffect(thumbnailUrl, style) {
@@ -2795,7 +2825,7 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
                         modifier = Modifier.matchParentSize().blur(24.dp).graphicsLayer { scaleX = 1.25f; scaleY = 1.25f },
                     )
                 }
-                Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = 0.5f)))
+                Box(Modifier.matchParentSize().background(PaletteBlack.copy(alpha = 0.5f)))
             }
             MiniPlayerBackgroundStyle.GLOW_MOTION -> {
                 val accent = extractedColors.firstOrNull() ?: MaterialTheme.colorScheme.primary
@@ -2881,8 +2911,8 @@ fun ClassicDesktopMiniPlayer(
     modifier: Modifier = Modifier,
 ) {
     val isDynamicBg = backgroundStyle != MiniPlayerBackgroundStyle.FOLLOW_THEME
-    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White else MaterialTheme.colorScheme.onSurface
-    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk else MaterialTheme.colorScheme.onSurface
+    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -2920,7 +2950,7 @@ fun ClassicDesktopMiniPlayer(
                         Box(
                             Modifier
                                 .size(52.dp)
-                                .clip(RoundedCornerShape(8.dp))
+                                .clip(MaterialTheme.shapes.extraSmall)
                                 .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
                                 .clickable(onClick = onOpenPlayer),
                         ) {
@@ -2928,21 +2958,25 @@ fun ClassicDesktopMiniPlayer(
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f).clickable(onClick = onOpenPlayer)) {
-                            Text(
-                                nowPlaying.title,
-                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                                color = contentColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(nowPlaying.title) {
+                                Text(
+                                    nowPlaying.title,
+                                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                                    color = contentColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                             Spacer(Modifier.height(2.dp))
-                            Text(
-                                nowPlaying.artist,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = mutedColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(nowPlaying.artist) {
+                                Text(
+                                    nowPlaying.artist,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = mutedColor,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
 
@@ -3182,8 +3216,8 @@ fun NewDesktopMiniPlayer(
     modifier: Modifier = Modifier,
 ) {
     val isDynamicBg = backgroundStyle != MiniPlayerBackgroundStyle.FOLLOW_THEME
-    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White else MaterialTheme.colorScheme.onSurface
-    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk else MaterialTheme.colorScheme.onSurface
+    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = MaterialTheme.colorScheme.primary
     val progress = (positionMs.toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
     val scope = rememberCoroutineScope()
@@ -3194,7 +3228,7 @@ fun NewDesktopMiniPlayer(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .height(64.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(MaterialTheme.shapes.extraLarge)
     ) {
         DesktopMiniPlayerBackgroundLayer(
             style = backgroundStyle,
@@ -3256,16 +3290,16 @@ fun NewDesktopMiniPlayer(
                     Box(
                         Modifier
                             .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.35f)),
+                            .background(PaletteBlack.copy(alpha = 0.35f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         if (isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = PaletteInk)
                         } else {
                             Icon(
                                 if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = if (isPlaying) "Pause" else "Play",
-                                tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                                tint = PaletteInk.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                                 modifier = Modifier.size(20.dp),
                             )
                         }
@@ -3281,20 +3315,24 @@ fun NewDesktopMiniPlayer(
                     .weight(1f)
                     .clickable(onClick = onOpenPlayer),
             ) {
-                Text(
-                    nowPlaying.title,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    nowPlaying.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = mutedColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Tooltip(nowPlaying.title) {
+                    Text(
+                        nowPlaying.title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Tooltip(nowPlaying.artist) {
+                    Text(
+                        nowPlaying.artist,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = mutedColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
 
             Spacer(Modifier.width(10.dp))
@@ -3429,8 +3467,8 @@ fun AppleDesktopMiniPlayer(
     modifier: Modifier = Modifier,
 ) {
     val isDynamicBg = backgroundStyle != MiniPlayerBackgroundStyle.FOLLOW_THEME
-    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White else MaterialTheme.colorScheme.onSurface
-    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk else MaterialTheme.colorScheme.onSurface
+    val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = MaterialTheme.colorScheme.primary
 
     Box(
@@ -3438,7 +3476,7 @@ fun AppleDesktopMiniPlayer(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
             .height(64.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(MaterialTheme.shapes.small)
     ) {
         DesktopMiniPlayerBackgroundLayer(
             style = backgroundStyle,
@@ -3476,7 +3514,7 @@ fun AppleDesktopMiniPlayer(
             Box(
                 Modifier
                     .size(42.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(MaterialTheme.shapes.small)
                     .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
                     .clickable(enabled = !transportOff, onClick = onTogglePlay),
                 contentAlignment = Alignment.Center,
@@ -3485,16 +3523,16 @@ fun AppleDesktopMiniPlayer(
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f)),
+                        .background(PaletteBlack.copy(alpha = 0.35f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = Color.White)
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = PaletteInk)
                     } else {
                         Icon(
                             if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                            tint = PaletteInk.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -3509,20 +3547,24 @@ fun AppleDesktopMiniPlayer(
                     .weight(1f)
                     .clickable(onClick = onOpenPlayer),
             ) {
-                Text(
-                    nowPlaying.title,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = contentColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    nowPlaying.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = mutedColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Tooltip(nowPlaying.title) {
+                    Text(
+                        nowPlaying.title,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        color = contentColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Tooltip(nowPlaying.artist) {
+                    Text(
+                        nowPlaying.artist,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = mutedColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
 
             Spacer(Modifier.width(12.dp))
@@ -3920,13 +3962,13 @@ fun LyricsFocusScreen(
                     .background(
                         Brush.verticalGradient(
                             0f to accent.copy(alpha = 0.5f),
-                            1f to Color.Black.copy(alpha = 0.85f),
+                            1f to PaletteBlack.copy(alpha = 0.85f),
                         )
                     )
             )
         }
         // Scrim so the white lyrics text always reads.
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.55f)))
+        Box(Modifier.fillMaxSize().background(PaletteBlack.copy(alpha = 0.55f)))
 
         LyricsScreen(
             nowPlaying = nowPlaying,
@@ -3948,7 +3990,7 @@ fun LyricsFocusScreen(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Color.Black.copy(alpha = 0.45f))
+                .background(PaletteBlack.copy(alpha = 0.45f))
                 .padding(horizontal = 24.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
@@ -3960,7 +4002,7 @@ fun LyricsFocusScreen(
                     Icon(
                         Icons.Filled.SkipPrevious,
                         contentDescription = Localization.get(language, "previous"),
-                        tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                        tint = PaletteInk.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                         modifier = Modifier.size(32.dp),
                     )
                 }
@@ -3988,7 +4030,7 @@ fun LyricsFocusScreen(
                     Icon(
                         Icons.Filled.SkipNext,
                         contentDescription = Localization.get(language, "next"),
-                        tint = Color.White.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
+                        tint = PaletteInk.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
                         modifier = Modifier.size(32.dp),
                     )
                 }

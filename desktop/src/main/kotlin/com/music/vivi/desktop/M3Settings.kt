@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -384,7 +385,7 @@ private fun CollapsibleHeader(
  * rows meet.
  */
 @Composable
-private fun CollapsibleGroupRow(shape: RoundedCornerShape, content: @Composable () -> Unit) {
+private fun CollapsibleGroupRow(shape: CornerBasedShape, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = shape,
@@ -398,11 +399,22 @@ private fun CollapsibleGroupRow(shape: RoundedCornerShape, content: @Composable 
 }
 
 /** The uneven corners of the group holding [size] rows, for the row at [index]. */
-private fun collapsibleGroupShape(index: Int, size: Int): RoundedCornerShape = when {
-    size == 1 -> RoundedCornerShape(24.dp)
-    index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
-    index == size - 1 -> RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
-    else -> RoundedCornerShape(6.dp)
+@Composable
+private fun collapsibleGroupShape(index: Int, size: Int): CornerBasedShape = when {
+    size == 1 -> MaterialTheme.shapes.extraLarge
+    index == 0 -> RoundedCornerShape(
+        topStart = ShapeRadii.extraLarge,
+        topEnd = ShapeRadii.extraLarge,
+        bottomStart = ShapeRadii.extraSmall,
+        bottomEnd = ShapeRadii.extraSmall,
+    )
+    index == size - 1 -> RoundedCornerShape(
+        topStart = ShapeRadii.extraSmall,
+        topEnd = ShapeRadii.extraSmall,
+        bottomStart = ShapeRadii.extraLarge,
+        bottomEnd = ShapeRadii.extraLarge,
+    )
+    else -> MaterialTheme.shapes.extraSmall
 }
 
 @Composable
@@ -465,7 +477,7 @@ private fun M3SettingsItemRow(
                 Box(
                     modifier = Modifier
                         .size(34.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(
                             MaterialTheme.colorScheme.primary.copy(alpha = if (item.enabled) 0.1f else 0.05f),
                         ),
@@ -589,7 +601,7 @@ fun M3SettingsDropdownItem(
     // and corner now, the same [M3SettingsDropdownCard] draws.
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),
@@ -628,7 +640,7 @@ fun M3SettingsDropdownCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),
@@ -700,9 +712,9 @@ private fun M3DropdownMenu(
         offset = DpOffset(offsetX, 0.dp),
         modifier = Modifier
             .width(menuWidth)
-            .clip(RoundedCornerShape(18.dp))
+            .clip(MaterialTheme.shapes.large)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), MaterialTheme.shapes.large)
             .padding(vertical = 4.dp),
     ) {
         // Highlight the option whose translated label matches the currently

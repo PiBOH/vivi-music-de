@@ -28,7 +28,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -144,7 +143,7 @@ fun AlbumScreen(
                     Spacer(Modifier.weight(1f))
                     Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
                     Spacer(Modifier.width(8.dp))
-                    OutlinedButton(onClick = { onShuffleAll(page!!.songs) }) {
+                    TextButton(onClick = { onShuffleAll(page!!.songs) }) {
                         Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(Localization.get(language, "shuffle_all"))
@@ -272,14 +271,16 @@ fun ArtistScreen(
                 )
                 if (showDescription) {
                     page!!.description?.takeIf { it.isNotBlank() }?.let { description ->
-                        Text(
-                            text = description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 4,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        )
+                        Tooltip(text = description) {
+                            Text(
+                                text = description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 4,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            )
+                        }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
@@ -469,7 +470,7 @@ fun PlaylistScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
                         Spacer(Modifier.width(8.dp))
-                        OutlinedButton(onClick = { onShuffleAll(page!!.songs) }) {
+                        TextButton(onClick = { onShuffleAll(page!!.songs) }) {
                             Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text(Localization.get(language, "shuffle_all"))

@@ -233,7 +233,7 @@ internal fun MarkdownView(
                 is MdBlock.Quote -> Box(
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(8.dp),
                 ) {
@@ -247,7 +247,7 @@ internal fun MarkdownView(
                 is MdBlock.Code -> Box(
                     Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(6.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(MaterialTheme.colorScheme.surfaceVariant)
                         .padding(10.dp),
                 ) {

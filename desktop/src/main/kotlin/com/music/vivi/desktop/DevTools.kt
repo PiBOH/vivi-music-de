@@ -542,7 +542,7 @@ fun BoxScope.DevToolsOverlay(syncManager: DesktopSyncManager?, language: String,
                     Modifier
                 }
             ),
-        shape = RoundedCornerShape(10.dp),
+        shape = MaterialTheme.shapes.small,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
         tonalElevation = 4.dp,
         shadowElevation = 4.dp,

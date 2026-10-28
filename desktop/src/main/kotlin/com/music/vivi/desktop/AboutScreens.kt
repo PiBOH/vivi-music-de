@@ -69,7 +69,7 @@ private val GithubIcon: ImageVector by lazy {
     ).apply {
         addPath(
             pathData = PathParser().parsePathString(GITHUB_MARK_PATH).toNodes(),
-            fill = SolidColor(Color.White),
+            fill = SolidColor(PaletteInk),
         )
     }.build()
 }
@@ -107,7 +107,7 @@ fun AboutSection(
     // The head: the app's own logo (the intro's, not a letter standing in for it)
     // and what this build is, so the answer is on the screen before any row.
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         // The fill every settings card wears (the page's `md-card`, a 30 % mix of
         // `surface-variant`), not the accent tint a hero would take: the head is a
         // card of this screen, and a tinted one read as a different kind of block.
@@ -349,7 +349,7 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
             Text(
                 (realName ?: username).take(1).uppercase(),
                 style = MaterialTheme.typography.titleSmall,
-                color = Color.White,
+                color = PaletteInk,
             )
         }
         AsyncImage(
@@ -363,12 +363,8 @@ private fun ContributorAvatar(username: String, realName: String?, title: String
 
 /** Stable per-username avatar disc color (deterministic, theme-independent). */
 private fun contributorAvatarColor(username: String): Color {
-    val palette = listOf(
-        Color(0xFF6750A4), Color(0xFF00696D), Color(0xFF006D3A), Color(0xFF7D5260),
-        Color(0xFF9A6700), Color(0xFF00639B), Color(0xFF704214), Color(0xFFB3261E),
-    )
     val hash = username.fold(0) { acc, c -> (acc * 31 + c.code) and 0x7fffffff }
-    return palette[hash % palette.size]
+    return AvatarDiscs[hash % AvatarDiscs.size]
 }
 
 // ---------------------------------------------------------------------------

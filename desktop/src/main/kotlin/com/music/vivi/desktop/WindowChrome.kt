@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -102,7 +103,7 @@ fun WindowControlsOverlay(
     if (!nativeTitleBar && (!spotifyLayout || onPlayerScreen)) {
         Box(Modifier.fillMaxSize()) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.small,
                 color = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.85f),
                 modifier = Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 6.dp),
             ) {
@@ -198,7 +199,7 @@ fun WindowScope.SpotifyTopHeader(
 
                 Surface(
                     onClick = onOpenSearch,
-                    shape = RoundedCornerShape(50),
+                    shape = CircleShape,
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     modifier = Modifier.widthIn(min = 140.dp, max = 420.dp).weight(1f, fill = false).height(42.dp),
                 ) {
@@ -218,13 +219,15 @@ fun WindowScope.SpotifyTopHeader(
                                 val hintText = Localization.get(language, "search_hint").let {
                                     if (it.isBlank() || it == "search_hint") "What do you want to play?" else it
                                 }
-                                Text(
-                                    text = hintText,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(text = hintText) {
+                                    Text(
+                                        text = hintText,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                             BasicTextField(
                                 value = searchQuery,
@@ -288,7 +291,7 @@ fun WindowScope.SpotifyTopHeader(
 
                             Row(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
+                                    .clip(MaterialTheme.shapes.small)
                                     .clickable { filterMenuExpanded = true }
                                     .padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -314,9 +317,9 @@ fun WindowScope.SpotifyTopHeader(
                                 onDismissRequest = { filterMenuExpanded = false },
                                 modifier = Modifier
                                     .width(180.dp)
-                                    .clip(RoundedCornerShape(18.dp))
+                                    .clip(MaterialTheme.shapes.large)
                                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                                    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), RoundedCornerShape(18.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), MaterialTheme.shapes.large)
                                     .padding(vertical = 4.dp),
                             ) {
                                 data class FilterOption(
@@ -372,7 +375,7 @@ fun WindowScope.SpotifyTopHeader(
                                         },
                                         modifier = Modifier
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
-                                            .clip(RoundedCornerShape(12.dp))
+                                            .clip(MaterialTheme.shapes.small)
                                             .background(
                                                 if (isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
                                                 else Color.Transparent

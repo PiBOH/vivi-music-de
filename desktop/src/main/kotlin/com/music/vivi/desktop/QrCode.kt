@@ -5,14 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
@@ -38,8 +37,8 @@ fun QrCode(text: String, size: Dp = 180.dp) {
     Box(
         Modifier
             .size(size)
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color.White),
+            .clip(MaterialTheme.shapes.small)
+            .background(PaletteInk),
     ) {
         Canvas(Modifier.fillMaxSize()) {
             val dim = matrix.width
@@ -51,7 +50,7 @@ fun QrCode(text: String, size: Dp = 180.dp) {
                     if (matrix.get(x, y)) {
                         // Slightly oversized cells avoid anti-aliasing seams.
                         drawRect(
-                            color = Color.Black,
+                            color = PaletteBlack,
                             topLeft = Offset(margin + x * cell, margin + y * cell),
                             size = Size(cell + 0.5f, cell + 0.5f),
                         )

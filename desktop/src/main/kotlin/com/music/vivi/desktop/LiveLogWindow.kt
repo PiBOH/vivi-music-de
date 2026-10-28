@@ -195,7 +195,7 @@ internal fun themedScrollbarStyle(): ScrollbarStyle {
     val fg = MaterialTheme.colorScheme.onSurface
     return base.copy(
         thickness = 10.dp,
-        shape = RoundedCornerShape(5.dp),
+        shape = MaterialTheme.shapes.extraSmall,
         unhoverColor = fg.copy(alpha = 0.22f),
         hoverColor = fg.copy(alpha = 0.55f),
     )

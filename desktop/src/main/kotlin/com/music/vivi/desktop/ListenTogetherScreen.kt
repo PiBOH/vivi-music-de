@@ -53,7 +53,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -593,7 +592,7 @@ internal fun LtConnectionCard(
         ?: Localization.get(language, "lt_custom_server")
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
@@ -611,13 +610,15 @@ internal fun LtConnectionCard(
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Text(
-                        address,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Tooltip(address) {
+                        Text(
+                            address,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 TextButton(onClick = { serverMenu = true }) {
                     Text(Localization.get(language, "lt_choose_server"))
@@ -765,7 +766,7 @@ internal fun LtSettingsSection(
 
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(16.dp)) {
@@ -920,12 +921,14 @@ private fun LtBlockedUsersDialog(
                         Row(
                             Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(14.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Tooltip(name, modifier = Modifier.weight(1f)) {
+                                Text(name, modifier = Modifier, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                             TextButton(onClick = { onUnblock(name) }) {
                                 Text(Localization.get(language, "lt_unblock"))
                             }
@@ -966,14 +969,16 @@ private fun LtLogsDialog(
                                 fontFamily = FontFamily.Monospace,
                             )
                             entry.detail?.let {
-                                Text(
-                                    it,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(it) {
+                                    Text(
+                                        it,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontFamily = FontFamily.Monospace,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
@@ -1031,7 +1036,7 @@ internal fun LtLobby(
     val joinMode = roomCode.length == 8
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1049,7 +1054,7 @@ internal fun LtLobby(
                         Modifier
                             .weight(1f)
                             .height(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(
                                 if (char.isNotEmpty()) MaterialTheme.colorScheme.primaryContainer
                                 else MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -1058,7 +1063,7 @@ internal fun LtLobby(
                                 1.dp,
                                 if (char.isNotEmpty()) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
                                 else MaterialTheme.colorScheme.outlineVariant,
-                                RoundedCornerShape(12.dp),
+                                MaterialTheme.shapes.small,
                             ),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -1187,7 +1192,7 @@ internal fun LtInRoom(
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.55f)),
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
@@ -1218,7 +1223,7 @@ internal fun LtInRoom(
                         },
                     )
                 }
-                OutlinedButton(onClick = onCopyLink) {
+                TextButton(onClick = onCopyLink) {
                     Icon(Icons.Filled.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(if (linkCopied) Localization.get(language, "copied_to_clipboard") else Localization.get(language, "lt_copy_link"))
@@ -1251,7 +1256,7 @@ internal fun LtInRoom(
         Spacer(Modifier.height(12.dp))
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
-            shape = RoundedCornerShape(20.dp),
+            shape = MaterialTheme.shapes.large,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1292,7 +1297,7 @@ internal fun LtInRoom(
     Spacer(Modifier.height(8.dp))
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -1307,12 +1312,14 @@ internal fun LtInRoom(
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                user.username,
-                                style = MaterialTheme.typography.bodyLarge,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(user.username) {
+                                Text(
+                                    user.username,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                             if (user.userId == room.hostId) {
                                 Spacer(Modifier.width(6.dp))
                                 Icon(
@@ -1393,7 +1400,7 @@ internal fun LtInRoom(
         Spacer(Modifier.height(8.dp))
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -1413,7 +1420,14 @@ internal fun LtInRoom(
                         )
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(req.username, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
+                            Tooltip(req.username) {
+                                Text(
+                                    req.username,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                             Text(
                                 Localization.get(language, "lt_waiting_approval"),
                                 style = MaterialTheme.typography.labelSmall,
@@ -1459,7 +1473,7 @@ internal fun LtInRoom(
     Spacer(Modifier.height(8.dp))
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(Modifier.fillMaxWidth().padding(14.dp)) {
@@ -1475,19 +1489,23 @@ internal fun LtInRoom(
                         if (index > 0) HorizontalDivider(Modifier.padding(vertical = 6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f)) {
-                                Text(
-                                    s.trackInfo.title,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    "${s.fromUsername} · ${s.trackInfo.artist}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(s.trackInfo.title) {
+                                    Text(
+                                        s.trackInfo.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                Tooltip("${s.fromUsername} · ${s.trackInfo.artist}") {
+                                    Text(
+                                        "${s.fromUsername} · ${s.trackInfo.artist}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                             IconButton(onClick = { onApproveSuggestion(s.suggestionId) }) {
                                 Icon(
@@ -1527,7 +1545,7 @@ internal fun LtInRoom(
     // --- the room's own actions ----------------------------------------------
     Spacer(Modifier.height(18.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        OutlinedButton(onClick = onRequestSync, enabled = !busy) {
+        TextButton(onClick = onRequestSync, enabled = !busy) {
             Text(Localization.get(language, "lt_request_sync"))
         }
         Button(onClick = onLeave) { Text(Localization.get(language, "leave_room")) }
@@ -1550,7 +1568,7 @@ internal fun LtInRoom(
     Spacer(Modifier.height(8.dp))
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.large,
         modifier = Modifier.fillMaxWidth().clickable { ListenTogetherChatWindow.open() },
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -1561,13 +1579,16 @@ internal fun LtInRoom(
             )
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    chat.lastOrNull()?.let { "${it.username}: ${it.message}" }
-                        ?: Localization.get(language, "lt_no_messages"),
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Tooltip(chat.lastOrNull()?.let { "${it.username}: ${it.message}" }
+                        ?: Localization.get(language, "lt_no_messages")) {
+                    Text(
+                        chat.lastOrNull()?.let { "${it.username}: ${it.message}" }
+                            ?: Localization.get(language, "lt_no_messages"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 Text(
                     // The shortcut is written on the row that opens the window,
                     // because a keyboard shortcut nobody knows about is a

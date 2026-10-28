@@ -3,6 +3,7 @@ package com.music.vivi.desktop
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.TooltipArea
 import androidx.compose.foundation.TooltipPlacement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,15 +30,23 @@ import androidx.compose.ui.window.PopupPositionProvider
  *   }
  *
  * Pass `null` to disable the tooltip.
+ *
+ * `modifier` lands on the area the pointer has to be on, so a text that the
+ * layout cuts keeps the parent-data modifiers it needs there: `weight` and
+ * `align` belong to the direct child of a `Row`/`Column`, and wrapping a cut
+ * `Text` would otherwise take them away from it - the text would stop being
+ * constrained and stop ellipsizing. Callers pass the wrapper's part of their
+ * chain and leave the rest on the text.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Tooltip(text: String?, content: @Composable () -> Unit) {
+fun Tooltip(text: String?, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     if (text.isNullOrBlank()) {
-        content()
+        Box(modifier) { content() }
         return
     }
     TooltipArea(
+        modifier = modifier,
         tooltip = {
             Surface(
                 shape = MaterialTheme.shapes.small,

@@ -1706,7 +1706,7 @@ fun WindowScope.App(
                     // Spotify mode: the black sidebar floats directly on the
                     // flat background (no surface frame around it).
                     color = if (spotifyLayout) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.small,
                 ) {
                     Sidebar(
                         hideHistory = pauseListenHistory,
@@ -1785,7 +1785,7 @@ fun WindowScope.App(
             Surface(
                 modifier = Modifier.weight(1f).fillMaxHeight().padding(if (spotifyLayout) androidx.compose.foundation.layout.PaddingValues(start = 2.dp, top = 0.dp, end = 2.dp, bottom = 6.dp) else androidx.compose.foundation.layout.PaddingValues(0.dp)),
                 color = if (spotifyLayout) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
-                shape = if (spotifyLayout) RoundedCornerShape(12.dp) else androidx.compose.ui.graphics.RectangleShape,
+                shape = if (spotifyLayout) MaterialTheme.shapes.small else androidx.compose.ui.graphics.RectangleShape,
             ) {
                     Box(Modifier.fillMaxSize()) {
                         AnimatedContent(
@@ -3162,7 +3162,7 @@ fun Sidebar(
 
     Surface(
         color = if (spotify) {
-            if (isAppInDarkTheme()) Color(0xFF000000) else MaterialTheme.colorScheme.surface
+            if (isAppInDarkTheme()) PaletteBlack else MaterialTheme.colorScheme.surface
         } else {
             MaterialTheme.colorScheme.surfaceContainer
         }
@@ -3183,7 +3183,7 @@ fun Sidebar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
@@ -3206,11 +3206,15 @@ fun Sidebar(
                             filterQuality = FilterQuality.High,
                             modifier = Modifier
                                 .size(brandSize.dp)
-                                .clip(RoundedCornerShape(8.dp)),
+                                .clip(MaterialTheme.shapes.extraSmall),
                         )
                     }
                     if (!collapsed) {
                         Spacer(Modifier.width(10.dp))
+                        // The row itself carries the tooltip ("Collapse sidebar"
+                        // / "Expand sidebar"), so the brand label does not add a
+                        // second one: the label is fixed and the rail is wide
+                        // enough for it, so it is never the cut text here.
                         Text(
                             text = "VIVI Music",
                             style = if (showTitleHeader) {
@@ -3269,16 +3273,18 @@ fun Sidebar(
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(14.dp))
-                                Text(
-                                    Localization.get(language, entry.key),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    color = if (selected) selectedFg
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(Localization.get(language, entry.key)) {
+                                    Text(
+                                        Localization.get(language, entry.key),
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                                        ),
+                                        color = if (selected) selectedFg
+                                        else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.height(2.dp))
@@ -3353,16 +3359,18 @@ fun Sidebar(
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
-                                Text(
-                                    Localization.get(language, entry.key),
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                    ),
-                                    color = if (selected) selectedFg
-                                    else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(Localization.get(language, entry.key)) {
+                                    Text(
+                                        Localization.get(language, entry.key),
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                        ),
+                                        color = if (selected) selectedFg
+                                        else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.height(2.dp))
@@ -3423,7 +3431,7 @@ fun Sidebar(
                     Row(
                         Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .clickable { showCreateDialog = true }
                             .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -3437,13 +3445,15 @@ fun Sidebar(
                         )
                         if (!collapsed) {
                             Spacer(Modifier.width(12.dp))
-                            Text(
-                                Localization.get(language, "new_playlist").let { if (it == "new_playlist" || it.isBlank()) "Create New..." else it },
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(Localization.get(language, "new_playlist").let { if (it == "new_playlist" || it.isBlank()) "Create New..." else it }) {
+                                Text(
+                                    Localization.get(language, "new_playlist").let { if (it == "new_playlist" || it.isBlank()) "Create New..." else it },
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
 
@@ -3481,15 +3491,17 @@ fun Sidebar(
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
-                                Text(
-                                    text = p.name,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                    ),
-                                    color = if (selected) selectedFg else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(text = p.name) {
+                                    Text(
+                                        text = p.name,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                        ),
+                                        color = if (selected) selectedFg else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                         Spacer(Modifier.height(2.dp))
@@ -3573,15 +3585,17 @@ fun Sidebar(
                                 )
                                 if (!collapsed) {
                                     Spacer(Modifier.width(12.dp))
-                                    Text(
-                                        text = op.title,
-                                        style = MaterialTheme.typography.bodyMedium.copy(
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                                        ),
-                                        color = if (selected) selectedFg else MaterialTheme.colorScheme.onSurface,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Tooltip(text = op.title) {
+                                        Text(
+                                            text = op.title,
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                            ),
+                                            color = if (selected) selectedFg else MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                             }
                             Spacer(Modifier.height(2.dp))
@@ -3622,13 +3636,15 @@ fun Sidebar(
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
-                                Text(
-                                    "Favourite Songs",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = if (favSelected) selectedFg else MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip("Favourite Songs") {
+                                    Text(
+                                        "Favourite Songs",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = if (favSelected) selectedFg else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
@@ -3673,7 +3689,7 @@ fun Sidebar(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(MaterialTheme.shapes.medium)
                     .clickable { onSelect(Screen.SettingsAccount) },
                 color = if (settingsSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
             ) {
@@ -3698,20 +3714,24 @@ fun Sidebar(
                     if (!collapsed) {
                         Spacer(Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = userName,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(
-                                text = userHandle,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Tooltip(text = userName) {
+                                Text(
+                                    text = userName,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            Tooltip(text = userHandle) {
+                                Text(
+                                    text = userHandle,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -3763,7 +3783,7 @@ fun MiniPlayer(
     ) {
         Surface(
             color = when {
-                pureBlack -> Color.Black
+                pureBlack -> PaletteBlack
                 style == MiniPlayerStyle.OUTLINE -> MaterialTheme.colorScheme.surface
                 else -> MaterialTheme.colorScheme.surfaceContainerHigh
             },
@@ -3773,9 +3793,9 @@ fun MiniPlayer(
                 BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             } else null,
             shape = when (style) {
-                MiniPlayerStyle.APPLE -> RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-                MiniPlayerStyle.OUTLINE -> RoundedCornerShape(14.dp)
-                else -> RoundedCornerShape(0.dp)
+                MiniPlayerStyle.APPLE -> RoundedCornerShape(topStart = ShapeRadii.medium, topEnd = ShapeRadii.medium)
+                MiniPlayerStyle.OUTLINE -> MaterialTheme.shapes.medium
+                else -> MaterialTheme.shapes.extraSmall
             },
         ) {
             Column {
@@ -3788,15 +3808,15 @@ fun MiniPlayer(
                         Modifier
                             .width(36.dp)
                             .height(3.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(if (pureBlack) Color.White.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant),
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .background(if (pureBlack) PaletteInk.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant),
                     )
                 }
                 if (durationMs > 0) {
                     LinearProgressIndicator(
                         progress = { (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(if (style == MiniPlayerStyle.APPLE) 3.dp else 2.dp),
-                        color = if (pureBlack) Color.White else MaterialTheme.colorScheme.primary,
+                        color = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.primary,
                     )
                 }
                 Row(
@@ -3807,7 +3827,7 @@ fun MiniPlayer(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (style == MiniPlayerStyle.APPLE) {
-                        Box(Modifier.clip(RoundedCornerShape(10.dp))) {
+                        Box(Modifier.clip(MaterialTheme.shapes.small)) {
                             Thumbnail(np.thumbnail, Modifier.size(40.dp))
                         }
                     } else {
@@ -3815,20 +3835,24 @@ fun MiniPlayer(
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            np.title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = if (pureBlack) Color.White else MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            np.artist,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (pureBlack) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Tooltip(np.title) {
+                            Text(
+                                np.title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Tooltip(np.artist) {
+                            Text(
+                                np.artist,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (pureBlack) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     // Listen Together guest: the transport in this bar is the
                     // host's. The lock rides with the play button the user is
@@ -3842,7 +3866,7 @@ fun MiniPlayer(
                             Icon(
                                 Icons.Filled.Lock,
                                 contentDescription = Localization.get(language, "lt_guest_note"),
-                                tint = if (pureBlack) Color.White.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (pureBlack) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(16.dp),
                             )
                         }
@@ -3854,13 +3878,13 @@ fun MiniPlayer(
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(18.dp),
                                     strokeWidth = 2.dp,
-                                    color = if (pureBlack) Color.White else MaterialTheme.colorScheme.primary,
+                                    color = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.primary,
                                 )
                             } else {
                                 Icon(
                                     if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                     contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                                    tint = if (pureBlack) Color.White else LocalContentColor.current,
+                                    tint = if (pureBlack) PaletteInk else LocalContentColor.current,
                                     modifier = Modifier
                                         .size(22.dp)
                                         .alpha(if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
@@ -3873,7 +3897,7 @@ fun MiniPlayer(
                             Icon(
                                 Icons.Filled.SkipNext,
                                 contentDescription = "Next",
-                                tint = if (pureBlack) Color.White else LocalContentColor.current,
+                                tint = if (pureBlack) PaletteInk else LocalContentColor.current,
                                 modifier = Modifier
                                     .size(22.dp)
                                     .alpha(if (transportOff) LOCKED_CONTROL_ALPHA else 1f),
@@ -3885,7 +3909,7 @@ fun MiniPlayer(
                             Icon(
                                 Icons.AutoMirrored.Filled.QueueMusic,
                                 contentDescription = "Queue",
-                                tint = if (pureBlack) Color.White else LocalContentColor.current,
+                                tint = if (pureBlack) PaletteInk else LocalContentColor.current,
                                 modifier = Modifier.size(22.dp),
                             )
                         }
@@ -3911,7 +3935,7 @@ fun BoxScope.InAppNotification(
     Surface(
         tonalElevation = 6.dp,
         shadowElevation = 8.dp,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
     ) {
         Row(
@@ -3950,7 +3974,7 @@ fun BoxScope.DevUnlockedNotification(
     Surface(
         tonalElevation = 6.dp,
         shadowElevation = 8.dp,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.align(Alignment.TopEnd).padding(16.dp),
     ) {
         Row(
@@ -4000,7 +4024,7 @@ fun BoxScope.UpdateNotification(
     Surface(
         tonalElevation = 6.dp,
         shadowElevation = 8.dp,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier
             .align(Alignment.TopEnd)
             .padding(16.dp),

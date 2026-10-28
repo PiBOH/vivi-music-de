@@ -239,13 +239,15 @@ fun HomeScreen(
                 ) {
                     Column {
                         val displayName = userName.ifBlank { "Guest" }
-                        Text(
-                            text = "$greetingText, $displayName",
-                            style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Tooltip(text = "$greetingText, $displayName") {
+                            Text(
+                                text = "$greetingText, $displayName",
+                                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
 
                     Tooltip(Localization.get(language, "tooltip_notifications")) {
@@ -281,7 +283,7 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(50),
+                        shape = CircleShape,
                         color = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ) {
                         Row(
@@ -291,7 +293,7 @@ fun HomeScreen(
                             val quickPicksSelected = !useLastListen
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
+                                    .clip(CircleShape)
                                     .background(
                                         if (quickPicksSelected) MaterialTheme.colorScheme.primaryContainer
                                         else Color.Transparent
@@ -316,7 +318,7 @@ fun HomeScreen(
                             val lastListenSelected = useLastListen
                             Box(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(50))
+                                    .clip(CircleShape)
                                     .background(
                                         if (lastListenSelected) MaterialTheme.colorScheme.primaryContainer
                                         else Color.Transparent
@@ -348,7 +350,7 @@ fun HomeScreen(
                             AppLog.click("Home randomize order")
                             onRandomizeOrderChange(!randomizeOrder)
                         },
-                        shape = RoundedCornerShape(50),
+                        shape = CircleShape,
                         color = if (randomizeOrder) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                         else MaterialTheme.colorScheme.surfaceContainerHigh,
                         modifier = Modifier.height(34.dp),
@@ -393,7 +395,7 @@ fun HomeScreen(
                                     AppLog.click("Home chip '${chip.title}'")
                                     selectedChip = if (selected) null else chip
                                 },
-                                shape = RoundedCornerShape(50),
+                                shape = CircleShape,
                                 color = if (selected) MaterialTheme.colorScheme.primary
                                 else MaterialTheme.colorScheme.surfaceContainerHigh,
                                 modifier = Modifier.height(32.dp),
@@ -604,7 +606,7 @@ fun HomeScreen(
                             modifier = Modifier
                                 .width(220.dp)
                                 .height(260.dp)
-                                .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 10.dp, bottomEnd = 28.dp, bottomStart = 10.dp))
+                                .clip(RoundedCornerShape(topStart = ShapeRadii.extraLarge, topEnd = ShapeRadii.small, bottomEnd = ShapeRadii.extraLarge, bottomStart = ShapeRadii.small))
                                 .background(Brush.linearGradient(mix.gradientColors))
                                 .clickable { onOpenBrowse("FEmusic_home", null) }
                                 .padding(20.dp),
@@ -617,22 +619,26 @@ fun HomeScreen(
                                         fontWeight = FontWeight.Bold,
                                         letterSpacing = androidx.compose.ui.unit.TextUnit(1.5f, androidx.compose.ui.unit.TextUnitType.Sp)
                                     ),
-                                    color = Color.White.copy(alpha = 0.85f),
+                                    color = PaletteInk.copy(alpha = 0.85f),
                                 )
-                                Text(
-                                    text = mix.title,
-                                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
-                                    color = Color.White,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    text = mix.subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Tooltip(text = mix.title) {
+                                    Text(
+                                        text = mix.title,
+                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
+                                        color = PaletteInk,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                Tooltip(text = mix.subtitle) {
+                                    Text(
+                                        text = mix.subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = PaletteInk.copy(alpha = 0.75f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
@@ -685,7 +691,7 @@ fun WrappedCard(wrappedStats: WrappedStats, language: String) {
     }
     val accent = MaterialTheme.colorScheme.primary
     Card(
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 12.dp, bottomEnd = 28.dp, bottomStart = 12.dp),
+        shape = RoundedCornerShape(topStart = ShapeRadii.extraLarge, topEnd = ShapeRadii.small, bottomEnd = ShapeRadii.extraLarge, bottomStart = ShapeRadii.small),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
@@ -724,13 +730,15 @@ fun WrappedCard(wrappedStats: WrappedStats, language: String) {
 private fun WrappedStat(value: String, label: String, accent: Color, modifier: Modifier = Modifier) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, style = MaterialTheme.typography.headlineSmall, color = accent)
-        Text(
-            label,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Tooltip(label) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 

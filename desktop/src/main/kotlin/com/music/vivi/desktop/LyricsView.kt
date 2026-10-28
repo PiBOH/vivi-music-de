@@ -1719,7 +1719,7 @@ private fun LyricsV2Word(
                             val center = (size.width + edge * 2f) * progress - edge
                             drawRect(
                                 brush = Brush.horizontalGradient(
-                                    colors = listOf(Color.Black, Color.Transparent),
+                                    colors = listOf(PaletteBlack, Color.Transparent),
                                     startX = center - edge,
                                     endX = center + edge,
                                 ),

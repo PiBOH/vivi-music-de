@@ -135,8 +135,8 @@ fun GradientHeader(
                 .matchParentSize()
                 .background(
                     Brush.verticalGradient(
-                        0f to Color.Black.copy(alpha = 0.45f),
-                        0.7f to Color.Black.copy(alpha = 0.25f),
+                        0f to PaletteBlack.copy(alpha = 0.45f),
+                        0.7f to PaletteBlack.copy(alpha = 0.25f),
                         1f to fade,
                     )
                 )
@@ -148,34 +148,40 @@ fun GradientHeader(
             Thumbnail(thumbnailUrl, Modifier.size(128.dp), sizePx = 256)
             Spacer(Modifier.width(16.dp))
             Column(Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                subtitle?.takeIf { it.isNotBlank() }?.let {
+                Tooltip(title) {
                     Text(
-                        it,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White.copy(alpha = 0.82f),
-                        maxLines = 1,
+                        title,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = PaletteInk,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
+                }
+                subtitle?.takeIf { it.isNotBlank() }?.let {
+                    Tooltip(it) {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = PaletteInk.copy(alpha = 0.82f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
                 meta?.takeIf { it.isNotBlank() }?.let {
-                    Text(
-                        it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.72f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Tooltip(it) {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = PaletteInk.copy(alpha = 0.72f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
-            DetailMenu(language, menuEntries, tint = Color.White)
+            DetailMenu(language, menuEntries, tint = PaletteInk)
         }
     }
 }

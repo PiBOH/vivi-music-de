@@ -102,7 +102,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
@@ -906,7 +905,7 @@ fun SettingsIntroScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        OutlinedButton(
+        Button(
             onClick = { previewing = true },
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -983,9 +982,9 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
 
         Spacer(Modifier.height(16.dp))
 
-        OutlinedButton(
+        Button(
             onClick = {
-                if (busy) return@OutlinedButton
+                if (busy) return@Button
                 busy = true
                 scope.launch {
                     val file = withContext(Dispatchers.IO) { chooseBackupFile(save = true) }
@@ -1175,7 +1174,7 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showRestartDialog = false }) {
+                TextButton(onClick = { showRestartDialog = false }) {
                     Text(Localization.get(language, "later"))
                 }
             },
@@ -1989,7 +1988,7 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
 
         // Master switch, always visible (unlock is also available from About).
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         ) {
@@ -2024,7 +2023,7 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
 
             // Live monitor
             Card(
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
@@ -2059,7 +2058,7 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
             // Display mode
             DevSectionHeader(language, "dev_tools_mode")
             Card(
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
@@ -2089,7 +2088,7 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
             // Display profile
             DevSectionHeader(language, "dev_tools_profile")
             Card(
-                shape = RoundedCornerShape(24.dp),
+                shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
@@ -2113,7 +2112,7 @@ fun PerformanceSection(language: String, syncManager: DesktopSyncManager) {
 
                 // Overlay behaviour (only relevant in overlay mode)
                 Card(
-                    shape = RoundedCornerShape(24.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
@@ -2451,7 +2450,7 @@ private fun DevStatRow(label: String, value: String) {
 private fun DevStatTile(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier
-            .clip(RoundedCornerShape(14.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.surface)
             .padding(12.dp),
     ) {
@@ -2621,7 +2620,7 @@ fun SettingsNotificationsScreen(
         )
 
         Spacer(Modifier.height(16.dp))
-        OutlinedButton(
+        Button(
             onClick = onTestNotification,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -2687,11 +2686,11 @@ fun NotificationHistoryScreen(
             )
         }
         Spacer(Modifier.height(16.dp))
-        OutlinedButton(onClick = {
+        TextButton(onClick = {
             NotificationHistory.clear()
             history = emptyList()
         }) {
-            Text(Localization.get(language, "clear_history"))
+            Text(Localization.get(language, "clear_history"), color = MaterialTheme.colorScheme.error)
         }
     }
 }
@@ -2716,7 +2715,7 @@ private fun NotificationModeOption(
         Text(title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
         if (tag != null) {
             Surface(
-                shape = RoundedCornerShape(6.dp),
+                shape = MaterialTheme.shapes.extraSmall,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
                 Text(
@@ -3405,7 +3404,7 @@ internal fun EqualizerResponseCard(
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),

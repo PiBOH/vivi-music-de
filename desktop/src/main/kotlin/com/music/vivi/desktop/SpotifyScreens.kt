@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -67,7 +68,7 @@ internal val SpotifyIcon: ImageVector by lazy {
     ).apply {
         addPath(
             pathData = PathParser().parsePathString(SPOTIFY_MARK_PATH).toNodes(),
-            fill = SolidColor(Color.Black),
+            fill = SolidColor(PaletteBlack),
         )
     }.build()
 }
@@ -270,7 +271,7 @@ internal fun SpotifyConnectCard(
 
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(18.dp)) {
@@ -278,7 +279,7 @@ internal fun SpotifyConnectCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -330,7 +331,7 @@ internal fun SpotifyConnectCard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 10.dp)
-                            .clip(RoundedCornerShape(50)),
+                            .clip(CircleShape),
                     )
                     Text(
                         "${percent.toInt().coerceIn(0, 100)}%",
@@ -351,7 +352,7 @@ private fun SpotifyErrorRow(language: String, message: String, onDismiss: () -> 
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 12.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.medium)
             .background(MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -399,11 +400,13 @@ internal fun SpotifyAccountGroup(
             M3SettingsItem(
                 icon = Icons.Filled.AccountCircle,
                 title = {
-                    Text(
-                        Localization.get(language, "spotify_connected_as").format(accountName),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Tooltip(Localization.get(language, "spotify_connected_as").format(accountName)) {
+                        Text(
+                            Localization.get(language, "spotify_connected_as").format(accountName),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 },
                 description = {
                     Text("$playlistCount ${Localization.get(language, "playlists").lowercase()}")
@@ -491,7 +494,9 @@ internal fun SpotifySourcesSection(
                     M3SettingsItem(
                         icon = Icons.AutoMirrored.Filled.PlaylistPlay,
                         title = {
-                            Text(playlist.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Tooltip(playlist.name) {
+                                Text(playlist.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                         },
                         description = {
                             Text("${playlist.tracks?.total ?: 0} ${Localization.get(language, "songs").lowercase()}")
@@ -524,7 +529,7 @@ internal fun SpotifySourcesSection(
 private fun ImportProgressCard(language: String, progress: SpotifyImport.Progress) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 14.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(18.dp)) {
@@ -542,7 +547,7 @@ private fun ImportProgressCard(language: String, progress: SpotifyImport.Progres
                 else progress.matched.toFloat() / progress.total.toFloat()
                 LinearProgressIndicator(
                     progress = { fraction.coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(50)),
+                    modifier = Modifier.fillMaxWidth().clip(CircleShape),
                 )
             }
             Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.End) {

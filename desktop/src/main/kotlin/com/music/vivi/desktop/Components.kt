@@ -48,7 +48,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -106,7 +106,7 @@ fun CachedBlurBackdrop(
     artworkUrl: String?,
     modifier: Modifier = Modifier,
     blurRadiusPx: Float = 80f,
-    scrimColor: Color = Color.Black.copy(alpha = 0.55f),
+    scrimColor: Color = PaletteBlack.copy(alpha = 0.55f),
     fallbackColor: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable BoxScope.() -> Unit
 ) {
@@ -294,7 +294,7 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
  */
 @Composable
 fun Thumbnail(url: String?, modifier: Modifier = Modifier, sizePx: Int = 544) {
-    val shape = RoundedCornerShape(8.dp)
+    val shape = MaterialTheme.shapes.extraSmall
     // Data saver is part of the URL (it changes the requested tier), so the
     // resolved URL is remembered against the settings revision too.
     val revision = settingsFileRevision()
@@ -347,21 +347,25 @@ fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier:
         onClick()
     })) {
         Thumbnail(item.thumbnail, Modifier.fillMaxWidth().aspectRatio(1f))
-        Text(
-            item.title,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        val subtitle = subtitleOf(item)
-        if (subtitle.isNotBlank()) {
+        Tooltip(item.title) {
             Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                item.title,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
+        }
+        val subtitle = subtitleOf(item)
+        if (subtitle.isNotBlank()) {
+            Tooltip(subtitle) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -397,7 +401,7 @@ fun SongRow(
                 onClick()
             })
             .padding(vertical = 6.dp)
-            .let { if (isCurrent) it.background(accent.copy(alpha = 0.07f), RoundedCornerShape(8.dp)) else it }
+            .let { if (isCurrent) it.background(accent.copy(alpha = 0.07f), MaterialTheme.shapes.extraSmall) else it }
             .padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -411,31 +415,35 @@ fun SongRow(
                 NowPlayingBars(
                     audioLevel = playback.audioLevel,
                     isPlaying = playback.isPlaying,
-                    color = Color.White,
+                    color = PaletteInk,
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                        .background(PaletteBlack.copy(alpha = 0.5f), MaterialTheme.shapes.extraSmall)
                         .padding(horizontal = 5.dp, vertical = 4.dp),
                 )
             }
         }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(
-                song.title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isCurrent) accent else Color.Unspecified,
-                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                song.artists.joinToString(", ") { it.name },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Tooltip(song.title) {
+                Text(
+                    song.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isCurrent) accent else Color.Unspecified,
+                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Tooltip(song.artists.joinToString(", ") { it.name }) {
+                Text(
+                    song.artists.joinToString(", ") { it.name },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
         if (onAddToPlaylist != null) {
             Tooltip(Localization.get(language, "add_to_playlist")) {
@@ -590,7 +598,7 @@ fun EmptyBox(language: String, onRetry: (() -> Unit)? = null) {
         )
         if (onRetry != null) {
             Spacer(Modifier.height(12.dp))
-            OutlinedButton(onClick = onRetry) { Text(Localization.get(language, "refresh")) }
+            Button(onClick = onRetry) { Text(Localization.get(language, "refresh")) }
         }
     }
 }
@@ -635,7 +643,7 @@ internal fun SignInHero(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Row(
@@ -646,7 +654,7 @@ internal fun SignInHero(
             Box(
                 modifier = Modifier
                     .size(64.dp)
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(MaterialTheme.shapes.large)
                     .background(MaterialTheme.colorScheme.primary),
                 contentAlignment = Alignment.Center,
             ) {
@@ -678,7 +686,7 @@ internal fun HeroStatePill(text: String, active: Boolean) {
     Row(
         modifier = Modifier
             .padding(top = 12.dp)
-            .clip(RoundedCornerShape(50))
+            .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .padding(horizontal = 12.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -781,30 +789,34 @@ fun SectionHeader(
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
             if (!label.isNullOrBlank()) {
+                Tooltip(label) {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Tooltip(title) {
                 Text(
-                    label,
-                    style = MaterialTheme.typography.labelLarge,
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
 
         if (onPlayAll != null) {
-            OutlinedButton(
+            Button(
                 onClick = {
                     AppLog.click("section '${title.ifBlank { label.orEmpty() }}' play all")
                     onPlayAll()
                 },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp),
                 modifier = Modifier.height(28.dp),
             ) {
@@ -829,7 +841,7 @@ fun MoodAndGenresButton(title: String, onClick: () -> Unit, modifier: Modifier =
         contentAlignment = Alignment.CenterStart,
         modifier = modifier
             .height(48.dp)
-            .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 8.dp, bottomEnd = 18.dp, bottomStart = 8.dp))
+            .clip(RoundedCornerShape(topStart = ShapeRadii.medium, topEnd = ShapeRadii.extraSmall, bottomEnd = ShapeRadii.medium, bottomStart = ShapeRadii.extraSmall))
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .clickable {
                 AppLog.click("mood/genre '$title'")
@@ -837,12 +849,14 @@ fun MoodAndGenresButton(title: String, onClick: () -> Unit, modifier: Modifier =
             }
             .padding(horizontal = 14.dp),
     ) {
-        Text(
-            title,
-            style = MaterialTheme.typography.labelLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Tooltip(title) {
+            Text(
+                title,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -1034,7 +1048,7 @@ fun ViviSlider(
             )
             // Subtle ring so the thumb is visible on any background.
             drawCircle(
-                color = Color.White.copy(alpha = 0.35f),
+                color = PaletteInk.copy(alpha = 0.35f),
                 radius = thumbRadius,
                 center = Offset(thumbX, waveY(thumbX)),
                 style = Stroke(width = 1.5f),
@@ -1337,7 +1351,7 @@ fun M3ScreenHero(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
         ),
@@ -1348,7 +1362,7 @@ fun M3ScreenHero(
                 Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(MaterialTheme.shapes.large)
                         .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -1397,7 +1411,7 @@ fun M3InfoChip(text: String, icon: ImageVector? = null, tonal: Boolean = false) 
     else MaterialTheme.colorScheme.onSurfaceVariant
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(8.dp))
+            .clip(MaterialTheme.shapes.extraSmall)
             .background(container)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -1439,7 +1453,7 @@ fun M3SegmentedBar(parts: List<M3BarPart>, modifier: Modifier = Modifier) {
                 Modifier
                     .weight(part.weight.coerceAtLeast(0.001f))
                     .fillMaxSize()
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(MaterialTheme.shapes.extraSmall)
                     .background(part.color),
             )
         }
@@ -1462,14 +1476,15 @@ fun M3SegmentedLegend(parts: List<M3BarPart>, modifier: Modifier = Modifier) {
                     Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                         Box(Modifier.size(8.dp).clip(CircleShape).background(part.color))
                         Spacer(Modifier.width(6.dp))
-                        Text(
-                            part.label,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
+                        Tooltip(part.label, modifier = Modifier.weight(1f)) {
+                            Text(
+                                part.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                         if (part.value != null) {
                             Text(
                                 part.value,

@@ -224,7 +224,7 @@ fun ChangelogScreen(language: String, onBack: () -> Unit) {
                         Box(
                             Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(MaterialTheme.shapes.small)
                                 .background(
                                     if (isSelected) MaterialTheme.colorScheme.primaryContainer
                                     else Color.Transparent

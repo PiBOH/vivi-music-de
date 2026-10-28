@@ -20,7 +20,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -198,7 +197,7 @@ fun LoginContent(language: String, onLoggedIn: () -> Unit) {
 
             // Embedded window unavailable → offer the browser fallback right here.
             if (error == Localization.get(language, "login_webview_unavailable")) {
-                OutlinedButton(
+                Button(
                     onClick = { LoginWebView.openBrowser() },
                     modifier = Modifier.padding(top = 4.dp),
                 ) {
@@ -353,7 +352,7 @@ internal fun GoogleSignInCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(18.dp)) {
@@ -361,7 +360,7 @@ internal fun GoogleSignInCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center,
                 ) {

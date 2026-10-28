@@ -417,19 +417,94 @@ private val spotifyShapes = Shapes(
 )/**
  * Material 3 Expressive shape scale: the same roles as [Shapes], with the
  * larger, rounder corners the expressive style uses (a card or a sheet reads as
- * a softer object than the plain Material 3 scale's 4/8/12/16 dp). Components
- * that take their shape from the theme follow it; the ones that pass their own
- * `RoundedCornerShape` are deliberately left as they are, because their radius
- * was a design decision at the call site (the settings cards, for example, sit
- * at 24 dp).
+ * a softer object than the plain Material 3 scale's 4/8/12/16 dp).
+ *
+ * This scale is the corner every screen uses: a `Modifier.clip`, a `background`
+ * or a `Surface` names a role (`MaterialTheme.shapes.extraSmall` 8, `small` 12,
+ * `medium` 16, `large` 20, `extraLarge` 28 dp), and the two ends of the scale
+ * are `RectangleShape` (none) and `CircleShape` (full). A bare
+ * `RoundedCornerShape(14.dp)` in a screen is a defect: it is a level nobody can
+ * find again on the scale (AGENTS.md, "Icons, shape and colour come from the
+ * three Material 3 sources").
  */
 private val expressiveShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(20.dp),
-    extraLarge = RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(ShapeRadii.extraSmall),
+    small = RoundedCornerShape(ShapeRadii.small),
+    medium = RoundedCornerShape(ShapeRadii.medium),
+    large = RoundedCornerShape(ShapeRadii.large),
+    extraLarge = RoundedCornerShape(ShapeRadii.extraLarge),
 )
+
+/**
+ * The scale as radii, for the few components that cut more than one level into
+ * a single object (the settings group: a round top and a tight bottom, a sheet's
+ * two top corners). The values are the ones [expressiveShapes] is built from,
+ * so such a shape cannot drift away from the scale.
+ */
+object ShapeRadii {
+    val extraSmall = 8.dp
+    val small = 12.dp
+    val medium = 16.dp
+    val large = 20.dp
+    val extraLarge = 28.dp
+}
+
+// ---------------------------------------------------------------------------
+// The palette: the raw values, in the one file allowed to name them
+// ---------------------------------------------------------------------------
+//
+// A screen draws with a colour role (`MaterialTheme.colorScheme.*`); the values
+// themselves live here, so a screen never holds a `Color(0x...)` that nobody
+// can find again (AGENTS.md, "Icons, shape and colour come from the three
+// Material 3 sources"). These are the few colours a role cannot express:
+//
+//  * an artwork is an arbitrary photograph, so the ink painted on it and the
+//    scrim under that ink are white and black whatever the theme does;
+//  * "pure black" and the theme-mode circles name the two ends of the palette;
+//  * the splash draws before a theme exists;
+//  * the QR code has to scan, which means pure black on pure white;
+//  * the accent picker draws the colour spectrum itself, and the About avatars
+//    carry one disc colour each.
+
+/** White, for the ink a cover, a splash or the QR paper always carries. */
+val PaletteInk = Color(0xFFFFFFFF)
+
+/** Black: a scrim over an artwork, the "pure black" surface, the QR ink. */
+val PaletteBlack = Color(0xFF000000)
+
+/** The splash backdrop, before any theme exists. */
+val SplashBackdrop = Color(0xFF151519)
+val SplashGlow = Color(0xFF100D14)
+val SplashFloor = Color(0xFF0A0A0D)
+
+/** The accent picker's hue wheel: the spectrum itself, not a theme colour. */
+val HueSpectrum = listOf(
+    Color(0xFFFF0000), // red
+    Color(0xFFFFFF00), // yellow
+    Color(0xFF00FF00), // green
+    Color(0xFF00FFFF), // cyan
+    Color(0xFF0000FF), // blue
+    Color(0xFFFF00FF), // magenta
+    Color(0xFFFF0000), // red, to close the sweep
+)
+
+/** The About avatars: one stable disc colour per contributor. */
+val AvatarDiscs = listOf(
+    Color(0xFF6750A4),
+    Color(0xFF00696D),
+    Color(0xFF006D3A),
+    Color(0xFF7D5260),
+    Color(0xFF9A6700),
+    Color(0xFF00639B),
+    Color(0xFF704214),
+    Color(0xFFB3261E),
+)
+
+/**
+ * An opaque colour from the six hex digits the accent field holds. The alpha
+ * byte is a literal of this file, not of the screen that parses the field.
+ */
+fun opaqueRgb(rgb: Int): Color = Color(0xFF000000.toInt() or rgb)
 
 /**
  * The resolved "is the app UI dark?" flag, matching the color scheme that

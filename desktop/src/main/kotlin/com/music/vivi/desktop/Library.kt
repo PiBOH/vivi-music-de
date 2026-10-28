@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +35,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material3.OutlinedButton
 import com.music.innertube.YouTube
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
@@ -398,7 +398,7 @@ fun LibraryScreen(
             }
             Spacer(Modifier.weight(1f))
             if (selectedTab == 0 && page?.items?.isNotEmpty() == true) {
-                OutlinedButton(onClick = { onShuffleAll(page!!.items.filterIsInstance<SongItem>()) }) {
+                Button(onClick = { onShuffleAll(page!!.items.filterIsInstance<SongItem>()) }) {
                     Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(Localization.get(language, "shuffle_all"))
@@ -465,7 +465,7 @@ fun LibraryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(Modifier.size(12.dp))
-                        OutlinedButton(onClick = { reloadKey++ }) {
+                        Button(onClick = { reloadKey++ }) {
                             Text(Localization.get(language, "refresh"))
                         }
                     }

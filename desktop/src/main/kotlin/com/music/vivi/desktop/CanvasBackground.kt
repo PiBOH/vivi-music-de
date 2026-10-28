@@ -89,7 +89,7 @@ fun CanvasBackground(url: String?, modifier: Modifier = Modifier, animate: Boole
             // the surface is the plain theme background (so the player follows
             // Light/Dark like the rest of the UI); with artwork the scrim is
             // stronger in dark mode and lighter in light mode.
-            Box(Modifier.matchParentSize().background(Color.Black.copy(alpha = if (dark) 0.35f else 0.2f)))
+            Box(Modifier.matchParentSize().background(PaletteBlack.copy(alpha = if (dark) 0.35f else 0.2f)))
         }
     }
 }

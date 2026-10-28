@@ -20,7 +20,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -652,7 +651,7 @@ fun LocalPlaylistsScreen(
                     if (pendingUpload > 0) uploadLabel
                     else Localization.get(language, "playlists_upload_none"),
                 ) {
-                    OutlinedButton(
+                    TextButton(
                         onClick = { confirmUpload = true },
                         enabled = pendingUpload > 0 && syncStatus.phase != PlaylistSync.Phase.RUNNING,
                     ) {
@@ -737,7 +736,9 @@ fun LocalPlaylistsScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(Modifier.weight(1f)) {
-                            Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Tooltip(p.name) {
+                                Text(p.name, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            }
                             Text(
                                 Localization.get(language, "song_count").replace("%d", p.songs.size.toString()),
                                 style = MaterialTheme.typography.bodySmall,
@@ -828,9 +829,11 @@ fun LocalPlaylistScreen(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(playlist.name, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            Tooltip(playlist.name, modifier = Modifier.weight(1f)) {
+                Text(playlist.name, style = MaterialTheme.typography.headlineMedium, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier)
+            }
             if (playlist.songs.isNotEmpty()) {
-                OutlinedButton(onClick = { onPlayAll(playlist.songs) }) {
+                Button(onClick = { onPlayAll(playlist.songs) }) {
                     Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text(Localization.get(language, "play_all"))
@@ -903,14 +906,18 @@ fun LocalPlaylistScreen(
                                 Thumbnail(song.thumbnail, Modifier.size(44.dp))
                                 Spacer(Modifier.width(12.dp))
                                 Column(Modifier.weight(1f)) {
-                                    Text(song.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text(
-                                        song.artist,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Tooltip(song.title) {
+                                        Text(song.title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                    }
+                                    Tooltip(song.artist) {
+                                        Text(
+                                            song.artist,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                                 // "Suggest to the host": a guest's quick action, right
                                 // before the remove cross, so proposing the song you

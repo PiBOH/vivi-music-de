@@ -44,7 +44,7 @@ private val googleG: ImageVector by lazy {
         viewportHeight = 24f,
     ).addPath(
         pathData = PathParser().parsePathString(GOOGLE_G_PATH).toNodes(),
-        fill = SolidColor(Color.Black),
+        fill = SolidColor(PaletteBlack),
     ).build()
 }
 

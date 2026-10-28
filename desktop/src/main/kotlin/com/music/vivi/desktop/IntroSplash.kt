@@ -126,7 +126,7 @@ fun IntroSplash(
                 Text(
                     "VIVI Music DE",
                     style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White,
+                    color = PaletteInk,
                 )
             }
             if (style == "logo_tagline") {
@@ -134,14 +134,14 @@ fun IntroSplash(
                 Text(
                     AppInfo.FULL_VERSION,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.6f),
+                    color = PaletteInk.copy(alpha = 0.6f),
                 )
             }
         }
 
         Text(
             Localization.get(language, "click_to_skip"),
-            color = Color.White.copy(alpha = 0.5f),
+            color = PaletteInk.copy(alpha = 0.5f),
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp),
         )
@@ -150,15 +150,15 @@ fun IntroSplash(
 
 /** Builds the backdrop brush for the requested background variant. */
 private fun introBackgroundBrush(background: String, accent: Color): Brush = when (background) {
-    "dark" -> Brush.verticalGradient(listOf(Color(0xFF151519), Color(0xFF0A0A0D)))
+    "dark" -> Brush.verticalGradient(listOf(SplashBackdrop, SplashFloor))
     "glow" -> Brush.verticalGradient(
-        listOf(accent.copy(alpha = 0.18f), Color(0xFF100D14), Color(0xFF0A0A0D)),
+        listOf(accent.copy(alpha = 0.18f), SplashGlow, SplashFloor),
     )
     else -> Brush.linearGradient(
         listOf(
             accent.copy(alpha = 0.32f),
-            Color(0xFF0A0A0D),
-            Color(0xFF0A0A0D),
+            SplashFloor,
+            SplashFloor,
         ),
     )
 }

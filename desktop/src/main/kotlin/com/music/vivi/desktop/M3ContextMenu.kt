@@ -55,7 +55,7 @@ val Material3ContextMenuRepresentation = object : ContextMenuRepresentation {
             properties = PopupProperties(focusable = true),
         ) {
             Surface(
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = 3.dp,
                 shadowElevation = 8.dp,

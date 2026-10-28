@@ -146,11 +146,11 @@ enum class MiniPlayerStyle(val key: String) {
 data class PlayerDesignMetrics(val artSize: Dp, val overlayTitle: Boolean, val artCorner: Dp)
 
 fun PlayerDesign.metrics(): PlayerDesignMetrics = when (this) {
-    PlayerDesign.CLASSIC -> PlayerDesignMetrics(360.dp, false, 11.dp)
-    PlayerDesign.NEW -> PlayerDesignMetrics(400.dp, false, 11.dp)
+    PlayerDesign.CLASSIC -> PlayerDesignMetrics(360.dp, false, ShapeRadii.small)
+    PlayerDesign.NEW -> PlayerDesignMetrics(400.dp, false, ShapeRadii.small)
     PlayerDesign.EXPRESSIVE,
     PlayerDesign.EXPRESSIVE_TRANSLUCENT,
-    -> PlayerDesignMetrics(521.dp, true, 11.dp)
+    -> PlayerDesignMetrics(521.dp, true, ShapeRadii.small)
 }
 
 /**
@@ -259,7 +259,7 @@ fun PlayerBackground(
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(if (bgUrl != null) Color.Black.copy(alpha = if (dark) 0.45f else 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .background(if (bgUrl != null) PaletteBlack.copy(alpha = if (dark) 0.45f else 0.2f) else MaterialTheme.colorScheme.surfaceContainerHigh)
                 )
             }
             PlayerBackgroundStyle.GLOW -> {
@@ -304,8 +304,8 @@ fun PlayerBackground(
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
-                                    0f to Color.Black.copy(alpha = if (dark) 0.35f else 0.12f),
-                                    1f to Color.Black.copy(alpha = if (dark) 0.8f else 0.35f),
+                                    0f to PaletteBlack.copy(alpha = if (dark) 0.35f else 0.12f),
+                                    1f to PaletteBlack.copy(alpha = if (dark) 0.8f else 0.35f),
                                 )
                             )
                     )
@@ -368,7 +368,7 @@ private fun VisualizerBackground(level: Float, accent: Color, animate: Boolean) 
             )
         }
         // Dark scrim so the artwork/title above stays readable.
-        drawRect(color = Color.Black.copy(alpha = 0.35f))
+        drawRect(color = PaletteBlack.copy(alpha = 0.35f))
     }
 }
 
@@ -475,10 +475,10 @@ fun QueueRowArtwork(
             NowPlayingBars(
                 audioLevel = playback.audioLevel,
                 isPlaying = playback.isPlaying,
-                color = Color.White,
+                color = PaletteInk,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(corner))
+                    .background(PaletteBlack.copy(alpha = 0.5f), RoundedCornerShape(corner))
                     .padding(horizontal = 5.dp, vertical = 4.dp),
             )
         }
@@ -506,7 +506,7 @@ fun PlayerThumbnail(
             modifier
                 .size(size)
                 .clip(RoundedCornerShape(corner))
-                .background(Color.Black.copy(alpha = 0.15f)),
+                .background(PaletteBlack.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
             Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx)
@@ -530,7 +530,7 @@ fun PlayerThumbnail(
                 scaleY = 1f + 0.02f * kotlin.math.sin(angle * kotlin.math.PI / 180.0).toFloat()
             }
             .clip(RoundedCornerShape(corner))
-            .background(Color.Black.copy(alpha = 0.15f)),
+            .background(PaletteBlack.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {
         Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx)

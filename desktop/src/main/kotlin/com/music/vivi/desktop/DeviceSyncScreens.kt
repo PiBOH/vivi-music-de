@@ -23,13 +23,14 @@ import java.net.URLEncoder
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
@@ -107,7 +108,7 @@ fun DeviceSyncSection(
     }
     Box(Modifier.padding(top = 8.dp)) {
         Tooltip(Localization.get(language, "tooltip_connection_method")) {
-            OutlinedButton(onClick = { methodExpanded = true }) {
+            FilledTonalButton(onClick = { methodExpanded = true }) {
                 Text(Localization.get(language, if (relayMode) "method_relay" else "method_lan"))
             }
         }
@@ -157,11 +158,10 @@ fun DeviceSyncSection(
             // GMS first: it is the build that installs on any phone. "GMS"/"FOSS"
             // are variant names (file names), not prose, so they stay untranslated.
             listOf("GMS" to ApkDownloads.GMS_URL, "FOSS" to ApkDownloads.FOSS_URL).forEach { (label, url) ->
-                OutlinedButton(onClick = { if (!openUrl(url)) downloadFailed = true }) {
+                FilledTonalButton(onClick = { if (!openUrl(url)) downloadFailed = true }) {
                     Icon(
                         Icons.Filled.Download,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(18.dp),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -237,7 +237,7 @@ fun DeviceSyncSection(
                     Button(onClick = { syncManager.requestPairingCode() }) {
                         Text(Localization.get(language, "regenerate_pair_code"))
                     }
-                    OutlinedButton(onClick = { syncManager.disconnect() }) {
+                    TextButton(onClick = { syncManager.disconnect() }) {
                         Text(Localization.get(language, "disconnect"))
                     }
                 }
@@ -314,13 +314,15 @@ fun DeviceSyncSection(
                 // needed several attempts to lock onto it. The extra size makes
                 // the code decode on the first frame.
                 QrCode(qrContent, size = 220.dp)
-                Text(
-                    "${Localization.get(language, if (relayMode) "relay_server" else "lan_address")}: $qrAddr",
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
+                Tooltip("${Localization.get(language, if (relayMode) "relay_server" else "lan_address")}: $qrAddr") {
+                    Text(
+                        "${Localization.get(language, if (relayMode) "relay_server" else "lan_address")}: $qrAddr",
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
                 Text(
                     Localization.get(language, "scan_qr"),
                     style = MaterialTheme.typography.bodySmall,
@@ -392,7 +394,7 @@ fun DeviceSyncSection(
 private fun DeviceSyncHowTo(language: String, relayMode: Boolean) {
     Surface(
         tonalElevation = 2.dp,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
     ) {
         Column(Modifier.padding(16.dp)) {

@@ -147,7 +147,7 @@ fun NowPlayingWidgetWindow(
         AppTheme(mode = themeMode, accent = accent, pureBlack = pureBlack, font = font) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
             tonalElevation = 3.dp,
         ) {
@@ -164,26 +164,30 @@ fun NowPlayingWidgetWindow(
                     Box(
                         Modifier
                             .size(58.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color.Black.copy(alpha = 0.15f)),
+                            .clip(MaterialTheme.shapes.small)
+                            .background(PaletteBlack.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Thumbnail(np?.thumbnail, Modifier.fillMaxSize())
                     }
                     Column(Modifier.weight(1f)) {
-                        Text(
-                            np?.title ?: "VIVI Music",
-                            style = MaterialTheme.typography.titleSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            np?.artist ?: Localization.get(language, "nothing_playing"),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Tooltip(np?.title ?: "VIVI Music") {
+                            Text(
+                                np?.title ?: "VIVI Music",
+                                style = MaterialTheme.typography.titleSmall,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Tooltip(np?.artist ?: Localization.get(language, "nothing_playing")) {
+                            Text(
+                                np?.artist ?: Localization.get(language, "nothing_playing"),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                     // Listen Together: this widget's transport is the host's
                     // while this user is a guest, so the three controls are
@@ -210,7 +214,7 @@ fun NowPlayingWidgetWindow(
                             enabled = !transportOff,
                             modifier = Modifier
                                 .size(34.dp)
-                                .clip(RoundedCornerShape(17.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .background(MaterialTheme.colorScheme.primary.copy(alpha = if (transportOff) LOCKED_CONTROL_ALPHA else 1f)),
                         ) {
                             Icon(

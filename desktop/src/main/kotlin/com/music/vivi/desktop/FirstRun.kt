@@ -34,7 +34,6 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -129,7 +128,7 @@ fun FirstRunFlow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (step > 0) {
-                OutlinedButton(
+                TextButton(
                     onClick = { step-- },
                     modifier = Modifier.height(48.dp),
                 ) {
@@ -193,7 +192,7 @@ private fun WelcomeStep(
             filterQuality = FilterQuality.High,
             modifier = Modifier
                 .size(104.dp)
-                .clip(RoundedCornerShape(26.dp)),
+                .clip(MaterialTheme.shapes.extraLarge),
         )
     }
     Spacer(Modifier.height(18.dp))

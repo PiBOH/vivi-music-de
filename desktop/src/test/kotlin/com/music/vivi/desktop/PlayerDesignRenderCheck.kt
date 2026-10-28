@@ -37,7 +37,7 @@ import java.io.File
  *    its derived row is not drawn);
  *  * with the swipe on, the sensitivity is the mini player card's fifth row and
  *    not a card of its own: 9 rows and the seam sequence
- *    `[12, 3, 12, 3, 3, 3, 3, 12]`, which is what says which card took the row;
+ *    `[16, 3, 16, 3, 3, 3, 3, 16]`, which is what says which card took the row;
  *  * the chips draw the value they are given: two renders that differ only in
  *    `sliderStyle` must not produce the same image.
  *
@@ -80,11 +80,11 @@ object PlayerDesignRenderCheck {
             failures += "with the swipe on the screen should hold 9 rows (1 + 2 + 5 + 1), read ${swipedBands.rows}"
         }
         // The file's own seam sequence is what says WHICH card the extra row
-        // joined: 8 dp between cards and 3 dp between the rows of one card, so
-        // the third card holds five rows. A sensitivity appended to the last card
-        // instead reads `[8, 3, 8, 3, 3, 3, 8, 3]` and a card of its own puts an
-        // 8 among them.
-        val expectedGaps = listOf(12, 3, 12, 3, 3, 3, 3, 12)
+        // joined: 16 dp between cards (the settings cards' `--md-sys-spacing-4`)
+        // and 3 dp between the rows of one card, so the third card holds five
+        // rows. A sensitivity appended to the last card instead reads
+        // `[16, 3, 16, 3, 3, 3, 16, 3]` and a card of its own puts a 16 among them.
+        val expectedGaps = listOf(16, 3, 16, 3, 3, 3, 3, 16)
         if (swipedBands.gaps != expectedGaps) {
             failures += "with the swipe on the seams should read $expectedGaps (5 rows in the mini player card), read ${swipedBands.gaps}"
         }

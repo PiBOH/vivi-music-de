@@ -55,12 +55,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -232,7 +232,7 @@ fun AppearanceSection(
                 }
             },
             dismissButton = {
-                OutlinedButton(onClick = { showRestartDialog = false }) {
+                TextButton(onClick = { showRestartDialog = false }) {
                     Text(Localization.get(language, "later"))
                 }
             },
@@ -560,7 +560,7 @@ fun ThemeSection(
                                     hexInput = cleaned
                                     if (cleaned.length == 6) {
                                         cleaned.toIntOrNull(16)?.let { rgb ->
-                                            val hsv = colorToHsv(Color(0xFF000000.toInt() or rgb))
+                                            val hsv = colorToHsv(opaqueRgb(rgb))
                                             hue = hsv[0]
                                             saturation = hsv[1]
                                             brightness = hsv[2]
@@ -664,7 +664,7 @@ private fun HsvColorWheel(
             val middle = center
             drawCircle(
                 brush = Brush.sweepGradient(
-                    colors = listOf(Color.Red, Color.Yellow, Color.Green, Color.Cyan, Color.Blue, Color.Magenta, Color.Red),
+                    colors = HueSpectrum,
                     center = middle,
                 ),
                 radius = r,
@@ -672,7 +672,7 @@ private fun HsvColorWheel(
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(Color.White, Color.White.copy(alpha = 0f)),
+                    colors = listOf(PaletteInk, PaletteInk.copy(alpha = 0f)),
                     center = middle,
                     radius = r,
                 ),
@@ -680,7 +680,7 @@ private fun HsvColorWheel(
                 center = middle,
             )
             if (brightness < 1f) {
-                drawCircle(Color.Black.copy(alpha = 1f - brightness), radius = r, center = middle)
+                drawCircle(PaletteBlack.copy(alpha = 1f - brightness), radius = r, center = middle)
             }
             val angle = Math.toRadians(hue.toDouble())
             val marker = Offset(
@@ -688,9 +688,9 @@ private fun HsvColorWheel(
                 y = middle.y + (r * saturation * sin(angle)).toFloat(),
             )
             val markRadius = (r * 0.06f).coerceAtLeast(4f)
-            drawCircle(Color.White, radius = markRadius, center = marker)
+            drawCircle(PaletteInk, radius = markRadius, center = marker)
             drawCircle(
-                Color.Black.copy(alpha = 0.55f),
+                PaletteBlack.copy(alpha = 0.55f),
                 radius = markRadius,
                 center = marker,
                 style = Stroke(width = 2f),
@@ -716,7 +716,7 @@ private fun BrightnessStrip(
         modifier = Modifier
             .width(StripSize)
             .height(WheelSize)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             // The bottom of a brightness ramp is the theme's scrim, not a literal
             // black: it is the same ink in every scheme, and it is the role M3
             // provides for "the darkest thing on this surface".
@@ -748,8 +748,8 @@ private fun BrightnessStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(3.dp))
-                .shadow(2.dp, RoundedCornerShape(3.dp)),
+                .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+                .shadow(2.dp, MaterialTheme.shapes.extraSmall),
         )
     }
 }
@@ -778,7 +778,7 @@ private fun IntensityStrip(
         modifier = Modifier
             .width(StripSize)
             .height(WheelSize)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(Brush.verticalGradient(listOf(accent, adjustAccentIntensity(accent, 0f))))
             .onSizeChanged { stripHeightPx = it.height.toFloat() }
             .pointerInput(stripHeightPx) {
@@ -816,8 +816,8 @@ private fun IntensityStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(3.dp))
-                .shadow(2.dp, RoundedCornerShape(3.dp)),
+                .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+                .shadow(2.dp, MaterialTheme.shapes.extraSmall),
         )
     }
 }
@@ -833,15 +833,15 @@ private fun ThemeModeCircle(
     onClick: () -> Unit,
 ) {
     val innerColor = when {
-        pureBlack -> Color.Black
+        pureBlack -> PaletteBlack
         previewDark -> MaterialTheme.colorScheme.surface
-        else -> Color.White
+        else -> PaletteInk
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
                 .size(64.dp)
-                .clip(RoundedCornerShape(18.dp))
+                .clip(MaterialTheme.shapes.large)
                 .background(
                     if (selected) MaterialTheme.colorScheme.surfaceVariant
                     else MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -849,7 +849,7 @@ private fun ThemeModeCircle(
                 .border(
                     width = if (selected) 2.dp else 1.dp,
                     color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(18.dp),
+                    shape = MaterialTheme.shapes.large,
                 )
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
@@ -877,7 +877,7 @@ private fun ThemeModeCircle(
                     Icon(
                         Icons.Filled.Check,
                         contentDescription = null,
-                        tint = if (pureBlack) Color.White else MaterialTheme.colorScheme.primary,
+                        tint = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(16.dp),
                     )
                 }
@@ -935,7 +935,7 @@ private fun AccentSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
 private fun ThemePreviewCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -952,7 +952,7 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
                     Modifier
                         .weight(1f)
                         .height(14.dp)
-                        .clip(RoundedCornerShape(7.dp))
+                        .clip(MaterialTheme.shapes.extraSmall)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
                 Spacer(Modifier.width(12.dp))
@@ -970,7 +970,7 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
                     Modifier
                         .weight(2f)
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(MaterialTheme.colorScheme.primary),
                 )
                 Column(
@@ -981,14 +981,14 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
                         Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(MaterialTheme.colorScheme.secondary),
                     )
                     Box(
                         Modifier
                             .fillMaxWidth()
                             .weight(1f)
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(MaterialTheme.shapes.small)
                             .background(MaterialTheme.colorScheme.tertiary),
                     )
                 }
@@ -996,7 +996,7 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
                     Modifier
                         .weight(1f)
                         .fillMaxSize()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                 )
             }

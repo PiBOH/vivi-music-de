@@ -377,14 +377,19 @@ object SettingsScreensRenderCheck {
         val desktopSeams = seams(desktopBands)
         val fontSeams = seams(fontBands)
 
-        // Updates: 2 rows, two cards of one row, 2 rows.
-        if (updateBands.size != 6) failures += "Updates should read six bands, read ${updateBands.size}"
+        // Updates: 2 rows, two cards of one row, 2 rows, then the filled action.
+        // The action is a band of its own because it is a `Button`: an outlined
+        // button is page colour inside with a 1 dp outline, which this scan reads
+        // as the page (give or take the outline), so it used to be invisible here.
+        if (updateBands.size != 7) failures += "Updates should read its six bands and the filled action, read ${updateBands.size}"
         if (updateSeams != 2) failures += "Updates should join its two two-row cards (2 seams), read $updateSeams"
 
         // Notifications: the mode's own card, the three rows of the card under it
-        // (two seams) and the action. The mode used to be a bare dropdown row on
-        // the page's background, which this scan could not see as a card at all.
-        if (notificationBands.size != 5) failures += "Notifications should read its mode card, three rows and the action, read ${notificationBands.size}"
+        // (two seams), the duration card and the filled action. The mode used to
+        // be a bare dropdown row on the page's background, which this scan could
+        // not see as a card at all, and the action used to be outlined, which it
+        // reads as page colour.
+        if (notificationBands.size != 6) failures += "Notifications should read its mode card, three rows, the duration and the filled action, read ${notificationBands.size}"
         if (notificationSeams != 2) failures += "Notifications should join its three rows (2 seams), read $notificationSeams"
 
         // Content: the two dropdown cards stand alone, the five switches are one
