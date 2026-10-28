@@ -318,7 +318,7 @@ dependencies there, or you break the desktop build.
     the rest of the app draws its deletes in the `error` colour.
   This rule is about buttons. Sliders, switches, chips, segmented buttons and
   the drag handles of the sliders are not buttons and keep their own style.
-- **Icons, shape and colour come from the three Material 3 sources (always):**
+- **Icons, shape, colour and motion come from the Material 3 sources (always):**
   where the design can use them, it uses these and nothing homemade.
   - **Icons** - <https://fonts.google.com/icons> (Material Symbols), by name:
     `canvas_art`, `queue_music`, `cloud_upload`. A name that is not in that
@@ -345,6 +345,22 @@ dependencies there, or you break the desktop build.
     reason - the ink an artwork carries over an arbitrary hue, the colour
     wheel's own spectrum, the theme-mode circles. `styles_check.mjs` fails on a
     corner that is not a scale level and on a colour outside `tokens.css`.
+  - **Motion** - <https://m3.material.io/styles/motion>: a duration and a curve
+    come from `Motion` (`desktop/.../Motion.kt`), never from the call site. The
+    object holds the published sixteen duration steps (`SHORT1` 50 ms ...
+    `EXTRA_LONG4` 1000 ms) and the seven easing tokens, and it is what
+    `Animations.kt` builds every transition out of. The direction picks the
+    curve: something arriving decelerates (`emphasizedDecelerate`), something
+    leaving accelerates (`emphasizedAccelerate`), a movement that begins and ends
+    on screen uses `emphasized`. A state change - a hover, a press - is not a
+    transition: it rides an effects spring through `Motion.hoverProgress`, which
+    is what `Modifier.hoverGrow` animates a cookie or a clover with. The springs'
+    damping and stiffness are the DE's own (Material publishes the spring tokens
+    but not those numbers), the durations and the curves are the published ones.
+    The UI preview mirrors the same table in `css/tokens.css`
+    (`--md-sys-motion-*`), `:desktop:motionCheck` and `motion_check.mjs` verify
+    both, and an `Animation speed` or `Animations` change reaches every one of
+    them.
 - **Expressive theme rule (always):** don't move away from expressive theme.
   You design it like the way the Spotify, Apple, etc. do, but don't move away
   from Material theme color.
