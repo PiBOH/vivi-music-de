@@ -1028,8 +1028,43 @@ private fun PlayerContent(
 ) {
     val contentWidth = 980.dp
     val metrics = design.metrics()
-    val singleColumn = design == PlayerDesign.NEW || design.isExpressive
-    val pillPlay = design == PlayerDesign.NEW
+    // The Apple player is its own screen: the artwork and every control in a
+    // column on the left, the lyrics filling the right, the backdrop taken from
+    // the cover and one close control in the corner. It draws none of the
+    // shared chrome below (no header, no "now playing" label), so it returns
+    // before it.
+    if (design == PlayerDesign.NEW) {
+        AppleMusicPlayer(
+            np = np,
+            positionMs = positionMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            volume = volume,
+            isShuffle = isShuffle,
+            repeatMode = repeatMode,
+            language = language,
+            accent = accent,
+            rotatingThumbnail = rotatingThumbnail,
+            loadPhase = loadPhase,
+            errorKey = errorKey,
+            errorDetail = errorDetail,
+            onBack = onBack ?: {},
+            onTogglePlay = onTogglePlay,
+            onNext = onNext,
+            onPrevious = onPrevious,
+            onSeek = onSeek,
+            onVolume = onVolume,
+            onToggleShuffle = onToggleShuffle,
+            onCycleRepeat = onCycleRepeat,
+            onOpenQueue = onOpenQueue,
+            onAddToPlaylist = onAddToPlaylist,
+        )
+        return
+    }
+    val singleColumn = design.isExpressive
+    // The pill-shaped play button belonged to the old New layout; the two that
+    // remain keep the plain one, so this is false by construction now.
+    val pillPlay = false
 
     Column(
         Modifier
@@ -2319,6 +2354,13 @@ fun LyricsScreen(
     onTogglePlay: () -> Unit = {},
     /** Null hides the back control: the expressive player's panel has no back. */
     onBack: (() -> Unit)? = null,
+    /**
+     * False drops the "Lyrics" header, its thumbnail and the screen's own
+     * padding: the Apple player puts the lyrics in its right column, where a
+     * title and a second play/pause above them would be chrome the layout does
+     * not have (the transport is 28 dp to their left).
+     */
+    showHeader: Boolean = true,
 ) {
     // A caller that passes its own size/spacing (the lyrics screens do, from the
     // live settings sliders) wins over the display object; a caller that only
@@ -2381,9 +2423,9 @@ fun LyricsScreen(
     // Listen Together: as a guest this thumbnail's play/pause is the host's, so
     // it is drawn grey and inert like every other transport control.
     val transportOff = transportLocked()
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        onBack?.let { back -> BackButton(language, back) }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().padding(if (showHeader) 16.dp else 0.dp)) {
+        if (showHeader) onBack?.let { back -> BackButton(language, back) }
+        if (showHeader) Row(verticalAlignment = Alignment.CenterVertically) {
             Text(Localization.get(language, "lyrics"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             // Thumbnail play/pause (port of the mobile advanced-lyrics control).
             np?.let {

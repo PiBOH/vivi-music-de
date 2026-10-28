@@ -743,6 +743,26 @@ tasks.register<JavaExec>("firstRunRenderCheck") {
  * first, the apex of the second, the lobe of every side of the third, and the
  * empty corners all three leave.
  */
+/**
+ * Headless check of the Apple player:
+ *
+ *     ./gradlew :desktop:applePlayerRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ApplePlayerRenderCheck.kt`.
+ * The screen draws white ink over a backdrop taken from the cover, so the check
+ * paints it off screen without artwork and reads the pixels: the screen must be
+ * dark (the scrim is what makes the ink legible), the left column must carry ink,
+ * the right half must carry the lyrics, and neither may appear in a window under
+ * the 720 dp where the two columns stop fitting.
+ */
+tasks.register<JavaExec>("applePlayerRenderCheck") {
+    group = "verification"
+    description = "Paints the Apple player headlessly and checks its backdrop, column and lyrics"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ApplePlayerRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("cookieShapesCheck") {
     group = "verification"
     description = "Paints the cookie and clover shapes headlessly and checks their outlines"
