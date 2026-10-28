@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.music.vivi.desktop.player.LoadPhase
 import com.music.vivi.desktop.player.RepeatMode
@@ -82,7 +83,6 @@ fun AppleMusicPlayer(
     isShuffle: Boolean,
     repeatMode: RepeatMode,
     language: String,
-    accent: Color,
     rotatingThumbnail: Boolean = false,
     /** The decode/resolve phase, drawn under the controls like the shared panel. */
     loadPhase: LoadPhase = LoadPhase.NONE,
@@ -101,16 +101,14 @@ fun AppleMusicPlayer(
     onAddToPlaylist: (() -> Unit)? = null,
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        // The backdrop is the artwork itself, blurred and darkened: it is what
-        // gives the screen its colour, and it is why every control below is
-        // drawn in ink rather than in a theme role.
-        PlayerBackground(
-            style = PlayerBackgroundStyle.APPLE_MUSIC,
-            bgUrl = np.thumbnail,
-            accent = accent,
-            modifier = Modifier.fillMaxSize(),
-            isPlaying = isPlaying,
-        )
+        // No backdrop of its own: `PlayerScreen` paints `PlayerBackground` once
+        // behind every design, with the style the user chose. This screen used to
+        // draw a second one fixed to Apple Music on top of it, which was the
+        // reason a background picked in the settings never showed here - and, once
+        // it was let through, two canvases or two blurs animating with only one of
+        // them visible. What it keeps is the scrim below, which is about the ink
+        // and not about which backdrop is under it.
+        //
         // A scrim of its own, over the backdrop. Every control on this screen is
         // drawn in ink rather than in a theme role, so it cannot rely on the
         // surface under it: the app's apple backdrop follows the theme (faint in
@@ -242,6 +240,13 @@ fun AppleMusicPlayer(
 
                 Spacer(Modifier.height(8.dp))
                 AppleTransport(
+                    // The five glyphs are fixed sizes; the space between them is
+                    // what follows the column, so the group never grows into the
+                    // row's edges on a wide window and never overflows the
+                    // column on a narrow one (the smallest window this screen
+                    // draws the column at is 60 % of ~400 dp, and five glyphs at
+                    // a fixed 24 dp of gap already need more than that).
+                    gap = (cover * 0.06f).coerceIn(4.dp, 24.dp),
                     isPlaying = isPlaying,
                     isShuffle = isShuffle,
                     repeatMode = repeatMode,
@@ -396,10 +401,19 @@ private fun AppleProgress(
 
 /**
  * The five transport controls, in the reference's order and weights: shuffle,
- * previous, play, next, repeat, with the play button the only filled shape.
+ * previous, play, next, repeat, drawn as one group in the middle of the column.
+ *
+ * The group does not stretch: the five used to be spread from edge to edge
+ * (`SpaceBetween`), so the distance between two of them was whatever the column
+ * happened to be wide - a window narrowed to 1 column left the icons almost
+ * touching, a wide one left the play button floating alone in the middle of the
+ * row. The reference keeps them together and lets the play glyph be the biggest
+ * thing in the row instead of putting it in a disc of its own; the gaps below
+ * are the layout's, at every width.
  */
 @Composable
 private fun AppleTransport(
+    gap: Dp,
     isPlaying: Boolean,
     isShuffle: Boolean,
     repeatMode: RepeatMode,
@@ -413,7 +427,7 @@ private fun AppleTransport(
     val locked = ListenTogetherGate.locked.value
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Tooltip(Localization.get(language, "shuffle")) {
@@ -438,24 +452,17 @@ private fun AppleTransport(
                     .clickable(enabled = !locked) { onPrevious() },
             )
         }
-        Surface(
-            onClick = onTogglePlay,
-            enabled = !locked,
-            shape = CircleShape,
-            color = PaletteInk.copy(alpha = if (locked) 0.5f else 1f),
-            modifier = Modifier.size(52.dp).pointerTilt(enabled = !locked, label = "applePlayTilt"),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = Localization.get(
-                        language,
-                        if (isPlaying) "pause" else "play",
-                    ),
-                    tint = PaletteBlack,
-                    modifier = Modifier.size(26.dp),
-                )
-            }
+        val playLabel = Localization.get(language, if (isPlaying) "pause" else "play")
+        Tooltip(playLabel) {
+            Icon(
+                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                contentDescription = playLabel,
+                tint = PaletteInk.copy(alpha = if (locked) 0.5f else 1f),
+                modifier = Modifier
+                    .size(42.dp)
+                    .iconHoverLift(enabled = !locked, label = "applePlay")
+                    .clickable(enabled = !locked) { onTogglePlay() },
+            )
         }
         Tooltip(Localization.get(language, "next")) {
             Icon(

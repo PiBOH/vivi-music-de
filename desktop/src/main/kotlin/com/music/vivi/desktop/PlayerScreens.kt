@@ -369,7 +369,6 @@ fun PlayerScreen(
                     onAddToPlaylist = { onAddToPlaylist(track) },
                     sliderStyle = sliderStyle,
                     design = design,
-                    background = background,
                     rotatingThumbnail = rotatingThumbnail,
                     artworkUrl = playerArtUrl,
                     accent = accent,
@@ -1019,7 +1018,6 @@ private fun PlayerContent(
     onAddToPlaylist: (() -> Unit)? = null,
     sliderStyle: ViviSliderStyle = ViviSliderStyle.SLIM,
     design: PlayerDesign = PlayerDesign.CLASSIC,
-    background: PlayerBackgroundStyle = PlayerBackgroundStyle.CANVAS,
     rotatingThumbnail: Boolean = false,
     /** Canvas artwork (mobile "Use canvas"): replaces the cover when present. */
     artworkUrl: String? = null,
@@ -1029,10 +1027,10 @@ private fun PlayerContent(
     val contentWidth = 980.dp
     val metrics = design.metrics()
     // The Apple player is its own screen: the artwork and every control in a
-    // column on the left, the lyrics filling the right, the backdrop taken from
-    // the cover and one close control in the corner. It draws none of the
-    // shared chrome below (no header, no "now playing" label), so it returns
-    // before it.
+    // column on the left, the lyrics filling the right, the backdrop the screen
+    // paints behind every design and one close control in the corner. It draws
+    // none of the shared chrome below (no header, no "now playing" label), so it
+    // returns before it.
     if (design == PlayerDesign.NEW) {
         AppleMusicPlayer(
             np = np,
@@ -1043,7 +1041,6 @@ private fun PlayerContent(
             isShuffle = isShuffle,
             repeatMode = repeatMode,
             language = language,
-            accent = accent,
             rotatingThumbnail = rotatingThumbnail,
             loadPhase = loadPhase,
             errorKey = errorKey,

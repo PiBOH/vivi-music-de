@@ -195,11 +195,19 @@ private fun BlurredBackdrop(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .requiredSize(BLURRED_BACKDROP_SIZE)
-                .blur(blurRadius)
+                // The scale has to sit OUTSIDE the blur, not inside it: `blur`
+                // draws into a layer of the node's own 256 dp and clips what it
+                // blurs to that layer, so a scale applied within the chain after
+                // it was cut back to 256 dp - which is why "Blur" and "Apple
+                // Music" painted one small square in the middle of the window
+                // instead of a backdrop. Scaling the blurred layer itself fills
+                // the screen and keeps the single 256 dp blur the whole point of
+                // the fixed raster size.
                 .graphicsLayer {
                     scaleX = cover * extraScale
                     scaleY = cover * extraScale
-                },
+                }
+                .blur(blurRadius),
         )
     }
 }
