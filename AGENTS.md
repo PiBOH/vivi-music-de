@@ -336,7 +336,14 @@ dependencies there, or you break the desktop build.
     song's cover in a row → the 4-sided cookie; a person (the Contributors
     list, developers and community alike, and the author of this edition) → the
     9-sided cookie; a Listen Together avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
-    never hand-rolls one of these three.
+    never hand-rolls one of these three. A shape that has to move takes the
+    animated constructors (`rememberPersonCookie`, `rememberArtistCookie`,
+    `rememberCloverShape`) instead of the fixed rest value: a hover rounds a
+    cookie's corners, a selection tightens and turns it, and the clover fills
+    its lobes. The numbers live in `CookieShapes.kt`, and the preview's
+    `.md-avatar` carries the same two polygons as CSS `path()` values
+    (`.ignore/cookie_paths.py` generates them), because a `url()` clipPath
+    cannot interpolate.
   - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
     role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
     `outlineVariant`, ...), never with a literal value. Raw colours live in the
