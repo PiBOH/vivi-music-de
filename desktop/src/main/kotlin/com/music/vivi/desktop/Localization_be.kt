@@ -53,6 +53,7 @@ internal fun strings_be(): Map<String, String> =
         "accent_turquoise" to "Бірузовы",
         "accent_yellow" to "Жоўты",
         "account" to "Уліковы запіс",
+        "account_signed_in" to "Увайшлі ў сістэму",
         "action_backup" to "Рэзервовая копія",
         "action_copy" to "Капіяваць",
         "action_cut" to "Выразаць",

@@ -53,6 +53,7 @@ internal fun strings_el(): Map<String, String> =
         "accent_turquoise" to "Τυρκουάζ",
         "accent_yellow" to "Κίτρινο",
         "account" to "Λογαριασμός",
+        "account_signed_in" to "Συνδεδεμένος",
         "action_backup" to "Αντίγραφο ασφαλείας",
         "action_copy" to "Αντιγραφή",
         "action_cut" to "Αποκοπή",

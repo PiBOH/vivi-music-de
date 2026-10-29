@@ -53,6 +53,7 @@ internal fun strings_ro(): Map<String, String> =
         "accent_turquoise" to "Turcoaz",
         "accent_yellow" to "Galben",
         "account" to "Cont",
+        "account_signed_in" to "Conectat",
         "action_backup" to "Copie de rezervă",
         "action_copy" to "Copiază",
         "action_cut" to "Decupează",

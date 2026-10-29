@@ -53,6 +53,7 @@ internal fun strings_pa(): Map<String, String> =
         "accent_turquoise" to "ਫਿਰੋਜ਼ੀ",
         "accent_yellow" to "ਪੀਲਾ",
         "account" to "ਖਾਤਾ",
+        "account_signed_in" to "ਸਾਈਨ ਇਨ ਹੈ",
         "action_backup" to "ਬੈਕਅੱਪ",
         "action_copy" to "ਕਾਪੀ ਕਰੋ",
         "action_cut" to "ਕੱਟੋ",

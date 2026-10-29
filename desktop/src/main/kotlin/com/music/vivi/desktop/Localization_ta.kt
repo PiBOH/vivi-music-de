@@ -53,6 +53,7 @@ internal fun strings_ta(): Map<String, String> =
         "accent_turquoise" to "டர்க்கைஸ்",
         "accent_yellow" to "மஞ்சள்",
         "account" to "கணக்கு",
+        "account_signed_in" to "உள்நுழைந்துள்ளது",
         "action_backup" to "காப்புப்பிரதி",
         "action_copy" to "நகலெடு",
         "action_cut" to "வெட்டு",

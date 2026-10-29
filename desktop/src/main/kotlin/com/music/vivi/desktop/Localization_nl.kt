@@ -53,6 +53,7 @@ internal fun strings_nl(): Map<String, String> =
         "accent_turquoise" to "Turquoise",
         "accent_yellow" to "Geel",
         "account" to "Account",
+        "account_signed_in" to "Aangemeld",
         "action_backup" to "Back-up",
         "action_copy" to "Kopiëren",
         "action_cut" to "Knippen",

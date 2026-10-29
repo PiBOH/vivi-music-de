@@ -5,10 +5,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Sync
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -32,11 +32,34 @@ fun AccountSection(
     onLogout: () -> Unit,
     onLoggedIn: () -> Unit,
 ) {
+    // The preview's page, in both states: its title is not gated on the session,
+    // so a signed-out Account still opens on the word Account over the sign-in.
+    Text(Localization.get(language, "account"), style = MaterialTheme.typography.titleLarge)
+    Spacer(Modifier.height(16.dp))
     if (isLoggedIn) {
-        // The head this screen never had: the same hero as the two sign-ins, and
-        // the session said by its title (`google_connected_title`) instead of a
-        // "Logged in as" pill that repeated what the sidebar already shows.
-        AccountHero(language = language)
+        // The account's own card: who is signed in, and the one action that
+        // belongs to that account. It replaces a hero that said "Connected to
+        // Google" (which the session card now says in one word) and the way out
+        // that stood on a card of its own, in the error colour, as if signing out
+        // were a delete.
+        val accountName = remember(settingsFileRevision()) { DesktopSettings.load().accountName }
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Person,
+                    title = { Text(accountName.ifBlank { "YouTube" }) },
+                    description = { Text(Localization.get(language, "account_signed_in")) },
+                    trailing = {
+                        Tooltip(Localization.get(language, "logout")) {
+                            Button(onClick = onLogout) {
+                                Text(Localization.get(language, "logout"))
+                            }
+                        }
+                    },
+                ),
+            ),
+        )
+        Spacer(Modifier.height(16.dp))
         // Mobile's "Auto sync with account": the account's playlists are
         // mirrored into the local store, so they can be played, queued and
         // edited offline instead of only being listed by the sidebar.
@@ -68,8 +91,11 @@ fun AccountSection(
             PlaylistSync.Phase.FAILED -> Localization.get(language, "update_failed")
             PlaylistSync.Phase.IDLE -> null
         }
-        M3SettingsGroup(
-            items = listOf(
+        // One card of three rows: the switch, the run it triggers and the upload
+        // that closes the same job. The preview folds them together because the
+        // button belongs to the switch above it and the upload is the same job
+        // one step further; as three cards the page read as three subjects.
+        val syncItems = mutableListOf(
                 M3SettingsItem(
                     icon = Icons.Filled.Sync,
                     title = { Text(Localization.get(language, "yt_sync")) },
@@ -83,7 +109,10 @@ fun AccountSection(
                     },
                 ),
                 M3SettingsItem(
-                    icon = Icons.Filled.Refresh,
+                    // The preview's own glyph: this row runs the same sync the
+                    // switch above it enables, so it carries the same mark, not a
+                    // refresh that reads as "check for updates".
+                    icon = Icons.Filled.Sync,
                     title = { Text(Localization.get(language, "sync_now")) },
                     description = if (syncStatusText != null) {
                         { Text(syncStatusText) }
@@ -101,8 +130,7 @@ fun AccountSection(
                         null
                     },
                 ),
-            ),
-        )
+            )
         // The other direction, and the one the user asks for explicitly: the
         // local playlists that are NOT on the account yet are created there and
         // their songs uploaded (the mobile app only offers this at creation time,
@@ -126,25 +154,22 @@ fun AccountSection(
         LaunchedEffect(uploadPlanKey) { PlaylistSync.refreshUploadPlan() }
         val uploadLabel = Localization.get(language, uploadPlan.labelKey)
         var confirmUpload by remember { mutableStateOf(false) }
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.CloudUpload,
-                    title = { Text(uploadLabel) },
-                    description = {
-                        Text(
-                            if (pendingUpload > 0) {
-                                Localization.get(language, "playlists_upload_desc")
-                            } else {
-                                Localization.get(language, "playlists_upload_none")
-                            },
-                        )
+        syncItems += M3SettingsItem(
+            icon = Icons.Filled.CloudUpload,
+            title = { Text(uploadLabel) },
+            description = {
+                Text(
+                    if (pendingUpload > 0) {
+                        Localization.get(language, "playlists_upload_desc")
+                    } else {
+                        Localization.get(language, "playlists_upload_none")
                     },
-                    enabled = pendingUpload > 0 && syncStatus.phase != PlaylistSync.Phase.RUNNING,
-                    onClick = { confirmUpload = true },
-                ),
-            ),
+                )
+            },
+            enabled = pendingUpload > 0 && syncStatus.phase != PlaylistSync.Phase.RUNNING,
+            onClick = { confirmUpload = true },
         )
+        M3SettingsGroup(items = syncItems)
         if (confirmUpload) {
             AlertDialog(
                 onDismissRequest = { confirmUpload = false },
@@ -180,20 +205,6 @@ fun AccountSection(
                 },
             )
         }
-        // The way out as a row of a card like every other action on this screen,
-        // in the error colour so a destructive action never reads as a normal one.
-        Spacer(Modifier.height(16.dp))
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.AutoMirrored.Filled.Logout,
-                    title = {
-                        Text(Localization.get(language, "logout"), color = MaterialTheme.colorScheme.error)
-                    },
-                    onClick = onLogout,
-                ),
-            ),
-        )
     } else {
         // Show the sign-in options directly here instead of a "Log in" button
         // that opens a second screen: the user picks Google or manual cookies

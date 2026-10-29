@@ -53,6 +53,7 @@ internal fun strings_bg(): Map<String, String> =
         "accent_turquoise" to "Тюркоаз",
         "accent_yellow" to "Жълт",
         "account" to "Профил",
+        "account_signed_in" to "Влезли сте",
         "action_backup" to "Архивиране",
         "action_copy" to "Копиране",
         "action_cut" to "Изрязване",

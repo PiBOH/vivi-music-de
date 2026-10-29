@@ -53,6 +53,7 @@ internal fun strings_pl(): Map<String, String> =
         "accent_turquoise" to "Turkusowy",
         "accent_yellow" to "Żółty",
         "account" to "Konto",
+        "account_signed_in" to "Zalogowano",
         "action_backup" to "Kopia zapasowa",
         "action_copy" to "Kopiuj",
         "action_cut" to "Wytnij",

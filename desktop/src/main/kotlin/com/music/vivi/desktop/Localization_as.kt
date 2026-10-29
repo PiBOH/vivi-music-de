@@ -53,6 +53,7 @@ internal fun strings_as(): Map<String, String> =
         "accent_turquoise" to "টাৰ্কোইজ",
         "accent_yellow" to "হালধীয়া",
         "account" to "একাউণ্ট",
+        "account_signed_in" to "ছাইন ইন কৰা হৈছে",
         "action_backup" to "বেকআপ",
         "action_copy" to "কপি কৰক",
         "action_cut" to "কাট কৰক",

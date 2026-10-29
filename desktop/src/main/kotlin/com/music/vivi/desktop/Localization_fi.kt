@@ -53,6 +53,7 @@ internal fun strings_fi(): Map<String, String> =
         "accent_turquoise" to "Turkoosi",
         "accent_yellow" to "Keltainen",
         "account" to "Tili",
+        "account_signed_in" to "Kirjautunut sisään",
         "action_backup" to "Varmuuskopio",
         "action_copy" to "Kopioi",
         "action_cut" to "Leikkaa",

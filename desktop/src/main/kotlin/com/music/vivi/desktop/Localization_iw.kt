@@ -53,6 +53,7 @@ internal fun strings_iw(): Map<String, String> =
         "accent_turquoise" to "טורקיז",
         "accent_yellow" to "צהוב",
         "account" to "חשבון",
+        "account_signed_in" to "מחובר",
         "action_backup" to "גיבוי",
         "action_copy" to "העתק",
         "action_cut" to "גזור",

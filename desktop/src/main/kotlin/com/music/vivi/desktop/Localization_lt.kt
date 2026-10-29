@@ -53,6 +53,7 @@ internal fun strings_lt(): Map<String, String> =
         "accent_turquoise" to "Turkio",
         "accent_yellow" to "Geltona",
         "account" to "Paskyra",
+        "account_signed_in" to "Prisijungta",
         "action_backup" to "Atsarginė kopija",
         "action_copy" to "Kopijuoti",
         "action_cut" to "Iškirpti",

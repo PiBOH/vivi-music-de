@@ -53,6 +53,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "accent_turquoise" to "Turkis",
         "accent_yellow" to "Gul",
         "account" to "Konto",
+        "account_signed_in" to "Logget inn",
         "action_backup" to "Sikkerhetskopi",
         "action_copy" to "Kopier",
         "action_cut" to "Klipp ut",

@@ -53,6 +53,7 @@ internal fun strings_vi(): Map<String, String> =
         "accent_turquoise" to "Xanh ngọc",
         "accent_yellow" to "Vàng",
         "account" to "Tài Khoản",
+        "account_signed_in" to "Đã đăng nhập",
         "action_backup" to "Sao lưu",
         "action_copy" to "Sao chép",
         "action_cut" to "Cắt",

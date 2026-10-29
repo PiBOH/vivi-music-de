@@ -53,6 +53,7 @@ internal fun strings_sv(): Map<String, String> =
         "accent_turquoise" to "Turkos",
         "accent_yellow" to "Gul",
         "account" to "Konto",
+        "account_signed_in" to "Inloggad",
         "action_backup" to "Säkerhetskopia",
         "action_copy" to "Kopiera",
         "action_cut" to "Klipp ut",

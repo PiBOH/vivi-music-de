@@ -53,6 +53,7 @@ internal fun strings_ml(): Map<String, String> =
         "accent_turquoise" to "ടർക്കോയ്സ്",
         "accent_yellow" to "മഞ്ഞ",
         "account" to "അക്കൗണ്ട്",
+        "account_signed_in" to "സൈൻ ഇൻ ചെയ്തു",
         "action_backup" to "ബാക്കപ്പ്",
         "action_copy" to "പകർത്തുക",
         "action_cut" to "മുറിക്കുക",

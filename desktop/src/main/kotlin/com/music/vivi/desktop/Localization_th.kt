@@ -53,6 +53,7 @@ internal fun strings_th(): Map<String, String> =
         "accent_turquoise" to "สีเขียวขุ่น",
         "accent_yellow" to "เหลือง",
         "account" to "บัญชี",
+        "account_signed_in" to "เข้าสู่ระบบแล้ว",
         "action_backup" to "สำรองข้อมูล",
         "action_copy" to "คัดลอก",
         "action_cut" to "ตัด",

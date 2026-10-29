@@ -53,6 +53,7 @@ internal fun strings_ms(): Map<String, String> =
         "accent_turquoise" to "Turquoise",
         "accent_yellow" to "Kuning",
         "account" to "Akaun",
+        "account_signed_in" to "Telah log masuk",
         "action_backup" to "Sandaran",
         "action_copy" to "Salin",
         "action_cut" to "Potong",

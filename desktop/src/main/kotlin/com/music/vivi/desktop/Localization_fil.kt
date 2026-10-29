@@ -53,6 +53,7 @@ internal fun strings_fil(): Map<String, String> =
         "accent_turquoise" to "Turkesa",
         "accent_yellow" to "Dilaw",
         "account" to "Account",
+        "account_signed_in" to "Nakapasok",
         "action_backup" to "Backup",
         "action_copy" to "Kopyahin",
         "action_cut" to "I-cut",

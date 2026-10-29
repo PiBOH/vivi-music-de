@@ -53,6 +53,7 @@ internal fun strings_ko(): Map<String, String> =
         "accent_turquoise" to "청록색",
         "accent_yellow" to "노란색",
         "account" to "계정",
+        "account_signed_in" to "로그인됨",
         "action_backup" to "백업",
         "action_copy" to "복사",
         "action_cut" to "잘라내기",

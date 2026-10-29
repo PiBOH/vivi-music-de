@@ -1313,6 +1313,28 @@ tasks.register<JavaExec>("updatesOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Account screen against the preview:
+ *
+ *     ./gradlew :desktop:accountOrderCheck
+ *
+ * The signed-in page is the preview's - the heading, the account's card with its
+ * name, its one-word state and Log out in the trailing slot, and one card of
+ * three rows (the switch, the run, the upload). This composes the real
+ * `SettingsAccountScreen` and reads the semantics tree for the order and the
+ * heading's 16 dp, then renders it headlessly and reads the column of card fill
+ * for the two cards, their 16 dp and the 3 dp seams of the card of three.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/AccountOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("accountOrderCheck") {
+    group = "verification"
+    description = "Checks that the Account screen is the preview's: order, heading, cards, seams and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.AccountOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

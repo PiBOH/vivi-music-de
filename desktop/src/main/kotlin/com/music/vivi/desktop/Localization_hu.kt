@@ -53,6 +53,7 @@ internal fun strings_hu(): Map<String, String> =
         "accent_turquoise" to "Türkiz",
         "accent_yellow" to "Sárga",
         "account" to "Fiók",
+        "account_signed_in" to "Bejelentkezve",
         "action_backup" to "Biztonsági mentés",
         "action_copy" to "Másolás",
         "action_cut" to "Kivágás",

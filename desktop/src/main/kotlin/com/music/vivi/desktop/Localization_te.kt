@@ -53,6 +53,7 @@ internal fun strings_te(): Map<String, String> =
         "accent_turquoise" to "టర్కోయిస్",
         "accent_yellow" to "పసుపు",
         "account" to "ఖాతా",
+        "account_signed_in" to "సైన్ ఇన్ అయ్యారు",
         "action_backup" to "బ్యాకప్",
         "action_copy" to "కాపీ చేయండి",
         "action_cut" to "కత్తిరించు",

@@ -53,6 +53,7 @@ internal fun strings_et(): Map<String, String> =
         "accent_turquoise" to "Türkiis",
         "accent_yellow" to "Kollane",
         "account" to "Kasutajakonto",
+        "account_signed_in" to "Sisse logitud",
         "action_backup" to "Varundus",
         "action_copy" to "Kopeeri",
         "action_cut" to "Lõika",

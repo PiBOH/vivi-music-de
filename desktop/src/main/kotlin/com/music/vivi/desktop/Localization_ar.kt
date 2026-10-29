@@ -53,6 +53,7 @@ internal fun strings_ar(): Map<String, String> =
         "accent_turquoise" to "فيروزي",
         "accent_yellow" to "أصفر",
         "account" to "حساب",
+        "account_signed_in" to "تم تسجيل الدخول",
         "action_backup" to "نسخ احتياطي",
         "action_copy" to "نسخ",
         "action_cut" to "قص",

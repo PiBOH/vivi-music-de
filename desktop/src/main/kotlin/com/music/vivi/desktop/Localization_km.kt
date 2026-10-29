@@ -53,6 +53,7 @@ internal fun strings_km(): Map<String, String> =
         "accent_turquoise" to "ពណ៌ខៀវបៃតង",
         "accent_yellow" to "ពណ៌លឿង",
         "account" to "គណនី",
+        "account_signed_in" to "បានចូល",
         "action_backup" to "បម្រុងទុក",
         "action_copy" to "ចម្លង",
         "action_cut" to "កាត់",

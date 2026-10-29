@@ -53,6 +53,7 @@ internal fun strings_sl(): Map<String, String> =
         "accent_turquoise" to "Turkizna",
         "accent_yellow" to "Rumena",
         "account" to "Račun",
+        "account_signed_in" to "Prijavljeni",
         "action_backup" to "Varnostna kopija",
         "action_copy" to "Kopiraj",
         "action_cut" to "Izreži",

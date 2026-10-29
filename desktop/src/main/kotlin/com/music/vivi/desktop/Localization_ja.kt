@@ -53,6 +53,7 @@ internal fun strings_ja(): Map<String, String> =
         "accent_turquoise" to "ターコイズ",
         "accent_yellow" to "黄",
         "account" to "アカウント",
+        "account_signed_in" to "ログイン済み",
         "action_backup" to "バックアップ",
         "action_copy" to "コピー",
         "action_cut" to "切り取り",

@@ -53,6 +53,7 @@ internal fun strings_id(): Map<String, String> =
         "accent_turquoise" to "Turquoise",
         "accent_yellow" to "Kuning",
         "account" to "Akun",
+        "account_signed_in" to "Sudah masuk",
         "action_backup" to "Cadangan",
         "action_copy" to "Salin",
         "action_cut" to "Potong",

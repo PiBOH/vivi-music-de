@@ -53,6 +53,7 @@ internal fun strings_fa(): Map<String, String> =
         "accent_turquoise" to "فیروزه",
         "accent_yellow" to "زرد",
         "account" to "حساب",
+        "account_signed_in" to "وارد شده‌اید",
         "action_backup" to "پشتیبان‌گیری",
         "action_copy" to "رونوشت",
         "action_cut" to "برش",

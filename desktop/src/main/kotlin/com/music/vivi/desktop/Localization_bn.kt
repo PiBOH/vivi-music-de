@@ -53,6 +53,7 @@ internal fun strings_bn(): Map<String, String> =
         "accent_turquoise" to "ফিরোজা",
         "accent_yellow" to "হলুদ",
         "account" to "অ্যাকাউন্ট",
+        "account_signed_in" to "সাইন ইন করা হয়েছে",
         "action_backup" to "ব্যাকআপ",
         "action_copy" to "কপি করুন",
         "action_cut" to "কাট করুন",

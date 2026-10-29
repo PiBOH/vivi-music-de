@@ -53,6 +53,7 @@ internal fun strings_eu(): Map<String, String> =
         "accent_turquoise" to "Turkesa",
         "accent_yellow" to "Horia",
         "account" to "Kontua",
+        "account_signed_in" to "Saioa hasita",
         "action_backup" to "Babeskopia",
         "action_copy" to "Kopiatu",
         "action_cut" to "Moztu",

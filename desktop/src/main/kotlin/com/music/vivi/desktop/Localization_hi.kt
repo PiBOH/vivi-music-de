@@ -53,6 +53,7 @@ internal fun strings_hi(): Map<String, String> =
         "accent_turquoise" to "फ़िरोज़ा",
         "accent_yellow" to "पीला",
         "account" to "खाता",
+        "account_signed_in" to "साइन इन है",
         "action_backup" to "बैकअप",
         "action_copy" to "कॉपी करें",
         "action_cut" to "काटें",

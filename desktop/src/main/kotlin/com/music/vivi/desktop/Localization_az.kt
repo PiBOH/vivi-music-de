@@ -53,6 +53,7 @@ internal fun strings_az(): Map<String, String> =
         "accent_turquoise" to "Turkuaz",
         "accent_yellow" to "Sarı",
         "account" to "Hesab",
+        "account_signed_in" to "Daxil olunub",
         "action_backup" to "Yedək",
         "action_copy" to "Kopyala",
         "action_cut" to "Kəs",

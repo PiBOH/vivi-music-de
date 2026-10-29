@@ -53,6 +53,7 @@ internal fun strings_ca(): Map<String, String> =
         "accent_turquoise" to "Turquesa",
         "accent_yellow" to "Groc",
         "account" to "Compte",
+        "account_signed_in" to "Sessió iniciada",
         "action_backup" to "Còpia de seguretat",
         "action_copy" to "Copiar",
         "action_cut" to "Retalla",

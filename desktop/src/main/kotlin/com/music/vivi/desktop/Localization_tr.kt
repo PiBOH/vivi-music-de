@@ -53,6 +53,7 @@ internal fun strings_tr(): Map<String, String> =
         "accent_turquoise" to "Turkuaz",
         "accent_yellow" to "Sarı",
         "account" to "Hesap",
+        "account_signed_in" to "Oturum açık",
         "action_backup" to "Yedekleme",
         "action_copy" to "Kopyala",
         "action_cut" to "Kes",

@@ -315,23 +315,6 @@ internal fun GoogleSignInHero(language: String, accountName: String) {
 }
 
 /**
- * The head of the signed-in Account screen, in the same shape as the sign-in
- * screens: the mark on its tile, what the section is, and the session as good
- * news rather than as a badge (`google_connected_title`, the same wording the
- * Spotify screen uses for its own session).
- */
-@Composable
-internal fun AccountHero(language: String) {
-    SignInHero(
-        title = Localization.get(language, "google_connected_title"),
-        promise = Localization.get(language, "login_signed_in_hint"),
-        stateText = null,
-        active = true,
-        mark = { GoogleMark(30.dp) },
-    )
-}
-
-/**
  * The one card: the three steps the app already printed (`login_step1`-`3`),
  * numbered because a sign-in is a sequence, the warning it prints before the
  * first attempt rather than after the second failure, and the button that opens

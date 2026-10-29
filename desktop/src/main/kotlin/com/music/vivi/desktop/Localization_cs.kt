@@ -53,6 +53,7 @@ internal fun strings_cs(): Map<String, String> =
         "accent_turquoise" to "Tyrkysová",
         "accent_yellow" to "Žlutá",
         "account" to "Účet",
+        "account_signed_in" to "Přihlášeno",
         "action_backup" to "Záloha",
         "action_copy" to "Kopírovat",
         "action_cut" to "Vyjmout",
