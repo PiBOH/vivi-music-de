@@ -156,6 +156,7 @@ internal fun strings_ar(): Map<String, String> =
         "changelog_unavailable" to "سجل التغييرات غير متاح",
         "charts" to "المخططات",
         "charts_empty" to "لا يوجد محتوى لعرضه هنا بعد.",
+        "check_now" to "تحقق الآن",
         "check_updates" to "التحقق من التحديثات المتاحة",
         "checking" to "جارٍ التحقق…",
         "choose_language" to "اختر لغتك",

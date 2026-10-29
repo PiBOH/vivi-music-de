@@ -156,6 +156,7 @@ internal fun strings_nl(): Map<String, String> =
         "changelog_unavailable" to "Wijzigingslogboek niet beschikbaar",
         "charts" to "Hitlijsten",
         "charts_empty" to "Er valt hier nog niets weer te geven.",
+        "check_now" to "Nu controleren",
         "check_updates" to "Controleren op beschikbare updates",
         "checking" to "Controleren…",
         "choose_language" to "Kies uw taal",

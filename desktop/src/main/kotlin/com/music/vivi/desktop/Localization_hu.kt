@@ -156,6 +156,7 @@ internal fun strings_hu(): Map<String, String> =
         "changelog_unavailable" to "A változásnapló nem érhető el",
         "charts" to "Slágerlisták",
         "charts_empty" to "Még nincs itt semmi megjeleníthető.",
+        "check_now" to "Ellenőrzés most",
         "check_updates" to "Elérhető frissítések keresése",
         "checking" to "Ellenőrzés…",
         "choose_language" to "Válasszon nyelvet",

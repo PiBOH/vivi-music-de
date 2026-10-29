@@ -156,6 +156,7 @@ internal fun strings_cs(): Map<String, String> =
         "changelog_unavailable" to "Seznam změn není k dispozici",
         "charts" to "Žebříčky",
         "charts_empty" to "Zatím zde není nic k zobrazení.",
+        "check_now" to "Zkontrolovat nyní",
         "check_updates" to "Zkontrolovat dostupné aktualizace",
         "checking" to "Kontrola…",
         "choose_language" to "Zvolte jazyk",

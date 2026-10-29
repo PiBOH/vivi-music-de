@@ -156,6 +156,7 @@ internal fun strings_bg(): Map<String, String> =
         "changelog_unavailable" to "Дневникът на промените не е наличен",
         "charts" to "Класации",
         "charts_empty" to "Все още няма какво да се покаже тук.",
+        "check_now" to "Провери сега",
         "check_updates" to "Проверка за налични актуализации",
         "checking" to "Проверява се…",
         "choose_language" to "Изберете език",

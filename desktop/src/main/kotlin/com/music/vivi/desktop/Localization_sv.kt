@@ -156,6 +156,7 @@ internal fun strings_sv(): Map<String, String> =
         "changelog_unavailable" to "Ändringslogg inte tillgänglig",
         "charts" to "Topplistor",
         "charts_empty" to "Det finns inget att visa här ännu.",
+        "check_now" to "Kontrollera nu",
         "check_updates" to "Sök efter tillgängliga uppdateringar",
         "checking" to "Kontrollerar…",
         "choose_language" to "Välj språk",

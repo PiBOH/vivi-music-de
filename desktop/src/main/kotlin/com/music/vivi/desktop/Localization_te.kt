@@ -156,6 +156,7 @@ internal fun strings_te(): Map<String, String> =
         "changelog_unavailable" to "చేంజ్‌లాగ్ అందుబాటులో లేదు",
         "charts" to "పట్టికలు",
         "charts_empty" to "ఇక్కడ ఇంకా చూపించడానికి ఏమీ లేదు.",
+        "check_now" to "ఇప్పుడు తనిఖీ చేయి",
         "check_updates" to "అందుబాటులో ఉన్న అప్‌డేట్‌లను తనిఖీ చేయండి",
         "checking" to "తనిఖీ చేస్తోంది…",
         "choose_language" to "మీ భాషను ఎంచుకోండి",

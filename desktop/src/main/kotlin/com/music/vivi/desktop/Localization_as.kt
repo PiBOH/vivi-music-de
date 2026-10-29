@@ -156,6 +156,7 @@ internal fun strings_as(): Map<String, String> =
         "changelog_unavailable" to "চেঞ্জলগ উপলব্ধ নহয়",
         "charts" to "চাৰ্ট",
         "charts_empty" to "ইয়াত এতিয়াও দেখুৱাবলৈ একো নাই।",
+        "check_now" to "এতিয়াই পৰীক্ষা কৰক",
         "check_updates" to "উপলব্ধ আপডেট পৰীক্ষা কৰক",
         "checking" to "পৰীক্ষা কৰি আছে…",
         "choose_language" to "আপোনাৰ ভাষা বাছক",

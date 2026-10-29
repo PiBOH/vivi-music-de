@@ -1287,6 +1287,32 @@ tasks.register<JavaExec>("notificationsOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Updates screen against the preview:
+ *
+ *     ./gradlew :desktop:updatesOrderCheck
+ *
+ * The preview's `updates` list is four blocks - the title, the check row with the
+ * version under it and its action, the pre-release switch, the interval choice
+ * and the card of the two destinations - and this composes the real
+ * `SettingsUpdatesScreen` on the ui-test harness and reads the semantics tree:
+ * every text of the screen in document order must be the preview's own sequence
+ * (with the app's one extra source row named in it), the heading 16 dp under the
+ * back row, the blocks 16 dp apart with each card's rows on the 3 dp seam, the
+ * action a button at its label's width on the row's trailing edge, and the groups
+ * fading up 8 dp as the screen arrives and not moving at all with the Animations
+ * switch off.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/UpdatesOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("updatesOrderCheck") {
+    group = "verification"
+    description = "Checks that the Updates screen is the preview's: blocks, order, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.UpdatesOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

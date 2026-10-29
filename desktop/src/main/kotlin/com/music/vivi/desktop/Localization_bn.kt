@@ -156,6 +156,7 @@ internal fun strings_bn(): Map<String, String> =
         "changelog_unavailable" to "চেঞ্জলগ উপলব্ধ নেই",
         "charts" to "শীর্ষ তালিকা",
         "charts_empty" to "এখানে এখনও দেখানোর মতো কিছু নেই।",
+        "check_now" to "এখনই দেখুন",
         "check_updates" to "উপলব্ধ আপডেট পরীক্ষা করুন",
         "checking" to "যাচাই করা হচ্ছে…",
         "choose_language" to "আপনার ভাষা চয়ন করুন",

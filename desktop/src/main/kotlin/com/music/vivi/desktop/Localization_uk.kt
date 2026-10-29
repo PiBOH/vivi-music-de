@@ -156,6 +156,7 @@ internal fun strings_uk(): Map<String, String> =
         "changelog_unavailable" to "Журнал змін недоступний",
         "charts" to "Чарти",
         "charts_empty" to "Тут ще немає чого показати.",
+        "check_now" to "Перевірити зараз",
         "check_updates" to "Перевірити наявність оновлень",
         "checking" to "Перевірка…",
         "choose_language" to "Виберіть мову",

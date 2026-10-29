@@ -156,6 +156,7 @@ internal fun strings_et(): Map<String, String> =
         "changelog_unavailable" to "Muudatuste logi pole saadaval",
         "charts" to "Edetabelid",
         "charts_empty" to "Siin pole veel midagi kuvada.",
+        "check_now" to "Kontrolli kohe",
         "check_updates" to "Otsi saadaolevaid uuendusi",
         "checking" to "Kontrollimine…",
         "choose_language" to "Vali keel",

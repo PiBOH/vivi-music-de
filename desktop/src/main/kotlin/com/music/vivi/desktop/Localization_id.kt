@@ -156,6 +156,7 @@ internal fun strings_id(): Map<String, String> =
         "changelog_unavailable" to "Changelog tidak tersedia",
         "charts" to "Tangga Lagu",
         "charts_empty" to "Belum ada yang bisa ditampilkan di sini.",
+        "check_now" to "Periksa sekarang",
         "check_updates" to "Periksa pembaruan yang tersedia",
         "checking" to "Memeriksa…",
         "choose_language" to "Pilih bahasa Anda",

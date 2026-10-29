@@ -156,6 +156,7 @@ internal fun strings_eu(): Map<String, String> =
         "changelog_unavailable" to "Aldaketa-erregistroa ez dago erabilgarri",
         "charts" to "Arrakasta Zerrendak",
         "charts_empty" to "Oraindik ez dago ezer erakusteko hemen.",
+        "check_now" to "Egiaztatu orain",
         "check_updates" to "Egiaztatu erabilgarri dauden eguneratzeak",
         "checking" to "Egiaztatzen…",
         "choose_language" to "Aukeratu zure hizkuntza",

@@ -156,6 +156,7 @@ internal fun strings_iw(): Map<String, String> =
         "changelog_unavailable" to "יומן השינויים אינו זמין",
         "charts" to "טבלאות",
         "charts_empty" to "אין עדיין מה להציג.",
+        "check_now" to "בדוק עכשיו",
         "check_updates" to "בדוק עדכונים זמינים",
         "checking" to "בודק…",
         "choose_language" to "בחר את השפה שלך",

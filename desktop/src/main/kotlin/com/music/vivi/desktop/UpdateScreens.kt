@@ -8,6 +8,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.Commit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Refresh
@@ -60,15 +61,16 @@ fun UpdateSection(
     val installerCount by UpdateState.installerCount.collectAsState()
     var openError by remember { mutableStateOf<String?>(null) }
 
-    // The screen is the preview's three blocks: what the app is and the check
-    // itself, the two choices that change what a check does (the source and the
-    // interval), and the two destinations the version history is read from.
-    // The update's own state (download, progress, installer) stays under them,
-    // where it appears only once there is something to report.
+    // The screen is the preview's four blocks: the title, what the app is and the
+    // check itself, the interval it waits between checks, and the two
+    // destinations the version history is read from. The update's own state
+    // (download, progress, installer) stays under them, where it appears only
+    // once there is something to report.
+    // The title carries no top padding of its own: `SettingsSubScreen` already
+    // puts the preview's 16 dp between the Back row and the screen's first block.
     Text(
         Localization.get(language, "updates"),
         style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.padding(top = 16.dp),
     )
     Spacer(Modifier.height(16.dp))
 
@@ -77,20 +79,20 @@ fun UpdateSection(
             M3SettingsItem(
                 icon = Icons.Filled.Refresh,
                 title = { Text(Localization.get(language, "check_updates")) },
-                description = {
-                    Text(
-                        "${Localization.get(language, "current_version")}: ${AppInfo.FULL_VERSION} " +
-                            "(${Localization.get(language, "de")} ${AppInfo.DE_VERSION})",
-                    )
-                },
+                // The preview puts the version itself under the row, with no label
+                // in front of it: the row is about that one version, and
+                // "Current version:" repeated it.
+                description = { Text(AppInfo.FULL_VERSION) },
+                // The preview's trailing slot is the action, not a symbol: a filled
+                // button that names what pressing it does. It used to be a refresh
+                // icon, which said the row was a switch for something.
                 trailing = {
-                    Tooltip(Localization.get(language, "check_updates")) {
-                        M3IconButton(onClick = onCheckUpdates, enabled = status != UpdateStatus.Checking) {
-                            Icon(
-                                if (status == UpdateStatus.Checking) Icons.Filled.Sync else Icons.Filled.Refresh,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                            )
+                    Tooltip(Localization.get(language, "check_now")) {
+                        Button(
+                            onClick = onCheckUpdates,
+                            enabled = status != UpdateStatus.Checking,
+                        ) {
+                            Text(Localization.get(language, "check_now"))
                         }
                     }
                 },
@@ -133,7 +135,10 @@ fun UpdateSection(
                 onClick = onOpenChangelog,
             ),
             M3SettingsItem(
-                icon = Icons.Filled.History,
+                // The preview's `commit` glyph, where the DE reused the history
+                // clock: a commit is a point in the log, not a clock face, and the
+                // clock already means the listening history elsewhere.
+                icon = Icons.Filled.Commit,
                 title = { Text(Localization.get(language, "commits")) },
                 trailing = { SettingsChevron() },
                 onClick = onOpenCommits,
@@ -242,14 +247,16 @@ fun UpdateSection(
         SelectionContainer { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp)) }
     }
 
-    // Downloaded installer management.
-    Text(
-        "${Localization.get(language, "installers_downloaded")}: $installerCount",
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 16.dp),
-    )
+    // Downloaded installer management, drawn only while an installer is on disk:
+    // it is the state of a download, not a choice, and a page that ends on
+    // "Downloaded installers: 0" says nothing the preview's page says.
     if (installerCount > 0) {
+        Text(
+            "${Localization.get(language, "installers_downloaded")}: $installerCount",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 16.dp),
+        )
         Button(
             onClick = { UpdateState.deleteAllInstallers() },
             modifier = Modifier.padding(top = 4.dp),

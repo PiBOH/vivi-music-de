@@ -156,6 +156,7 @@ internal fun strings_tr(): Map<String, String> =
         "changelog_unavailable" to "Değişiklik günlüğü kullanılamıyor",
         "charts" to "Listeler",
         "charts_empty" to "Burada gösterilecek henüz bir şey yok.",
+        "check_now" to "Şimdi denetle",
         "check_updates" to "Mevcut güncellemeleri kontrol et",
         "checking" to "Kontrol ediliyor…",
         "choose_language" to "Dilinizi seçin",

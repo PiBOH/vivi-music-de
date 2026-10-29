@@ -156,6 +156,7 @@ internal fun strings_fa(): Map<String, String> =
         "changelog_unavailable" to "تغییرات نسخه در دسترس نیست",
         "charts" to "چارت‌ها",
         "charts_empty" to "هنوز چیزی برای نمایش نیست.",
+        "check_now" to "همین حالا بررسی کن",
         "check_updates" to "بررسی به‌روزرسانی‌های موجود",
         "checking" to "در حال بررسی…",
         "choose_language" to "زبان خود را انتخاب کنید",

@@ -156,6 +156,7 @@ internal fun strings_ms(): Map<String, String> =
         "changelog_unavailable" to "Log perubahan tidak tersedia",
         "charts" to "Carta",
         "charts_empty" to "Belum ada apa-apa untuk dipaparkan di sini.",
+        "check_now" to "Semak sekarang",
         "check_updates" to "Semak kemas kini yang tersedia",
         "checking" to "Menyemak…",
         "choose_language" to "Pilih bahasa anda",

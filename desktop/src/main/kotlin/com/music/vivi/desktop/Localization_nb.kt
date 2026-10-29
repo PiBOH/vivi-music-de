@@ -156,6 +156,7 @@ internal fun strings_nb(): Map<String, String> =
         "changelog_unavailable" to "Endringslogg ikke tilgjengelig",
         "charts" to "Hitlister",
         "charts_empty" to "Det er ingenting å vise her ennå.",
+        "check_now" to "Sjekk nå",
         "check_updates" to "Se etter tilgjengelige oppdateringer",
         "checking" to "Sjekker…",
         "choose_language" to "Velg språk",

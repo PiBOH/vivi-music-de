@@ -86,6 +86,34 @@ object SettingsScreensRenderCheck {
         val updateBands = bands(updates)
         println("updates: bands=${updateBands.size} ${updateBands.map { "${it.top}..${it.bottom}" }}")
 
+        // The same screen with an update waiting: its download control is a filled
+        // `Button` under the cards, and a button IS a band of this scan (page
+        // colour inside an outlined one, which is why the old arm missed it).
+        val updatesAvailable = render {
+            UpdateSection(
+                language = "en",
+                status = UpdateStatus.Available(
+                    version = "9.9.9_DE-9.9.9",
+                    url = "https://github.com/PiBOH/vivi-music-de/releases",
+                ),
+                includePreReleases = false,
+                updateIntervalHours = 24,
+                updateSource = UpdateSource.FORK,
+                onIntervalChange = {},
+                onTogglePreReleases = {},
+                onUpdateSourceChange = {},
+                onCheckUpdates = {},
+                onOpenChangelog = {},
+                onOpenCommits = {},
+            )
+        }
+        File(outDir, "updates_available.png").writeBytes(updatesAvailable)
+        val updateAvailableBands = bands(updatesAvailable)
+        println(
+            "updates (available): bands=${updateAvailableBands.size} " +
+                "${updateAvailableBands.map { "${it.top}..${it.bottom}" }}",
+        )
+
         val notifications = render {
             SettingsNotificationsScreen(
                 language = "en",
@@ -377,12 +405,20 @@ object SettingsScreensRenderCheck {
         val desktopSeams = seams(desktopBands)
         val fontSeams = seams(fontBands)
 
-        // Updates: 2 rows, two cards of one row, 2 rows, then the filled action.
-        // The action is a band of its own because it is a `Button`: an outlined
-        // button is page colour inside with a 1 dp outline, which this scan reads
-        // as the page (give or take the outline), so it used to be invisible here.
-        if (updateBands.size != 7) failures += "Updates should read its six bands and the filled action, read ${updateBands.size}"
+        // Updates: two cards of two rows (the check with the version under it and
+        // the pre-release switch, then the two destinations) and the interval and
+        // source choices between them, each a card of its own.
+        if (updateBands.size != 6) {
+            failures += "Updates should read its two two-row cards and its two choices (6), read ${updateBands.size}"
+        }
         if (updateSeams != 2) failures += "Updates should join its two two-row cards (2 seams), read $updateSeams"
+        // With an update waiting there is one block more: the filled download
+        // action under the cards. Below it sits the version line and the
+        // one-line "no installer" note, neither of which is card fill.
+        if (updateAvailableBands.size != updateBands.size + 1) {
+            failures += "Updates with an update waiting should read its six cards and the filled action, " +
+                "read ${updateAvailableBands.size}"
+        }
 
         // Notifications: the mode's own card, the three rows of the card under it
         // (two seams), the duration card and the filled action. The mode used to
@@ -520,7 +556,8 @@ object SettingsScreensRenderCheck {
         if (failures.isEmpty()) {
             println()
             println(
-                "OK: Updates is six bands with the two seams of its two-row cards, " +
+                "OK: Updates is six bands with the two seams of its two-row cards, its action appearing " +
+                    "with an available update, " +
                     "Notifications is the mode card over a card of three rows joined by two seams, " +
                     "Content joins its five switches and its providers, " +
                     "Language is one card of every language under its field, " +

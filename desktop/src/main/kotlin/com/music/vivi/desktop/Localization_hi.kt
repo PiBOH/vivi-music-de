@@ -156,6 +156,7 @@ internal fun strings_hi(): Map<String, String> =
         "changelog_unavailable" to "चेंजलॉग उपलब्ध नहीं है",
         "charts" to "चार्ट",
         "charts_empty" to "यहां दिखाने के लिए अभी कुछ नहीं है।",
+        "check_now" to "अभी जाँचें",
         "check_updates" to "उपलब्ध अपडेट जाँचें",
         "checking" to "जाँच हो रही है…",
         "choose_language" to "अपनी भाषा चुनें",

@@ -156,6 +156,7 @@ internal fun strings_sl(): Map<String, String> =
         "changelog_unavailable" to "Dnevnik sprememb ni na voljo",
         "charts" to "Grafikoni",
         "charts_empty" to "Tu še ni ničesar za prikaz.",
+        "check_now" to "Preveri zdaj",
         "check_updates" to "Preveri razpoložljive posodobitve",
         "checking" to "Preverjanje…",
         "choose_language" to "Izberite jezik",

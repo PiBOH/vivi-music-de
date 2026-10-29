@@ -156,6 +156,7 @@ internal fun strings_th(): Map<String, String> =
         "changelog_unavailable" to "บันทึกการเปลี่ยนแปลงไม่พร้อมใช้งาน",
         "charts" to "ชาร์ตเพลง",
         "charts_empty" to "ยังไม่มีอะไรให้แสดงที่นี่",
+        "check_now" to "ตรวจสอบเลย",
         "check_updates" to "ตรวจสอบอัปเดตที่มีให้",
         "checking" to "กำลังตรวจสอบ…",
         "choose_language" to "เลือกภาษาของคุณ",

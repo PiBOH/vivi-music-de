@@ -156,6 +156,7 @@ internal fun strings_ml(): Map<String, String> =
         "changelog_unavailable" to "ചേഞ്ച്‌ലോഗ് ലഭ്യമല്ല",
         "charts" to "ചാർട്ടുകൾ",
         "charts_empty" to "ഇവിടെ ഇതുവരെ കാണിക്കാൻ ഒന്നുമില്ല.",
+        "check_now" to "ഇപ്പോൾ പരിശോധിക്കുക",
         "check_updates" to "ലഭ്യമായ അപ്ഡേറ്റുകൾ പരിശോധിക്കുക",
         "checking" to "പരിശോധിക്കുന്നു…",
         "choose_language" to "നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക",

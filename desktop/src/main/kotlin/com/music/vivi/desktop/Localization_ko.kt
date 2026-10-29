@@ -156,6 +156,7 @@ internal fun strings_ko(): Map<String, String> =
         "changelog_unavailable" to "변경 로그를 사용할 수 없음",
         "charts" to "차트",
         "charts_empty" to "아직 여기에 표시할 내용이 없습니다.",
+        "check_now" to "지금 확인",
         "check_updates" to "사용 가능한 업데이트 확인",
         "checking" to "확인 중…",
         "choose_language" to "언어 선택",

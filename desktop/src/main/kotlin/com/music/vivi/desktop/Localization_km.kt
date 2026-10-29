@@ -156,6 +156,7 @@ internal fun strings_km(): Map<String, String> =
         "changelog_unavailable" to "កំណត់ហេតុការផ្លាស់ប្តូរមិនអាចប្រើបាន",
         "charts" to "តារាង",
         "charts_empty" to "មិនទាន់មានអ្វីបង្ហាញនៅទីនេះទេ។",
+        "check_now" to "ពិនិត្យឥឡូវ",
         "check_updates" to "ពិនិត្យបច្ចុប្បន្នភាពដែលមាន",
         "checking" to "កំពុងពិនិត្យ…",
         "choose_language" to "ជ្រើសរើសភាសារបស់អ្នក",

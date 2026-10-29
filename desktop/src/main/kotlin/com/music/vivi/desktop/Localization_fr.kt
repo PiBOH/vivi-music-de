@@ -156,6 +156,7 @@ internal fun strings_fr(): Map<String, String> =
         "changelog_unavailable" to "Journal des modifications indisponible",
         "charts" to "Classements",
         "charts_empty" to "Il n'y a encore rien à afficher ici.",
+        "check_now" to "Vérifier maintenant",
         "check_updates" to "Rechercher les mises à jour disponibles",
         "checking" to "Vérification…",
         "choose_language" to "Choisissez votre langue",

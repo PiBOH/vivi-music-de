@@ -156,6 +156,7 @@ internal fun strings_be(): Map<String, String> =
         "changelog_unavailable" to "Чэйнджлог недаступны",
         "charts" to "Чарты",
         "charts_empty" to "Тут пакуль няма чаго паказваць.",
+        "check_now" to "Праверыць зараз",
         "check_updates" to "Праверыць наяўныя абнаўленні",
         "checking" to "Правяраецца…",
         "choose_language" to "Выберыце мову",

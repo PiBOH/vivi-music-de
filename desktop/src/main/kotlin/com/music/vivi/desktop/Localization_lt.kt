@@ -156,6 +156,7 @@ internal fun strings_lt(): Map<String, String> =
         "changelog_unavailable" to "Pakeitimų žurnalas nepasiekiamas",
         "charts" to "Topai",
         "charts_empty" to "Čia dar nėra ką rodyti.",
+        "check_now" to "Tikrinti dabar",
         "check_updates" to "Tikrinti, ar yra atnaujinimų",
         "checking" to "Tikrinama…",
         "choose_language" to "Pasirinkite kalbą",

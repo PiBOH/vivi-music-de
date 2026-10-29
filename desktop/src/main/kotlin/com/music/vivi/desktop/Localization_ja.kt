@@ -156,6 +156,7 @@ internal fun strings_ja(): Map<String, String> =
         "changelog_unavailable" to "変更履歴は利用できません",
         "charts" to "チャート",
         "charts_empty" to "ここに表示するものはまだありません。",
+        "check_now" to "今すぐ確認",
         "check_updates" to "利用可能なアップデートを確認",
         "checking" to "確認中…",
         "choose_language" to "言語を選択",

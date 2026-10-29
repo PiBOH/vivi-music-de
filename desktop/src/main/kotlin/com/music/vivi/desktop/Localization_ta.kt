@@ -156,6 +156,7 @@ internal fun strings_ta(): Map<String, String> =
         "changelog_unavailable" to "மாற்றப்பதிவு கிடைக்கவில்லை",
         "charts" to "பட்டியல்கள்",
         "charts_empty" to "இங்கே இன்னும் காட்ட எதுவும் இல்லை.",
+        "check_now" to "இப்போது சரிபார்",
         "check_updates" to "கிடைக்கும் புதுப்பிப்புகளைச் சரிபார்",
         "checking" to "சரிபார்க்கிறது…",
         "choose_language" to "உங்கள் மொழியைத் தேர்ந்தெடுக்கவும்",

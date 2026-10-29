@@ -156,6 +156,7 @@ internal fun strings_el(): Map<String, String> =
         "changelog_unavailable" to "Το αρχείο αλλαγών δεν είναι διαθέσιμο",
         "charts" to "Διαγράμματα",
         "charts_empty" to "Δεν υπάρχει ακόμη τίποτα προς εμφάνιση εδώ.",
+        "check_now" to "Έλεγχος τώρα",
         "check_updates" to "Έλεγχος για διαθέσιμες ενημερώσεις",
         "checking" to "Έλεγχος…",
         "choose_language" to "Επιλέξτε γλώσσα",

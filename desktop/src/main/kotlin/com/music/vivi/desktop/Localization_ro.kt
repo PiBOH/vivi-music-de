@@ -156,6 +156,7 @@ internal fun strings_ro(): Map<String, String> =
         "changelog_unavailable" to "Jurnalul modificărilor nu este disponibil",
         "charts" to "Clasamente",
         "charts_empty" to "Nu există încă nimic de afișat aici.",
+        "check_now" to "Verifică acum",
         "check_updates" to "Caută actualizări disponibile",
         "checking" to "Se verifică…",
         "choose_language" to "Alegeți limba",

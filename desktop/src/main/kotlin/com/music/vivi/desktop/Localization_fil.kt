@@ -156,6 +156,7 @@ internal fun strings_fil(): Map<String, String> =
         "changelog_unavailable" to "Hindi available ang changelog",
         "charts" to "Mga chart",
         "charts_empty" to "Wala pang maipapakita dito.",
+        "check_now" to "Tingnan ngayon",
         "check_updates" to "Tingnan ang mga available na update",
         "checking" to "Sinusuri…",
         "choose_language" to "Piliin ang iyong wika",

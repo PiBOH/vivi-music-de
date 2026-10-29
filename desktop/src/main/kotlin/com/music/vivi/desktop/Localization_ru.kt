@@ -156,6 +156,7 @@ internal fun strings_ru(): Map<String, String> =
         "changelog_unavailable" to "Журнал изменений недоступен",
         "charts" to "Чарты",
         "charts_empty" to "Здесь пока нечего показывать.",
+        "check_now" to "Проверить сейчас",
         "check_updates" to "Проверить наличие обновлений",
         "checking" to "Проверка…",
         "choose_language" to "Выберите язык",

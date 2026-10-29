@@ -156,6 +156,7 @@ internal fun strings_pa(): Map<String, String> =
         "changelog_unavailable" to "ਚੇਂਜਲੌਗ ਉਪਲਬਧ ਨਹੀਂ ਹੈ",
         "charts" to "ਚਾਰਟ",
         "charts_empty" to "ਇੱਥੇ ਦਿਖਾਉਣ ਲਈ ਅਜੇ ਕੁਝ ਨਹੀਂ ਹੈ।",
+        "check_now" to "ਹੁਣ ਜਾਂਚੋ",
         "check_updates" to "ਉਪਲਬਧ ਅੱਪਡੇਟ ਜਾਂਚੋ",
         "checking" to "ਜਾਂਚ ਹੋ ਰਹੀ ਹੈ…",
         "choose_language" to "ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ",

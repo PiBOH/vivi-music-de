@@ -156,6 +156,7 @@ internal fun strings_az(): Map<String, String> =
         "changelog_unavailable" to "Dəyişiklik jurnalı əlçatan deyil",
         "charts" to "Cədvəllər",
         "charts_empty" to "Burada hələ göstəriləcək heç nə yoxdur.",
+        "check_now" to "İndi yoxla",
         "check_updates" to "Mövcud yeniləmələri yoxla",
         "checking" to "Yoxlanılır…",
         "choose_language" to "Dilinizi seçin",

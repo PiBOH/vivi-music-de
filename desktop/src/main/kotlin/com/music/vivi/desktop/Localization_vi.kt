@@ -156,6 +156,7 @@ internal fun strings_vi(): Map<String, String> =
         "changelog_unavailable" to "Nhật ký thay đổi không khả dụng",
         "charts" to "Biểu đồ",
         "charts_empty" to "Chưa có gì để hiển thị ở đây.",
+        "check_now" to "Kiểm tra ngay",
         "check_updates" to "Kiểm tra bản cập nhật có sẵn",
         "checking" to "Đang kiểm tra…",
         "choose_language" to "Chọn ngôn ngữ của bạn",
