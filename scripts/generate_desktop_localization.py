@@ -101,6 +101,65 @@ DIR_TO_LANG = {
     "-zh-rTW": "zh-rTW",
 }
 
+# One language, one table.
+#
+# A language is written to `Localization_<tag>.kt`, and the tag loses what Kotlin
+# cannot take in an identifier, so two spellings of the same locale name the
+# same file: `pt-rBR` (the Android folder, the app's own picker) and `pt_rBR`
+# (the tag the phone sends during sync, and the one the extra-translation
+# batches since 109 write) both name `Localization_pt_rBR.kt`, and `zh-rCN` /
+# `zh_rCN` and `zh-rTW` / `zh_rTW` do the same. While each spelling was a
+# language of its own the file was written twice, and the second write - the
+# stub the underscore batches had built - replaced the full table: `pt-BR`,
+# `zh-CN` and `zh-TW` shipped with 11 keys and English for the other 882.
+#
+# So a tag is first resolved to the language it belongs to, and only the
+# canonical one is written; the other spelling stays as an alias row of the
+# lookup table, pointing at the same map, because the phone does send it.
+def file_tag(tag):
+    """The `Localization_<name>` name of a tag: what Kotlin can take."""
+    return re.sub(r"[^A-Za-z0-9_]", "_", tag)
+
+
+CANONICAL_LANGUAGES = set(DIR_TO_LANG.values())
+
+FILE_TO_LANGUAGE = {file_tag(tag): tag for tag in CANONICAL_LANGUAGES}
+
+# The spellings that are only another way of writing a language above.
+LANGUAGE_ALIASES = {}
+
+
+def canonical_language(tag):
+    """The language a tag is written under; `pt_rBR` and `pt-rBR` are one."""
+    if tag in CANONICAL_LANGUAGES:
+        return tag
+    canonical = FILE_TO_LANGUAGE.get(file_tag(tag))
+    if canonical is None or canonical == tag:
+        return tag
+    LANGUAGE_ALIASES[tag] = canonical
+    return canonical
+
+
+def one_table_per_file(languages):
+    """Every language writes its own file, and no two write the same one.
+
+    The defect this guards is silent otherwise: the second table simply replaces
+    the first, and a language ships reading English. Returns the owner of each
+    file so the writer cannot be handed the same name twice.
+    """
+    owner = {}
+    for lang in languages:
+        name = file_tag(lang)
+        if name in owner:
+            raise SystemExit(
+                "Refusing to write: '%s' and '%s' would both be %s%s.kt. One language, "
+                "one table: resolve the second spelling with `canonical_language` "
+                "(it stays as an alias of the first)."
+                % (owner[name], lang, LANG_FILE_PREFIX, name)
+            )
+        owner[name] = lang
+    return owner
+
 # desktop key -> Android string resource name (only where the meaning matches).
 # Values come from either strings.xml (base ViMusic strings) or vivi_strings.xml
 # (VIVI-specific strings).
@@ -2267,6 +2326,11 @@ def main():
         for lang, text in langmap.items():
             if lang == "en":
                 continue
+            # The batches spell `pt-BR` as `pt_rBR` and the two Chinese locales
+            # the same way; resolving the tag here is what puts those values in
+            # the language they belong to instead of in a second table that
+            # would overwrite it on the way out.
+            lang = canonical_language(lang)
             entries = languages.setdefault(lang, {})
             existing = entries.get(key)
             if text in garbage:
@@ -2390,9 +2454,14 @@ def main():
         ):
             os.remove(os.path.join(OUT_DIR, name))
 
+    # One table per file, and never two languages in one: a tag that resolves to
+    # another language's file would take that language's table away on the way
+    # out, which is the defect above.
+    one_table_per_file([lang for lang, _entries in ordered])
+
     written = []
     for lang, entries in ordered:
-        path = os.path.join(OUT_DIR, "%s%s.kt" % (LANG_FILE_PREFIX, re.sub(r"[^A-Za-z0-9_]", "_", lang)))
+        path = os.path.join(OUT_DIR, "%s%s.kt" % (LANG_FILE_PREFIX, file_tag(lang)))
         with open(path, "w", encoding="utf-8") as f:
             f.write(language_file(lang, symbol_for(lang), entries))
         written.append(path)
@@ -2420,8 +2489,18 @@ def main():
     parts.append("     * that reads exactly one language (plus English as the fallback).")
     parts.append("     */")
     parts.append("    private val tables: Map<String, () -> Map<String, String>> = mapOf(")
+    # The other spelling of a language is a row of the lookup and not a table of
+    # its own: the phone sends `pt_rBR` during sync, and that must be the same
+    # Portuguese as the picker's `pt-rBR` rather than an English fallback. It is
+    # written next to the language it names, so the pair reads as one entry.
+    aliases_of = {}
+    for alias, canonical in LANGUAGE_ALIASES.items():
+        if canonical in languages:
+            aliases_of.setdefault(canonical, []).append(alias)
     for lang, _entries in ordered:
         parts.append('        "%s" to { %s() },' % (lang, symbol_for(lang)))
+        for alias in sorted(aliases_of.get(lang, [])):
+            parts.append('        "%s" to { %s() },' % (alias, symbol_for(lang)))
     parts.append("    )")
     parts.append("")
     parts.append("    /** Built tables, so a language is parsed once per session. */")

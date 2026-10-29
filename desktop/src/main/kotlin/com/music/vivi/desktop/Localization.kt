@@ -74,8 +74,8 @@ object Localization {
         "uk" to { strings_uk() },
         "vi" to { strings_vi() },
         "zh-rCN" to { strings_zh_rCN() },
-        "zh-rTW" to { strings_zh_rTW() },
         "zh_rCN" to { strings_zh_rCN() },
+        "zh-rTW" to { strings_zh_rTW() },
         "zh_rTW" to { strings_zh_rTW() },
     )
 
