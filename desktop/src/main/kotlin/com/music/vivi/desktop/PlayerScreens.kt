@@ -487,7 +487,7 @@ private fun M3EPlayerContent(
                     Box(
                         Modifier
                             .offset(x = artworkOffsetX, y = artworkOffsetY)
-                            .shadow(20.dp, CookieShapes.fourSided)
+                            .shadow(20.dp, trackArtworkShape(rotatingThumbnail))
                     ) {
                         PlayerThumbnail(artworkUrl ?: np.thumbnail, artworkSize, rotatingThumbnail)
                     }
@@ -1300,7 +1300,7 @@ private fun PlayerArtworkBlock(
                 Modifier
             }
             val blockModifier = Modifier
-                .shadow(24.dp, CookieShapes.fourSided)
+                .shadow(24.dp, trackArtworkShape(rotatingThumbnail))
                 .then(swipeModifier)
                 .pointerInput(np.videoId, canSeek, canToggle) {
                     if (!canSeek && !canToggle) return@pointerInput
@@ -1337,7 +1337,7 @@ private fun PlayerArtworkBlock(
                         Box(
                             Modifier
                                 .matchParentSize()
-                                .clip(CookieShapes.fourSided)
+                                .clip(trackArtworkShape(rotatingThumbnail))
                                 .background(
                                     Brush.verticalGradient(
                                         0.5f to Color.Transparent,
@@ -2926,6 +2926,8 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
 @Composable
 fun ClassicDesktopMiniPlayer(
     nowPlaying: NowPlaying,
+    /** Squared artwork while it turns, the cookie at rest: [trackArtworkShape]. */
+    rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
     positionMs: Long,
@@ -2996,7 +2998,9 @@ fun ClassicDesktopMiniPlayer(
                         Box(
                             Modifier
                                 .size(52.dp)
-                                .clip(MaterialTheme.shapes.extraSmall)
+                                // Cookie at rest, squared while the artwork turns:
+                                // the same option, the same shape as the player.
+                                .clip(trackArtworkShape(rotatingThumbnail))
                                 .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
                                 .clickable(onClick = onOpenPlayer),
                         ) {
@@ -3238,6 +3242,8 @@ fun ClassicDesktopMiniPlayer(
 @Composable
 fun NewDesktopMiniPlayer(
     nowPlaying: NowPlaying,
+    /** Squared artwork while it turns, the cookie at rest: [trackArtworkShape]. */
+    rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
     positionMs: Long,
@@ -3329,7 +3335,7 @@ fun NewDesktopMiniPlayer(
                 Box(
                     Modifier
                         .size(38.dp)
-                        .clip(CircleShape)
+                        .clip(trackArtworkShape(rotatingThumbnail))
                         .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious),
                 ) {
                     Thumbnail(nowPlaying.thumbnail, Modifier.fillMaxSize())
@@ -3490,6 +3496,8 @@ fun NewDesktopMiniPlayer(
 @Composable
 fun AppleDesktopMiniPlayer(
     nowPlaying: NowPlaying,
+    /** Squared artwork while it turns, the cookie at rest: [trackArtworkShape]. */
+    rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
     positionMs: Long,
@@ -3560,7 +3568,7 @@ fun AppleDesktopMiniPlayer(
             Box(
                 Modifier
                     .size(42.dp)
-                    .clip(MaterialTheme.shapes.small)
+                    .clip(trackArtworkShape(rotatingThumbnail))
                     .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
                     .clickable(enabled = !transportOff, onClick = onTogglePlay),
                 contentAlignment = Alignment.Center,
@@ -3760,6 +3768,8 @@ private const val SWIPE_SENSITIVITY_MIN_DP = 18f
 @Composable
 fun DesktopMiniPlayer(
     nowPlaying: NowPlaying?,
+    /** Squared artwork while it turns, the cookie at rest: [trackArtworkShape]. */
+    rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
     positionMs: Long,
@@ -3797,6 +3807,7 @@ fun DesktopMiniPlayer(
         MiniPlayerDesign.NEW -> {
             NewDesktopMiniPlayer(
                 nowPlaying = np,
+                rotatingThumbnail = rotatingThumbnail,
                 isPlaying = isPlaying,
                 isLoading = isLoading,
                 positionMs = positionMs,
@@ -3823,6 +3834,7 @@ fun DesktopMiniPlayer(
         MiniPlayerDesign.APPLE -> {
             AppleDesktopMiniPlayer(
                 nowPlaying = np,
+                rotatingThumbnail = rotatingThumbnail,
                 isPlaying = isPlaying,
                 isLoading = isLoading,
                 positionMs = positionMs,
@@ -3848,6 +3860,7 @@ fun DesktopMiniPlayer(
         else -> {
             ClassicDesktopMiniPlayer(
                 nowPlaying = np,
+                rotatingThumbnail = rotatingThumbnail,
                 isPlaying = isPlaying,
                 isLoading = isLoading,
                 positionMs = positionMs,
@@ -3892,6 +3905,8 @@ fun SpotifyPlayerBar(
     volume: Float,
     isShuffle: Boolean,
     repeatMode: RepeatMode,
+    /** Squared artwork while it turns, the cookie at rest: [trackArtworkShape]. */
+    rotatingThumbnail: Boolean = false,
     miniPlayerDesign: MiniPlayerDesign = MiniPlayerDesign.CLASSIC,
     miniPlayerBackgroundStyle: MiniPlayerBackgroundStyle = MiniPlayerBackgroundStyle.FOLLOW_THEME,
     pureBlackMiniPlayer: Boolean = false,
@@ -3924,6 +3939,7 @@ fun SpotifyPlayerBar(
         volume = volume,
         isShuffle = isShuffle,
         repeatMode = repeatMode,
+        rotatingThumbnail = rotatingThumbnail,
         design = miniPlayerDesign,
         swipeThumbnail = swipeThumbnail,
         swipeSensitivity = swipeSensitivity,

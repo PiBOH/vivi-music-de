@@ -151,11 +151,11 @@ fun AppleMusicPlayer(
                     .width(cover)
                     .verticalScroll(rememberScrollState()),
             ) {
-                // The artwork's shadow comes from the cookie's own outline. A
-                // rounded rectangle here would put the square back around a
-                // shape that is not one, which is what the Basic player already
-                // does with the same elevation.
-                Box(Modifier.shadow(24.dp, CookieShapes.fourSided)) {
+                // The artwork's shadow comes from its own outline, which is the
+                // cookie at rest and the squared shape while the artwork turns
+                // (`trackArtworkShape`): a fixed corner here would put the square
+                // back around a shape that is not one.
+                Box(Modifier.shadow(24.dp, trackArtworkShape(rotatingThumbnail))) {
                     PlayerThumbnail(
                         url = np.thumbnail,
                         size = cover,
@@ -418,12 +418,17 @@ private fun AppleTransport(
     val locked = ListenTogetherGate.locked.value
     // The sizes are the ones the phone's Apple player draws (`Player_v2.kt`):
     // 48 dp skip glyphs and an 80 dp play/pause, the shuffle and the repeat small
-    // at the ends, and the five spread evenly over the column as `SpaceEvenly`.
-    // Gathered in the middle at 30 and 42 dp the row was a second, smaller scale
-    // than the phone's, and the play glyph was half the size of the reference's.
+    // at the ends of the group.
+    //
+    // The group is gathered in the middle of the column, with the same 20 dp the
+    // expressive player puts between its five controls, instead of spread over
+    // the column's whole width: `SpaceEvenly` put the shuffle and the repeat
+    // against the column's edges, so the row read wider than the artwork above it
+    // and the five stopped being one group. Centred, the group shares the
+    // artwork's axis at every window width.
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // A 20 dp glyph with a 40 dp target: the picture stays small, what the

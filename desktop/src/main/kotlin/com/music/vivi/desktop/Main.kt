@@ -2945,6 +2945,7 @@ fun WindowScope.App(
     }
     NowPlayingBar(
         spotifyLayout = spotifyLayout,
+        rotatingThumbnail = rotatingThumbnail,
         current = current,
         nowPlaying = nowPlaying,
         isPlaying = isPlaying,

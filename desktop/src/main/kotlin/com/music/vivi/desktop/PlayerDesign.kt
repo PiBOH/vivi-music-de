@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -492,6 +493,21 @@ fun QueueRowArtwork(
 }
 
 /**
+ * The shape a track's own artwork takes, in the player and in the mini player.
+ *
+ * The 4-sided cookie is the shape of every cover in the DE, but a picture that
+ * revolves inside it keeps swinging its corners around a fixed outline. So the
+ * rotating option decides the shape family as well as the movement: while the
+ * artwork turns it is an ordinary squared cover, a level of the theme's shape
+ * scale, and the cookie comes back as soon as the rotation is off. Both the big
+ * artwork and the mini player's thumbnail ask here, so the two cannot disagree
+ * about the same option.
+ */
+@Composable
+fun trackArtworkShape(rotating: Boolean): Shape =
+    if (rotating) MaterialTheme.shapes.medium else CookieShapes.fourSided
+
+/**
  * Album artwork that slowly rotates when [rotating] is enabled (the mobile
  * "rotating thumbnail" option).
  */
@@ -506,14 +522,13 @@ fun PlayerThumbnail(
     // covers then get a high-resolution variant while the 46 dp queue rows keep
     // a small one.
     val requestedPx = with(LocalDensity.current) { size.toPx().toInt() }.coerceAtLeast(544)
+    // The cookie at rest, a squared cover while it turns: see [trackArtworkShape].
+    val shape = trackArtworkShape(rotating)
     if (!rotating) {
         Box(
             modifier
                 .size(size)
-                // The 4-sided cookie, the shape every other cover in the DE has:
-                // the player's artwork is a song's picture like a row's, and the
-                // rotating switch turns it, it does not decide what shape it is.
-                .clip(CookieShapes.fourSided)
+                .clip(shape)
                 .background(PaletteBlack.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
@@ -537,7 +552,7 @@ fun PlayerThumbnail(
                 scaleX = 1f + 0.02f * kotlin.math.sin(angle * kotlin.math.PI / 180.0).toFloat()
                 scaleY = 1f + 0.02f * kotlin.math.sin(angle * kotlin.math.PI / 180.0).toFloat()
             }
-            .clip(CookieShapes.fourSided)
+            .clip(shape)
             .background(PaletteBlack.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {

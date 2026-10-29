@@ -23,6 +23,8 @@ import com.music.vivi.desktop.player.PlayerState
 @Composable
 fun NowPlayingBar(
     spotifyLayout: Boolean,
+    /** The mini player's artwork: squared while it turns, the cookie at rest. */
+    rotatingThumbnail: Boolean = false,
     current: Screen,
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
@@ -97,6 +99,7 @@ fun NowPlayingBar(
         pureBlackMiniPlayer = pureBlackMiniPlayer,
         swipeThumbnail = swipeThumbnail,
         swipeSensitivity = swipeSensitivity,
+        rotatingThumbnail = rotatingThumbnail,
         sliderStyle = ViviSliderStyle.from(sliderStyle),
     )
         }
