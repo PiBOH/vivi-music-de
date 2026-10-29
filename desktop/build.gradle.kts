@@ -1261,6 +1261,32 @@ tasks.register<JavaExec>("hubOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Notifications screen against the preview:
+ *
+ *     ./gradlew :desktop:notificationsOrderCheck
+ *
+ * The preview's `notifications` list is five blocks - the title, the mode
+ * choice, the sentence that says what it means, one card of three rows and the
+ * action - and this composes the real `SettingsNotificationsScreen` on the
+ * ui-test harness and reads the semantics tree: every text of the screen in
+ * document order must be the preview's own sequence (with the app's one extra
+ * duration row named in it), the sentence must stand 8 dp under the mode card and
+ * 4 dp in from its edge, the heading 16 dp under the back row, the card and the
+ * action 16 dp apart, the action at its label's width instead of the page's, and
+ * the groups must fade up 8 dp as the screen arrives and not move at all with the
+ * Animations switch off.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/NotificationsOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("notificationsOrderCheck") {
+    group = "verification"
+    description = "Checks that the Notifications screen is the preview's: blocks, order, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.NotificationsOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

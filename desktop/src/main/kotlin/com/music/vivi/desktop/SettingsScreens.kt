@@ -413,6 +413,12 @@ fun SettingsSubScreen(language: String, onBack: () -> Unit, content: @Composable
                 .padding(14.dp),
         ) {
             BackButton(language, onBack)
+            // The preview puts 16 dp between the back row and the screen's first
+            // block: its `.back-row` pads 8 dp under the label and every block a
+            // sub-screen starts with (`.md-section-title` and `.md-group` alike)
+            // carries 16 dp of top margin. The app drew the title straight
+            // against the back row, which made the heading read as part of it.
+            Spacer(Modifier.height(16.dp))
             content()
         }
         CompositionLocalProvider(LocalScrollbarStyle provides themedScrollbarStyle()) {
@@ -2583,10 +2589,10 @@ fun SettingsNotificationsScreen(
     onRequestNotificationPermission: () -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
-        // The preview's shape: the mode and what it means, then the three rows
-        // that belong to it in one card, then the one action that proves it
-        // works. The duration is the app's own extra and stays a choice of its
-        // own under the card.
+        // The preview's shape, block for block: the title, the mode and what it
+        // means, the three rows that belong to it in one card, and the one action
+        // that proves it works - which the preview draws at its own width, not as
+        // a button the width of the page.
         Text(Localization.get(language, "notifications"), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
@@ -2600,11 +2606,25 @@ fun SettingsNotificationsScreen(
             ),
             onSelect = onNotificationModeChange,
         )
+        // The preview's `.md-note`: 8 dp under the card and 4 dp in from its edge.
         Text(
             Localization.get(language, "notification_mode_desc"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 6.dp, start = 6.dp, end = 6.dp),
+            modifier = Modifier.padding(top = 8.dp, start = 4.dp, end = 4.dp),
+        )
+
+        // The duration is the app's own row and the preview has none. It sits with
+        // the mode it belongs to rather than between the rows and the action, so
+        // the preview's own tail (the card, then the button) stays whole.
+        Spacer(Modifier.height(16.dp))
+        M3SettingsDropdownItem(
+            icon = Icons.Filled.AccessTime,
+            title = Localization.get(language, "notification_duration"),
+            description = Localization.get(language, "notification_duration_desc"),
+            value = "${notificationDurationSeconds}s",
+            options = listOf(3, 5, 10, 15, 30).map { it.toString() to "${it}s" },
+            onSelect = { s -> onNotificationDurationChange(s.toIntOrNull() ?: notificationDurationSeconds) },
         )
 
         Spacer(Modifier.height(16.dp))
@@ -2636,20 +2656,7 @@ fun SettingsNotificationsScreen(
         )
 
         Spacer(Modifier.height(16.dp))
-        M3SettingsDropdownItem(
-            icon = Icons.Filled.AccessTime,
-            title = Localization.get(language, "notification_duration"),
-            description = Localization.get(language, "notification_duration_desc"),
-            value = "${notificationDurationSeconds}s",
-            options = listOf(3, 5, 10, 15, 30).map { it.toString() to "${it}s" },
-            onSelect = { s -> onNotificationDurationChange(s.toIntOrNull() ?: notificationDurationSeconds) },
-        )
-
-        Spacer(Modifier.height(16.dp))
-        Button(
-            onClick = onTestNotification,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        Button(onClick = onTestNotification) {
             Text(Localization.get(language, "test_notification"))
         }
     }

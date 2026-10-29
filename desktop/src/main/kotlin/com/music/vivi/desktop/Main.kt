@@ -1809,6 +1809,12 @@ fun WindowScope.App(
                             },
                             label = "screenTransition",
                         ) { screen ->
+                // The preview marks a navigation with `screen--enter`, and only a
+                // navigation: a control that changes the page must not replay the
+                // entrance. `AnimatedContent`'s content is exactly that boundary, so
+                // the screens inside it are told that a new one has arrived and the
+                // settings groups fade up (`M3SettingsGroup`'s `groupEnter`).
+                CompositionLocalProvider(LocalScreenArrival provides true) {
                 when (screen) {
                     is Screen.Home -> HomeScreen(
                         language = language,
@@ -2878,6 +2884,7 @@ fun WindowScope.App(
                         },
                     )
                 }
+                } // the arrival lasts as long as this composition
                 } // AnimatedContent
                 if (showUpdateNotification && updateStatus is UpdateStatus.Available) {
                     UpdateNotification(

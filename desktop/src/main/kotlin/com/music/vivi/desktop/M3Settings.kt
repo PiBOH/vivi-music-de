@@ -1,6 +1,7 @@
 package com.music.vivi.desktop
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -41,6 +42,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +57,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
@@ -122,13 +126,51 @@ data class M3Dropdown(
     val selectedKey: String? = null,
 )
 
+/**
+ * True inside a screen a navigation has just put on show, false for a screen
+ * composed on its own - a check's frame approaches a screen that way.
+ *
+ * The preview gives a group its entrance only under `.screen--enter`, a marker
+ * its router writes on a route change and a control that changes the page never
+ * keeps. This is that marker: the screen host provides it, a group reads it once
+ * when it is first composed, and anything that draws a screen outside the host
+ * gets no entrance at all.
+ */
+val LocalScreenArrival = compositionLocalOf { false }
+
+/**
+ * A settings group fades up as its screen arrives, which is the preview's
+ * `.screen--enter .md-group` rule: 8 dp of travel over the medium1 token on the
+ * decelerating curve. It runs once per composition, so a switch that changes a
+ * row inside the group does not replay it, and it is nothing at all with the
+ * Animations switch off or outside a navigation.
+ */
+@Composable
+private fun Modifier.groupEnter(): Modifier {
+    if (!Animations.enabled || !LocalScreenArrival.current) return this
+    val progress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = Animations.ms(Motion.MEDIUM1),
+                easing = Animations.emphasizedDecelerate,
+            ),
+        )
+    }
+    return graphicsLayer {
+        alpha = progress.value
+        translationY = (1f - progress.value) * 8.dp.toPx()
+    }
+}
+
 @Composable
 fun M3SettingsGroup(
     title: String? = null,
     items: List<M3SettingsItem>,
     itemMinHeight: Dp? = null,
 ) {
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxWidth().groupEnter()) {
         title?.let {
             Text(
                 text = it,
@@ -700,7 +742,12 @@ private fun M3SettingsDropdownRow(
         item = M3SettingsItem(
             icon = icon,
             title = { Text(title) },
-            description = { Text(description ?: value) },
+            // The value is the trailing chip, once. It used to be drawn under the
+            // title as well when the caller passed no description of its own, so
+            // every choice without a sentence under it said its answer twice and
+            // stood a line taller than the preview's row (`.md-row__desc` is drawn
+            // only when the node carries a description).
+            description = description?.let { text -> { Text(text) } },
             dropdown = M3Dropdown(
                 value = value,
                 options = options,
