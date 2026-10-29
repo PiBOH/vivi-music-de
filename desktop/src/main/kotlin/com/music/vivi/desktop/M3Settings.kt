@@ -134,7 +134,10 @@ fun M3SettingsGroup(
                 text = it,
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(bottom = 6.dp, top = 6.dp),
+                // 6 dp top and bottom, 4 dp in from the card's edge: the
+                // preview's `.md-group__title` padding, so the label sits just
+                // inside the card's left edge instead of flush with it.
+                modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
             )
         }
         // The 3 dp seam is carried by the row under it (its own leading padding)

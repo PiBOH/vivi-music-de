@@ -579,9 +579,15 @@ object SettingsScreensRenderCheck {
         }
         if (start >= 0) runs += Band(start, image.height - 1)
         // Text between two rows leaves a 1 px line of page colour: those are not
-        // gaps, they are glyphs, so runs shorter than 6 px are folded into their
-        // neighbour instead of counting as a band.
-        return runs.filter { it.height >= 6 }
+        // gaps, they are glyphs, so a short run is folded into its neighbour
+        // instead of counting as a band. The threshold is a row's own height, not
+        // a few pixels: the measured column runs through the group titles as well
+        // as through the cards, and a `labelLarge` title paints a 12 px slice of
+        // glyph at the column - which was counted as a band of its own the moment
+        // the titles moved 4 dp in (the preview's `padding: 6px 4px`) and made the
+        // App font screen read nine bands instead of eight. A card row is at least
+        // 56 dp tall, so nothing a band is meant to be is lost.
+        return runs.filter { it.height >= 20 }
     }
 
     private fun near(a: Int, b: Int, threshold: Int): Boolean {

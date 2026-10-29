@@ -51,6 +51,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AccessTime
@@ -4322,6 +4324,12 @@ fun SettingsScreen(
     val query = searchQuery.trim()
     val searching = query.isNotEmpty()
 
+    // The page's own header, in the preview's order (`renderHub`): the title and
+    // the one icon button on a line of their own, the search field under it on a
+    // full-width line, the rule under both. The field used to share the title's
+    // line and take the button's place, which made the page reflow as soon as it
+    // opened and put the field at half the width the preview gives it.
+    val searchFocus = remember { FocusRequester() }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)
     ) {
@@ -4329,33 +4337,44 @@ fun SettingsScreen(
             Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(Localization.get(language, "settings"), style = MaterialTheme.typography.headlineMedium)
+            Text(
+                Localization.get(language, "settings"),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f).padding(top = 12.dp, bottom = 8.dp),
+            )
             Spacer(Modifier.width(16.dp))
-            if (searchActive) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text(Localization.get(language, "search")) },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    trailingIcon = {
-                        Tooltip(Localization.get(language, "dismiss")) {
-                            M3IconButton(onClick = { searchActive = false; searchQuery = "" }) {
-                                Icon(Icons.Filled.Close, contentDescription = Localization.get(language, "dismiss"))
-                            }
-                        }
-                    },
-                )
-            } else {
-                Tooltip(Localization.get(language, "search")) {
-                    M3IconButton(onClick = { searchActive = true }) {
-                        Icon(Icons.Filled.Search, contentDescription = Localization.get(language, "search"))
-                    }
+            // The same button, either way: it opens the field and closes it. The
+            // preview never shows a close icon inside the field, and clearing the
+            // query with the field is what it does when the button closes it.
+            Tooltip(Localization.get(language, if (searchActive) "dismiss" else "search")) {
+                M3IconButton(onClick = {
+                    searchActive = !searchActive
+                    searchQuery = ""
+                }) {
+                    Icon(
+                        if (searchActive) Icons.Filled.Close else Icons.Filled.Search,
+                        contentDescription = Localization.get(language, if (searchActive) "dismiss" else "search"),
+                    )
                 }
             }
         }
-        HorizontalDivider(Modifier.padding(vertical = 12.dp))
+        if (searchActive) {
+            // The preview's `.md-search`: one full-width line, 56 dp high, the
+            // outline rounded to a pill, the magnifier in the leading slot.
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp).focusRequester(searchFocus),
+                singleLine = true,
+                shape = CircleShape,
+                placeholder = { Text(Localization.get(language, "search")) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            )
+            LaunchedEffect(Unit) { searchFocus.requestFocus() }
+        }
+        // 12 dp above the rule and none under it: the first group carries its own
+        // 16 dp, the way the preview's `.md-group` margin does.
+        HorizontalDivider(Modifier.padding(top = 12.dp))
 
         // The query matches a row when either its own label or any of the
         // localized labels of the options inside its sub-screen(s) contains it,
@@ -4372,6 +4391,7 @@ fun SettingsScreen(
         // Group 1 — account and updates (mobile's first group).
         val generalKeys = listOf("updates", "account", "notifications")
         if (!searching || generalKeys.any { matches(it) }) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 title = if (searching) null else Localization.get(language, "general"),
                 items = listOfNotNull(
@@ -4385,6 +4405,7 @@ fun SettingsScreen(
         // lyrics options live in it because that is where mobile keeps them).
         val mediaKeys = listOf("appearance", "lyrics", "player_audio", "device_sync", "content", "language")
         if (!searching || mediaKeys.any { matches(it) }) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 title = if (searching) null else Localization.get(language, "appearance"),
                 items = listOfNotNull(
@@ -4400,6 +4421,7 @@ fun SettingsScreen(
         // Group 3 — features & data (mobile's third group).
         val privacyKeys = listOf("ai_lyrics_translation", "privacy", "storage", "data_saver")
         if (!searching || privacyKeys.any { matches(it) }) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 title = if (searching) null else Localization.get(language, "privacy"),
                 items = listOfNotNull(
@@ -4417,6 +4439,7 @@ fun SettingsScreen(
         // item (About) was never rendered at all.
         val aboutKeys = listOf("backup_restore", "wrapped_title", "integrations", "spotify_import", "desktop_features", "system", "about")
         if (!searching || aboutKeys.any { matches(it) }) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 title = if (searching) null else Localization.get(language, "about"),
                 items = listOfNotNull(

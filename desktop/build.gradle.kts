@@ -1234,6 +1234,33 @@ tasks.register<JavaExec>("settingsScreensRenderCheck") {
  * row's: under the row with its left edge on the row's, and above it when there
  * is no room below. A manual check, not part of `check`.
  */
+/**
+ * Headless check of the settings hub against the preview:
+ *
+ *     ./gradlew :desktop:hubOrderCheck
+ *
+ * The hub is where the redesign starts, and what it must be is the preview's
+ * `hub()`: four groups (General, Appearance, Privacy, About) holding seventeen
+ * rows, in that order, with the same labels and the values the rows print. The
+ * check composes the real `SettingsScreen` on the ui-test harness and reads the
+ * semantics tree, so the page's own text is the input: the group titles and row
+ * labels put back in document order must be the preview's sequence entry by
+ * entry (a label the preview draws twice is read twice), the two row values the
+ * check can drive itself must be there, and the header must be the preview's -
+ * the title with the one icon button beside it over a full-width search field
+ * that exists only once the button opened it, group titles inset 4 dp from the
+ * cards with 16 dp between two groups.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/HubOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("hubOrderCheck") {
+    group = "verification"
+    description = "Checks that the settings hub is the preview's: groups, rows, order, header and group geometry"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.HubOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"
