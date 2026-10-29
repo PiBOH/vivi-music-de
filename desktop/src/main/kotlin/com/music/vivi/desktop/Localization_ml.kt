@@ -584,6 +584,7 @@ internal fun strings_ml(): Map<String, String> =
         "native_title_bar_desc_hint" to "അനുയോജ്യത പ്രശ്നങ്ങളുണ്ടെങ്കിൽ (വിൻഡോ/റെൻഡറിംഗ്) ഇത് ഓണാക്കുക.",
         "network" to "നെറ്റ്‌വർക്ക്",
         "new_playlist" to "പ്ലേലിസ്റ്റ് സൃഷ്ടിക്കുക",
+        "new_profile" to "പുതിയ പ്രൊഫൈൽ",
         "new_release_albums" to "പുതിയ റിലീസ് ആൽബങ്ങൾ",
         "next" to "അടുത്തത്",
         "no_installer" to "നിങ്ങളുടെ സിസ്റ്റത്തിനായി ഇതുവരെ ഇൻസ്റ്റാളർ ഇല്ല — സ്വമേധയാ ഡൗൺലോഡ് ചെയ്യാൻ റിലീസ് പേജ് തുറക്കുക.",

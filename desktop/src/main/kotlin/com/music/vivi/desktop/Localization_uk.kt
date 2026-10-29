@@ -584,6 +584,7 @@ internal fun strings_uk(): Map<String, String> =
         "native_title_bar_desc_hint" to "Увімкніть її, якщо є проблеми із сумісністю (вікно/рендеринг).",
         "network" to "Мережа",
         "new_playlist" to "Створити плейлист",
+        "new_profile" to "Новий профіль",
         "new_release_albums" to "Альбоми нових релізів",
         "next" to "Наступний",
         "no_installer" to "Для вашої системи ще немає інсталятора — відкрийте сторінку випуску, щоб завантажити його вручну.",

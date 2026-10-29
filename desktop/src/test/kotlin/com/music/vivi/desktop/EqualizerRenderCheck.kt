@@ -91,7 +91,7 @@ object EqualizerRenderCheck {
         val active = render(activeId = PROFILE.id)
         File(outDir, "equalizer-active.png").writeBytes(active)
         val activeBands = bands(active)
-        // The curve is the top card, under the four list rows: the ink is read
+        // The curve is the top card, under the five list rows: the ink is read
         // there, where no slider lives.
         val curveInk = primaryInk(active, from = 0, to = HEIGHT / 2)
         println("profile: cards=${activeBands.cards} rows=${activeBands.rows} gaps=${activeBands.gaps} curve ink=$curveInk")
@@ -99,8 +99,8 @@ object EqualizerRenderCheck {
         if (emptyBands.cards != 1) {
             failures += "with no profile the list should be ONE card, read ${emptyBands.cards}"
         }
-        if (emptyBands.rows != 4) {
-            failures += "with no profile the list should hold 4 rows (no equalization, the profile, import, add example), read ${emptyBands.rows}"
+        if (emptyBands.rows != 5) {
+            failures += "with no profile the list should hold 5 rows (no equalization, the profile, new profile, import, add example), read ${emptyBands.rows}"
         }
         // The only `primary` a screen of rows paints is the tint of the 22 dp icon
         // tiles, a few hundred pixels; a drawn curve is tens of thousands.
@@ -111,8 +111,8 @@ object EqualizerRenderCheck {
         if (activeBands.cards != 4) {
             failures += "with a profile the screen should hold 4 cards (the list, the curve, the preamp, the bands), read ${activeBands.cards}: ${activeBands.gaps}"
         }
-        if (activeBands.rows != 16) {
-            failures += "with a profile the screen should hold 16 rows (4 list, the curve, the preamp, 10 bands), read ${activeBands.rows}"
+        if (activeBands.rows != 17) {
+            failures += "with a profile the screen should hold 17 rows (5 list, the curve, the preamp, 10 bands), read ${activeBands.rows}"
         }
         if (curveInk < 20_000) {
             failures += "with a profile the response curve should be drawn in primary ink, read only $curveInk px in the upper half"

@@ -584,6 +584,7 @@ internal fun strings_vi(): Map<String, String> =
         "native_title_bar_desc_hint" to "Bật nó nếu bạn gặp sự cố tương thích (cửa sổ/kết xuất).",
         "network" to "Mạng",
         "new_playlist" to "Tạo danh sách phát",
+        "new_profile" to "Hồ sơ mới",
         "new_release_albums" to "Album phát hành mới",
         "next" to "Tiếp theo",
         "no_installer" to "Chưa có trình cài đặt cho hệ thống của bạn — mở trang phát hành để tải xuống thủ công.",

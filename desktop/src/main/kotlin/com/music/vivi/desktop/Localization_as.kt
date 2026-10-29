@@ -584,6 +584,7 @@ internal fun strings_as(): Map<String, String> =
         "native_title_bar_desc_hint" to "সংগতি সমস্যা হ'লে (উইণ্ড' বা ৰেণ্ডাৰিং সমস্যা) ইয়াক অন কৰক।",
         "network" to "নেটৱৰ্ক",
         "new_playlist" to "নতুন প্লে'লিষ্ট",
+        "new_profile" to "নতুন প্ৰফাইল",
         "new_release_albums" to "নতুন ৰিলিজ এলবাম",
         "next" to "পৰৱৰ্তী",
         "no_installer" to "আপোনাৰ ছিষ্টেমৰ বাবে এতিয়াও ইনষ্টলাৰ নাই — নিজে ডাউনলোড কৰিবলৈ ৰিলিজ পেজ খোলক।",

@@ -584,6 +584,7 @@ internal fun strings_fa(): Map<String, String> =
         "native_title_bar_desc_hint" to "اگر مشکل سازگاری (پنجره/رندر) دارید آن را روشن کنید.",
         "network" to "شبکه",
         "new_playlist" to "ایجاد فهرست‌پخش",
+        "new_profile" to "نمایه جدید",
         "new_release_albums" to "مجموعه‌های منتشرشده‌ی جدید",
         "next" to "بعدی",
         "no_installer" to "هنوز نصب‌کننده‌ای برای سیستم شما موجود نیست — برای دانلود دستی صفحه انتشار را باز کنید.",

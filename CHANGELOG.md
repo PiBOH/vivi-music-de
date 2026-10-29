@@ -11,6 +11,11 @@ the program's own SemVer. `[APK]` marks mobile-only changes.
 
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.12-beta] - 2026-10-29
+
+### ✨ Added
+- [DE] **The equalizer can make a profile of its own, not only import one.** The list held *No equalization*, every AutoEQ `ParametricEQ.txt` imported on the machine and the bundled example, so a profile that did not come from a file did not exist: shaping one's own curve meant importing a file with no filters in it first. A **New profile** row sits between the profiles and the import now, and it asks for a name before it makes the profile (`new_profile`, all 49 languages): the profile joins the list with the ten bands the chart already draws, every gain at 0 dB and the app's own Q, becomes the active one and opens the editor on a flat line, so the first thing to move is the curve the listener can see. **Measured:** `:desktop:compileKotlin` passes; `:desktop:equalizerRenderCheck` reads `no profile: cards=1 rows=5` and `profile: cards=4 rows=17` (the five list rows, the curve, the preamp and the ten bands), with the curve still painted in `37660 px` and the fold still opening and closing. In the preview the row opens the same one-field dialog, and a created profile reads `No equalization`, the three shipped profiles, `My headphones`, `New profile`, `Import profile (.txt)`, `Add example profile`, with `My headphones` selected and its ten bands at `0 dB`; `styles_check.mjs`, `scroll_check.mjs`, `motion_check.mjs`, `prefs_check.mjs`, `buttons_check.mjs`, `geometry_check.mjs` and `glyph_check.mjs` exit 0. **Watch:** a profile can start empty of gains but never empty of bands, and it is the active profile as soon as it exists. **Open sub-item:** the created profile's name is asked once and cannot be renamed from the equalizer afterwards, and nothing here presses the dialog in the app itself, which has no pointer in a headless read.
+
 ## [6.0.8.11_DE-1.56.11-beta] - 2026-10-29
 
 ### 🔧 Changed

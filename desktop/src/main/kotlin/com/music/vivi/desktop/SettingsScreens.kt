@@ -3027,6 +3027,22 @@ fun exampleEQProfile(): SavedEQProfile = SavedEQProfile(
 )
 
 /**
+ * A profile made here instead of imported: the ten bands the app's chart and
+ * band rows already draw, every gain at 0 dB, so the editor opens on a flat line
+ * that can be shaped by hand. Its id is stamped, so two profiles made in the same
+ * session stay two profiles.
+ */
+fun customEQProfile(name: String): SavedEQProfile = SavedEQProfile(
+    id = "custom_${System.currentTimeMillis()}",
+    name = name,
+    deviceModel = name,
+    bands = listOf(31.0, 62.0, 125.0, 250.0, 500.0, 1000.0, 2000.0, 4000.0, 8000.0, 16000.0)
+        .map { ParametricEQBand(frequency = it, gain = 0.0, q = 1.0) },
+    preamp = 0.0,
+    isCustom = true,
+)
+
+/**
  * Maps an EQ band center frequency to its localized range-name key, so the
  * live editor can show whether a band sits in the sub-bass, bass, low-mid,
  * mid, high-mid or treble region next to its frequency (e.g. "Band 2 · 150 Hz · Bass").
@@ -3127,10 +3143,12 @@ fun SettingsEqualizerScreen(
     onImportProfile: (String, ParametricEQ) -> Unit,
     onDeleteProfile: (String) -> Unit,
     onAddExampleProfile: () -> Unit = {},
+    onCreateProfile: (String) -> Unit = {},
     onUpdateProfile: (String, List<ParametricEQBand>, Double) -> Unit = { _, _, _ -> },
 ) {
     var error by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<SavedEQProfile?>(null) }
+    var creatingProfile by remember { mutableStateOf(false) }
 
     fun pickFile(): File? = runCatching {
         val dialog = java.awt.FileDialog(
@@ -3214,6 +3232,17 @@ fun SettingsEqualizerScreen(
                         ),
                     )
                 }
+                // A profile can be made here as well as imported: the equalizer is
+                // a list of profiles, and until now the only way to get one was a
+                // file from AutoEQ or the bundled example, which is not a profile
+                // of one's own. It opens the editor on a flat line.
+                add(
+                    M3SettingsItem(
+                        icon = Icons.Filled.Add,
+                        title = { Text(Localization.get(language, "new_profile")) },
+                        onClick = { creatingProfile = true },
+                    ),
+                )
                 add(
                     M3SettingsItem(
                         icon = Icons.Filled.UploadFile,
@@ -3351,6 +3380,40 @@ fun SettingsEqualizerScreen(
             text = { Text(message) },
             confirmButton = {
                 TextButton(onClick = { error = null }) { Text(Localization.get(language, "ok")) }
+            },
+        )
+    }
+
+    if (creatingProfile) {
+        var name by remember { mutableStateOf("") }
+        AlertDialog(
+            onDismissRequest = { creatingProfile = false },
+            title = { Text(Localization.get(language, "new_profile")) },
+            text = {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    singleLine = true,
+                    label = { Text(Localization.get(language, "new_profile")) },
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = name.isNotBlank(),
+                    onClick = {
+                        if (name.isNotBlank()) {
+                            onCreateProfile(name.trim())
+                            creatingProfile = false
+                        }
+                    },
+                ) {
+                    Text(Localization.get(language, "create"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { creatingProfile = false }) {
+                    Text(Localization.get(language, "cancel"))
+                }
             },
         )
     }
@@ -4212,7 +4275,7 @@ fun SettingsScreen(
         "updates" to listOf("update_available", "up_to_date", "check_updates", "update_check_interval", "include_prereleases", "update_source", "changelog", "commits", "latest_release", "install_now", "restart_now", "open_release_page"),
         "notifications" to listOf("notification_duration", "notification_duration_desc", "notification_history", "notification_main_window", "notification_mode", "notification_mode_desc", "notification_native", "notifications", "save_notification_history", "test_notification"),
         "appearance" to listOf("animations", "animations_desc", "app_font", "appearance", "density_and_grid", "intro", "native_title_bar", "native_title_bar_desc", "native_title_bar_desc_hint", "player_design", "restart_required", "restart_required_title", "right_panel", "right_panel_desc", "screen_transitions", "show_intro_on_startup", "theme_colors", "vivimusic_canvas", "accent_intensity", "add_to_palette", "brightness", "color_palette", "custom_color", "custom_colors", "hue", "pure_black", "remove_custom_color", "saturation", "theme_dark", "theme_light", "theme_mode", "theme_system", "custom_font", "font_google_sans", "font_outfit", "font_plus_jakarta_sans", "font_sans_flex", "font_selection", "font_system", "import_font", "preview_text_quote", "typography_preview", "canvas_source", "vivimusic_canvas_desc", "grid_item_size", "transition_fade", "transition_off", "transition_slide", "mini_player_background", "mini_player_design", "player_background", "pure_black_mini", "pure_black_mini_desc", "rotating_thumbnail", "rotating_thumbnail_desc", "intro_background", "intro_desc", "intro_style", "preview_intro"),
-        "player_audio" to listOf("add_example_profile", "band_count", "delete_profile_confirmation", "delete_profile_desc", "eq_band", "eq_disabled", "eq_edit_profile", "eq_gain", "eq_preamp", "eq_q_factor", "equalizer_header", "import_error_title", "import_profile", "no_profiles", "mini_player_background", "mini_player_design", "player_background", "player_design", "pure_black_mini", "pure_black_mini_desc", "rotating_thumbnail", "rotating_thumbnail_desc", "autoplay_next", "audio_quality", "audio_quality_auto", "audio_quality_high", "audio_quality_low", "persistent_queue", "remember_shuffle_repeat", "sync_vivi_volume", "stream_cache_minutes", "stream_cache_minutes_desc", "stream_cache_forever", "eq_range_sub_bass", "eq_range_bass", "eq_range_low_mid", "eq_range_mid", "eq_range_high_mid", "eq_range_treble"),
+        "player_audio" to listOf("add_example_profile", "new_profile", "band_count", "delete_profile_confirmation", "delete_profile_desc", "eq_band", "eq_disabled", "eq_edit_profile", "eq_gain", "eq_preamp", "eq_q_factor", "equalizer_header", "import_error_title", "import_profile", "no_profiles", "mini_player_background", "mini_player_design", "player_background", "player_design", "pure_black_mini", "pure_black_mini_desc", "rotating_thumbnail", "rotating_thumbnail_desc", "autoplay_next", "audio_quality", "audio_quality_auto", "audio_quality_high", "audio_quality_low", "persistent_queue", "remember_shuffle_repeat", "sync_vivi_volume", "stream_cache_minutes", "stream_cache_minutes_desc", "stream_cache_forever", "eq_range_sub_bass", "eq_range_bass", "eq_range_low_mid", "eq_range_mid", "eq_range_high_mid", "eq_range_treble"),
         "account" to listOf("clear_session", "logout", "login", "login_google", "login_manual_title", "logged_in_as", "not_logged_in", "account", "cookie_label", "visitor_data_label", "data_sync_id_label"),
         "device_sync" to listOf("connection_method", "method_relay", "method_lan", "relay_server", "lan_sync", "connect", "generate_code", "regenerate_pair_code", "code_expires_in", "code_hint", "lan_hint", "pair", "unpair", "scan_qr", "connected", "disconnected", "status", "download_mobile_apk", "how_to_connect", "waiting_for_pairing"),
         "content" to listOf("content", "content_country", "content_language", "system_default"),

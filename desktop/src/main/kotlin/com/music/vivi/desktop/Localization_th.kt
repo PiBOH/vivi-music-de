@@ -584,6 +584,7 @@ internal fun strings_th(): Map<String, String> =
         "native_title_bar_desc_hint" to "เปิดใช้งานหากคุณมีปัญหาความเข้ากันได้ (หน้าต่าง/การเรนเดอร์)",
         "network" to "เครือข่าย",
         "new_playlist" to "เพลย์ลิสต์ใหม่",
+        "new_profile" to "โปรไฟล์ใหม่",
         "new_release_albums" to "อัลบั้มเพลงใหม่ออกใหม่",
         "next" to "ถัดไป",
         "no_installer" to "ยังไม่มีตัวติดตั้งสำหรับระบบของคุณ — เปิดหน้าปล่อยเวอร์ชันเพื่อดาวน์โหลดด้วยตนเอง",

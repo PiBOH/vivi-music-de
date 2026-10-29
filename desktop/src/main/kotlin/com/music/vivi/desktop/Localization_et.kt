@@ -584,6 +584,7 @@ internal fun strings_et(): Map<String, String> =
         "native_title_bar_desc_hint" to "Lülitage see sisse, kui teil on ühilduvusprobleeme (aken/kuvamine).",
         "network" to "Võrk",
         "new_playlist" to "Loo esitusloend",
+        "new_profile" to "Uus profiil",
         "new_release_albums" to "Uute väljaannete albumid",
         "next" to "Järgmine",
         "no_installer" to "Teie süsteemi jaoks pole veel installerit — avage väljalaske leht, et see käsitsi alla laadida.",

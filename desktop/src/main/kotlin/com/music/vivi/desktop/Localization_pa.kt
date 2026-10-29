@@ -584,6 +584,7 @@ internal fun strings_pa(): Map<String, String> =
         "native_title_bar_desc_hint" to "ਜੇਕਰ ਤੁਹਾਨੂੰ ਅਨੁਕੂਲਤਾ ਸਮੱਸਿਆਵਾਂ ਹਨ (ਵਿੰਡੋ/ਰੈਂਡਰਿੰਗ) ਤਾਂ ਇਸਨੂੰ ਚਾਲੂ ਕਰੋ।",
         "network" to "ਨੈੱਟਵਰਕ",
         "new_playlist" to "ਪਲੇਲਿਸਟ ਬਣਾਓ",
+        "new_profile" to "ਨਵੀਂ ਪ੍ਰੋਫਾਈਲ",
         "new_release_albums" to "ਨਵੀਂ ਰਿਲੀਜ਼ ਐਲਬਮਾਂ",
         "next" to "ਅਗਲਾ",
         "no_installer" to "ਤੁਹਾਡੇ ਸਿਸਟਮ ਲਈ ਅਜੇ ਕੋਈ ਇੰਸਟਾਲਰ ਨਹੀਂ ਹੈ — ਹੱਥੀਂ ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਰੀਲੀਜ਼ ਪੇਜ ਖੋਲ੍ਹੋ।",

@@ -584,6 +584,7 @@ internal fun strings_ja(): Map<String, String> =
         "native_title_bar_desc_hint" to "互換性の問題がある場合（ウィンドウ/描画の問題）はオンにしてください。",
         "network" to "ネットワーク",
         "new_playlist" to "再生リストを作成",
+        "new_profile" to "新しいプロファイル",
         "new_release_albums" to "新リリースアルバム",
         "next" to "次へ",
         "no_installer" to "お使いのシステム用のインストーラーはまだありません — 手動でダウンロードするにはリリースページを開いてください。",

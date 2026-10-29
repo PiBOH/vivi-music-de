@@ -584,6 +584,7 @@ internal fun strings_te(): Map<String, String> =
         "native_title_bar_desc_hint" to "అనుకూలత సమస్యలు ఉంటే (విండో/రెండరింగ్) దీన్ని ఆన్ చేయండి.",
         "network" to "నెట్‌వర్క్",
         "new_playlist" to "ప్లేలిస్ట్ను సృష్టించుకోండి",
+        "new_profile" to "కొత్త ప్రొఫైల్",
         "new_release_albums" to "కొత్త విడుదల ఆల్బమ్‌లు",
         "next" to "తర్వాత",
         "no_installer" to "మీ సిస్టమ్ కోసం ఇంకా ఇన్‌స్టాలర్ లేదు — మాన్యువల్‌గా డౌన్‌లోడ్ చేయడానికి విడుదల పేజీని తెరవండి.",

@@ -584,6 +584,7 @@ internal fun strings_iw(): Map<String, String> =
         "native_title_bar_desc_hint" to "הפעל אם יש לך בעיות תאימות (בעיות חלון/רינדור).",
         "network" to "רשת",
         "new_playlist" to "צור פלייליסט",
+        "new_profile" to "פרופיל חדש",
         "new_release_albums" to "אלבומים חדשים",
         "next" to "הבא",
         "no_installer" to "אין עדיין מתקין למערכת שלך — פתח את דף השחרור כדי להוריד ידנית.",

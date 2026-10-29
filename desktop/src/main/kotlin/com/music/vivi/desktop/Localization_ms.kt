@@ -584,6 +584,7 @@ internal fun strings_ms(): Map<String, String> =
         "native_title_bar_desc_hint" to "Hidupkannya jika anda menghadapi masalah keserasian (tetingkap/rendering).",
         "network" to "Rangkaian",
         "new_playlist" to "Senarai main baharu",
+        "new_profile" to "Profil baharu",
         "new_release_albums" to "Album keluaran baharu",
         "next" to "Seterusnya",
         "no_installer" to "Belum ada pemasang untuk sistem anda — buka halaman keluaran untuk memuat turun secara manual.",

@@ -584,6 +584,7 @@ internal fun strings_ca(): Map<String, String> =
         "native_title_bar_desc_hint" to "Activeu-la si teniu problemes de compatibilitat (finestra/renderització).",
         "network" to "Xarxa",
         "new_playlist" to "Crea una llista",
+        "new_profile" to "Perfil nou",
         "new_release_albums" to "Àlbums de nous llançaments",
         "next" to "Següent",
         "no_installer" to "Encara no hi ha instal·lador per al vostre sistema — obriu la pàgina de la versió per baixar-lo manualment.",

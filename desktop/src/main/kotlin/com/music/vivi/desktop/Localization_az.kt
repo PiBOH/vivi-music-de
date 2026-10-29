@@ -584,6 +584,7 @@ internal fun strings_az(): Map<String, String> =
         "native_title_bar_desc_hint" to "Uyğunluq problemləriniz varsa (pəncərə/göstərmə problemləri) onu yandırın.",
         "network" to "Şəbəkə",
         "new_playlist" to "Yeni pleylist",
+        "new_profile" to "Yeni profil",
         "new_release_albums" to "Yeni buraxılış albomları",
         "next" to "Növbəti",
         "no_installer" to "Sisteminiz üçün hələ quraşdırıcı yoxdur — əl ilə yükləmək üçün buraxılış səhifəsini açın.",

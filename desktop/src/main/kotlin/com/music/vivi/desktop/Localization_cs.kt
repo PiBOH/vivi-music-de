@@ -584,6 +584,7 @@ internal fun strings_cs(): Map<String, String> =
         "native_title_bar_desc_hint" to "Zapněte ji, pokud máte problémy s kompatibilitou (okno/vykreslování).",
         "network" to "Síť",
         "new_playlist" to "Vytvořit playlist",
+        "new_profile" to "Nový profil",
         "new_release_albums" to "Alba nových vydání",
         "next" to "Další",
         "no_installer" to "Pro váš systém zatím není instalátor — otevřete stránku vydání a stáhněte jej ručně.",

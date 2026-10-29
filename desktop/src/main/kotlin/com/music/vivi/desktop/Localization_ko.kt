@@ -584,6 +584,7 @@ internal fun strings_ko(): Map<String, String> =
         "native_title_bar_desc_hint" to "호환성 문제(창/렌더링 문제)가 있으면 켜세요.",
         "network" to "네트워크",
         "new_playlist" to "재생목록 만들기",
+        "new_profile" to "새 프로필",
         "new_release_albums" to "새로 나온 앨범",
         "next" to "다음",
         "no_installer" to "시스템용 설치 프로그램이 아직 없습니다 — 수동으로 다운로드하려면 릴리스 페이지를 여세요.",

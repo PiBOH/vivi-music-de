@@ -584,6 +584,7 @@ internal fun strings_id(): Map<String, String> =
         "native_title_bar_desc_hint" to "Aktifkan jika Anda memiliki masalah kompatibilitas (jendela/rendering).",
         "network" to "Jaringan",
         "new_playlist" to "Buat daftar putar",
+        "new_profile" to "Profil baru",
         "new_release_albums" to "Album rilis baru",
         "next" to "Selanjutnya",
         "no_installer" to "Belum ada penginstal untuk sistem Anda — buka halaman rilis untuk mengunduhnya secara manual.",

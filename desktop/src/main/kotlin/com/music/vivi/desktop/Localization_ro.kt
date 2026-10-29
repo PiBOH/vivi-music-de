@@ -584,6 +584,7 @@ internal fun strings_ro(): Map<String, String> =
         "native_title_bar_desc_hint" to "Activați-o dacă aveți probleme de compatibilitate (fereastră/randare).",
         "network" to "Rețea",
         "new_playlist" to "Creează playlist",
+        "new_profile" to "Profil nou",
         "new_release_albums" to "Albume lansări noi",
         "next" to "Următorul",
         "no_installer" to "Nu există încă un instalator pentru sistemul tău — deschide pagina versiunii pentru a-l descărca manual.",

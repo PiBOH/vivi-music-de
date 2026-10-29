@@ -584,6 +584,7 @@ internal fun strings_hu(): Map<String, String> =
         "native_title_bar_desc_hint" to "Kapcsolja be, ha kompatibilitási problémái vannak (ablak/megjelenítés).",
         "network" to "Hálózat",
         "new_playlist" to "Lejátszási lista létrehozása",
+        "new_profile" to "Új profil",
         "new_release_albums" to "Új megjelenésű albumok",
         "next" to "Következő",
         "no_installer" to "Az Ön rendszeréhez még nincs telepítő — nyissa meg a kiadás oldalát a kézi letöltéshez.",

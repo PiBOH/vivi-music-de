@@ -584,6 +584,7 @@ internal fun strings_sk(): Map<String, String> =
         "native_title_bar_desc_hint" to "Zapnite ju, ak máte problémy s kompatibilitou (okno/vykresľovanie).",
         "network" to "Sieť",
         "new_playlist" to "Vytvoriť playlist",
+        "new_profile" to "Nový profil",
         "new_release_albums" to "Albumy nových vydaní",
         "next" to "Ďalšia",
         "no_installer" to "Pre váš systém zatiaľ nie je inštalátor — otvorte stránku vydania a stiahnite si ho ručne.",

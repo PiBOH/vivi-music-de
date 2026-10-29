@@ -584,6 +584,7 @@ internal fun strings_bn(): Map<String, String> =
         "native_title_bar_desc_hint" to "সামঞ্জস্যের সমস্যা থাকলে (উইন্ডো/রেন্ডারিং সমস্যা) এটি চালু করুন।",
         "network" to "নেটওয়ার্ক",
         "new_playlist" to "প্লেলিস্ট তৈরি করুন",
+        "new_profile" to "নতুন প্রোফাইল",
         "new_release_albums" to "নতুন রিলিজ অ্যালবাম",
         "next" to "পরবর্তী",
         "no_installer" to "আপনার সিস্টেমের জন্য এখনও কোনো ইনস্টলার নেই — ম্যানুয়ালি ডাউনলোড করতে রিলিজ পেজ খুলুন।",

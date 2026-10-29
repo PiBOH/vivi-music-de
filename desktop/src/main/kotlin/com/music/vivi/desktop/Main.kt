@@ -2257,6 +2257,16 @@ fun WindowScope.App(
                                 }
                                 player.setEqualizer(profile)
                             },
+                            onCreateProfile = { name ->
+                                val profile = customEQProfile(name)
+                                DesktopSettings.update { state ->
+                                    state.copy(
+                                        eqProfiles = state.eqProfiles + profile,
+                                        activeEqProfileId = profile.id,
+                                    )
+                                }
+                                player.setEqualizer(profile)
+                            },
                             onUpdateProfile = { id, bands, preamp ->
                                 DesktopSettings.update { state ->
                                     val profiles = state.eqProfiles.map {

@@ -584,6 +584,7 @@ internal fun strings_ru(): Map<String, String> =
         "native_title_bar_desc_hint" to "Включите её, если есть проблемы с совместимостью (окно/отрисовка).",
         "network" to "Сеть",
         "new_playlist" to "Создать плейлист",
+        "new_profile" to "Новый профиль",
         "new_release_albums" to "Альбомы новых релизов",
         "next" to "Следующий",
         "no_installer" to "Для вашей системы пока нет установщика — откройте страницу релиза, чтобы скачать его вручную.",

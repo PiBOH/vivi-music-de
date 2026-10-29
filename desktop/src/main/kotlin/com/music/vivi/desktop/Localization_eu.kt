@@ -584,6 +584,7 @@ internal fun strings_eu(): Map<String, String> =
         "native_title_bar_desc_hint" to "Aktibatu bateragarritasun arazoak badituzu (leihoa/errendatzea).",
         "network" to "Sarea",
         "new_playlist" to "Erreprodukzio-zerrenda berria",
+        "new_profile" to "Profil berria",
         "new_release_albums" to "Argitalpen berrien diskoak",
         "next" to "Hurrengoa",
         "no_installer" to "Zure sistemarako instalatzailerik ez dago oraindik — ireki bertsioaren orria eskuz deskargatzeko.",

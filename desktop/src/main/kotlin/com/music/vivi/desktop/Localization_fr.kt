@@ -584,6 +584,7 @@ internal fun strings_fr(): Map<String, String> =
         "native_title_bar_desc_hint" to "Activez-la si vous avez des problèmes de compatibilité (fenêtre/rendu).",
         "network" to "Réseau",
         "new_playlist" to "Créer une playlist",
+        "new_profile" to "Nouveau profil",
         "new_release_albums" to "Albums des nouvelles sorties",
         "next" to "Suivant",
         "no_installer" to "Aucun installateur pour votre système pour l'instant — ouvrez la page de la version pour le télécharger manuellement.",

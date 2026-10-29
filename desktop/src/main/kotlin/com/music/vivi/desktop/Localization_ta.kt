@@ -584,6 +584,7 @@ internal fun strings_ta(): Map<String, String> =
         "native_title_bar_desc_hint" to "பொருந்தக்கூடிய சிக்கல்கள் இருந்தால் (சாளரம்/ரெண்டரிங்) இதை இயக்கவும்.",
         "network" to "நெட்வொர்க்",
         "new_playlist" to "பிளேலிச்ட்டை உருவாக்கவும்",
+        "new_profile" to "புதிய சுயவிவரம்",
         "new_release_albums" to "புதிய வெளியீட்டு ஆல்பங்கள்",
         "next" to "அடுத்து",
         "no_installer" to "உங்கள் கணினிக்கு இன்னும் நிறுவி இல்லை — கைமுறையாகப் பதிவிறக்க வெளியீட்டுப் பக்கத்தைத் திறக்கவும்.",

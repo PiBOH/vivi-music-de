@@ -584,6 +584,7 @@ internal fun strings_bs(): Map<String, String> =
         "native_title_bar_desc_hint" to "Uključite je ako imate problema s kompatibilnošću (prozor/prikaz).",
         "network" to "Mreža",
         "new_playlist" to "Napravi spisku",
+        "new_profile" to "Novi profil",
         "new_release_albums" to "Albumi novih izdanja",
         "next" to "Sljedeća",
         "no_installer" to "Za vaš sistem još nema instalatera — otvorite stranicu izdanja da ga preuzmete ručno.",

@@ -584,6 +584,7 @@ internal fun strings_hi(): Map<String, String> =
         "native_title_bar_desc_hint" to "यदि आपको संगतता समस्याएँ हैं (विंडो/रेंडरिंग) तो इसे चालू करें।",
         "network" to "नेटवर्क",
         "new_playlist" to "चाल सूची बनाएं",
+        "new_profile" to "नया प्रोफ़ाइल",
         "new_release_albums" to "नई रिलीज़ एल्बम",
         "next" to "अगला",
         "no_installer" to "आपके सिस्टम के लिए अभी कोई इंस्टॉलर नहीं है — मैन्युअल रूप से डाउनलोड करने के लिए रिलीज़ पेज खोलें।",

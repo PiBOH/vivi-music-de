@@ -584,6 +584,7 @@ internal fun strings_fi(): Map<String, String> =
         "native_title_bar_desc_hint" to "Ota se käyttöön, jos sinulla on yhteensopivuusongelmia (ikkuna/piirto).",
         "network" to "Verkko",
         "new_playlist" to "Luo soittolista",
+        "new_profile" to "Uusi profiili",
         "new_release_albums" to "Uusien julkaisujen albumit",
         "next" to "Seuraava",
         "no_installer" to "Järjestelmällesi ei ole vielä asennusohjelmaa — avaa julkaisusivu ladataksesi sen manuaalisesti.",

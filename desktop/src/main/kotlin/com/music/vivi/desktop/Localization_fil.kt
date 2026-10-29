@@ -584,6 +584,7 @@ internal fun strings_fil(): Map<String, String> =
         "native_title_bar_desc_hint" to "I-on ito kung may mga isyu sa compatibility (window/rendering).",
         "network" to "Network",
         "new_playlist" to "Bagong playlist",
+        "new_profile" to "Bagong profile",
         "new_release_albums" to "Mga album ng bagong release",
         "next" to "Susunod",
         "no_installer" to "Wala pang installer para sa iyong system — buksan ang release page para manual itong i-download.",

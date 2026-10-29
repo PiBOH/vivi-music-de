@@ -584,6 +584,7 @@ internal fun strings_ar(): Map<String, String> =
         "native_title_bar_desc_hint" to "قم بتشغيلها إذا واجهت مشاكل في التوافق (مشاكل النافذة أو العرض).",
         "network" to "الشبكة",
         "new_playlist" to "أنشأ قائمة أغاني",
+        "new_profile" to "ملف تعريف جديد",
         "new_release_albums" to "ألبومات الإصدارات الجديدة",
         "next" to "التالي",
         "no_installer" to "لا يوجد مُثبِّت لنظامك بعد — افتح صفحة الإصدار لتنزيله يدويًا.",

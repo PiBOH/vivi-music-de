@@ -584,6 +584,7 @@ internal fun strings_sv(): Map<String, String> =
         "native_title_bar_desc_hint" to "Aktivera den om du har kompatibilitetsproblem (fönster/rendering).",
         "network" to "Nätverk",
         "new_playlist" to "Ny spellista",
+        "new_profile" to "Ny profil",
         "new_release_albums" to "Nya släppalbum",
         "next" to "Nästa",
         "no_installer" to "Det finns ingen installerare för ditt system än — öppna versionssidan för att ladda ner den manuellt.",

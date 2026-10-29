@@ -584,6 +584,7 @@ internal fun strings_nl(): Map<String, String> =
         "native_title_bar_desc_hint" to "Schakel het in als je compatibiliteitsproblemen hebt (venster/weergave).",
         "network" to "Netwerk",
         "new_playlist" to "Afspeellijst maken",
+        "new_profile" to "Nieuw profiel",
         "new_release_albums" to "Albums van nieuwe releases",
         "next" to "Volgende",
         "no_installer" to "Er is nog geen installatieprogramma voor jouw systeem — open de releasepagina om het handmatig te downloaden.",

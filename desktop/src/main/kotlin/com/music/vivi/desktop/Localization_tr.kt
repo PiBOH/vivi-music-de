@@ -584,6 +584,7 @@ internal fun strings_tr(): Map<String, String> =
         "native_title_bar_desc_hint" to "Uyumluluk sorunlarınız varsa (pencere/oluşturma) açın.",
         "network" to "Ağ",
         "new_playlist" to "Çalma listesi oluştur",
+        "new_profile" to "Yeni profil",
         "new_release_albums" to "Yeni çıkan albümler",
         "next" to "Bir sonraki",
         "no_installer" to "Sisteminiz için henüz yükleyici yok — manuel indirmek için sürüm sayfasını açın.",

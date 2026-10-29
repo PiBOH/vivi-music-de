@@ -584,6 +584,7 @@ internal fun strings_el(): Map<String, String> =
         "native_title_bar_desc_hint" to "Ενεργοποιήστε την αν έχετε προβλήματα συμβατότητας (παράθυρο/απόδοση).",
         "network" to "Δίκτυο",
         "new_playlist" to "Δημιουργία λίστας",
+        "new_profile" to "Νέο προφίλ",
         "new_release_albums" to "Άλμπουμ νέων κυκλοφοριών",
         "next" to "Επόμενο",
         "no_installer" to "Δεν υπάρχει ακόμα πρόγραμμα εγκατάστασης για το σύστημά σας — ανοίξτε τη σελίδα έκδοσης για να το κατεβάσετε χειροκίνητα.",

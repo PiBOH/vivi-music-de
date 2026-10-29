@@ -584,6 +584,7 @@ internal fun strings_km(): Map<String, String> =
         "native_title_bar_desc_hint" to "បើកវាប្រសិនបើអ្នកមានបញ្ហាភាពឆបគ្នា (បង្អួច/ការបង្ហាញ)។",
         "network" to "បណ្តាញ",
         "new_playlist" to "បញ្ជីចាក់ថ្មី",
+        "new_profile" to "ទម្រង់ថ្មី",
         "new_release_albums" to "អាល់ប៊ុមចេញថ្មី",
         "next" to "បន្ទាប់",
         "no_installer" to "មិនទាន់មានកម្មវិធីដំឡើងសម្រាប់ប្រព័ន្ធរបស់អ្នកទេ — បើកទំព័រកំណែដើម្បីទាញយកដោយដៃ។",

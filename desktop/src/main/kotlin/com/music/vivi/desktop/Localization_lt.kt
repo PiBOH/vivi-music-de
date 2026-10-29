@@ -584,6 +584,7 @@ internal fun strings_lt(): Map<String, String> =
         "native_title_bar_desc_hint" to "Įjunkite, jei turite suderinamumo problemų (langas/atvaizdavimas).",
         "network" to "Tinklas",
         "new_playlist" to "Naujas grojaraštis",
+        "new_profile" to "Naujas profilis",
         "new_release_albums" to "Naujų leidinių albumai",
         "next" to "Kitas",
         "no_installer" to "Jūsų sistemai dar nėra diegimo programos — atidarykite leidimo puslapį, kad atsisiųstumėte rankiniu būdu.",
