@@ -1388,6 +1388,30 @@ tasks.register<JavaExec>("themeOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Player & mini-player design screen against the preview:
+ *
+ *     ./gradlew :desktop:playerDesignOrderCheck
+ *
+ * The preview's `playerDesign` list is one column - the player's choice in a card
+ * of one row, the full player's card (background, the turning artwork), the mini
+ * player's card (design, background, its pure black finish, the swipe and the
+ * sensitivity under it) and the slider style alone. This composes the real
+ * `SettingsPlayerDesignScreen`, reads its semantics tree for the column's order
+ * and the heading's 16 dp, then renders it headlessly and reads the column of
+ * card fill for the four cards on the page's 16 dp and 3 dp seams and for the
+ * groups fading up on arrival.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/PlayerDesignOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("playerDesignOrderCheck") {
+    group = "verification"
+    description = "Checks that the Player & mini-player design screen is the preview's: order, cards and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.PlayerDesignOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

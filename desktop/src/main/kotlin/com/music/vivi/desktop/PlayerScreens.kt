@@ -48,13 +48,13 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Album
-import androidx.compose.material.icons.filled.Brightness1
-import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Gradient
+import androidx.compose.material.icons.filled.LinearScale
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.RotateRight
 import androidx.compose.material.icons.filled.Swipe
+import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -4266,12 +4266,15 @@ fun PlayerDesignScreen(
     // belongs to. Slider style stands alone at the end because it styles both
     // players and neither of them alone.
     Column(Modifier.fillMaxWidth()) {
+        // No top padding of its own: `SettingsSubScreen` already puts the page's
+        // 16 dp under the Back row, and the preview's heading stands there. The
+        // first card then stands the page's own 16 dp under the heading, which
+        // is `.md-group`'s margin-top.
         Text(
             Localization.get(language, "player_and_mini_player_design"),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(top = 16.dp),
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(16.dp))
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -4307,10 +4310,11 @@ fun PlayerDesignScreen(
                         onSelect = { key -> onBackgroundChange(PlayerBackgroundStyle.from(key)) },
                     ),
                 ),
+                // The page's mark for the turning artwork is `rotate_right`, and
+                // it carries no sentence under the title.
                 M3SettingsItem(
-                    icon = Icons.Filled.Album,
+                    icon = Icons.Filled.RotateRight,
                     title = { Text(Localization.get(language, "rotating_thumbnail")) },
-                    description = { Text(Localization.get(language, "rotating_thumbnail_desc")) },
                     trailing = { Switch(checked = rotatingThumbnail, onCheckedChange = onRotatingThumbnailChange) },
                     onClick = { onRotatingThumbnailChange(!rotatingThumbnail) },
                 ),
@@ -4320,7 +4324,9 @@ fun PlayerDesignScreen(
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.Devices,
+                    // `view_agenda` on the page: the shape of the bar, which is
+                    // what this choice picks.
+                    icon = Icons.Filled.ViewAgenda,
                     title = { Text(Localization.get(language, "mini_player_design")) },
                     dropdown = M3Dropdown(
                         value = Localization.get(language, miniPlayerDesignLabelKey(miniPlayerDesign)),
@@ -4344,9 +4350,9 @@ fun PlayerDesignScreen(
                     ),
                 ),
                 M3SettingsItem(
-                    icon = Icons.Filled.Brightness1,
+                    // `dark_mode` on the page, and no sentence under it either.
+                    icon = Icons.Filled.DarkMode,
                     title = { Text(Localization.get(language, "pure_black_mini")) },
-                    description = { Text(Localization.get(language, "pure_black_mini_desc")) },
                     trailing = { Switch(checked = pureBlackMiniPlayer, onCheckedChange = onPureBlackMiniPlayerChange) },
                     onClick = { onPureBlackMiniPlayerChange(!pureBlackMiniPlayer) },
                 ),
@@ -4370,19 +4376,31 @@ fun PlayerDesignScreen(
                 listOf(
                     M3SettingsItem(
                         icon = Icons.Filled.Swipe,
-                        title = {
+                        // The page keeps the title plain and prints the value in
+                        // the row's trailing slot (`.md-slider__value`: 56 dp at
+                        // least, right-aligned, `onSurfaceVariant`), so the row
+                        // reads "Swipe sensitivity" with the number beside it.
+                        title = { Text(Localization.get(language, "swipe_sensitivity")) },
+                        description = { Text(Localization.get(language, "swipe_sensitivity_desc")) },
+                        trailing = {
                             Text(
-                                "${Localization.get(language, "swipe_sensitivity")}: " +
-                                    "${(swipeSensitivity * 100).roundToInt()}%",
+                                "${(swipeSensitivity * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.End,
+                                modifier = Modifier.widthIn(min = 56.dp),
                             )
                         },
-                        description = { Text(Localization.get(language, "swipe_sensitivity_desc")) },
                         slider = {
                             M3SettingsSlider(
                                 value = swipeSensitivity,
                                 onValueChange = onSwipeSensitivityChange,
                                 valueRange = 0f..1f,
-                                steps = 9,
+                                // The page's own granularity: `min: 0, max: 100,
+                                // step: 1`, i.e. one step per percent (99 marks
+                                // between the ends), not the ten 10 % stops this
+                                // row used to snap to.
+                                steps = 99,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         },
@@ -4396,7 +4414,8 @@ fun PlayerDesignScreen(
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.SwapHoriz,
+                    // `linear_scale` on the page: the seek bar this choice styles.
+                    icon = Icons.Filled.LinearScale,
                     title = { Text(Localization.get(language, "slider_style")) },
                     dropdown = M3Dropdown(
                         value = sliderStyleLabel(language, sliderStyle),
