@@ -1443,25 +1443,23 @@ tasks.register<JavaExec>("dropdownPositionCheck") {
 }
 
 /**
- * Real-window check of where every settings dropdown opens:
+ * Window-sized check of where every settings dropdown opens:
  *
  *     ./gradlew :desktop:settingsDropdownWindowCheck
  *
  * See `desktop/src/test/kotlin/com/music/vivi/desktop/SettingsDropdownWindowCheck.kt`.
- * `dropdownPositionCheck` reads the menu on the ui-test harness, whose scene is
- * off-screen. This one opens a real OS window on the machine's display (a
- * `ComposePanel` in a `JFrame`), presses each settings dropdown with the real
- * pointer, captures the screen and reads the menu back from the pixels: under
- * the row that was pressed, right-aligned to the value that opened it, and above
- * it when
- * the row sits at the floor of the window. Every dropdown the settings screens
- * draw is a case, in the shape its own screen gives it. Needs a display: with
- * none it prints `NOT RUN` and verifies nothing. A manual check, not part of
- * `check`.
+ * `dropdownPositionCheck` measures one row shape. This one composes every
+ * settings dropdown the screens draw (twenty-eight cases, each in the shape its
+ * own screen gives it) on Compose's desktop harness at the size of a real window,
+ * presses the row and reads the menu back from the composition: under the row
+ * that was pressed, right-aligned to the value that opened it, at least 200 dp
+ * wide, above it when the row sits at the floor of the window, and pressing an
+ * entry applies that entry to the row. Needs a display: with none it prints
+ * `NOT RUN` and verifies nothing. A manual check, not part of `check`.
  */
 tasks.register<JavaExec>("settingsDropdownWindowCheck") {
     group = "verification"
-    description = "Presses every settings dropdown in a real window and reads where its menu opens"
+    description = "Presses every settings dropdown in a window-sized composition and reads where its menu opens"
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.SettingsDropdownWindowCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath

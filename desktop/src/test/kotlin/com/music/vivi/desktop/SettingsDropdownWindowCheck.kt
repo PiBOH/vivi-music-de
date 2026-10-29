@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
+@file:OptIn(ExperimentalTestApi::class)
 
 package com.music.vivi.desktop
 
@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,73 +18,76 @@ import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.ModelTraining
-import androidx.compose.material.icons.filled.SmartToy
-import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.awt.ComposePanel
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.test.DesktopComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
-import java.awt.BorderLayout
-import java.awt.GraphicsEnvironment
-import java.awt.Rectangle
-import java.awt.Robot
-import java.awt.event.InputEvent
-import java.awt.image.BufferedImage
-import javax.swing.JFrame
-import javax.swing.SwingUtilities
 import kotlin.math.abs
 
 /**
- * Real-window check of where every settings dropdown opens, run with
+ * Window-sized check of where every settings dropdown opens, run with
  *
  *     ./gradlew :desktop:settingsDropdownWindowCheck
  *
- * `:desktop:dropdownPositionCheck` measures the same behaviour on the ui-test
- * harness, whose scene is off-screen. This one opens an actual OS window - a
- * `ComposePanel` in a `JFrame`, on the machine's own display - presses the row
- * with the real pointer (`java.awt.Robot`), captures the screen and reads the
- * menu back from the pixels, so what is verified is what a user sees.
+ * `:desktop:dropdownPositionCheck` measures one row shape. This one composes
+ * **every** settings dropdown the DE draws - all twenty-eight, each in the shape
+ * its own screen gives it - on Compose's desktop test harness at the size of a
+ * real window (900x1000 px), presses the row and reads the menu back from the
+ * composition.
  *
- * Every settings dropdown drawn as a row is a case: one per configuration, in
- * the shape its screen gives it - `M3SettingsDropdownItem` and
- * `M3SettingsDropdownCard` (a loose row and a card), and `M3SettingsItem` with a
+ * What it asserts, per case:
+ *
+ *  * the row opens a menu at all, with an entry per option;
+ *  * the menu opens **under the row that was pressed** - its first entry a menu
+ *    margin under the row's bottom edge, never at the window corner or halfway
+ *    down the page - and is **right-aligned to the value** that was pressed
+ *    (the row is the width of the page, so a menu hung off its left edge opened
+ *    at the window's margin, nowhere near the value);
+ *  * the menu is the row's width of menu (**at least 200 dp wide**), so a menu
+ *    collapsed into a stripe fails;
+ *  * near the floor of the window the same menu opens **above** the row;
+ *  * pressing an entry **applies the choice**: the row then shows the pressed
+ *    entry and the menu is gone.
+ *
+ * The rows themselves are the product's: `M3SettingsDropdownItem` and
+ * `M3SettingsDropdownCard` (a loose row and a card) and `M3SettingsItem` with a
  * `M3Dropdown`, which is how the Player & mini-player design screen carries its
  * five choices in one card. (The two menus outside that row - the AI screen's
  * trailing choice and Device sync's connection method - are not rows of a
- * settings card and are not cases.) A case renders that row on its own, presses the
- * control at the row's right end (the value and its chevron), and asserts:
+ * settings card and are not cases.)
  *
- *  * the menu opens **under the row that was pressed**, its top 0..24 px below
- *    the row's bottom edge, right-aligned to the value that was pressed (a row
- *    is the width of the page, so a menu hung off its left edge opened at the
- *    window's margin, nowhere near the value);
- *  * the menu is the row's own width of menu (at least 200 px wide), so a menu
- *    collapsed into a stripe fails;
- *  * near the floor of the window the same menu opens **above** the row.
+ * Earlier this check pressed the row with the system pointer in a `JFrame` and
+ * read the menu out of a screen capture. It measured the machine instead of the
+ * menu: on a renderer that falls back from DirectX (`Failed to create DirectX12
+ * device`) the same row opened its menu on one press and not on the next, while
+ * the row's hover state showed the pointer had arrived; the window also left
+ * bands of the page unpainted (pure black), and the capture of a window with
+ * rounded corners pulled in the desktop along its bottom edge. Reading the
+ * composition instead is exact - the menu's real bounds, its real entries, the
+ * real response to pressing one - and the popup that is measured is the same
+ * popup the screens draw.
  *
- * The row's bottom edge is marked by the harness with a 2 px magenta rule drawn
- * under it (`drawWithContent`, no layout change), because that is the one
- * measurement the pixels cannot otherwise name. The menu is then the region
- * that changed below that rule between the frame before the press and the frame
- * after it.
- *
- * A check that needs a display prints `NOT RUN` and returns without claiming
- * anything: it has not seen a window, so it has verified nothing.
+ * What this cannot see is that the popup is *painted* on a physical screen; that
+ * part of the old check was its own, and it is the part the renderer above
+ * defeated. It is listed as open in `TODO.md`.
  */
 object SettingsDropdownWindowCheck {
 
@@ -91,26 +95,25 @@ object SettingsDropdownWindowCheck {
     private const val HEIGHT = 1000
 
     /** A menu margin of 8 dp plus its own 4 dp top padding. */
-    private const val MENU_GAP_MAX = 24
+    private const val MENU_GAP_MAX = 24f
 
     /**
      * How far the menu's right edge may sit from the row's own right edge: the
      * row keeps 17 dp of trailing padding after the value, so the menu ends
      * there, and a shadow can pull the read edge a little further.
      */
-    private const val MENU_RIGHT_SLACK = 44
+    private const val MENU_RIGHT_SLACK = 44f
 
-    private const val MENU_MIN_WIDTH = 200
+    private const val MENU_MIN_WIDTH = 200f
 
     private enum class Kind { ITEM, CARD, INLINE }
 
     /**
      * One dropdown as its screen draws it. [title] is the row's label and
-     * [value] the choice it shows; neither is measured, they are what makes the
-     * case readable in the output and in the window. [options] is the real list
-     * where it is public (`LanguageCodeToName`, `CountryCodeToName`), and
-     * otherwise its length is what the screen offers, which is what decides how
-     * tall the menu is.
+     * [value] the choice it shows; neither is asserted, they are what makes the
+     * case readable. [options] is the real list where it is public
+     * (`LanguageCodeToName`, `CountryCodeToName`), and otherwise its length is
+     * what the screen offers, which is what decides how tall the menu is.
      */
     private data class Case(
         val name: String,
@@ -168,37 +171,31 @@ object SettingsDropdownWindowCheck {
         Case("flip: at the floor", Kind.ITEM, "Transition style", "Fade", listOf("Fade", "Slide"), Icons.Filled.AutoAwesome, nearFloor = true),
     )
 
-    /** The row every case renders, with a magenta rule under its bottom edge. */
+    /**
+     * The choice the harness's row shows: `null` until an entry is pressed, so a
+     * case starts on the value its own screen shows and the row, after the press,
+     * is the row saying what was chosen.
+     */
+    private val chosen = mutableStateOf<String?>(null)
+
+    /** The row every case renders, at the top of the page or at its floor. */
     @Composable
     private fun page(case: Case) {
+        // One instance for the whole run: `M3Dropdown` is a data class, and the
+        // row's `remember(dropdown)` keeps the menu open only while the choice it
+        // carries compares equal - a lambda built at each composition would make
+        // every recomposition a different choice and close the menu as it opened.
+        val onSelect = remember { { key: String -> chosen.value = key } }
         AppTheme(mode = ThemeMode.LIGHT, accent = Color(0xFFED5564), language = "en") {
-            // 1 dp = 1 px, so the pixels the window is captured in and the
-            // layout of the row are the same numbers whatever the display's
-            // scaling is.
-            CompositionLocalProvider(LocalDensity provides Density(1f, 1f)) {
-                Box(Modifier.fillMaxWidth().fillMaxHeight().background(MaterialTheme.colorScheme.surface)) {
-                    Column(Modifier.fillMaxHeight()) {
-                        if (case.nearFloor) {
-                            Spacer(Modifier.weight(1f))
-                            // The rule has to be on screen: the page keeps its
-                            // last 10 px below the row.
-                            Spacer(Modifier.height(10.dp))
-                        }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(start = 20.dp, end = 20.dp)
-                                .drawWithContent {
-                                    drawContent()
-                                    drawRect(
-                                        color = Color(0xFFFF00FF),
-                                        topLeft = Offset(0f, size.height - 2f),
-                                        size = Size(size.width, 2f),
-                                    )
-                                },
-                        ) {
-                            DropdownRow(case)
-                        }
+            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+                Column(Modifier.fillMaxHeight()) {
+                    if (case.nearFloor) {
+                        Spacer(Modifier.weight(1f))
+                        // The row keeps 10 dp of page under it at the floor.
+                        Spacer(Modifier.height(10.dp))
+                    }
+                    Box(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp)) {
+                        DropdownRow(case, chosen.value ?: case.value, onSelect)
                     }
                 }
             }
@@ -207,25 +204,25 @@ object SettingsDropdownWindowCheck {
 
     /** The row in the shape its own screen draws it. */
     @Composable
-    private fun DropdownRow(case: Case) {
+    private fun DropdownRow(case: Case, value: String, onSelect: (String) -> Unit) {
         val options = case.options.map { it to it }
         when (case.kind) {
             Kind.ITEM -> Box(Modifier.fillMaxWidth().padding(top = 40.dp)) {
                 M3SettingsDropdownItem(
                     icon = case.icon,
                     title = case.title,
-                    value = case.value,
+                    value = value,
                     options = options,
-                    onSelect = {},
+                    onSelect = onSelect,
                 )
             }
             Kind.CARD -> Box(Modifier.fillMaxWidth().padding(top = 40.dp)) {
                 M3SettingsDropdownCard(
                     icon = case.icon,
                     title = case.title,
-                    value = case.value,
+                    value = value,
                     options = options,
-                    onSelect = {},
+                    onSelect = onSelect,
                 )
             }
             Kind.INLINE -> Box(Modifier.fillMaxWidth().padding(top = 40.dp)) {
@@ -234,7 +231,7 @@ object SettingsDropdownWindowCheck {
                         M3SettingsItem(
                             icon = case.icon,
                             title = { Text(case.title) },
-                            dropdown = M3Dropdown(value = case.value, options = options, onSelect = {}),
+                            dropdown = M3Dropdown(value = value, options = options, onSelect = onSelect),
                         ),
                     ),
                 )
@@ -242,181 +239,124 @@ object SettingsDropdownWindowCheck {
         }
     }
 
+    /** A rectangle read off a semantics node, in root px. */
+    private data class Rect(val left: Float, val top: Float, val right: Float, val bottom: Float) {
+        val width get() = right - left
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
-        if (GraphicsEnvironment.isHeadless()) {
-            println("NOT RUN: no display in this environment, so no window was opened and nothing was verified")
+        // The desktop harness builds a real Skia surface: with no display it
+        // verifies nothing, and says so instead of claiming a pass.
+        if (java.awt.GraphicsEnvironment.isHeadless()) {
+            println("NOT RUN: no display in this environment, so nothing was measured")
             return
         }
         // An argument narrows the run to the cases whose name contains it, for
-        // chasing one row without re-measuring the other twenty.
+        // chasing one row without measuring the other twenty-seven.
         val only = args.firstOrNull()
         val selected = if (only == null) cases else cases.filter { it.name.contains(only, ignoreCase = true) }
         if (selected.isEmpty()) error("no case matches '$only'")
         val failures = mutableListOf<String>()
         val active = mutableStateOf(selected.first())
 
-        // The window is never taller than the display it opens on: the floor case
-        // puts its row on the window's own bottom edge, so a window that hangs
-        // under the screen hides exactly the row that case measures (read as
-        // "the row's bottom edge is not on screen" on a 1280x800 panel, where a
-        // 1000 px window ends below the framebuffer). The clamp keeps the 40 dp
-        // of page above it and the row's own height.
-        val display = GraphicsEnvironment.getLocalGraphicsEnvironment()
-            .defaultScreenDevice.defaultConfiguration.bounds
-        val windowWidth = minOf(WIDTH, display.width - 40)
-        val windowHeight = minOf(HEIGHT, display.height - 80)
+        runDesktopComposeUiTest(WIDTH, HEIGHT) {
+            setContent { page(active.value) }
+            waitForIdle()
+            println("window: ${WIDTH}x$HEIGHT, ${selected.size} row(s)")
 
-        // A `ComposePanel` may only be built on the AWT event dispatch thread.
-        var panelHolder: ComposePanel? = null
-        var windowHolder: JFrame? = null
-        SwingUtilities.invokeAndWait {
-            val composePanel = ComposePanel()
-            composePanel.setContent { page(active.value) }
-            val composeWindow = JFrame("VIVI Music - settings dropdown check")
-            composeWindow.contentPane.layout = BorderLayout()
-            composeWindow.contentPane.add(composePanel, BorderLayout.CENTER)
-            composeWindow.defaultCloseOperation = JFrame.DISPOSE_ON_CLOSE
-            composeWindow.setSize(windowWidth, windowHeight)
-            // Centred on the display the machine boots on (the laptop panel), never
-            // at a fixed offset: `setLocation(120, 20)` is a point in the whole
-            // virtual desktop, so on a desk with a second monitor to the left of
-            // the laptop it opened this window on that monitor instead. The
-            // centring is clamped to that display's own corner, because the window
-            // is 1000 px tall and a laptop panel is often shorter: without the
-            // clamp its title bar landed above the screen (measured `at 241,-85`
-            // here), and a check whose window is half off screen measures nothing.
-            composeWindow.setLocation(
-                (display.x + (display.width - windowWidth) / 2).coerceAtLeast(display.x),
-                (display.y + (display.height - windowHeight) / 2).coerceAtLeast(display.y),
-            )
-            // Nothing may cover the window: the frame is read from the screen.
-            composeWindow.isAlwaysOnTop = true
-            composeWindow.isVisible = true
-            composeWindow.toFront()
-            composeWindow.requestFocus()
-            panelHolder = composePanel
-            windowHolder = composeWindow
-        }
-        val panel = panelHolder ?: error("the window was not created")
-        val window = windowHolder ?: error("the window was not created")
-        Thread.sleep(1500)
 
-        val robot = Robot()
-        val pointer = java.awt.MouseInfo.getPointerInfo().location
-        try {
-            val origin = panel.locationOnScreen
-            val scale = screenScale(robot, panel)
-            println("window: panel ${panel.width}x${panel.height} at ${origin.x},${origin.y}, screen scale ${"%.2f".format(scale)}")
-            println()
-            // The first press on a window that was just opened activates it
-            // instead of reaching the page, so the first case's row is pressed
-            // once and thrown away before anything is measured.
-            active.value = selected.first()
-            settled(robot, panel)
-            press(robot, panel, origin, scale, pointer)
-            dismiss(robot, panel, origin, scale, pointer)
-
-            selected.forEach { case ->
+            selected.forEachIndexed { index, case ->
                 active.value = case
-                // The page is read only once two frames in a row are the same,
-                // so a capture never holds the previous case, or a frame of the
-                // composition still moving.
-                var before = settled(robot, panel)
-                var marker = marker(before)
-                // A capture that lands while the window is still settling (or
-                // while the display comes back from idle) has no rule in it yet:
-                // the page is read again before the case is called a failure.
-                var reads = 0
-                while (marker == null && reads++ < 3) {
-                    focus(window, panel)
-                    Thread.sleep(500)
-                    before = settled(robot, panel)
-                    marker = marker(before)
+                chosen.value = null
+                waitForIdle()
+                val row = rowOf(case)
+                if (row == null) {
+                    failures += "${case.name}: the row is not in the window"
+                    return@forEachIndexed
                 }
-                if (marker == null) {
-                    save(before, "${case.name}-no-marker")
-                    failures += "${case.name}: the row's bottom edge is not on screen"
-                    return@forEach
-                }
-                val clickX = origin.x + ((marker.left + marker.right) / 2 + (marker.right - marker.left) / 4) / scale
-                val clickY = origin.y + (marker.y - 14) / scale
-                // The window has to own the pointer for the menu to stay open,
-                // and a menu that is still closing can swallow a press: two
-                // presses at most, the second one after the page is still.
-                var menu: Region? = null
-                var after: BufferedImage = before
-                for (attempt in 0..1) {
-                    focus(window, panel)
-                    robot.mouseMove(clickX.toInt(), clickY.toInt())
-                    robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
-                    robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
-                    // The pointer itself is drawn in a screen capture, so it is
-                    // parked outside the window before the frame is read.
-                    robot.mouseMove(pointer.x, pointer.y)
-                    after = settled(robot, panel)
-                    // A menu that fits is read under the row; one that has no
-                    // room below is read above it, where it has to be.
-                    menu = if (case.nearFloor) {
-                        changedBetween(before, after, 0, marker.y - 3)
-                    } else {
-                        changedBetween(before, after, marker.y + 3, after.height)
-                    }
-                    if (menu != null) break
-                    if (attempt == 0) {
-                        dismiss(robot, panel, origin, scale, pointer)
-                        before = settled(robot, panel)
-                    }
-                }
-                val opened = menu
-                if (opened == null) {
-                    val anywhere = changedBetween(before, after, 0, after.height)
-                    save(before, "${case.name}-before")
-                    save(after, "${case.name}-after")
+                val rowRect = row.rect()
+
+                // The press. A row that does not open a menu fails here.
+                onNodeWithText(case.title).performClick()
+                waitForIdle()
+                val menu = menuOf(case, rowRect)
+                if (menu == null) {
                     failures += "${case.name}: pressing the row opened no menu " +
-                        (if (case.nearFloor) "above it" else "under it") +
-                        " (press at ${clickX.toInt()},${clickY.toInt()}, marker ${marker.left}..${marker.right} bottom ${marker.y}; " +
-                        (anywhere?.let { "the frame changed at ${it.left}..${it.right} ${it.top}..${it.bottom})" } ?: "the frame did not change at all)")
-                    dismiss(robot, panel, origin, scale, pointer)
-                    return@forEach
+                        if (case.nearFloor) "above it" else "under it"
+                    return@forEachIndexed
                 }
-                val gap = opened.top - marker.y
+
+                val gap = with(density) { (menu.first.top - rowRect.bottom).toDp().value }
+                val rightGap = with(density) { (rowRect.right - menu.first.right).toDp().value }
+                val width = with(density) { menu.first.width.toDp().value }
                 println(
                     "${case.name}\n" +
-                        "    row ${marker.left}..${marker.right} bottom ${marker.y}, " +
-                        "menu ${opened.left}..${opened.right} ${opened.top}..${opened.bottom}, gap $gap",
+                        "    row ${rowRect.left.enDesc()}..${rowRect.right.enDesc()} bottom ${rowRect.bottom.enDesc()}, " +
+                        "menu ${menu.first.left.enDesc()}..${menu.first.right.enDesc()} " +
+                        "${menu.first.top.enDesc()}..${menu.first.bottom.enDesc()} (${menu.second.size} entries), " +
+                        "gap ${"%.1f".format(gap)} dp, right ${"%.1f".format(rightGap)} dp, " +
+                        "width ${"%.1f".format(width)} dp",
                 )
+
                 if (case.nearFloor) {
-                    if (opened.bottom > marker.y - 4) {
+                    val belowRow = with(density) { (menu.first.bottom - rowRect.top).toDp().value }
+                    if (belowRow > 4f) {
                         failures += "${case.name}: with no room below, the menu must open above the row " +
-                            "(row bottom ${marker.y}, menu ends ${opened.bottom})"
+                            "(the row starts at ${rowRect.top.enDesc()}, the menu ends ${menu.first.bottom.enDesc()})"
                     }
                 } else {
-                    if (gap < 0) failures += "${case.name}: the menu starts ${-gap} px above the row's bottom"
+                    if (gap < 0f) failures += "${case.name}: the menu starts ${-gap} dp above the row's bottom"
                     if (gap > MENU_GAP_MAX) {
-                        failures += "${case.name}: the menu is not attached to the row, its first pixel is $gap px below it"
+                        failures += "${case.name}: the menu is not attached to the row, its first entry is " +
+                            "${"%.1f".format(gap)} dp below it"
                     }
-                    if (abs(opened.right - marker.right) > MENU_RIGHT_SLACK) {
+                    if (abs(rightGap) > MENU_RIGHT_SLACK) {
                         failures += "${case.name}: the menu must be right-aligned to the row's value " +
-                            "(the row ends at ${marker.right}), read ${opened.right}"
+                            "(the row ends at ${rowRect.right.enDesc()}), read ${menu.first.right.enDesc()}"
                     }
-                    if (opened.right - opened.left < MENU_MIN_WIDTH) {
-                        failures += "${case.name}: the menu must be at least $MENU_MIN_WIDTH px wide, read ${opened.right - opened.left}"
+                    if (width < MENU_MIN_WIDTH) {
+                        failures += "${case.name}: the menu must be at least $MENU_MIN_WIDTH dp wide, " +
+                            "read ${"%.1f".format(width)} dp"
                     }
                 }
-                dismiss(robot, panel, origin, scale, pointer)
+
+                // The entry press: the entry picked is not the one the row already
+                // shows, so a value that follows can only come from that press. A
+                // list longer than the window (the 48 languages, the countries)
+                // draws only the entries that fit, so the pick is made from those.
+                val current = chosen.value ?: case.value
+                val pick = menu.second.firstOrNull { it.first != current }
+                if (pick == null) {
+                    failures += "${case.name}: the menu offers no entry other than '$current'"
+                    return@forEachIndexed
+                }
+                pick.second.performClick()
+                waitForIdle()
+                if (chosen.value != pick.first) {
+                    failures += "${case.name}: pressing the entry '${pick.first}' applied " +
+                        "'${chosen.value}' instead"
+                }
+                if (menuOf(case, rowRect) != null) {
+                    failures += "${case.name}: pressing an entry of the menu left it open"
+                }
+                val shows = rowOf(case)?.rect()?.let { row ->
+                    nodesWithText(pick.first).any { node -> row.contains(node.boundsInRoot) }
+                }
+                if (shows != true) {
+                    failures += "${case.name}: after pressing the entry '${pick.first}' the row " +
+                        "does not show it"
+                }
             }
-        } finally {
-            robot.mouseMove(pointer.x, pointer.y)
-            SwingUtilities.invokeAndWait { window.dispose() }
         }
 
         println()
         if (failures.isEmpty()) {
             println(
                 "OK: ${selected.count { !it.nearFloor }} settings dropdown(s) open their menu under the row " +
-                    "that was pressed, right-aligned to its value, ${selected.count { it.nearFloor }} at the floor " +
-                    "of a real window opens above it",
+                    "that was pressed, right-aligned to its value and at least $MENU_MIN_WIDTH dp wide, " +
+                    "${selected.count { it.nearFloor }} at the floor of a window opens above it, and pressing an " +
+                    "entry applies that entry to the row",
             )
             return
         }
@@ -427,146 +367,72 @@ object SettingsDropdownWindowCheck {
 
     // ------------------------------------------------------------------ window
 
-    /** Device pixels per AWT unit, read off the panel's own capture. */
-    private fun screenScale(robot: Robot, panel: ComposePanel): Double {
-        val shot = capture(robot, panel)
-        return shot.width.toDouble() / panel.width
-    }
-
-    private fun capture(robot: Robot, panel: ComposePanel): BufferedImage {
-        val origin = panel.locationOnScreen
-        return robot.createScreenCapture(Rectangle(origin.x, origin.y, panel.width, panel.height))
-    }
-
-    /** Gives the window the pointer back: a menu that loses it does not stay. */
-    private fun focus(window: JFrame, panel: ComposePanel) {
-        SwingUtilities.invokeAndWait {
-            window.toFront()
-            window.requestFocus()
-            panel.requestFocusInWindow()
+    /** The node of the row the case draws: the clickable that holds its label. */
+    private fun DesktopComposeUiTest.rowOf(case: Case): SemanticsNode? {
+        val labels = onAllNodesWithText(case.title).fetchSemanticsNodes()
+        if (labels.isEmpty()) return null
+        val label = labels.first().boundsInRoot
+        val clickables = onAllNodes(hasClickAction()).fetchSemanticsNodes()
+        return clickables.firstOrNull { node ->
+            val b = node.boundsInRoot
+            label.left >= b.left - 1f && label.right <= b.right + 1f &&
+                label.top >= b.top - 1f && label.bottom <= b.bottom + 1f
         }
-        Thread.sleep(200)
-    }
-
-    /** Presses the row of the case on screen, for the warm-up. */
-    private fun press(robot: Robot, panel: ComposePanel, origin: java.awt.Point, scale: Double, pointer: java.awt.Point) {
-        val frame = settled(robot, panel)
-        val marker = marker(frame) ?: return
-        val clickX = origin.x + ((marker.left + marker.right) / 2 + (marker.right - marker.left) / 4) / scale
-        val clickY = origin.y + (marker.y - 14) / scale
-        robot.mouseMove(clickX.toInt(), clickY.toInt())
-        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
-        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
-        robot.mouseMove(pointer.x, pointer.y)
-        Thread.sleep(400)
     }
 
     /**
-     * The frame the page has come to rest on: two captures in a row that are
-     * the same, 150 ms apart, so a composition, the menu's fade or a ripple is
-     * never read halfway through.
+     * The menu of [case] on screen: the box around it, and its entries.
+     *
+     * The entries are the option labels drawn outside the row - the row itself
+     * shows one of them as its value, and that one is not the menu. A menu taller
+     * than the window draws only the entries that fit, so the list is what is on
+     * screen, not the whole list the row offers.
      */
-    private fun settled(robot: Robot, panel: ComposePanel): BufferedImage {
-        var previous = capture(robot, panel)
-        repeat(20) {
-            Thread.sleep(150)
-            val next = capture(robot, panel)
-            if (!anyDiff(previous, next)) return next
-            previous = next
+    private fun DesktopComposeUiTest.menuOf(
+        case: Case,
+        row: Rect,
+    ): Pair<Rect, List<Pair<String, androidx.compose.ui.test.SemanticsNodeInteraction>>>? {
+        val entries = case.options.mapNotNull { label ->
+            onFirstOutside(label, row, case.nearFloor)?.let { label to it }
         }
-        return previous
+        if (entries.isEmpty()) return null
+        val rects = entries.map { it.second.fetchSemanticsNode().boundsInRoot }
+        val box = Rect(
+            rects.minOf { it.left },
+            rects.minOf { it.top },
+            rects.maxOf { it.right },
+            rects.maxOf { it.bottom },
+        )
+        return box to entries
     }
 
-    /** Whether two frames differ anywhere, sampled so a frame check is cheap. */
-    private fun anyDiff(a: BufferedImage, b: BufferedImage): Boolean {
-        for (y in 0 until minOf(a.height, b.height) step 2) {
-            for (x in 0 until minOf(a.width, b.width) step 2) {
-                if (differs(a.getRGB(x, y), b.getRGB(x, y))) return true
-            }
+    private fun DesktopComposeUiTest.nodesWithText(text: String): List<SemanticsNode> =
+        onAllNodesWithText(text).fetchSemanticsNodes()
+
+    /** The first node carrying [text] that is on the menu's side of [row]. */
+    private fun DesktopComposeUiTest.onFirstOutside(
+        text: String,
+        row: Rect,
+        above: Boolean,
+    ): androidx.compose.ui.test.SemanticsNodeInteraction? {
+        val copies = onAllNodesWithText(text)
+        val index = copies.fetchSemanticsNodes().indexOfFirst { node ->
+            val b = node.boundsInRoot
+            if (above) b.bottom <= row.top + 1f else b.top >= row.bottom - 1f
         }
-        return false
+        return if (index < 0) null else copies[index]
     }
 
-    /**
-     * Closes an open menu by pressing empty page under the row, so the window
-     * keeps the focus a menu needs: an Escape key leaves the popup owner in a
-     * state where the next menu does not open at all.
-     */
-    private fun dismiss(robot: Robot, panel: ComposePanel, origin: java.awt.Point, scale: Double, pointer: java.awt.Point) {
-        robot.mouseMove((origin.x + 40 * scale).toInt(), (origin.y + panel.height - 30).toInt())
-        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK)
-        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK)
-        robot.mouseMove(pointer.x, pointer.y)
-        // The menu is a popup of its own while it fades out, and a press under
-        // it is swallowed: the next case waits for the page to be still.
-        Thread.sleep(700)
-        settled(robot, panel)
+    private fun SemanticsNode.rect(): Rect {
+        val b = boundsInRoot
+        return Rect(b.left, b.top, b.right, b.bottom)
     }
 
-    // ------------------------------------------------------------------ pixels
+    private fun Rect.contains(other: androidx.compose.ui.geometry.Rect): Boolean =
+        other.left >= left - 1f && other.right <= right + 1f && other.top >= top - 1f && other.bottom <= bottom + 1f
 
-    private data class Marker(val left: Int, val right: Int, val y: Int)
-    private data class Region(val left: Int, val right: Int, val top: Int, val bottom: Int)
-
-    /** The magenta rule under the row, read from its middle column. */
-    private fun marker(image: BufferedImage): Marker? {
-        for (y in 0 until image.height) {
-            if (!magenta(image.getRGB(image.width / 2, y))) continue
-            var left = image.width / 2
-            while (left > 0 && magenta(image.getRGB(left - 1, y))) left--
-            var right = image.width / 2
-            while (right < image.width - 1 && magenta(image.getRGB(right + 1, y))) right++
-            // Keep the lowest of the two rule rows, so the row's bottom is the
-            // edge the menu has to clear.
-            var bottom = y
-            while (bottom + 1 < image.height && magenta(image.getRGB(image.width / 2, bottom + 1))) bottom++
-            return Marker(left, right, bottom)
-        }
-        return null
-    }
-
-    private fun magenta(rgb: Int): Boolean {
-        val r = (rgb shr 16) and 255
-        val g = (rgb shr 8) and 255
-        val b = rgb and 255
-        return r > 200 && g < 90 && b > 200
-    }
-
-    /** The bounding box of what changed between [fromY] and [toY] in two frames. */
-    private fun changedBetween(before: BufferedImage, after: BufferedImage, fromY: Int, toY: Int): Region? {
-        var left = Int.MAX_VALUE
-        var right = -1
-        var top = Int.MAX_VALUE
-        var bottom = -1
-        val yStart = fromY.coerceAtLeast(0)
-        val yEnd = toY.coerceAtMost(minOf(before.height, after.height))
-        for (y in yStart until yEnd) {
-            for (x in 0 until minOf(before.width, after.width)) {
-                if (!differs(before.getRGB(x, y), after.getRGB(x, y))) continue
-                if (x < left) left = x
-                if (x > right) right = x
-                if (y < top) top = y
-                if (y > bottom) bottom = y
-            }
-        }
-        return if (right < 0) null else Region(left, right, top, bottom)
-    }
-
-    private fun differs(a: Int, b: Int): Boolean {
-        val dr = abs(((a shr 16) and 255) - ((b shr 16) and 255))
-        val dg = abs(((a shr 8) and 255) - ((b shr 8) and 255))
-        val db = abs((a and 255) - (b and 255))
-        return dr + dg + db > 24
-    }
+    private fun Float.enDesc(): String = toInt().toString()
 
     /** The labels the lyrics position row offers, from the app's own enum. */
     private fun lyricsLabels(): List<String> = LyricsPosition.entries.map { it.name }
-
-    /** Writes a frame under `.ignore/windowcheck/` for a case that failed. */
-    private fun save(image: BufferedImage, name: String) {
-        val dir = java.io.File(".ignore/windowcheck").apply { mkdirs() }
-        val file = java.io.File(dir, name.replace(Regex("[^A-Za-z0-9]+"), "_") + ".png")
-        javax.imageio.ImageIO.write(image, "png", file)
-        println("    frame: ${file.path}")
-    }
 }
