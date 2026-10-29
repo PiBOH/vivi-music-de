@@ -102,6 +102,7 @@ internal fun strings_ru(): Map<String, String> =
         "animation_speed_slow" to "Медленно",
         "animations" to "Анимации",
         "animations_desc" to "Включите анимации интерфейса (переходы между экранами и т.д.). Выключите для мгновенного переключения.",
+        "animations_hub_desc" to "Главный переключатель, переходы между экранами, стиль перехода и скорость.",
         "app_developer" to "Ведущий разработчик",
         "app_font" to "Шрифт приложения",
         "app_info_section" to "Информация о приложении",

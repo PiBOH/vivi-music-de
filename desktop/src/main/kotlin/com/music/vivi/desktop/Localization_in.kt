@@ -102,6 +102,7 @@ internal fun strings_in(): Map<String, String> =
         "animation_speed_slow" to "Lambat",
         "animations" to "Animasi",
         "animations_desc" to "Aktifkan animasi UI (transisi layar, dll.). Matikan untuk perpindahan instan.",
+        "animations_hub_desc" to "Sakelar utama, transisi layar, gaya transisi, dan kecepatan.",
         "app_developer" to "Pengembang utama",
         "app_font" to "Font aplikasi",
         "app_info_section" to "Info aplikasi",

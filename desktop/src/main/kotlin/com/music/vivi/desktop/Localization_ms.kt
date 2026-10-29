@@ -102,6 +102,7 @@ internal fun strings_ms(): Map<String, String> =
         "animation_speed_slow" to "Perlahan",
         "animations" to "Animasi",
         "animations_desc" to "Dayakan animasi UI (peralihan skrin, dsb.). Matikan untuk pertukaran serta-merta.",
+        "animations_hub_desc" to "Suis utama, peralihan skrin, gaya peralihan dan kelajuan.",
         "app_developer" to "Pembangun utama",
         "app_font" to "Fon aplikasi",
         "app_info_section" to "Maklumat aplikasi",

@@ -111,7 +111,11 @@ fun AppearanceSection(
 ) {
     var showRestartDialog by remember { mutableStateOf(false) }
 
-    Text(Localization.get(language, "appearance"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+    // The heading carries no top padding of its own: `SettingsSubScreen` already
+    // puts the preview's 16 dp between the Back row and the screen's first block,
+    // and the card under it stands 16 dp below (`.md-group`), not against it.
+    Text(Localization.get(language, "appearance"), style = MaterialTheme.typography.titleLarge)
+    Spacer(Modifier.height(16.dp))
 
     // Hub rows: each opens its M3 sub-screen, where the single-choice options
     // are picked from anchored dropdowns (CRITICAL FIX 1.49.1 — the sub-screens
@@ -176,7 +180,11 @@ fun AppearanceSection(
             M3SettingsItem(
                 icon = Icons.Filled.MotionPhotosOn,
                 title = { Text(Localization.get(language, "animations")) },
-                description = { Text(Localization.get(language, "animations_desc")) },
+                // The row is a door, so it describes the screen behind it (the
+                // switch, the transitions, their style and the speed) instead of
+                // repeating `animations_desc`, which is the master switch's own
+                // sentence on that screen.
+                description = { Text(Localization.get(language, "animations_hub_desc")) },
                 trailing = { SettingsChevron() },
                 onClick = onOpenTransitions,
             ),

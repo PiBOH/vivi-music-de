@@ -102,6 +102,7 @@ internal fun strings_pt(): Map<String, String> =
         "animation_speed_slow" to "Lento",
         "animations" to "Animações",
         "animations_desc" to "Ative as animações da interface (transições de tela, etc.). Desative para alternar instantaneamente.",
+        "animations_hub_desc" to "O interruptor principal, as transições de ecrã, o estilo de transição e a velocidade.",
         "app_developer" to "Desenvolvedor principal",
         "app_font" to "Fonte do app",
         "app_info_section" to "Informações do app",

@@ -102,6 +102,7 @@ internal fun strings_km(): Map<String, String> =
         "animation_speed_slow" to "យឺត",
         "animations" to "ចលនា",
         "animations_desc" to "បើកចលនានៃផ្ទាំង (ការផ្លាស់ប្តូរអេក្រង់ ។ល។)។ បិទសម្រាប់ការផ្លាស់ប្តូរភ្លាមៗ។",
+        "animations_hub_desc" to "កុងតាក់មេ ការផ្លាស់ប្តូរអេក្រង់ រចនាប័ទ្មផ្លាស់ប្តូរ និងល្បឿន។",
         "app_developer" to "អ្នកអភិវឌ្ឍន៍សំខាន់",
         "app_font" to "ពុម្ពអក្សរកម្មវិធី",
         "app_info_section" to "ព័ត៌មានកម្មវិធី",

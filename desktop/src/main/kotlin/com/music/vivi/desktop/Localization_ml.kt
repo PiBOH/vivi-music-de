@@ -102,6 +102,7 @@ internal fun strings_ml(): Map<String, String> =
         "animation_speed_slow" to "പതുക്കെ",
         "animations" to "ആനിമേഷനുകൾ",
         "animations_desc" to "UI ആനിമേഷനുകൾ പ്രവർത്തനക്ഷമമാക്കുക (സ്ക്രീൻ ട്രാൻസിഷനുകൾ മുതലായവ). തൽക്ഷണ മാറ്റത്തിനായി ഓഫ് ചെയ്യുക.",
+        "animations_hub_desc" to "പ്രധാന സ്വിച്ച്, സ്ക്രീൻ ട്രാൻസിഷനുകൾ, ട്രാൻസിഷൻ ശൈലി, വേഗത.",
         "app_developer" to "പ്രധാന ഡെവലപ്പർ",
         "app_font" to "ആപ്പ് ഫോണ്ട്",
         "app_info_section" to "ആപ്പ് വിവരങ്ങൾ",

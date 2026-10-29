@@ -1335,6 +1335,33 @@ tasks.register<JavaExec>("accountOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Appearance screen against the preview:
+ *
+ *     ./gradlew :desktop:appearanceOrderCheck
+ *
+ * The preview's `appearance` list is two cards under one title - six doors
+ * (theme, the player and mini player's design, the canvas, the font, the display
+ * density, the intro) and then the animations door plus the two switches (the
+ * native title bar with its hint, the right Now Playing panel) - and this
+ * composes the real `SettingsAppearanceScreen` on the ui-test harness and reads
+ * the semantics tree: every text of the screen in document order must be the
+ * preview's own sequence, which is also what proves the six doors carry no
+ * sentence and the intro row its one; the heading stands 16 dp under the back
+ * row with the first card 16 dp under it, the second card 16 dp under the first,
+ * each card's rows on the 3 dp seam, and both groups fade up as the screen
+ * arrives and paint nothing on the frame it lands on.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/AppearanceOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("appearanceOrderCheck") {
+    group = "verification"
+    description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.AppearanceOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

@@ -102,6 +102,7 @@ internal fun strings_te(): Map<String, String> =
         "animation_speed_slow" to "నెమ్మదిగా",
         "animations" to "యానిమేషన్లు",
         "animations_desc" to "UI యానిమేషన్లను ప్రారంభించండి (స్క్రీన్ ట్రాన్సిషన్లు మొదలైనవి). తక్షణ మార్పిడి కోసం ఆఫ్ చేయండి.",
+        "animations_hub_desc" to "ప్రధాన స్విచ్, స్క్రీన్ ట్రాన్సిషన్లు, ట్రాన్సిషన్ శైలి మరియు వేగం.",
         "app_developer" to "ప్రధాన డెవలపర్",
         "app_font" to "యాప్ ఫాంట్",
         "app_info_section" to "యాప్ సమాచారం",

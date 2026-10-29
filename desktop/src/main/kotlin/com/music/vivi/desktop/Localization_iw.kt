@@ -102,6 +102,7 @@ internal fun strings_iw(): Map<String, String> =
         "animation_speed_slow" to "איטי",
         "animations" to "אנימציות",
         "animations_desc" to "הפעל אנימציות ממשק (מעברי מסך וכו'). כבה למעבר מיידי.",
+        "animations_hub_desc" to "המתג הראשי, מעברי המסך, סגנון המעבר והמהירות.",
         "app_developer" to "המפתח הראשי",
         "app_font" to "גופן האפליקציה",
         "app_info_section" to "מידע על האפליקציה",

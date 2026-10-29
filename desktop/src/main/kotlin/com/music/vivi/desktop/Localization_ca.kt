@@ -102,6 +102,7 @@ internal fun strings_ca(): Map<String, String> =
         "animation_speed_slow" to "Lent",
         "animations" to "Animacions",
         "animations_desc" to "Activa les animacions de la interfície (transicions de pantalla, etc.). Desactiva-les per a un canvi instantani.",
+        "animations_hub_desc" to "L'interruptor principal, les transicions de pantalla, l'estil de transició i la velocitat.",
         "app_developer" to "Desenvolupador principal",
         "app_font" to "Tipografia de l'aplicació",
         "app_info_section" to "Informació de l'aplicació",

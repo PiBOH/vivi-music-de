@@ -102,6 +102,7 @@ internal fun strings_az(): Map<String, String> =
         "animation_speed_slow" to "Yavaş",
         "animations" to "Animasiyalar",
         "animations_desc" to "UI animasiyalarını aktivləşdirin (ekran keçidləri və s.). Ani keçid üçün söndürün.",
+        "animations_hub_desc" to "Əsas açar, ekran keçidləri, keçid üslubu və sürəti.",
         "app_developer" to "Baş tərtibatçı",
         "app_font" to "Tətbiq şrifti",
         "app_info_section" to "Tətbiq məlumatı",

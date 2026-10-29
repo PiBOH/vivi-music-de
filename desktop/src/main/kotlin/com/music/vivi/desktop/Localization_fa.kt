@@ -102,6 +102,7 @@ internal fun strings_fa(): Map<String, String> =
         "animation_speed_slow" to "کند",
         "animations" to "انیمیشن‌ها",
         "animations_desc" to "فعال‌سازی انیمیشن‌های رابط (انتقال صفحه و...). برای جابه‌جایی فوری خاموش کنید.",
+        "animations_hub_desc" to "کلید اصلی، انتقال بین صفحه‌ها، سبک انتقال و سرعت.",
         "app_developer" to "توسعه‌دهنده اصلی",
         "app_font" to "قلم برنامه",
         "app_info_section" to "اطلاعات برنامه",

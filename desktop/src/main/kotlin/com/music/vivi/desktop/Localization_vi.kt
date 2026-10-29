@@ -102,6 +102,7 @@ internal fun strings_vi(): Map<String, String> =
         "animation_speed_slow" to "Chậm",
         "animations" to "Hoạt ảnh",
         "animations_desc" to "Bật hoạt ảnh giao diện (chuyển màn hình, v.v.). Tắt để chuyển ngay lập tức.",
+        "animations_hub_desc" to "Công tắc chính, hiệu ứng chuyển màn hình, kiểu chuyển và tốc độ.",
         "app_developer" to "Nhà phát triển chính",
         "app_font" to "Phông ứng dụng",
         "app_info_section" to "Thông tin ứng dụng",

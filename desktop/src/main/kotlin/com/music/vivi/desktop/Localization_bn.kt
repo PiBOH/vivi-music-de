@@ -102,6 +102,7 @@ internal fun strings_bn(): Map<String, String> =
         "animation_speed_slow" to "ধীর",
         "animations" to "অ্যানিমেশন",
         "animations_desc" to "UI অ্যানিমেশন সক্ষম করুন (স্ক্রিন ট্রানজিশন ইত্যাদি)। তাৎক্ষণিক স্যুইচিংয়ের জন্য বন্ধ করুন।",
+        "animations_hub_desc" to "প্রধান সুইচ, স্ক্রিন ট্রানজিশন, ট্রানজিশনের ধরন এবং গতি।",
         "app_developer" to "প্রধান ডেভেলপার",
         "app_font" to "অ্যাপ ফন্ট",
         "app_info_section" to "অ্যাপের তথ্য",

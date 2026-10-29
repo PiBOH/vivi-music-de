@@ -102,6 +102,7 @@ internal fun strings_pa(): Map<String, String> =
         "animation_speed_slow" to "ਹੌਲੀ",
         "animations" to "ਐਨੀਮੇਸ਼ਨਾਂ",
         "animations_desc" to "UI ਐਨੀਮੇਸ਼ਨਾਂ ਸਮਰੱਥ ਕਰੋ (ਸਕ੍ਰੀਨ ਟ੍ਰਾਂਜ਼ੀਸ਼ਨ ਆਦਿ)। ਤੁਰੰਤ ਸਵਿਚਿੰਗ ਲਈ ਬੰਦ ਕਰੋ।",
+        "animations_hub_desc" to "ਮੁੱਖ ਸਵਿੱਚ, ਸਕ੍ਰੀਨ ਟ੍ਰਾਂਜ਼ੀਸ਼ਨ, ਟ੍ਰਾਂਜ਼ੀਸ਼ਨ ਸਟਾਈਲ ਅਤੇ ਗਤੀ।",
         "app_developer" to "ਮੁੱਖ ਡਿਵੈਲਪਰ",
         "app_font" to "ਐਪ ਫੌਂਟ",
         "app_info_section" to "ਐਪ ਜਾਣਕਾਰੀ",

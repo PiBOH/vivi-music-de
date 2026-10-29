@@ -102,6 +102,7 @@ internal fun strings_et(): Map<String, String> =
         "animation_speed_slow" to "Aeglane",
         "animations" to "Animatsioonid",
         "animations_desc" to "Luba liidese animatsioonid (ekraanisiirded jne). Lülita välja koheseks vahetamiseks.",
+        "animations_hub_desc" to "Pealüliti, ekraanisiirded, ülemineku stiil ja kiirus.",
         "app_developer" to "Peaarendaja",
         "app_font" to "Rakenduse font",
         "app_info_section" to "Rakenduse teave",

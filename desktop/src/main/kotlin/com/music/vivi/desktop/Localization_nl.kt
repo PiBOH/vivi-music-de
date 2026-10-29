@@ -102,6 +102,7 @@ internal fun strings_nl(): Map<String, String> =
         "animation_speed_slow" to "Langzaam",
         "animations" to "Animaties",
         "animations_desc" to "UI-animaties inschakelen (schermovergangen enz.). Zet uit voor direct schakelen.",
+        "animations_hub_desc" to "De hoofdschakelaar, de schermovergangen, de overgangsstijl en de snelheid.",
         "app_developer" to "Hoofdontwikkelaar",
         "app_font" to "App-lettertype",
         "app_info_section" to "App-informatie",

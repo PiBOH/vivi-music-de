@@ -102,6 +102,7 @@ internal fun strings_uk(): Map<String, String> =
         "animation_speed_slow" to "Повільно",
         "animations" to "Анімації",
         "animations_desc" to "Увімкніть анімації інтерфейсу (переходи між екранами тощо). Вимкніть для миттєвого перемикання.",
+        "animations_hub_desc" to "Головний перемикач, переходи між екранами, стиль переходу та швидкість.",
         "app_developer" to "Провідний розробник",
         "app_font" to "Шрифт застосунку",
         "app_info_section" to "Інформація про застосунок",

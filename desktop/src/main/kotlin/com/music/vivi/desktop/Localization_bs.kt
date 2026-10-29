@@ -102,6 +102,7 @@ internal fun strings_bs(): Map<String, String> =
         "animation_speed_slow" to "Sporo",
         "animations" to "Animacije",
         "animations_desc" to "Omogući UI animacije (tranzicije ekrana itd.). Isključi za trenutno prebacivanje.",
+        "animations_hub_desc" to "Glavni prekidač, prijelazi ekrana, stil prijelaza i brzina.",
         "app_developer" to "Glavni programer",
         "app_font" to "Font aplikacije",
         "app_info_section" to "Informacije o aplikaciji",

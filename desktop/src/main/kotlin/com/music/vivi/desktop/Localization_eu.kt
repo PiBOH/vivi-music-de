@@ -102,6 +102,7 @@ internal fun strings_eu(): Map<String, String> =
         "animation_speed_slow" to "Motela",
         "animations" to "Animazioak",
         "animations_desc" to "Gaitu interfazearen animazioak (pantaila-trantsizioak, etab.). Itzali berehalako aldaketarako.",
+        "animations_hub_desc" to "Etengailu nagusia, pantaila-trantsizioak, trantsizio-estiloa eta abiadura.",
         "app_developer" to "Garatzaile nagusia",
         "app_font" to "Aplikazioaren tipografia",
         "app_info_section" to "Aplikazioaren informazioa",

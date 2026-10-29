@@ -102,6 +102,7 @@ internal fun strings_fi(): Map<String, String> =
         "animation_speed_slow" to "Hidas",
         "animations" to "Animaatiot",
         "animations_desc" to "Ota käyttöön käyttöliittymän animaatiot (näytön siirtymät jne.). Poista käytöstä välitöntä vaihtamista varten.",
+        "animations_hub_desc" to "Pääkytkin, näyttösiirtymät, siirtymätyyli ja nopeus.",
         "app_developer" to "Pääkehittäjä",
         "app_font" to "Sovelluksen fontti",
         "app_info_section" to "Sovelluksen tiedot",

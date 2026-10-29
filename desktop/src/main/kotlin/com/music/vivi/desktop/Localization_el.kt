@@ -102,6 +102,7 @@ internal fun strings_el(): Map<String, String> =
         "animation_speed_slow" to "Αργή",
         "animations" to "Κινούμενα σχέδια",
         "animations_desc" to "Ενεργοποιήστε τα κινούμενα σχέδια διεπαφής (μεταβάσεις οθόνης κ.λπ.). Απενεργοποιήστε για άμεση εναλλαγή.",
+        "animations_hub_desc" to "Ο κύριος διακόπτης, οι μεταβάσεις οθονών, το στυλ μετάβασης και η ταχύτητα.",
         "app_developer" to "Επικεφαλής προγραμματιστής",
         "app_font" to "Γραμματοσειρά εφαρμογής",
         "app_info_section" to "Πληροφορίες εφαρμογής",

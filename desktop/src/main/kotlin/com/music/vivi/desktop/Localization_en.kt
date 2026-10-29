@@ -102,6 +102,7 @@ internal fun strings_en(): Map<String, String> =
         "animation_speed_slow" to "Slow",
         "animations" to "Animations",
         "animations_desc" to "Enable UI animations (screen transitions, etc.). Turn off for instant switching.",
+        "animations_hub_desc" to "The master switch, screen transitions, the transition style and the speed.",
         "app_developer" to "Lead Developer",
         "app_font" to "App Font",
         "app_info_section" to "APP INFO",

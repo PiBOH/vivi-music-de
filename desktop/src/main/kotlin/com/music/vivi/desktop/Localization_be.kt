@@ -102,6 +102,7 @@ internal fun strings_be(): Map<String, String> =
         "animation_speed_slow" to "Павольна",
         "animations" to "Анімацыі",
         "animations_desc" to "Уключыце анімацыі інтэрфейсу (пераходы паміж экранамі і г.д.). Выключыце для імгненнага пераключэння.",
+        "animations_hub_desc" to "Галоўны перамыкач, пераходы паміж экранамі, стыль пераходу і хуткасць.",
         "app_developer" to "Галоўны распрацоўшчык",
         "app_font" to "Шрыфт дадатку",
         "app_info_section" to "Інфармацыя пра дадатак",

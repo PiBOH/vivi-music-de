@@ -102,6 +102,7 @@ internal fun strings_cs(): Map<String, String> =
         "animation_speed_slow" to "Pomalu",
         "animations" to "Animace",
         "animations_desc" to "Povolit UI animace (přechody obrazovek atd.). Vypnout pro okamžité přepínání.",
+        "animations_hub_desc" to "Hlavní přepínač, přechody obrazovek, styl přechodu a rychlost.",
         "app_developer" to "Hlavní vývojář",
         "app_font" to "Písmo aplikace",
         "app_info_section" to "Informace o aplikaci",

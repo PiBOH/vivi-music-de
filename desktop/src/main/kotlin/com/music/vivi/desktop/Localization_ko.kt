@@ -102,6 +102,7 @@ internal fun strings_ko(): Map<String, String> =
         "animation_speed_slow" to "느리게",
         "animations" to "애니메이션",
         "animations_desc" to "UI 애니메이션을 활성화합니다(화면 전환 등). 즉시 전환하려면 끄세요.",
+        "animations_hub_desc" to "마스터 스위치, 화면 전환, 전환 스타일 및 속도.",
         "app_developer" to "리드 개발자",
         "app_font" to "앱 글꼴",
         "app_info_section" to "앱 정보",

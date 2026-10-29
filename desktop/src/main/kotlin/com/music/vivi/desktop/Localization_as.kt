@@ -102,6 +102,7 @@ internal fun strings_as(): Map<String, String> =
         "animation_speed_slow" to "লেহেমীয়া",
         "animations" to "এনিমেছন",
         "animations_desc" to "UI এনিমেছন সক্ষম কৰক (স্ক্ৰীন ট্ৰাঞ্জিচন আদি)। তাৎক্ষণিক স্যুইচিংৰ বাবে বন্ধ কৰক।",
+        "animations_hub_desc" to "মূল ছুইচ, স্ক্ৰীন পৰিৱৰ্তন, পৰিৱৰ্তনৰ শৈলী আৰু গতি।",
         "app_developer" to "মূল ডেভেলপাৰ",
         "app_font" to "এপ ফণ্ট",
         "app_info_section" to "এপ তথ্য",

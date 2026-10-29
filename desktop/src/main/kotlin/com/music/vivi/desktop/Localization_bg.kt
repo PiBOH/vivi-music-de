@@ -102,6 +102,7 @@ internal fun strings_bg(): Map<String, String> =
         "animation_speed_slow" to "Бавно",
         "animations" to "Анимации",
         "animations_desc" to "Активирайте UI анимации (преходи между екрани и др.). Изключете за мигновено превключване.",
+        "animations_hub_desc" to "Главният превключвател, преходите между екраните, стилът на прехода и скоростта.",
         "app_developer" to "Главен разработчик",
         "app_font" to "Шрифт на приложението",
         "app_info_section" to "Информация за приложението",

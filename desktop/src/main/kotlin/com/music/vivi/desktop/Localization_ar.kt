@@ -102,6 +102,7 @@ internal fun strings_ar(): Map<String, String> =
         "animation_speed_slow" to "بطيء",
         "animations" to "الرسوم المتحركة",
         "animations_desc" to "فعّل رسوم الواجهة المتحركة (انتقالات الشاشة وغيرها). أوقفها للتبديل الفوري.",
+        "animations_hub_desc" to "المفتاح الرئيسي وانتقالات الشاشة ونمط الانتقال وسرعته.",
         "app_developer" to "المطور الرئيسي",
         "app_font" to "خط التطبيق",
         "app_info_section" to "معلومات التطبيق",

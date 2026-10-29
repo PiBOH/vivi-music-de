@@ -102,6 +102,7 @@ internal fun strings_pl(): Map<String, String> =
         "animation_speed_slow" to "Wolno",
         "animations" to "Animacje",
         "animations_desc" to "Włącz animacje interfejsu (przejścia ekranów itp.). Wyłącz dla natychmiastowego przełączania.",
+        "animations_hub_desc" to "Główny przełącznik, przejścia ekranów, styl przejścia i szybkość.",
         "app_developer" to "Główny programista",
         "app_font" to "Czcionka aplikacji",
         "app_info_section" to "Informacje o aplikacji",

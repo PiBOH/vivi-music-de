@@ -102,6 +102,7 @@ internal fun strings_ja(): Map<String, String> =
         "animation_speed_slow" to "遅い",
         "animations" to "アニメーション",
         "animations_desc" to "UIアニメーションを有効にします（画面遷移など）。即時切り替えの場合はオフにします。",
+        "animations_hub_desc" to "マスタースイッチ、画面の切り替え、切り替えスタイル、速度。",
         "app_developer" to "リードデベロッパー",
         "app_font" to "アプリのフォント",
         "app_info_section" to "アプリ情報",

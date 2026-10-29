@@ -102,6 +102,7 @@ internal fun strings_tr(): Map<String, String> =
         "animation_speed_slow" to "Yavaş",
         "animations" to "Animasyonlar",
         "animations_desc" to "UI animasyonlarını etkinleştirin (ekran geçişleri vb.). Anında geçiş için kapatın.",
+        "animations_hub_desc" to "Ana anahtar, ekran geçişleri, geçiş stili ve hız.",
         "app_developer" to "Uygulama Geliştiricisi",
         "app_font" to "Uygulama yazı tipi",
         "app_info_section" to "UYGULAMA BİLGİSİ",

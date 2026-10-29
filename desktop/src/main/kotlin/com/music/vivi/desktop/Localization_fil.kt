@@ -102,6 +102,7 @@ internal fun strings_fil(): Map<String, String> =
         "animation_speed_slow" to "Mabagal",
         "animations" to "Mga animation",
         "animations_desc" to "I-enable ang mga animation ng UI (screen transitions, atbp.). I-off para sa agarang paglipat.",
+        "animations_hub_desc" to "Ang master switch, mga screen transition, ang transition style at ang bilis.",
         "app_developer" to "Pangunahing developer",
         "app_font" to "Font ng app",
         "app_info_section" to "Impormasyon ng app",

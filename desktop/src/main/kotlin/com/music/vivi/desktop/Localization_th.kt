@@ -102,6 +102,7 @@ internal fun strings_th(): Map<String, String> =
         "animation_speed_slow" to "ช้า",
         "animations" to "แอนิเมชัน",
         "animations_desc" to "เปิดใช้งานแอนิเมชัน UI (การเปลี่ยนหน้าจอ ฯลฯ) ปิดเพื่อสลับทันที",
+        "animations_hub_desc" to "สวิตช์หลัก การเปลี่ยนหน้าจอ รูปแบบการเปลี่ยน และความเร็ว",
         "app_developer" to "นักพัฒนาหลัก",
         "app_font" to "ฟอนต์แอป",
         "app_info_section" to "ข้อมูลแอป",

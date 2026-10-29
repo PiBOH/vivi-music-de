@@ -102,6 +102,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "animation_speed_slow" to "Langsom",
         "animations" to "Animasjoner",
         "animations_desc" to "Aktiver UI-animasjoner (skjermoverganger osv.). Slå av for umiddelbar bytting.",
+        "animations_hub_desc" to "Hovedbryteren, skjermoverganger, overgangsstilen og hastigheten.",
         "app_developer" to "Hovedutvikler",
         "app_font" to "App-font",
         "app_info_section" to "App-informasjon",

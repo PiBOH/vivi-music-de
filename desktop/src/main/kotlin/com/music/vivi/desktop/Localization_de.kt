@@ -102,6 +102,7 @@ internal fun strings_de(): Map<String, String> =
         "animation_speed_slow" to "Langsam",
         "animations" to "Animationen",
         "animations_desc" to "UI-Animationen aktivieren (Bildschirmübergänge usw.). Zum sofortigen Wechseln deaktivieren.",
+        "animations_hub_desc" to "Der Hauptschalter, die Bildschirmübergänge, der Übergangsstil und die Geschwindigkeit.",
         "app_developer" to "Leitender Entwickler",
         "app_font" to "App-Schriftart",
         "app_info_section" to "App-Informationen",

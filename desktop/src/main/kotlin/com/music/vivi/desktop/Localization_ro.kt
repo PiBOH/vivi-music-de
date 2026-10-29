@@ -102,6 +102,7 @@ internal fun strings_ro(): Map<String, String> =
         "animation_speed_slow" to "Lent",
         "animations" to "Animații",
         "animations_desc" to "Activați animațiile interfeței (tranziții de ecran etc.). Dezactivați pentru comutare instantanee.",
+        "animations_hub_desc" to "Comutatorul principal, tranzițiile ecranelor, stilul tranziției și viteza.",
         "app_developer" to "Dezvoltator principal",
         "app_font" to "Font aplicație",
         "app_info_section" to "Informații aplicație",

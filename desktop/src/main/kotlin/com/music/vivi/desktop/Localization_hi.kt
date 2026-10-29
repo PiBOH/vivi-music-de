@@ -102,6 +102,7 @@ internal fun strings_hi(): Map<String, String> =
         "animation_speed_slow" to "धीमा",
         "animations" to "एनिमेशन",
         "animations_desc" to "UI एनिमेशन सक्षम करें (स्क्रीन ट्रांज़िशन आदि)। तुरंत स्विचिंग के लिए बंद करें।",
+        "animations_hub_desc" to "मुख्य स्विच, स्क्रीन ट्रांज़िशन, ट्रांज़िशन शैली और गति।",
         "app_developer" to "मुख्य डेवलपर",
         "app_font" to "ऐप फ़ॉन्ट",
         "app_info_section" to "ऐप जानकारी",

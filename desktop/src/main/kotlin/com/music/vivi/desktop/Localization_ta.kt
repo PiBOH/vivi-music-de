@@ -102,6 +102,7 @@ internal fun strings_ta(): Map<String, String> =
         "animation_speed_slow" to "மெதுவாக",
         "animations" to "அனிமேஷன்கள்",
         "animations_desc" to "UI அனிமேஷன்களை இயக்கவும் (திரை மாற்றங்கள் போன்றவை). உடனடி மாற்றத்திற்கு அணைக்கவும்.",
+        "animations_hub_desc" to "முதன்மைச் சுவிட்ச், திரை மாற்றங்கள், மாற்றப் பாணி மற்றும் வேகம்.",
         "app_developer" to "முதன்மை டெவலப்பர்",
         "app_font" to "ஆப் எழுத்துரு",
         "app_info_section" to "ஆப் தகவல்",

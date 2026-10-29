@@ -102,6 +102,7 @@ internal fun strings_sl(): Map<String, String> =
         "animation_speed_slow" to "Počasi",
         "animations" to "Animacije",
         "animations_desc" to "Omogoči animacije vmesnika (prehode med zasloni itd.). Izklopi za takojšnje preklapljanje.",
+        "animations_hub_desc" to "Glavno stikalo, prehodi zaslona, slog prehoda in hitrost.",
         "app_developer" to "Glavni razvijalec",
         "app_font" to "Pisava aplikacije",
         "app_info_section" to "Informacije o aplikaciji",

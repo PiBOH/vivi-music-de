@@ -102,6 +102,7 @@ internal fun strings_hu(): Map<String, String> =
         "animation_speed_slow" to "Lassú",
         "animations" to "Animációk",
         "animations_desc" to "UI-animációk engedélyezése (képernyőátmenetek stb.). Kapcsolja ki az azonnali váltáshoz.",
+        "animations_hub_desc" to "A főkapcsoló, a képernyőátmenetek, az átmenet stílusa és a sebesség.",
         "app_developer" to "Vezető fejlesztő",
         "app_font" to "Alkalmazás betűtípusa",
         "app_info_section" to "Alkalmazás adatai",

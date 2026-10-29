@@ -102,6 +102,7 @@ internal fun strings_lt(): Map<String, String> =
         "animation_speed_slow" to "Lėtai",
         "animations" to "Animacijos",
         "animations_desc" to "Įgalinti sąsajos animacijas (ekrano perėjimus ir kt.). Išjunkite, kad būtų galima akimirksniu perjungti.",
+        "animations_hub_desc" to "Pagrindinis jungiklis, ekranų perėjimai, perėjimo stilius ir greitis.",
         "app_developer" to "Pagrindinis kūrėjas",
         "app_font" to "Programos šriftas",
         "app_info_section" to "Programos informacija",
