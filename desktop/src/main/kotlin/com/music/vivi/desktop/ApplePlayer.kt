@@ -47,7 +47,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.music.vivi.desktop.player.LoadPhase
 import com.music.vivi.desktop.player.RepeatMode
@@ -240,13 +239,6 @@ fun AppleMusicPlayer(
 
                 Spacer(Modifier.height(8.dp))
                 AppleTransport(
-                    // The five glyphs are fixed sizes; the space between them is
-                    // what follows the column, so the group never grows into the
-                    // row's edges on a wide window and never overflows the
-                    // column on a narrow one (the smallest window this screen
-                    // draws the column at is 60 % of ~400 dp, and five glyphs at
-                    // a fixed 24 dp of gap already need more than that).
-                    gap = (cover * 0.06f).coerceIn(4.dp, 24.dp),
                     isPlaying = isPlaying,
                     isShuffle = isShuffle,
                     repeatMode = repeatMode,
@@ -413,7 +405,6 @@ private fun AppleProgress(
  */
 @Composable
 private fun AppleTransport(
-    gap: Dp,
     isPlaying: Boolean,
     isShuffle: Boolean,
     repeatMode: RepeatMode,
@@ -425,21 +416,33 @@ private fun AppleTransport(
     onCycleRepeat: () -> Unit,
 ) {
     val locked = ListenTogetherGate.locked.value
+    // The sizes are the ones the phone's Apple player draws (`Player_v2.kt`):
+    // 48 dp skip glyphs and an 80 dp play/pause, the shuffle and the repeat small
+    // at the ends, and the five spread evenly over the column as `SpaceEvenly`.
+    // Gathered in the middle at 30 and 42 dp the row was a second, smaller scale
+    // than the phone's, and the play glyph was half the size of the reference's.
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(gap, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // A 20 dp glyph with a 40 dp target: the picture stays small, what the
+        // pointer has to hit does not.
         Tooltip(Localization.get(language, "shuffle")) {
-            Icon(
-                Icons.Filled.Shuffle,
-                contentDescription = Localization.get(language, "shuffle"),
-                tint = PaletteInk.copy(alpha = if (isShuffle) 1f else 0.65f),
-                modifier = Modifier
-                    .size(19.dp)
+            Box(
+                Modifier
+                    .size(40.dp)
                     .iconHoverLift(enabled = !locked, label = "appleShuffle")
                     .clickable(enabled = !locked) { onToggleShuffle() },
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    Icons.Filled.Shuffle,
+                    contentDescription = Localization.get(language, "shuffle"),
+                    tint = PaletteInk.copy(alpha = if (isShuffle) 1f else 0.65f),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
         Tooltip(Localization.get(language, "previous")) {
             Icon(
@@ -447,7 +450,7 @@ private fun AppleTransport(
                 contentDescription = Localization.get(language, "previous"),
                 tint = PaletteInk.copy(alpha = if (locked) 0.4f else 1f),
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(48.dp)
                     .iconHoverLift(enabled = !locked, label = "applePrevious")
                     .clickable(enabled = !locked) { onPrevious() },
             )
@@ -459,7 +462,7 @@ private fun AppleTransport(
                 contentDescription = playLabel,
                 tint = PaletteInk.copy(alpha = if (locked) 0.5f else 1f),
                 modifier = Modifier
-                    .size(42.dp)
+                    .size(80.dp)
                     .iconHoverLift(enabled = !locked, label = "applePlay")
                     .clickable(enabled = !locked) { onTogglePlay() },
             )
@@ -470,21 +473,26 @@ private fun AppleTransport(
                 contentDescription = Localization.get(language, "next"),
                 tint = PaletteInk.copy(alpha = if (locked) 0.4f else 1f),
                 modifier = Modifier
-                    .size(30.dp)
+                    .size(48.dp)
                     .iconHoverLift(enabled = !locked, label = "appleNext")
                     .clickable(enabled = !locked) { onNext() },
             )
         }
         Tooltip(Localization.get(language, "repeat")) {
-            Icon(
-                if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
-                contentDescription = Localization.get(language, "repeat"),
-                tint = PaletteInk.copy(alpha = if (repeatMode == RepeatMode.OFF) 0.65f else 1f),
-                modifier = Modifier
-                    .size(19.dp)
+            Box(
+                Modifier
+                    .size(40.dp)
                     .iconHoverLift(enabled = !locked, label = "appleRepeat")
                     .clickable(enabled = !locked) { onCycleRepeat() },
-            )
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
+                    contentDescription = Localization.get(language, "repeat"),
+                    tint = PaletteInk.copy(alpha = if (repeatMode == RepeatMode.OFF) 0.65f else 1f),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         }
     }
 }

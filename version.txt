@@ -1,8 +1,8 @@
 6.0.8.11
 149
 beta
-1.56.8
-448
+1.56.9
+449
 beta
 # version.txt - the release metadata, read by the workflows and by
 # desktop/build.gradle.kts. Six value lines, then these notes:
