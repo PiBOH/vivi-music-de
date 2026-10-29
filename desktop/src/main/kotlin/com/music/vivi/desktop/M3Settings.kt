@@ -146,7 +146,7 @@ val LocalScreenArrival = compositionLocalOf { false }
  * Animations switch off or outside a navigation.
  */
 @Composable
-private fun Modifier.groupEnter(): Modifier {
+internal fun Modifier.groupEnter(): Modifier {
     if (!Animations.enabled || !LocalScreenArrival.current) return this
     val progress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {

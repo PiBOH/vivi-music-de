@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +24,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.ViewSidebar
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Album
 import androidx.compose.material.icons.filled.Brightness1
+import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Devices
@@ -54,6 +60,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -62,6 +69,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,11 +78,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
@@ -82,6 +93,9 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextAlign
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.rememberDynamicColorScheme
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -249,9 +263,9 @@ fun AppearanceSection(
 }
 
 /**
- * Theme sub-screen: 4 mode circles (System / Light / Dark / Pure black) +
- * the full 21-color accent palette + a live preview card. Mirrors the Android
- * `ThemeScreen` (pixel-perfect mode selection).
+ * Theme sub-screen, in the redesign page's own order: the heading, the live
+ * preview card, the four mode circles, the accent palette and the colour wheel
+ * under them. Mirrors the Android `ThemeScreen` for what it offers.
  */
 @Composable
 fun ThemeSection(
@@ -270,18 +284,24 @@ fun ThemeSection(
     onRemoveCustomAccent: (Int) -> Unit = {},
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "theme_colors"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+        // The heading carries no top padding of its own: `SettingsSubScreen`
+        // already puts the page's 16 dp under the Back row.
+        Text(Localization.get(language, "theme_colors"), style = MaterialTheme.typography.titleLarge)
 
         // Live preview card (uses the currently applied theme).
         ThemePreviewCard(Modifier.fillMaxWidth().padding(top = 16.dp).height(140.dp))
 
-        Spacer(Modifier.height(24.dp))
-
-        Text(Localization.get(language, "theme_mode"), style = MaterialTheme.typography.titleMedium)
-        Row(
+        // The page's own section title: 16 dp under the card, and the circles 12
+        // dp under it (`.md-section-title`, then `.md-modes`' own margin).
+        Text(
+            Localization.get(language, "theme_mode"),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        FlowRow(
             Modifier.fillMaxWidth().padding(top = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ThemeModeCircle(
                 language = language,
@@ -321,8 +341,6 @@ fun ThemeSection(
             )
         }
 
-        Spacer(Modifier.height(24.dp))
-
         // The custom-colour state lives BEFORE the palette because the palette
         // draws the custom circle as its own last entry (the picker belongs at
         // the end of the row the user is already looking at, not in a section of
@@ -340,134 +358,148 @@ fun ThemeSection(
         // The picker is open the moment the screen is: the round wheel is the
         // point of the section, and having to find the palette's last dot and
         // click it before anything appeared was the old behaviour ("the wheel
-        // must always be visible"). The section's own **Hide** label still
-        // collapses it, so the wheel is what the screen opens on and one click
-        // away from being put aside.
+        // must always be visible"). The page opens with it closed instead; the
+        // close button in its header puts it away and the custom circle brings
+        // it back, so it is never more than one click from either state.
         var showCustomPicker by remember { mutableStateOf(true) }
 
-        // Two columns, the layout the owner drew: the palette and the saved
-        // custom colours on the left, the picker on the right - the wheel with
-        // its brightness strip and, rightmost, the accent intensity, and the hex
-        // field with *Add to palette* under the wheel.
+        // The page's own column: "Accent color", the circles, then the wheel
+        // under them. The previous layout put the palette and the picker side by
+        // side so the wheel sat beside the colours, which the page does not draw
+        // and which made one screen read as two.
         //
-        // The intensity used to be a full-width slider with a row of five preview
-        // circles under it, in a section of its own further down the screen: the
-        // same value in two places, and a screen two screens tall. It is one
-        // vertical strip beside the wheel now (issue #103).
-        Row(
-            Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(40.dp),
-        ) {
-            Column(Modifier.weight(1f)) {
-                // "Accent color", not "Color palette": the block is the accent the
-                // theme is built from, not a catalogue of colours (the same heading
-                // the redesign preview carries). The key already existed, so no new
-                // string had to be translated.
-                Text(Localization.get(language, "accent_color"), style = MaterialTheme.typography.titleMedium)
-                // Palette swatches in rows of six, with the custom-colour circle
-                // as the LAST swatch of the flow - right of the predefined
-                // colours, on the next row when the current one is full.
-                val paletteSize = AccentPalette.colors.size
-                (0..paletteSize).chunked(6).forEach { row ->
-                    Row(
-                        Modifier.fillMaxWidth().padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        row.forEach { index ->
-                            if (index == paletteSize) {
-                                Tooltip(Localization.get(language, "custom_color")) {
-                                    AccentSwatch(
-                                        color = customColor,
-                                        selected = showCustomPicker,
-                                        onClick = {
-                                            // Seed the picker from the accent in use, so the
-                                            // circle opens ON the current colour.
-                                            val hsv = colorToHsv(accent)
-                                            hue = hsv[0]
-                                            saturation = hsv[1]
-                                            brightness = hsv[2]
-                                            showCustomPicker = true
-                                        },
-                                    )
-                                }
-                                return@forEach
-                            }
-                            val entry = AccentPalette.colors[index]
-                            val isSelected = if (entry.color == Color.Transparent) {
-                                accent == Color.Transparent
-                            } else {
-                                accent == entry.color
-                            }
-                            val colorName = Localization.get(language, "accent_${entry.key}")
-                            Tooltip(colorName) {
-                                AccentSwatch(
-                                    color = entry.color,
-                                    selected = isSelected,
-                                    onClick = {
-                                        if (entry.color == Color.Transparent) {
-                                            AccentPalette.refreshSystemAccent()
-                                            onAccentChange(Color.Transparent)
-                                        } else {
-                                            onAccentChange(entry.color)
-                                        }
-                                    },
+        // "Accent color", not "Color palette": the block is the accent the theme
+        // is built from, not a catalogue of colours (the same heading the
+        // redesign preview carries). The key already existed, so no new string
+        // had to be translated.
+        Text(
+            Localization.get(language, "accent_color"),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        // Every circle in one flow - the presets, the colours *Add to palette*
+        // saved (painted with their own hex) and the custom-colour circle last -
+        // which is where the page puts them (`.md-palette`: a grid of 40 dp
+        // circles, gap 12, filled automatically), instead of rows of six with the
+        // saved ones under a heading of their own.
+        //
+        // A preset shows the primary its scheme builds, the accent softened to
+        // tone 40 in a light scheme and 80 in a dark one, which is the fill the
+        // page computes (`accentSwatch`); a saved colour shows itself, because
+        // that is the colour that was chosen.
+        val dark = isAppInDarkTheme()
+        PaletteGrid(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+            AccentPalette.colors.forEach { entry ->
+                val isSelected = if (entry.color == Color.Transparent) {
+                    accent == Color.Transparent
+                } else {
+                    accent == entry.color
+                }
+                val seed = if (entry.color == Color.Transparent) {
+                    AccentPalette.effective(entry.color)
+                } else {
+                    entry.color
+                }
+                val scheme = rememberDynamicColorScheme(
+                    seedColor = seed,
+                    isDark = dark,
+                    specVersion = ColorSpec.SpecVersion.SPEC_2025,
+                    style = PaletteStyle.TonalSpot,
+                )
+                val colorName = Localization.get(language, "accent_${entry.key}")
+                Tooltip(colorName) {
+                    AccentSwatch(
+                        fill = scheme.primary,
+                        ink = scheme.onPrimary,
+                        selected = isSelected,
+                        // The system colour is not one of the app's own, so its
+                        // circle says whose it is: the page draws the OS's mark
+                        // (`osLogo`) and falls back to `brightness_auto` where
+                        // there is no mark, which is the glyph available here.
+                        mark = if (entry.color == Color.Transparent) {
+                            {
+                                Icon(
+                                    Icons.Filled.BrightnessAuto,
+                                    contentDescription = null,
+                                    tint = scheme.onPrimary,
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
-                        }
-                    }
-                }
-
-                if (customAccents.isNotEmpty()) {
-                    Spacer(Modifier.height(20.dp))
-                    Text(Localization.get(language, "custom_colors"), style = MaterialTheme.typography.titleMedium)
-                    customAccents.chunked(6).forEach { row ->
-                        Row(
-                            Modifier.fillMaxWidth().padding(top = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            row.forEach { argb ->
-                                val c = argbIntToColor(argb)
-                                val isSelected = accent == c
-                                Tooltip(Localization.get(language, "remove_custom_color")) {
-                                    Box {
-                                        AccentSwatch(
-                                            color = c,
-                                            selected = isSelected,
-                                            onClick = { onAccentChange(c) },
-                                        )
-                                        Icon(
-                                            Icons.Filled.Close,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier
-                                                .align(Alignment.TopEnd)
-                                                .size(16.dp)
-                                                .clip(CircleShape)
-                                                .background(MaterialTheme.colorScheme.surface)
-                                                .clickable { onRemoveCustomAccent(argb) }
-                                                .padding(2.dp),
-                                        )
-                                    }
-                                }
+                        } else {
+                            null
+                        },
+                        onClick = {
+                            if (entry.color == Color.Transparent) {
+                                AccentPalette.refreshSystemAccent()
+                                onAccentChange(Color.Transparent)
+                            } else {
+                                onAccentChange(entry.color)
                             }
-                        }
+                        },
+                    )
+                }
+            }
+            customAccents.forEach { argb ->
+                val saved = argbIntToColor(argb)
+                val isSelected = accent == saved
+                Tooltip(Localization.get(language, "remove_custom_color")) {
+                    Box {
+                        AccentSwatch(
+                            fill = saved,
+                            ink = contrastInk(saved),
+                            selected = isSelected,
+                            onClick = { onAccentChange(saved) },
+                        )
+                        // Dropping a colour the user added is an action and not a
+                        // drawing detail, so the badge stays even though the page
+                        // draws no removal: reported, not removed.
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surface)
+                                .clickable { onRemoveCustomAccent(argb) }
+                                .padding(2.dp),
+                        )
                     }
                 }
             }
+            // The way into the wheel, last in the flow and in every state: the
+            // page draws the colour wheel itself there - a spectrum disc with a
+            // dark hub and a `+` - so the way in never changes shape once a
+            // colour is in use.
+            Tooltip(Localization.get(language, "custom_color")) {
+                CustomColorSwatch(
+                    selected = showCustomPicker,
+                    onClick = {
+                        // Seeded from the accent in use, so the circle opens ON
+                        // the current colour, and put away on a second press.
+                        val hsv = colorToHsv(accent)
+                        hue = hsv[0]
+                        saturation = hsv[1]
+                        brightness = hsv[2]
+                        showCustomPicker = !showCustomPicker
+                    },
+                )
+            }
+        }
 
-            // --- Custom color picker (one round wheel) ---
-            // A fixed width, not a weight: the picker needs the room for the wheel,
-            // its two strips and the widest caption, and the palette is the part
-            // that can give it away. It is also what keeps the header row below
-            // from sizing the column (a full-width row in an UNWEIGHTED column
-            // takes 100 % of the Row, which left the palette with nothing: the
-            // wheel rendered at x = 0, as the render check reported).
-            Column(Modifier.width(PickerColumnWidth)) {
-                // The section's own title and the switch that puts the picker
-                // aside; the title stays because it is what names the block, and
-                // the Hide/Show label lands above the strips, as in the mockup.
+        // The wheel, 16 dp under the palette and only while it is open: the
+        // page's `.md-group` around it is a block of the page and not a card, so
+        // its title and its close button sit on the page's own surface.
+        if (showCustomPicker) {
+            val alreadySaved = remember(customAccents, customColor) {
+                customAccents.any { argbIntToColor(it) == customColor }
+            }
+            Column(Modifier.fillMaxWidth().padding(top = 16.dp).groupEnter()) {
+                // As wide as the wheel's box, so the close button lands on the
+                // wheel's right edge (`.md-picker__head`).
                 Row(
-                    Modifier.fillMaxWidth().clickable { showCustomPicker = !showCustomPicker },
+                    Modifier.width(WheelSize + 2.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -475,148 +507,148 @@ fun ThemeSection(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        Localization.get(language, if (showCustomPicker) "login_hide" else "login_show"),
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-                if (!showCustomPicker) {
-                    Spacer(Modifier.height(36.dp))
-                } else {
-                    val alreadySaved = remember(customAccents, customColor) {
-                        customAccents.any { argbIntToColor(it) == customColor }
+                    // The page's head button is 32 dp with a 20 dp glyph
+                    // (`.md-picker__head`), so the head row is 32 dp tall and
+                    // not Material's 48 dp touch target: a settings screen on a
+                    // desktop is a pointer surface, and the extra 16 dp would
+                    // push the wheel down from where the page puts it.
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
+                        M3IconButton(
+                            onClick = { showCustomPicker = false },
+                            modifier = Modifier.size(32.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = Localization.get(language, "login_hide"),
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
-                    Spacer(Modifier.height(14.dp))
-                    // The picker's three controls, left to right: the wheel (hue
-                    // around the rim, saturation from the centre out), the
-                    // brightness strip, and the intensity - rightmost, where the
-                    // owner moved it.
-                    Row(verticalAlignment = Alignment.Top) {
-                        HsvColorWheel(
+                }
+                // The wheel and the strip that belongs to it, on the page's own
+                // 32 dp gap, and the app's intensity beside them: the page no
+                // longer draws intensity, so it is kept and named rather than
+                // dropped.
+                Row(
+                    Modifier.padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(32.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    HsvColorWheel(
+                        hue = hue,
+                        saturation = saturation,
+                        brightness = brightness,
+                        onPick = { h, s -> hue = h; saturation = s },
+                    )
+                    Tooltip(Localization.get(language, "brightness")) {
+                        BrightnessStrip(
                             hue = hue,
                             saturation = saturation,
                             brightness = brightness,
-                            onPick = { h, s -> hue = h; saturation = s },
+                            onBrightnessChange = { brightness = it },
                         )
-                        Spacer(Modifier.width(StripGap))
-                        Tooltip(Localization.get(language, "brightness")) {
-                            BrightnessStrip(
-                                hue = hue,
-                                saturation = saturation,
-                                brightness = brightness,
-                                onBrightnessChange = { brightness = it },
+                    }
+                    Tooltip(Localization.get(language, "accent_intensity")) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            IntensityStrip(
+                                accent = accent,
+                                intensity = accentIntensity,
+                                onIntensityChange = onAccentIntensityChange,
+                                onIntensityChangeFinished = onAccentIntensityChangeFinished,
                             )
-                        }
-                        Spacer(Modifier.width(StripGap))
-                        Tooltip(Localization.get(language, "accent_intensity")) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                IntensityStrip(
-                                    accent = accent,
-                                    intensity = accentIntensity,
-                                    onIntensityChange = onAccentIntensityChange,
-                                    onIntensityChangeFinished = onAccentIntensityChangeFinished,
-                                )
-                                Text(
-                                    Localization.get(language, "accent_intensity"),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 2,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(top = 6.dp).width(StripCaptionWidth),
-                                )
-                                Text(
-                                    "${(accentIntensity * 100).roundToInt()}%",
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(top = 2.dp),
-                                )
-                            }
+                            Text(
+                                Localization.get(language, "accent_intensity"),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(top = 6.dp).width(StripCaptionWidth),
+                            )
+                            Text(
+                                "${(accentIntensity * 100).roundToInt()}%",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 2.dp),
+                            )
                         }
                     }
-                    // The hex field and the button that saves the colour: UNDER
-                    // the wheel, centred with it.
-                    Column(
-                        Modifier.padding(top = 18.dp).width(WheelSize),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        // Live-updating HEX field (issue #61): typing a 6-digit value applies it
-                        // to the picker immediately, so a color can be pasted from anywhere.
-                        val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
-                        var hexInput by remember { mutableStateOf(liveHex) }
-                        var hexFocused by remember { mutableStateOf(false) }
-                        // While the field is not focused it mirrors the colour picked on the
-                        // wheel; typing in it drives hue/saturation/brightness instead.
-                        LaunchedEffect(hexFocused, liveHex) {
-                            if (!hexFocused) hexInput = liveHex
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(customColor)
-                                    .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            OutlinedTextField(
-                                value = hexInput,
-                                onValueChange = { raw ->
-                                    val cleaned = raw.uppercase()
-                                        .filter { it.isDigit() || it in 'A'..'F' }
-                                        .take(6)
-                                    hexInput = cleaned
-                                    if (cleaned.length == 6) {
-                                        cleaned.toIntOrNull(16)?.let { rgb ->
-                                            val hsv = colorToHsv(opaqueRgb(rgb))
-                                            hue = hsv[0]
-                                            saturation = hsv[1]
-                                            brightness = hsv[2]
-                                        }
+                }
+                // The hex field and the button that saves the colour: UNDER the
+                // wheel, centred with it.
+                Column(
+                    Modifier.padding(top = 16.dp).width(WheelSize),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    // Live-updating HEX field (issue #61): typing a 6-digit value applies it
+                    // to the picker immediately, so a color can be pasted from anywhere.
+                    val liveHex = "%06X".format(java.util.Locale.US, colorToArgbInt(customColor) and 0xFFFFFF)
+                    var hexInput by remember { mutableStateOf(liveHex) }
+                    var hexFocused by remember { mutableStateOf(false) }
+                    // While the field is not focused it mirrors the colour picked on the
+                    // wheel; typing in it drives hue/saturation/brightness instead.
+                    LaunchedEffect(hexFocused, liveHex) {
+                        if (!hexFocused) hexInput = liveHex
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(customColor)
+                                .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), CircleShape),
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        OutlinedTextField(
+                            value = hexInput,
+                            onValueChange = { raw ->
+                                val cleaned = raw.uppercase()
+                                    .filter { it.isDigit() || it in 'A'..'F' }
+                                    .take(6)
+                                hexInput = cleaned
+                                if (cleaned.length == 6) {
+                                    cleaned.toIntOrNull(16)?.let { rgb ->
+                                        val hsv = colorToHsv(opaqueRgb(rgb))
+                                        hue = hsv[0]
+                                        saturation = hsv[1]
+                                        brightness = hsv[2]
                                     }
-                                },
-                                singleLine = true,
-                                isError = hexInput.length != 6,
-                                placeholder = { Text("#RRGGBB") },
-                                textStyle = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .width(150.dp)
-                                    .onFocusChanged { hexFocused = it.isFocused },
-                            )
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        Button(
-                            onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
-                            enabled = !alreadySaved,
-                        ) {
-                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text(Localization.get(language, "add_to_palette"))
-                        }
+                                }
+                            },
+                            singleLine = true,
+                            isError = hexInput.length != 6,
+                            placeholder = { Text("#RRGGBB") },
+                            textStyle = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .width(150.dp)
+                                .onFocusChanged { hexFocused = it.isFocused },
+                        )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { onAddCustomAccent(colorToArgbInt(customColor)) },
+                        enabled = !alreadySaved,
+                    ) {
+                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(Localization.get(language, "add_to_palette"))
                     }
                 }
             }
         }
-
-        Spacer(Modifier.height(36.dp))
     }
 }
 
 /** The colour wheel's diameter, and the height of the strip beside it. */
 private val WheelSize = 220.dp
 
-/** The width one of the strips beside the wheel takes, and the gap before it. */
+/** The width one of the strips beside the wheel takes. */
 private val StripSize = 20.dp
-private val StripGap = 14.dp
 
 /**
- * The picker column's width: the wheel, the brightness strip and the intensity
- * strip with the gaps between them, plus the width of the caption under the
- * intensity (the widest text in the column, which is what the strip is centred
- * in).
+ * The width of the caption under the intensity strip: the widest text beside
+ * the wheel, which is what that strip is centred in.
  */
 private val StripCaptionWidth = 92.dp
-private val PickerColumnWidth = WheelSize + StripGap + StripSize + StripGap + StripCaptionWidth
 
 /**
  * The colour wheel: hue around the rim, saturation from the centre out, both
@@ -637,6 +669,8 @@ private fun HsvColorWheel(
     Box(
         Modifier
             .size(WheelSize)
+            // The page's own 1 dp outline around the disc (`.md-picker__wheel`).
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
             .onSizeChanged { radiusPx = it.width / 2f }
             .pointerInput(Unit) {
                 fun pick(position: Offset) {
@@ -678,9 +712,14 @@ private fun HsvColorWheel(
                 radius = r,
                 center = middle,
             )
+            // The page's saturation ramp reaches fully transparent at 70 % of
+            // the radius (`radial-gradient(..., #fff 0%, transparent 70%)`), so
+            // the last third of the disc is the hue itself.
             drawCircle(
                 brush = Brush.radialGradient(
-                    colors = listOf(PaletteInk, PaletteInk.copy(alpha = 0f)),
+                    0f to PaletteInk,
+                    0.7f to PaletteInk.copy(alpha = 0f),
+                    1f to PaletteInk.copy(alpha = 0f),
                     center = middle,
                     radius = r,
                 ),
@@ -695,13 +734,21 @@ private fun HsvColorWheel(
                 x = middle.x + (r * saturation * cos(angle)).toFloat(),
                 y = middle.y + (r * saturation * sin(angle)).toFloat(),
             )
-            val markRadius = (r * 0.06f).coerceAtLeast(4f)
-            drawCircle(PaletteInk, radius = markRadius, center = marker)
+            // The page's marker: a 16 dp ring of white, 2 dp thick, with the
+            // colour being picked showing through it and a soft dark edge so a
+            // white ring still reads on a white part of the disc.
+            val markRadius = 8.dp.toPx() - 1.dp.toPx()
             drawCircle(
-                PaletteBlack.copy(alpha = 0.55f),
+                color = PaletteInk,
                 radius = markRadius,
                 center = marker,
-                style = Stroke(width = 2f),
+                style = Stroke(width = 2.dp.toPx()),
+            )
+            drawCircle(
+                color = PaletteBlack.copy(alpha = 0.28f),
+                radius = markRadius + 1.dp.toPx(),
+                center = marker,
+                style = Stroke(width = 1.dp.toPx()),
             )
         }
     }
@@ -724,7 +771,9 @@ private fun BrightnessStrip(
         modifier = Modifier
             .width(StripSize)
             .height(WheelSize)
-            .clip(MaterialTheme.shapes.small)
+            // The page's pill, outlined by 1 dp of `outlineVariant`
+            // (`.md-picker__strip`).
+            .clip(CircleShape)
             // The bottom of a brightness ramp is the theme's scrim, not a literal
             // black: it is the same ink in every scheme, and it is the role M3
             // provides for "the darkest thing on this surface".
@@ -733,6 +782,7 @@ private fun BrightnessStrip(
                     listOf(hsvToColor(hue, saturation, 1f), MaterialTheme.colorScheme.scrim),
                 ),
             )
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
             .onSizeChanged { stripHeightPx = it.height.toFloat() }
             .pointerInput(stripHeightPx) {
                 fun pick(y: Float) = onBrightnessChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
@@ -756,8 +806,12 @@ private fun BrightnessStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
-                .shadow(2.dp, MaterialTheme.shapes.extraSmall),
+                // The page's thumb: a 10 dp pill with a 2 dp white border and a
+                // small shadow, drawn on the strip and clipped by its ends
+                // (`.md-picker__thumb`). White is `mode-light`, an ink the page
+                // fixes because the marker sits on an arbitrary colour.
+                .border(2.dp, PaletteInk, CircleShape)
+                .shadow(2.dp, CircleShape),
         )
     }
 }
@@ -786,8 +840,9 @@ private fun IntensityStrip(
         modifier = Modifier
             .width(StripSize)
             .height(WheelSize)
-            .clip(MaterialTheme.shapes.small)
+            .clip(CircleShape)
             .background(Brush.verticalGradient(listOf(accent, adjustAccentIntensity(accent, 0f))))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
             .onSizeChanged { stripHeightPx = it.height.toFloat() }
             .pointerInput(stripHeightPx) {
                 fun pick(y: Float) = onIntensityChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
@@ -824,12 +879,22 @@ private fun IntensityStrip(
                 .offset(y = thumbY - 5.dp)
                 .height(10.dp)
                 .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
-                .shadow(2.dp, MaterialTheme.shapes.extraSmall),
+                .border(2.dp, PaletteInk, CircleShape)
+                .shadow(2.dp, CircleShape),
         )
     }
 }
 
+/**
+ * One of the four mode circles: the page's `.md-mode`.
+ *
+ * A 64 dp circle filled with the scheme it stands for - the split for the
+ * system's own choice, white for light, the near-black for dark, true black for
+ * pure black - with `brightness_auto` on the split so the system circle says it
+ * follows the system. Selection is the page's own: the border turns primary, a
+ * 3 dp primary ring stands outside it and the circle grows by 4 %, while the
+ * label takes the primary colour and a heavier weight.
+ */
 @Composable
 private fun ThemeModeCircle(
     language: String,
@@ -840,82 +905,118 @@ private fun ThemeModeCircle(
     isAuto: Boolean,
     onClick: () -> Unit,
 ) {
-    val innerColor = when {
-        pureBlack -> PaletteBlack
-        previewDark -> MaterialTheme.colorScheme.surface
-        else -> PaletteInk
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.04f else 1f,
+        animationSpec = tween(
+            durationMillis = Animations.ms(Motion.SHORT4),
+            easing = Animations.emphasizedDecelerate,
+        ),
+        label = "themeModeScale",
+    )
+    val fill = when {
+        // The page's `--md-comp-mode-split` is a hard split, not a fade: a conic
+        // whose white half is the right one, so the two schemes read as a
+        // half-and-half disc. Compose's sweep starts at 3 o'clock, which puts the
+        // white half at 270..90 degrees - the right side - with the two stops
+        // 0.25 apart at each edge.
+        isAuto -> Brush.sweepGradient(
+            0f to PaletteInk,
+            0.249f to PaletteInk,
+            0.25f to ComponentDark,
+            0.749f to ComponentDark,
+            0.75f to PaletteInk,
+            1f to PaletteInk,
+        )
+        pureBlack -> SolidColor(PaletteBlack)
+        previewDark -> SolidColor(ComponentDark)
+        else -> SolidColor(PaletteInk)
     }
+    val ring = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             Modifier
                 .size(64.dp)
-                .clip(MaterialTheme.shapes.large)
-                .background(
-                    if (selected) MaterialTheme.colorScheme.surfaceVariant
-                    else MaterialTheme.colorScheme.surfaceContainerHigh,
-                )
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .drawBehind {
+                    if (selected) {
+                        drawCircle(
+                            color = ring,
+                            radius = size.minDimension / 2f + 3.dp.toPx(),
+                        )
+                    }
+                }
+                .clip(CircleShape)
+                .background(fill)
                 .border(
-                    width = if (selected) 2.dp else 1.dp,
-                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                    shape = MaterialTheme.shapes.large,
+                    width = 2.dp,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.outline
+                    },
+                    shape = CircleShape,
                 )
                 .clickable(onClick = onClick),
             contentAlignment = Alignment.Center,
         ) {
-            Box(
-                Modifier
-                    .size(36.dp)
-                    .clip(CircleShape)
-                    .background(innerColor)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = CircleShape,
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (isAuto) {
-                    Icon(
-                        Icons.Filled.Palette,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.size(16.dp),
-                    )
-                } else if (selected) {
-                    Icon(
-                        Icons.Filled.Check,
-                        contentDescription = null,
-                        tint = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                }
+            if (isAuto) {
+                Icon(
+                    Icons.Filled.BrightnessAuto,
+                    contentDescription = null,
+                    tint = ComponentModeInk,
+                    modifier = Modifier.size(22.dp),
+                )
             }
         }
         Text(
             label,
-            style = MaterialTheme.typography.labelMedium,
+            // The page's label inherits the page font (14 px, `bodyMedium`) and
+            // only takes a heavier weight when the circle is selected.
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 6.dp),
+            modifier = Modifier.padding(top = 8.dp),
         )
     }
 }
 
+/**
+ * One accent circle: the page's `.md-swatch`.
+ *
+ * 40 dp, a 1 dp border of the surface's own ink at a fifth of its strength, and
+ * the page's selection ring - 3 dp of surface and then 6 dp of primary, drawn
+ * outside the 40 dp box so the row does not move when a colour is chosen. The
+ * check sits on the fill's own ink, which the scheme supplies, so a pale accent
+ * cannot hide its own mark.
+ */
 @Composable
-private fun AccentSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
+private fun AccentSwatch(
+    fill: Color,
+    ink: Color,
+    selected: Boolean,
+    mark: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    val ring = MaterialTheme.colorScheme.primary
+    val page = MaterialTheme.colorScheme.surface
     Box(
         Modifier
-            .size(36.dp)
+            .size(40.dp)
+            .drawBehind {
+                if (selected) {
+                    val radius = size.minDimension / 2f
+                    drawCircle(ring, radius = radius + 6.dp.toPx())
+                    drawCircle(page, radius = radius + 3.dp.toPx())
+                }
+            }
             .clip(CircleShape)
-            .then(
-                if (color == Color.Transparent) {
-                    Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                } else {
-                    Modifier.background(color)
-                },
-            )
+            .background(fill)
             .border(
-                width = if (selected) 3.dp else 1.dp,
-                color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outlineVariant,
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
                 shape = CircleShape,
             )
             .clickable(onClick = onClick),
@@ -925,15 +1026,93 @@ private fun AccentSwatch(color: Color, selected: Boolean, onClick: () -> Unit) {
             Icon(
                 Icons.Filled.Check,
                 contentDescription = null,
-                tint = if (color == Color.Transparent) MaterialTheme.colorScheme.onSurface else contrastInk(color),
-                modifier = Modifier.size(16.dp),
-            )
-        } else if (color == Color.Transparent) {
-            Icon(
-                Icons.Filled.Palette,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = ink,
                 modifier = Modifier.size(18.dp),
+            )
+        } else {
+            mark?.invoke()
+        }
+    }
+}
+
+/**
+ * The palette's grid: the page's `repeat(auto-fill, minmax(44px, 1fr))`
+ * (`.md-palette`).
+ *
+ * A fixed 12 dp gap is not the same grid: the page fits as many 44 dp columns as
+ * the width allows, stretches them to share it, and stands each 40 dp circle at
+ * the left of its own cell, so the pitch follows the window instead of staying
+ * at 40 + 12. A FlowRow would pack the circles at one fixed gap and would also
+ * let one more fit than the page's own column count, which is why this places
+ * them on the page's cells instead. The 12 dp between rows is the page's row gap.
+ */
+@Composable
+private fun PaletteGrid(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val gap = 12.dp.roundToPx()
+        val minCell = 44.dp.roundToPx()
+        val side = 40.dp.roundToPx()
+        val width = constraints.maxWidth
+        val columns = ((width + gap) / (minCell + gap)).coerceAtLeast(1)
+        // Each cell shares the row, exactly as `1fr` does.
+        val cell = (width - gap * (columns - 1)).toFloat() / columns
+        val placeables = measurables.map { it.measure(Constraints.fixed(side, side)) }
+        val rows = if (placeables.isEmpty()) 0 else (placeables.size + columns - 1) / columns
+        val height = (rows * side + (rows - 1).coerceAtLeast(0) * gap).coerceAtLeast(0)
+        layout(width, height) {
+            placeables.forEachIndexed { index, placeable ->
+                val column = index % columns
+                val row = index / columns
+                placeable.place((column * (cell + gap)).toInt(), row * (side + gap))
+            }
+        }
+    }
+}
+
+/**
+ * The custom-colour circle: the page's `.md-swatch--custom`.
+ *
+ * A spectrum disc with a dark hub and a `+` on it, in every state - the way into
+ * the wheel never changes shape once a colour is in use - and the same selection
+ * ring as the other circles while the wheel is open.
+ */
+@Composable
+private fun CustomColorSwatch(selected: Boolean, onClick: () -> Unit) {
+    val ring = MaterialTheme.colorScheme.primary
+    val page = MaterialTheme.colorScheme.surface
+    Box(
+        Modifier
+            .size(40.dp)
+            .drawBehind {
+                if (selected) {
+                    val radius = size.minDimension / 2f
+                    drawCircle(ring, radius = radius + 6.dp.toPx())
+                    drawCircle(page, radius = radius + 3.dp.toPx())
+                }
+            }
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            drawCircle(
+                brush = Brush.sweepGradient(colors = HueSpectrum, center = center),
+                radius = size.minDimension / 2f,
+                center = center,
+            )
+        }
+        Box(
+            Modifier
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(ComponentDark),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Add,
+                contentDescription = null,
+                tint = PaletteInk,
+                modifier = Modifier.size(16.dp),
             )
         }
     }
@@ -960,7 +1139,9 @@ private fun ThemePreviewCard(modifier: Modifier = Modifier) {
                     Modifier
                         .weight(1f)
                         .height(14.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
+                        // The page's own pill: `border-radius: full` on
+                        // `.md-preview__bar`.
+                        .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceContainerHigh),
                 )
                 Spacer(Modifier.width(12.dp))

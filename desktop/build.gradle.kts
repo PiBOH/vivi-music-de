@@ -1362,6 +1362,32 @@ tasks.register<JavaExec>("appearanceOrderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless check of the Theme & Colors screen against the preview:
+ *
+ *     ./gradlew :desktop:themeOrderCheck
+ *
+ * The preview's `theme` list is one column - the title, the 140 dp live preview
+ * card, "Theme mode" with the four 64 dp circles, "Accent color" with the
+ * palette, then the picker whose head is "Custom color", whose body is the
+ * 220 dp wheel with its 20 dp brightness strip level and 32 dp away, and whose
+ * foot is the hex field with *Add to palette*. This composes the real
+ * `SettingsThemeScreen`, reads its semantics tree in document order and renders
+ * it headlessly to measure what the page's CSS sizes: the circles, the 40 dp
+ * palette discs on the page's own `minmax(44px, 1fr)` pitch, the wheel and its
+ * strip, and the 16/12/8 dp between the blocks; the arrival frame must not paint
+ * the picker, which is a group on the page and fades up.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ThemeOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("themeOrderCheck") {
+    group = "verification"
+    description = "Checks that the Theme & Colors screen is the preview's: column, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ThemeOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("dropdownPositionCheck") {
     group = "verification"
     description = "Opens a settings dropdown and reads where its menu lands against the row"

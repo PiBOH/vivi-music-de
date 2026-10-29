@@ -34,8 +34,9 @@ import java.io.File
  *    down in the middle, black at the bottom, with the accent intensity as the
  *    strip to its RIGHT (the accent at the top, the same colour at 0 % at the
  *    bottom) - the control the owner moved beside the wheel;
- *  * the palette is a grid of round swatches in the LEFT column, all of them left
- *    of the wheel, and the hex field's own swatch is drawn UNDER the wheel;
+ *  * the palette is a grid of round swatches ABOVE the wheel, in the same column
+ *    (the page's own order: "Accent color", the circles, then the wheel under
+ *    them), and the hex field's own swatch is drawn UNDER the wheel;
  *  * no horizontal HSV bar is left on the screen (a wide, thin chromatic band).
  *
  * PNGs of both renders are written under `.ignore/colorwheel/`.
@@ -141,18 +142,32 @@ object ColorWheelRenderCheck {
         }
 
         // 5. The brightness strip sits beside the wheel: full colour at its top,
-        //    half way down in the middle, black at the bottom.
-        // Four px below the top, because the thumb sitting at full brightness
-        // is drawn as a white border right at the top of the strip.
-        val stripX = wheel.x2 + 24
-        val stripTop = sample(greenShot, stripX, wheel.y1 + 16)
-        val stripMiddle = sample(greenShot, stripX, cy)
-        println("strip: top=${fmt(stripTop)} middle=${fmt(stripMiddle)}")
-        if (!(stripTop[1] > 200 && stripTop[0] < 100 && stripTop[2] < 100)) {
-            failures += "the strip's top is ${fmt(stripTop)}, expected the colour at full brightness"
-        }
-        if (!(stripMiddle[1] in 90..180 && stripMiddle[0] < 90 && stripMiddle[2] < 90)) {
-            failures += "the strip's middle is ${fmt(stripMiddle)}, expected half the brightness"
+        //    half way down in the middle, black at the bottom. Both strips are
+        //    picked from the picture as the narrow vertical chromatic bands right
+        //    of the wheel, so neither sample depends on a fixed offset: the strip
+        //    is centred in its own column and the pill's white top edge moves
+        //    with the rounded ends.
+        val bandsRight = blobs(greenShot)
+            .filter { it.width in 16..26 && it.height >= 100 && it.x1 > wheel.x2 }
+            .sortedBy { it.x1 }
+        println("strips right of the wheel: " + bandsRight.joinToString { "${it.width}x${it.height}px at ${it.x1}" })
+        val brightnessBand = bandsRight.firstOrNull()
+        val intensityBand = bandsRight.getOrNull(1)
+        if (brightnessBand == null) {
+            failures += "no brightness strip was drawn beside the wheel"
+        } else {
+            val stripX = (brightnessBand.x1 + brightnessBand.x2) / 2
+            // Clear of the thumb, which sits at the strip's very top at full
+            // brightness and is drawn as a 2 dp white border.
+            val stripTop = sample(greenShot, stripX, brightnessBand.y1 + 12)
+            val stripMiddle = sample(greenShot, stripX, brightnessBand.y1 + brightnessBand.height / 2)
+            println("strip: top=${fmt(stripTop)} middle=${fmt(stripMiddle)}")
+            if (!(stripTop[1] > 200 && stripTop[0] < 100 && stripTop[2] < 100)) {
+                failures += "the strip's top is ${fmt(stripTop)}, expected the colour at full brightness"
+            }
+            if (!(stripMiddle[1] in 90..180 && stripMiddle[0] < 90 && stripMiddle[2] < 90)) {
+                failures += "the strip's middle is ${fmt(stripMiddle)}, expected half the brightness"
+            }
         }
 
         // 6. The three HSV bars are gone: a wide, thin band may still exist (the
@@ -173,23 +188,15 @@ object ColorWheelRenderCheck {
         // 7. The accent intensity is the strip to the RIGHT of the brightness
         //    strip: the accent itself at the top and the same colour at 0 % at the
         //    bottom, which is the gradient the removed row of preview circles used
-        //    to carry. The two strips are picked from the picture as the narrow
-        //    vertical chromatic bands right of the wheel - the intensity one is
-        //    centred in the column of its own caption, so its x is not a fixed
-        //    offset from the wheel. Sampling is clear of the ticks and the thumb.
-        val bandsRight = blobs(greenShot)
-            .filter { it.width in 16..26 && it.height >= 100 && it.x1 > wheel.x2 }
-            .sortedBy { it.x1 }
-        println("strips right of the wheel: " + bandsRight.joinToString { "${it.width}x${it.height}px at ${it.x1}" })
-        val intensityBand = bandsRight.lastOrNull()
-        if (bandsRight.size < 2 || intensityBand == null) {
+        //    to carry. Sampling is clear of the ticks and the thumb.
+        if (intensityBand == null) {
             failures += "expected two strips beside the wheel (brightness + intensity), found ${bandsRight.size}"
         } else {
             val intensityX = (intensityBand.x1 + intensityBand.x2) / 2
-            // The strip is top-aligned with the wheel and as tall as it, so the two
-            // samples are taken off the wheel: clear of the ticks (0, 12, 23, ...)
-            // and of the thumb, which sits at the top at 100 %.
-            val intensityTop = sample(greenShot, intensityX, wheel.y1 + 20)
+            // The strip is top-aligned with the wheel and as tall as it, so the
+            // bottom is read off the wheel: the gradient ends achromatic there,
+            // which is why the band itself stops short of the strip's end.
+            val intensityTop = sample(greenShot, intensityX, intensityBand.y1 + 12)
             val intensityBottom = sample(greenShot, intensityX, wheel.y1 + WHEEL_DP - 7)
             println("intensity: top=${fmt(intensityTop)} bottom=${fmt(intensityBottom)}")
             if (!(intensityTop[1] > 200 && intensityTop[0] < 100 && intensityTop[2] < 100)) {
@@ -202,15 +209,16 @@ object ColorWheelRenderCheck {
             }
         }
 
-        // 8. The palette is a grid of round swatches in the LEFT column: the picker
-        //    took the right one, so every swatch must stay left of the wheel.
+        // 8. The palette is a grid of round swatches ABOVE the wheel and in its
+        //    own column: the page's column is "Accent color", the circles, then
+        //    the wheel under them.
         val swatches = blobs(greenShot).filter {
-            it.width in 32..48 && it.height in 32..48 && it.x2 < wheel.x1 &&
+            it.width in 32..48 && it.height in 32..48 && it.y2 < wheel.y1 &&
                 kotlin.math.abs(it.width - it.height) <= 4
         }
-        println("palette: ${swatches.size} round swatch(es) left of the wheel")
+        println("palette: ${swatches.size} round swatch(es) above the wheel")
         if (swatches.size < 8) {
-            failures += "only ${swatches.size} round palette swatch(es) were drawn left of the wheel"
+            failures += "only ${swatches.size} round palette swatch(es) were drawn above the wheel"
         }
 
         // 9. The hex field and *Add to palette* are UNDER the wheel: the colour
@@ -229,8 +237,8 @@ object ColorWheelRenderCheck {
             println()
             println("OK: the wheel is round, the hue runs around the rim, the saturation from")
             println("    the centre, the marker follows the accent, the brightness strip and the")
-            println("    intensity strip are beside it, the palette is a grid of swatches in the")
-            println("    left column and the hex field's swatch is under the wheel")
+            println("    intensity strip are beside it, the palette is a grid of swatches above the")
+            println("    wheel and the hex field's swatch is under it")
             return
         }
         println()

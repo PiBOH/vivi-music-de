@@ -472,6 +472,23 @@ val PaletteInk = Color(0xFFFFFFFF)
 /** Black: a scrim over an artwork, the "pure black" surface, the QR ink. */
 val PaletteBlack = Color(0xFF000000)
 
+/**
+ * The near-black the theme screen's circles are built from: the **Dark** mode
+ * circle's fill, the split of the **System** circle, and the hub of the custom
+ * colour wheel. It is the page's own `#1d1b20` (`--md-comp-mode-dark` and
+ * `--md-comp-hub` in `css/tokens.css`), a surface that is black in spirit but
+ * still carries a little of the scheme's violet, so `PaletteBlack` cannot stand
+ * in for it.
+ */
+val ComponentDark = Color(0xFF1D1B20)
+
+/**
+ * The ink on the **System** mode circle's split fill: neither white nor black
+ * reads on both halves, so the page draws `brightness_auto` in a mid grey
+ * (`--md-comp-mode-ink`, `#7a7a7a`) and so does this.
+ */
+val ComponentModeInk = Color(0xFF7A7A7A)
+
 /** The splash backdrop, before any theme exists. */
 val SplashBackdrop = Color(0xFF151519)
 val SplashGlow = Color(0xFF100D14)
