@@ -221,15 +221,32 @@ object SystemMonitor {
 
     private var job: Job? = null
 
+    /**
+     * How often the OS network counters are read.
+     *
+     * Reading them means launching a process (see [windowsNetTotals]), and the
+     * only consumers are the dev panel and the title bar. At the 2 s cadence of
+     * the rest of the sample that was a PowerShell process every two seconds for
+     * as long as the app ran, i.e. a constant drain of its own (a few percent of
+     * a core, plus the antivirus pass on every launch). The speed is still exact:
+     * it is the delta over the time between two readings.
+     */
+    private const val NET_SAMPLE_MS = 10_000L
+
     private var lastRx = -1L
     private var lastTx = -1L
-    private var lastSampleMs = 0L
+    private var lastNetSampleMs = 0L
+    private var netDownBps = -1L
+    private var netUpBps = -1L
+    private var netDownTotal = -1L
+    private var netUpTotal = -1L
 
     fun start() {
         if (job != null) return
         job = scope.launch {
             while (true) {
-                sample()
+                // Off the Default pool: a sample can launch a process.
+                kotlinx.coroutines.withContext(Dispatchers.IO) { sample() }
                 delay(2000L)
             }
         }
@@ -265,20 +282,24 @@ object SystemMonitor {
         val processRam = readProcessRam()
         val threads = threadBean.threadCount
 
-        val (rx, tx) = readNetworkTotals()
+        // The OS counters are read on their own, slower cadence: see
+        // NET_SAMPLE_MS. Between two readings the last values are reported.
         val now = System.currentTimeMillis()
-        var downBps = -1L
-        var upBps = -1L
-        if (lastRx >= 0 && rx >= 0 && tx >= 0 && now > lastSampleMs) {
-            val dtSec = (now - lastSampleMs) / 1000.0
-            if (dtSec > 0) {
-                downBps = ((rx - lastRx) / dtSec).toLong().coerceAtLeast(0)
-                upBps = ((tx - lastTx) / dtSec).toLong().coerceAtLeast(0)
+        if (now - lastNetSampleMs >= NET_SAMPLE_MS) {
+            val (rx, tx) = readNetworkTotals()
+            if (lastRx >= 0 && rx >= 0 && tx >= 0 && now > lastNetSampleMs) {
+                val dtSec = (now - lastNetSampleMs) / 1000.0
+                if (dtSec > 0) {
+                    netDownBps = ((rx - lastRx) / dtSec).toLong().coerceAtLeast(0)
+                    netUpBps = ((tx - lastTx) / dtSec).toLong().coerceAtLeast(0)
+                }
             }
+            lastRx = rx
+            lastTx = tx
+            netDownTotal = rx
+            netUpTotal = tx
+            lastNetSampleMs = now
         }
-        lastRx = rx
-        lastTx = tx
-        lastSampleMs = now
 
         _stats.value = SystemStats(
             cpuProcess = cpuProcess,
@@ -289,10 +310,10 @@ object SystemMonitor {
             sysRamTotalBytes = ramTotal,
             processRamBytes = processRam,
             threadCount = threads,
-            netDownBps = downBps,
-            netUpBps = upBps,
-            netDownTotalBytes = rx,
-            netUpTotalBytes = tx,
+            netDownBps = netDownBps,
+            netUpBps = netUpBps,
+            netDownTotalBytes = netDownTotal,
+            netUpTotalBytes = netUpTotal,
             availableProcessors = runtime.availableProcessors(),
             uptimeMs = runtimeBean.uptime,
             osName = System.getProperty("os.name").orEmpty(),
@@ -388,12 +409,39 @@ object SystemMonitor {
         return rx to tx
     }
 
+    /**
+     * Received/sent bytes on Windows.
+     *
+     * `netstat -e` prints localized LABELS on non-English Windows ("Byte",
+     * "Ricevuti"/"Trasmessi"), which is why matching the English "Bytes" row left
+     * the stats empty once (1.33.109). The numbers themselves are not localized
+     * and the first row that carries two of them is always bytes, received then
+     * sent, so they are read by POSITION here. That costs a few milliseconds,
+     * where the PowerShell pipeline this replaces cost a whole process launch
+     * (and its antivirus pass) on every sample.
+     *
+     * The PowerShell reader stays as the fallback for a machine whose `netstat`
+     * prints the counts in another shape (thousands separators, a missing
+     * `netstat.exe`), so the stats can never be lost altogether.
+     */
     private fun windowsNetTotals(): Pair<Long, Long> {
-        // `netstat -e` labels are localized on non-English Windows ("Byte" /
-        // "Ricevuti"/"Trasmessi"), so matching the English "Bytes" row silently
-        // failed and the network stats stayed "—". Get-NetAdapterStatistics
-        // exposes culture-invariant property names, so sum ReceivedBytes /
-        // SentBytes across all adapters via PowerShell instead.
+        val fast = runCatching {
+            val out = ProcessBuilder("netstat.exe", "-e").redirectErrorStream(true)
+                .start().inputStream.bufferedReader().readText()
+            val row = out.lineSequence()
+                .map { it.trim().split(Regex("\\s+")) }
+                .firstOrNull { fields ->
+                    fields.size >= 2 && fields.takeLast(2).all { tok -> tok.isNotEmpty() && tok.all { c -> c in '0'..'9' } }
+                }
+            if (row != null) row[row.size - 2].toLong() to row[row.size - 1].toLong() else null
+        }.getOrNull()
+        if (fast != null && fast.first >= 0 && fast.second >= 0) return fast
+        return windowsNetTotalsViaPowerShell()
+    }
+
+    private fun windowsNetTotalsViaPowerShell(): Pair<Long, Long> {
+        // Get-NetAdapterStatistics exposes culture-invariant property names, so
+        // ReceivedBytes / SentBytes can be summed across all adapters.
         val script = """
             ${'$'}ErrorActionPreference = 'Stop'
             (Get-NetAdapterStatistics -ErrorAction SilentlyContinue | Measure-Object -Property ReceivedBytes, SentBytes -Sum | ForEach-Object { [long]${'$'}_.Sum }) -join ' '

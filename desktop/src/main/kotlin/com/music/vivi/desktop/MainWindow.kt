@@ -76,6 +76,22 @@ private fun configureRenderApi() {
     System.setProperty("skiko.renderApi", "SOFTWARE")
 }
 
+/**
+ * The startup stages already written to `app.log`, so a recomposition of the app
+ * scope cannot write one twice (`startupStage`, in `main`).
+ */
+private val startupStagesLogged: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+/**
+ * `DetailedStartupLogs` read once per process.
+ *
+ * [startupStage] runs from the composable body of `main`, i.e. on every
+ * recomposition of the app scope, and it used to consult the settings store
+ * before deciding that it had nothing to write. One per process is what the
+ * option means anyway.
+ */
+private val startupLogEnabled: Boolean by lazy { DesktopSettings.load().detailedStartupLogs }
+
 /** Marker written by the crash fallback (ErrorDialog.kt) after a Skiko GL crash. */
 private fun glSoftwareMarkerFile(): java.io.File =
     java.io.File(System.getProperty("user.home"), ".vivimusic/.gl-software")
@@ -149,7 +165,14 @@ fun main(args: Array<String>) {
         // Gated on DetailedStartupLogs (Developer options, off by default): with
         // it off these four lines are not written at all, so a normal launch has
         // a clean log.
-        if (!DesktopSettings.load().detailedStartupLogs) return
+        if (!startupLogEnabled) return
+        // One line per stage for the whole process. The body this is called from
+        // is a composable, and it recomposes whenever anything it reads changes
+        // (the dev title bar's stats, a settings revision, the theme), so it used
+        // to write the same four "startup" lines again on every recomposition:
+        // one session logged 248 of them in twelve minutes, which is both a log
+        // nobody can read and a file append on the UI thread each time.
+        if (!startupStagesLogged.add(name)) return
         AppLog.log("app", "startup: $name at +${System.currentTimeMillis() - startupAt}ms")
     }
 
@@ -160,16 +183,25 @@ fun main(args: Array<String>) {
     // stored by the app), create it when it is missing, and watch it for edits
     // made while the app runs. It has to run before the first load of the
     // session, which is why it is the very first thing here.
-    SettingsFile.start()
-
-    val initialSettings = DesktopSettings.load()
-    startupStage("settings loaded")
+    //
+    // Everything in this body runs again on every recomposition of the app scope,
+    // and something always changes (the dev title bar's system stats, a settings
+    // revision, a theme change). The startup work below is a side effect, so each
+    // piece is wrapped in `remember`: a start, a restore or a thread does not
+    // belong on the path a frame takes, and the innertube warmup used to start a
+    // NEW thread on every recomposition.
+    remember { SettingsFile.start() }
 
     // Bumped whenever settings.json is edited from outside the app. Every option
     // read from the store uses it as a remember key (`settingsFileRevision()`),
     // so a hand-edited file takes effect immediately instead of at the next
     // restart.
     val settingsRevision = settingsFileRevision()
+
+    // Re-read only when the file really changed: a plain call in this body parsed
+    // the settings again on every recomposition.
+    val initialSettings = remember(settingsRevision) { DesktopSettings.load() }
+    startupStage("settings loaded")
 
     // Configure the shared YouTube client exactly like the Android App.onCreate()
     // does, honouring the saved content language/region (or the OS default).
@@ -185,15 +217,17 @@ fun main(args: Array<String>) {
     // Nothing before the first frame needs a request, so the client is built on
     // its own thread; a request that arrives first simply waits on the class
     // initialisation, which the JVM serialises for us.
-    Thread({ runCatching { YouTube.locale = startupLocale } }, "vivi-innertube-warmup").apply {
-        isDaemon = true
-        start()
+    remember(startupLocale) {
+        Thread({ runCatching { YouTube.locale = startupLocale } }, "vivi-innertube-warmup").apply {
+            isDaemon = true
+            start()
+        }
     }
 
     // The shared Compose strings (the text-selection context menu above all)
     // localise from the platform locale, not from the app's own table: on an
     // Italian machine an English build showed "Copia". Follow the app language.
-    Languages.applyJvmLocale(initialSettings.language)
+    remember(initialSettings.language) { Languages.applyJvmLocale(initialSettings.language) }
 
     // The options that are cached outside Compose follow an edit of the file too.
     LaunchedEffect(settingsRevision) {
@@ -208,21 +242,27 @@ fun main(args: Array<String>) {
         // platform locale too, so the right-click menu follows it.
         Languages.applyJvmLocale(current.language)
     }
-    YouTubeExtractor.cacheDir = File(System.getProperty("user.home"), ".vivimusic/cache").apply { mkdirs() }
-    LoginManager.restore()
-    DesktopSettings.ensureFirstLaunchDate()
+    remember {
+        YouTubeExtractor.cacheDir = File(System.getProperty("user.home"), ".vivimusic/cache").apply { mkdirs() }
+        LoginManager.restore()
+        DesktopSettings.ensureFirstLaunchDate()
+    }
     // Restore the preferred audio output device (Java Sound mixer). NOT here:
     // enumerating the Java Sound mixers is a device round-trip that nothing
     // before the first play needs, and it used to sit on the way to the first
     // frame. The effect below still runs it before any audio line is opened.
     LaunchedEffect(Unit) { runCatching { AudioOutput.load() } }
-    // Restore the global UI animation speed.
-    Animations.load()
-    // Restore the content filters (explicit/video/Shorts).
-    ContentFilters.load()
-    // Dev tools are non-critical: never let their initialization crash the app
-    // at startup (which the jpackage launcher reports as "Failed to launch JVM").
-    runCatching { DeveloperOptions.load() }
+    // Restore the global UI animation speed, the content filters and the dev
+    // tools. Once, not once per recomposition: each of these reads the settings
+    // store, and `Animations`/`ContentFilters` are what every animated surface
+    // reads while it draws.
+    remember {
+        Animations.load()
+        ContentFilters.load()
+        // Dev tools are non-critical: never let their initialization crash the app
+        // at startup (which the jpackage launcher reports as "Failed to launch JVM").
+        runCatching { DeveloperOptions.load() }
+    }
     startupStage("cached options loaded")
 
     // Bootup speed: the settings file is parsed exactly ONCE (initialSettings)
@@ -310,18 +350,17 @@ fun main(args: Array<String>) {
         }
     }
 
-    // Live window title: shows CPU/RAM when dev options are on and either the
-    // "show in title bar" toggle is set or the display mode is "title bar only".
-    val devTitleEnabled by DeveloperOptions.enabled.collectAsState()
-    val devTitleVisible by DeveloperOptions.showInTitleBar.collectAsState()
-    val devMode by DeveloperOptions.mode.collectAsState()
-    val titleStats by SystemMonitor.stats.collectAsState()
-    val windowTitle = buildString {
-        append("VIVI Music — desktop")
-        if (devTitleEnabled && (devTitleVisible || devMode == DevToolsMode.TITLE_BAR)) {
-            append(titleStats.titleBarText())
-        }
-    }
+    // The window title is deliberately NOT built from Compose state here.
+    //
+    // The dev title bar appends live CPU/RAM, and this body hosts the entire app:
+    // reading the 2-second stats snapshot up here re-executed the whole UI tree
+    // on that beat (one exported session logged 248 of them in twelve minutes,
+    // every one of them re-running the sidebar, the open screen and the player),
+    // which is what made the app feel heavy, most of all with animations on.
+    // The live part is written on the AWT frame directly instead, off the
+    // composition (see `LaunchedEffect(frameWindow)` below); the composition only
+    // ever sees the constant base title.
+    val windowTitle = "VIVI Music — desktop"
 
     var isFullscreen by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().isFullscreen) }
     // Native OS title bar vs VIVI's custom one (window chrome is fixed at
@@ -373,6 +412,33 @@ fun main(args: Array<String>) {
     ) {
         val frameWindow = window
         awtWindowRef[0] = frameWindow
+
+        // The dev title bar's live suffix, outside the composition: one collector
+        // for its four inputs, and a cheap re-assert loop so a title Compose writes
+        // back from the `title` parameter (it re-applies it on every recomposition
+        // of this call site) is corrected a few hundred milliseconds later instead
+        // of staying on screen until the next stats tick.
+        LaunchedEffect(frameWindow) {
+            var title = windowTitle
+            launch {
+                kotlinx.coroutines.flow.combine(
+                    DeveloperOptions.enabled,
+                    DeveloperOptions.showInTitleBar,
+                    DeveloperOptions.mode,
+                    SystemMonitor.stats,
+                ) { enabled, inTitleBar, mode, stats ->
+                    if (enabled && (inTitleBar || mode == DevToolsMode.TITLE_BAR)) {
+                        windowTitle + stats.titleBarText()
+                    } else {
+                        windowTitle
+                    }
+                }.collect { title = it }
+            }
+            while (true) {
+                if (frameWindow.title != title) frameWindow.title = title
+                kotlinx.coroutines.delay(400L)
+            }
+        }
 
         // The window wears the app's own mark. The packaged Windows and macOS
         // bundles get it from the launcher, but a Linux launcher has nothing to

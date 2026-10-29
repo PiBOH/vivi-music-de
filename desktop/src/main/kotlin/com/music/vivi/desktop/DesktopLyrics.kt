@@ -196,7 +196,20 @@ object DesktopLyrics {
                         AppLog.log("lyrics", "  $name: plain fallback kept — hunting for synced lyrics")
                     }
                 }
-                .onFailure { AppLog.log("lyrics", "  $name: ${it.message} for '$title'") }
+                .onFailure { error ->
+                    // A provider that answers with a web page instead of JSON
+                    // (blocked, rate limited, a maintenance page) makes the
+                    // parser report the markup itself — "Unexpected JSON token
+                    // ... but had '<' instead at path: $" followed by the HTML
+                    // dump. Say what actually happened, without the body.
+                    val why = error.message.orEmpty()
+                    val readable = if (why.contains("but had '<' instead") || why.contains("<html")) {
+                        "answered with an HTML page instead of JSON (blocked or rate limited)"
+                    } else {
+                        why
+                    }
+                    AppLog.log("lyrics", "  $name: $readable for '$title'")
+                }
         }
 
         // No source had timestamps: use the best plain text we found.

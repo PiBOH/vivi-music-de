@@ -3541,15 +3541,23 @@ fun Sidebar(
                         val localNames = remember(activeLocalPlaylists) {
                             activeLocalPlaylists.map { it.name.trim().lowercase() }.toSet()
                         }
-                        val online = onlinePlaylists
-                            .distinctBy { it.id }
-                            .filterNot { it.id in localAccountIds || it.title.trim().lowercase() in localNames }
-                        if (onlinePlaylists.isNotEmpty() && online.size != onlinePlaylists.size) {
-                            AppLog.log(
-                                "playlists",
-                                "sidebar: ${onlinePlaylists.size} account playlist(s) listed, " +
-                                    "${onlinePlaylists.size - online.size} already in the local library",
-                            )
+                        // Remembered, and the log moved out of the composition:
+                        // this sidebar is re-executed whenever the app scope is,
+                        // so the filter ran (and one session wrote the same line
+                        // 167 times, a disk append each) for nothing.
+                        val online = remember(onlinePlaylists, localAccountIds, localNames) {
+                            onlinePlaylists
+                                .distinctBy { it.id }
+                                .filterNot { it.id in localAccountIds || it.title.trim().lowercase() in localNames }
+                        }
+                        LaunchedEffect(onlinePlaylists, online) {
+                            if (onlinePlaylists.isNotEmpty() && online.size != onlinePlaylists.size) {
+                                AppLog.log(
+                                    "playlists",
+                                    "sidebar: ${onlinePlaylists.size} account playlist(s) listed, " +
+                                        "${onlinePlaylists.size - online.size} already in the local library",
+                                )
+                            }
                         }
                         online.forEach { op ->
                             val selected = current == Screen.Playlist(op.id)
