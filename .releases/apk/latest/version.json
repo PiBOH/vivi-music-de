@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.11",
+  "versionCode": 149,
+  "channel": "beta",
+  "title": "v6.0.8.11_DE-1.56.12: make an equalizer profile by hand",
+  "builtAt": "2026-10-29T16:48:52Z",
+  "commit": "0e59d7f9e06d17a3a21b0fdbc992cc36dad02c35",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30133916,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
