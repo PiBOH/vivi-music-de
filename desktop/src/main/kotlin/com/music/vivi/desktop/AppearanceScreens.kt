@@ -1433,7 +1433,9 @@ fun CanvasSection(
     onCanvasSourceChange: (CanvasSource) -> Unit,
 ) {
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+        // No top padding of its own: `SettingsSubScreen` already puts the page's
+        // 16 dp under the Back row, which is where the preview's heading stands.
+        Text(Localization.get(language, "vivimusic_canvas"), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
         // The page's row is the name and the switch, with nothing under them: the
         // sentence that stood here said what the Canvas is to someone who has
@@ -1454,6 +1456,11 @@ fun CanvasSection(
         Spacer(Modifier.height(16.dp))
         M3SettingsDropdownItem(
             icon = Icons.Filled.Palette,
+            // The page draws this row's card inside a `.md-group`, so it fades up
+            // with the groups above it as the screen arrives. A standalone
+            // dropdown card is not a group of this screen's own, so the entrance
+            // is asked for here.
+            modifier = Modifier.groupEnter(),
             title = Localization.get(language, "canvas_source"),
             value = Localization.get(language, when (canvasSource) {
                 CanvasSource.APPLE_MUSIC -> "canvas_source_apple_music"

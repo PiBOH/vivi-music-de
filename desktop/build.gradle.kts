@@ -1389,6 +1389,28 @@ tasks.register<JavaExec>("themeOrderCheck") {
 }
 
 /**
+ * Headless check of the Canvas screen against the preview:
+ *
+ *     ./gradlew :desktop:canvasOrderCheck
+ *
+ * The preview's `canvas` list is a title, the Canvas's own switch in a card of one
+ * row and, while that switch is on, the source in a card of its own. This
+ * composes the real `SettingsCanvasScreen` on and off and reads its semantics tree
+ * for the column's order and the source's row leaving with the switch, then
+ * renders it headlessly for the two cards on the page's 16 dp, the switch alone
+ * while the Canvas is off, and the groups fading up on arrival.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/CanvasOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("canvasOrderCheck") {
+    group = "verification"
+    description = "Checks that the Canvas screen is the preview's: column, cards, the folded source and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.CanvasOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+/**
  * Headless check of the Player & mini-player design screen against the preview:
  *
  *     ./gradlew :desktop:playerDesignOrderCheck
