@@ -1495,6 +1495,27 @@ tasks.register<JavaExec>("backupOrderCheck") {
     mainClass.set("com.music.vivi.desktop.BackupOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the VIVI Wrapped screen against the preview:
+ *
+ *     ./gradlew :desktop:wrappedOrderCheck
+ *
+ * The preview's `wrapped` list is the heading and one card of one row - the Home
+ * glyph, *Show on Home*, its sentence and the switch. This composes the real
+ * screen with a session behind it and with none, and reads the sequence of texts,
+ * the heading under the back row, the card under it, the switch in both states,
+ * the press that reaches the preference, the session card's place under the
+ * page's, the empty state that draws no zeroes, and the arrival frame.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/WrappedOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("wrappedOrderCheck") {
+    group = "verification"
+    description = "Checks that VIVI Wrapped is the preview's: rows, order, measures and the press"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.WrappedOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

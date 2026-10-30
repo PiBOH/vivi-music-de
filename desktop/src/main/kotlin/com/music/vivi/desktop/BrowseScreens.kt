@@ -679,9 +679,21 @@ fun HomeScreen(
     }
 }
 
-/** "VIVI Wrapped" card showing the current session's listening stats. */
+/**
+ * "VIVI Wrapped" card showing the current session's listening stats.
+ *
+ * [modifier] carries the card's own inset, which is Home's list: the settings
+ * screen draws the same card flush with its other blocks and passes its own.
+ * [showTitle] drops the card's heading for a caller that already has that
+ * heading above it (the settings screen's title is the same sentence).
+ */
 @Composable
-fun WrappedCard(wrappedStats: WrappedStats, language: String) {
+fun WrappedCard(
+    wrappedStats: WrappedStats,
+    language: String,
+    modifier: Modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+    showTitle: Boolean = true,
+) {
     val minutes = wrappedStats.playedMs / 60_000
     val timeText = if (minutes >= 60) {
         "${minutes / 60}h ${minutes % 60}m"
@@ -692,15 +704,17 @@ fun WrappedCard(wrappedStats: WrappedStats, language: String) {
     Card(
         shape = RoundedCornerShape(topStart = ShapeRadii.extraLarge, topEnd = ShapeRadii.small, bottomEnd = ShapeRadii.extraLarge, bottomStart = ShapeRadii.small),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = modifier,
     ) {
         Column(Modifier.padding(16.dp)) {
-            Text(
-                Localization.get(language, "wrapped_title"),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Spacer(Modifier.height(8.dp))
+            if (showTitle) {
+                Text(
+                    Localization.get(language, "wrapped_title"),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                Spacer(Modifier.height(8.dp))
+            }
             Row(Modifier.fillMaxWidth()) {
                 WrappedStat(
                     value = wrappedStats.trackStarts.toString(),

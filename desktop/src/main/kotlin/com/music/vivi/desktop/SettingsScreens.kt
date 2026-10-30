@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayCircle
@@ -569,6 +570,60 @@ fun SettingsTransitionsScreen(
     }
 }
 
+/**
+ * VIVI Wrapped, the preview's page: the heading, one card of the one switch, and
+ * the session's own numbers under them.
+ *
+ * The page draws the heading and the switch alone, because *Show on Home* is what
+ * the screen sets and the numbers are the Home card's subject. The numbers stay
+ * as the app's own block below the page's card (with the Home card off they are
+ * the only place they are visible), without the card's heading, which is the same
+ * sentence as the screen's title, and only while the session has something to
+ * report: a machine that has played nothing yet is the page itself rather than
+ * three zeroes.
+ */
+@Composable
+internal fun WrappedSection(
+    language: String,
+    wrappedStats: WrappedStats,
+    showWrappedOnHome: Boolean,
+    onShowWrappedOnHomeChange: (Boolean) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            Localization.get(language, "wrapped_title"),
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        // The page's 16 dp above its card: one row, its own switch and the
+        // sentence under its name.
+        Spacer(Modifier.height(16.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Home,
+                    title = { Text(Localization.get(language, "wrapped_show_on_home")) },
+                    description = { Text(Localization.get(language, "wrapped_show_on_home_desc")) },
+                    trailing = {
+                        Switch(checked = showWrappedOnHome, onCheckedChange = onShowWrappedOnHomeChange)
+                    },
+                    onClick = { onShowWrappedOnHomeChange(!showWrappedOnHome) },
+                ),
+            ),
+        )
+
+        if (wrappedStats.trackStarts > 0) {
+            Spacer(Modifier.height(16.dp))
+            WrappedCard(
+                wrappedStats = wrappedStats,
+                language = language,
+                modifier = Modifier.fillMaxWidth(),
+                showTitle = false,
+            )
+        }
+    }
+}
+
 @Composable
 fun SettingsWrappedScreen(
     language: String,
@@ -578,28 +633,11 @@ fun SettingsWrappedScreen(
     onShowWrappedOnHomeChange: (Boolean) -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
-        Text(Localization.get(language, "wrapped_title"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 12.dp))
-        WrappedCard(wrappedStats = wrappedStats, language = language)
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Switch(checked = showWrappedOnHome, onCheckedChange = onShowWrappedOnHomeChange)
-            Column(Modifier.clickable { onShowWrappedOnHomeChange(!showWrappedOnHome) }) {
-                Text(Localization.get(language, "wrapped_show_on_home"))
-                Text(
-                    Localization.get(language, "wrapped_show_on_home_desc"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        Text(
-            Localization.get(language, "wrapped_desc"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        WrappedSection(
+            language = language,
+            wrappedStats = wrappedStats,
+            showWrappedOnHome = showWrappedOnHome,
+            onShowWrappedOnHomeChange = onShowWrappedOnHomeChange,
         )
     }
 }
