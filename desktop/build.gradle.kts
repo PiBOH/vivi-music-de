@@ -1452,6 +1452,27 @@ tasks.register<JavaExec>("notificationHistoryOrderCheck") {
     mainClass.set("com.music.vivi.desktop.NotificationHistoryOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Data Saver screen against the preview:
+ *
+ *     ./gradlew :desktop:dataSaverOrderCheck
+ *
+ * The preview's `dataSaver` list is the title, one card of the one switch with
+ * the sentence that says what it turns off, and the app's own info card 24 dp
+ * under it; this composes the real screen and reads the sequence of texts, the
+ * heading 16 dp under the back row, the switch card 16 dp under it, the info
+ * card's caption and its five lines, both states of the switch from the
+ * preference, and the press on the row that really changes it.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/DataSaverOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("dataSaverOrderCheck") {
+    group = "verification"
+    description = "Checks that Data Saver is the preview's: blocks, order, measures and the switch's press"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.DataSaverOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

@@ -66,6 +66,8 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.BlurOn
 import androidx.compose.material.icons.filled.EnergySavingsLeaf
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.SlowMotionVideo
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
@@ -3755,53 +3757,104 @@ fun SettingsDataSaverScreen(
     onToggleDataSaver: (Boolean) -> Unit,
 ) {
     SettingsSubScreen(language, onBack) {
-        Text(
-            Localization.get(language, "data_saver"),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(vertical = 12.dp),
+        DataSaverSection(
+            language = language,
+            dataSaver = dataSaver,
+            onToggleDataSaver = onToggleDataSaver,
         )
+    }
+}
 
-        Text(
-            Localization.get(language, "data_saver_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(bottom = 16.dp),
-        )
+/**
+ * The body of the Data Saver screen, as the page draws it: the switch with its
+ * own sentence in one card, then the app's own info card naming what it turns
+ * off.
+ *
+ * The section is its own composable so a check can compose it with either state
+ * of the switch and read the press that changes it, without the machine's own
+ * preference deciding the answer.
+ */
+@Composable
+internal fun DataSaverSection(
+    language: String,
+    dataSaver: Boolean,
+    onToggleDataSaver: (Boolean) -> Unit,
+) {
+    // No padding of its own: the sub-screen already puts the page's 16 dp under
+    // the Back row, and the extra 12 made this heading stand at 28.
+    Text(Localization.get(language, "data_saver"), style = MaterialTheme.typography.titleLarge)
+    Spacer(Modifier.height(16.dp))
 
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.EnergySavingsLeaf,
-                    title = { Text(Localization.get(language, "data_saver")) },
-                    trailing = { Switch(checked = dataSaver, onCheckedChange = onToggleDataSaver) },
-                    onClick = { onToggleDataSaver(!dataSaver) },
-                ),
+    // The sentence is the switch's own description, which is where the page puts
+    // it; under the heading it was a paragraph saying what the row already says.
+    M3SettingsGroup(
+        items = listOf(
+            M3SettingsItem(
+                icon = Icons.Filled.EnergySavingsLeaf,
+                title = { Text(Localization.get(language, "data_saver")) },
+                description = { Text(Localization.get(language, "data_saver_desc")) },
+                trailing = { Switch(checked = dataSaver, onCheckedChange = onToggleDataSaver) },
+                onClick = { onToggleDataSaver(!dataSaver) },
             ),
-        )
+        ),
+    )
 
-        Spacer(Modifier.height(16.dp))
+    // The page's 24 dp between the switch's card and the info card: the five
+    // things the switch turns off are a list of information, not five more
+    // controls, so they are rows of one card and not five switches.
+    Spacer(Modifier.height(24.dp))
+    DataSaverInfoCard(language)
+}
 
-        Text(
-            Localization.get(language, "data_saver_turns_off_header"),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-        )
-        listOf(
-            "data_saver_player_canvas",
-            "data_saver_artist_video",
-            "data_saver_artist_bg_video",
-            "data_saver_album_canvas",
-            "data_saver_high_quality_images",
-        ).forEach { key ->
+/**
+ * The app's own info card (`DataSaverInfoRow`), drawn as the page draws it: the
+ * caption in the accent, then one glyph and one line per item, 14 dp apart.
+ */
+@Composable
+private fun DataSaverInfoCard(language: String) {
+    // The page repeats a glyph for two items of the same kind (the two videos, the
+    // two image surfaces) and gives each kind its own: a canvas that moves, a
+    // video of an artist, a still image.
+    val items = listOf(
+        Icons.Filled.Animation to "data_saver_player_canvas",
+        Icons.Filled.SlowMotionVideo to "data_saver_artist_video",
+        Icons.Filled.SlowMotionVideo to "data_saver_artist_bg_video",
+        Icons.Filled.Image to "data_saver_album_canvas",
+        Icons.Filled.Image to "data_saver_high_quality_images",
+    )
+    Surface(
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
             Text(
-                "•  " + Localization.get(language, key),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 3.dp),
+                Localization.get(language, "data_saver_turns_off_header"),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.primary,
             )
+            items.forEach { (icon, key) ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    Icon(
+                        icon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        Localization.get(language, key),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(24.dp))
     }
 }
 
