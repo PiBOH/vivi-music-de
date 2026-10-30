@@ -754,15 +754,23 @@ and an entry already written that is being edited. The rules, in order:
   offers, with their names and their values, the platforms something was
   verified on, and what stays unchanged (a name kept, a drawing untouched) stay
   in the bullet in one short clause each, even in the short form: cutting them
-  is losing a fact, not shortening. The developer detail is the measurement and
-  the identifier, never the choice on screen.
+  is losing a fact, not shortening. A **count or a coverage** the reader can
+  check against the screen is content too - how many intervals a row offers,
+  how many languages carry a string, which rows are affected, over how many of
+  them - and so is the qualifier that makes a claim true: "the 27 dropdowns
+  drawn as a row" is not the same claim as "all of them", and the qualifier is
+  the fact, not padding. The developer detail is the measurement and the
+  identifier, never the choice on screen or its number.
 - **Nothing invented, nothing silently lost.** Shortening keeps every fact of
   the long form at the level of detail above; it never adds a promise the
   change did not make, and a fact that cannot be said in the short form is
   carried by the commit body instead of disappearing. A bullet that says
   something the shipped code no longer does is a defect, not a style question:
   when an entry records two successive states of one screen, only the last one
-  is written in the present tense.
+  is written in the present tense. A bullet a later change **superseded** does
+  not stay saying something false until someone decides what to do with it: it
+  is corrected to what ships first, and whether the superseded bullet is then
+  removed or folded into the newer one is the owner's call.
 - **For example**, not "`:desktop:dropdownPositionCheck` opens one for real on
   the compose ui-test harness and reads the menu against the row: the first
   option sits 12 px under the row's bottom with its left edge on the row's",
