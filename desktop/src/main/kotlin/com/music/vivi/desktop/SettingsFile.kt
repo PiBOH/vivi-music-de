@@ -67,6 +67,9 @@ object SettingsFile {
         // Account and credentials.
         "cookie", "dataSyncId", "visitorData", "accountName", "accountEmail",
         "accountChannelHandle", "aiApiKey", "deeplApiKey", "lastfmSession",
+        // The imported font files: the app's own copies, behind rows that are
+        // data (the choice of one still is an option, as `customFontPath`).
+        "customFonts",
         // Histories and collections (data, not options).
         "searchHistory", "notificationHistory", "recognitionHistory",
         "library", "queueJson", "queueIndex",

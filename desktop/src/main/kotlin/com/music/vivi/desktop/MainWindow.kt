@@ -292,6 +292,34 @@ fun main(args: Array<String>) {
         }
     }
 
+    // The imported faces: the list is data, not an option, so it is read once
+    // (a settings.json edit does not carry it) and every change is written back
+    // by `CustomFonts` itself.
+    remember { CustomFonts.load(initialSettings.customFonts, initialSettings.customFontPath) }
+
+    // Picking an imported face writes the two settings the whole app already
+    // reads (`selectedFont` and `customFontPath`), so the theme, the lyrics and
+    // the settings mirror need no knowledge of the list.
+    val selectCustomFont: (CustomFont) -> Unit = { face ->
+        AppFonts.customFontPath = face.path
+        customFontPath = face.path
+        selectedFont = AppFont.CUSTOM
+        DesktopSettings.update {
+            it.copy(customFontPath = face.path, selectedFont = AppFont.CUSTOM.value)
+        }
+    }
+    val renameCustomFont: (CustomFont, String) -> Unit = { face, name -> CustomFonts.rename(face.id, name) }
+    val removeCustomFont: (CustomFont) -> Unit = { face ->
+        CustomFonts.remove(face.id)
+        // Dropping the face in use leaves the app the one it fell back to,
+        // instead of a choice whose file is gone.
+        if (customFontPath == face.path) {
+            AppFonts.customFontPath = null
+            customFontPath = ""
+            selectedFont = AppFont.SYSTEM
+            DesktopSettings.update { it.copy(customFontPath = "", selectedFont = AppFont.SYSTEM.value) }
+        }
+    }
     // Import a user font (.ttf/.otf): pick the file, copy it into the app data
     // dir so the setting survives moving/deleting the original, and apply it.
     //
@@ -318,33 +346,18 @@ fun main(args: Array<String>) {
                 AppLog.click("import font: nothing selected")
             } else {
                 AppLog.click("import font '${src.absolutePath}'")
-                val fontsDir = java.io.File(System.getProperty("user.home"), ".vivimusic/fonts").apply { mkdirs() }
-                val ext = src.extension.ifBlank { "ttf" }
-                val dest = java.io.File(fontsDir, "custom_font.$ext")
-                val failure = runCatching {
-                    java.nio.file.Files.copy(
-                        src.toPath(),
-                        dest.toPath(),
-                        java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-                    )
-                }.exceptionOrNull()
-                if (failure != null || !dest.exists()) {
-                    val why = failure?.let { "${it.javaClass.simpleName}: ${it.message}" }
-                        ?: "the copy did not produce a file"
-                    AppLog.log("app", "font import failed for '${src.absolutePath}': $why")
+                // The copy, its name and the row are `CustomFonts`' own work: a
+                // second import adds a face instead of replacing the first, and
+                // the row is named after the face the file draws.
+                val face = CustomFonts.add(src)
+                if (face == null) {
                     DesktopNotifier.notify(
                         Localization.get(language, "import_font"),
-                        Localization.get(language, "custom_font") + ": " + why,
+                        Localization.get(language, "custom_font") + ": " + (CustomFonts.lastError ?: src.name),
                         "appearance",
                     )
                 } else {
-                    AppFonts.customFontPath = dest.absolutePath
-                    customFontPath = dest.absolutePath
-                    selectedFont = AppFont.CUSTOM
-                    DesktopSettings.update {
-                        it.copy(customFontPath = dest.absolutePath, selectedFont = AppFont.CUSTOM.value)
-                    }
-                    AppLog.log("app", "font imported: '${src.name}' → '${dest.absolutePath}'")
+                    selectCustomFont(face)
                 }
             }
         }
@@ -662,6 +675,9 @@ fun main(args: Array<String>) {
                         },
                         customFontPath = customFontPath,
                         onImportFont = importFont,
+                        onSelectCustomFont = selectCustomFont,
+                        onRenameCustomFont = renameCustomFont,
+                        onRemoveCustomFont = removeCustomFont,
                         pureBlack = pureBlack,
                         onPureBlackChange = {
                             pureBlack = it

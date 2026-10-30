@@ -479,6 +479,9 @@ fun SettingsFontScreen(
     onFontChange: (AppFont) -> Unit,
     customFontPath: String = "",
     onImportFont: () -> Unit = {},
+    onSelectCustomFont: (CustomFont) -> Unit = {},
+    onRenameFont: (CustomFont, String) -> Unit = { _, _ -> },
+    onRemoveFont: (CustomFont) -> Unit = {},
     useFontInLyrics: Boolean = true,
     onUseFontInLyricsChange: (Boolean) -> Unit = {},
 ) {
@@ -489,6 +492,9 @@ fun SettingsFontScreen(
             onFontChange = onFontChange,
             customFontPath = customFontPath,
             onImportFont = onImportFont,
+            onSelectCustomFont = onSelectCustomFont,
+            onRenameFont = onRenameFont,
+            onRemoveFont = onRemoveFont,
             useFontInLyrics = useFontInLyrics,
             onUseFontInLyricsChange = onUseFontInLyricsChange,
         )

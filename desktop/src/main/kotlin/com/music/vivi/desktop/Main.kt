@@ -194,6 +194,9 @@ fun WindowScope.App(
     onFontChange: (AppFont) -> Unit,
     customFontPath: String = "",
     onImportFont: () -> Unit = {},
+    onSelectCustomFont: (CustomFont) -> Unit = {},
+    onRenameCustomFont: (CustomFont, String) -> Unit = { _, _ -> },
+    onRemoveCustomFont: (CustomFont) -> Unit = {},
     themeMode: ThemeMode,
     accent: Color,
     onThemeModeChange: (ThemeMode) -> Unit,
@@ -1971,6 +1974,9 @@ fun WindowScope.App(
                         onFontChange = onFontChange,
                         customFontPath = customFontPath,
                         onImportFont = onImportFont,
+                        onSelectCustomFont = onSelectCustomFont,
+                        onRenameFont = onRenameCustomFont,
+                        onRemoveFont = onRemoveCustomFont,
                         useFontInLyrics = lyricsUseAppFont,
                         onUseFontInLyricsChange = { on ->
                             lyricsUseAppFont = on

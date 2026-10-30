@@ -1354,6 +1354,31 @@ tasks.register<JavaExec>("accountOrderCheck") {
  * See `desktop/src/test/kotlin/com/music/vivi/desktop/AppearanceOrderCheck.kt`.
  * A manual check, not part of `check`.
  */
+/**
+ * Headless check of the App font screen against the preview:
+ *
+ *     ./gradlew :desktop:fontOrderCheck
+ *
+ * The preview's `font` list is the title, the typography card, the *Font
+ * Selection* heading with one row per face and the import as the last of them,
+ * and the lyrics switch under it; this composes the real `SettingsFontScreen`
+ * on the ui-test harness and reads the semantics tree: every text of the screen
+ * in document order must be the preview's own sequence, which is also what
+ * proves the card carries its four lines and an imported face is a row of the
+ * same list with its rename and its delete. The heading stands 16 dp under the
+ * back row with the typography card 16 dp under it, the font card is six rows on
+ * the 3 dp seam, the lyrics card stands 16 dp under it, and both groups fade up
+ * as the screen arrives and paint nothing on the frame it lands on.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/FontOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("fontOrderCheck") {
+    group = "verification"
+    description = "Checks that the App font screen is the preview's: rows, order, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.FontOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

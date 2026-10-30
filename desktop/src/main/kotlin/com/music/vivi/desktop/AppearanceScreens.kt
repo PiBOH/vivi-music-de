@@ -39,11 +39,13 @@ import androidx.compose.material.icons.filled.BrightnessAuto
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Devices
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.DesktopWindows
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.Layers
@@ -92,6 +94,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.text.style.TextAlign
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -1295,23 +1298,45 @@ fun FontSection(
     onFontChange: (AppFont) -> Unit,
     customFontPath: String = "",
     onImportFont: () -> Unit = {},
+    onSelectCustomFont: (CustomFont) -> Unit = {},
+    onRenameFont: (CustomFont, String) -> Unit = { _, _ -> },
+    onRemoveFont: (CustomFont) -> Unit = {},
     useFontInLyrics: Boolean = true,
     onUseFontInLyricsChange: (Boolean) -> Unit = {},
 ) {
+    // A face renamed from this screen: which row the dialog is open for, and the
+    // name being typed into it.
+    var renaming by remember { mutableStateOf<CustomFont?>(null) }
+    var draft by remember { mutableStateOf("") }
     // Restored to the pre-1.44.0 rich layout: a big themed typography preview
     // card + each font listed as its own radio row rendered in that typeface.
     val activeFamily = AppFonts.familyFor(selectedFont, customFontPath)
 
     Column(Modifier.fillMaxWidth()) {
-        Text(Localization.get(language, "app_font"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
+        // No top padding of its own: `SettingsSubScreen` already puts the page's
+        // 16 dp under the Back row, and a second one made this screen's heading
+        // stand 32 dp down where every other settings screen stands 16.
+        Text(Localization.get(language, "app_font"), style = MaterialTheme.typography.titleLarge)
 
+        // The card a face is chosen by, in the page's own four lines: the label,
+        // the quote set in the face being chosen, the figures under it (a face is
+        // chosen for its digits as much as for its letters, and the quote never
+        // shows them) and the face's own name - which is what makes the card
+        // follow the choice instead of naming the list under it.
+        // The card names the face it is drawing: a preset by its own name, an
+        // imported row by the name the user gave it (its file, until renamed).
+        val caption = when {
+            selectedFont != AppFont.CUSTOM -> Localization.get(language, selectedFont.nameKey())
+            customFontPath.isBlank() -> Localization.get(language, "custom_font")
+            else -> CustomFonts.byPath(customFontPath)?.name ?: fileNameOf(customFontPath)
+        }
         Card(
-            shape = MaterialTheme.shapes.large,
+            shape = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         ) {
             Column(Modifier.fillMaxWidth().padding(24.dp)) {
                 Text(
@@ -1319,19 +1344,28 @@ fun FontSection(
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp),
+                    letterSpacing = 0.08.em,
                 )
                 Text(
                     Localization.get(language, "preview_text_quote"),
                     fontFamily = activeFamily,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.padding(bottom = 12.dp),
+                    modifier = Modifier.padding(top = 8.dp),
                 )
                 Text(
-                    Localization.get(language, "font_selection"),
+                    TYPOGRAPHY_FIGURES,
+                    fontFamily = activeFamily,
+                    style = MaterialTheme.typography.labelLarge,
+                    letterSpacing = 0.02.em,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.65f),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    caption,
+                    fontFamily = activeFamily,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 12.dp),
                 )
             }
         }
@@ -1357,19 +1391,49 @@ fun FontSection(
                         selectedFont == AppFont.PLUS_JAKARTA_SANS,
                     ) { onFontChange(AppFont.PLUS_JAKARTA_SANS) },
                 )
-                if (customFontPath.isNotBlank()) {
+                // Every imported face is a row of this card, named after the face
+                // it draws and carrying the two things only it can do: a rename,
+                // which is only a name, and a delete, which drops its own copy
+                // of the file. The radio stays where every other row keeps it.
+                CustomFonts.faces.forEach { face ->
+                    val family = AppFonts.familyFor(AppFont.CUSTOM, face.path)
                     add(
                         M3SettingsItem(
                             icon = Icons.Filled.FontDownload,
-                            title = {
-                                Text(
-                                    Localization.get(language, "custom_font"),
-                                    fontFamily = AppFonts.familyFor(AppFont.CUSTOM, customFontPath),
-                                )
+                            title = { Text(face.name, fontFamily = family) },
+                            description = { Text(Localization.get(language, "custom_font"), fontFamily = family) },
+                            trailing = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Tooltip(Localization.get(language, "rename")) {
+                                        M3IconButton(
+                                            onClick = {
+                                                draft = face.name
+                                                renaming = face
+                                            },
+                                        ) {
+                                            Icon(
+                                                Icons.Filled.Edit,
+                                                contentDescription = Localization.get(language, "rename"),
+                                                modifier = Modifier.size(20.dp),
+                                            )
+                                        }
+                                    }
+                                    Tooltip(Localization.get(language, "delete")) {
+                                        M3IconButton(onClick = { onRemoveFont(face) }) {
+                                            Icon(
+                                                Icons.Filled.Delete,
+                                                contentDescription = Localization.get(language, "delete"),
+                                                modifier = Modifier.size(20.dp),
+                                            )
+                                        }
+                                    }
+                                    RadioButton(
+                                        selected = selectedFont == AppFont.CUSTOM && customFontPath == face.path,
+                                        onClick = null,
+                                    )
+                                }
                             },
-                            description = { Text(customFontPath.substringAfterLast("\\").substringAfterLast("/")) },
-                            trailing = { RadioButton(selected = selectedFont == AppFont.CUSTOM, onClick = null) },
-                            onClick = { onFontChange(AppFont.CUSTOM) },
+                            onClick = { onSelectCustomFont(face) },
                         ),
                     )
                 }
@@ -1383,6 +1447,32 @@ fun FontSection(
             },
         )
 
+        renaming?.let { face ->
+            AlertDialog(
+                onDismissRequest = { renaming = null },
+                title = { Text(Localization.get(language, "rename")) },
+                text = {
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { draft = it },
+                        singleLine = true,
+                        label = { Text(Localization.get(language, "custom_font")) },
+                    )
+                },
+                confirmButton = {
+                    Button(
+                        enabled = draft.isNotBlank(),
+                        onClick = {
+                            onRenameFont(face, draft)
+                            renaming = null
+                        },
+                    ) { Text(Localization.get(language, "ok")) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { renaming = null }) { Text(Localization.get(language, "cancel")) }
+                },
+            )
+        }
         // The lyrics draw from a bare text style of their own, so the face chosen
         // here never reached them even though the theme carries it everywhere
         // else. This is the switch that decides it, on by default: a font chosen
@@ -1406,6 +1496,20 @@ fun FontSection(
     }
 }
 
+/** The figures the typography card sets under the quote, as the page draws them:
+ *  a face is chosen for its digits as much as for its letters. */
+private const val TYPOGRAPHY_FIGURES = "0123456789"
+
+/** The localization key of a preset face's name. An imported face is named
+ *  after its own file instead, which is what the card's caption reads. */
+private fun AppFont.nameKey(): String = when (this) {
+    AppFont.SYSTEM -> "font_system"
+    AppFont.GOOGLE_SANS -> "font_google_sans"
+    AppFont.SANS_FLEX -> "font_sans_flex"
+    AppFont.OUTFIT -> "font_outfit"
+    AppFont.PLUS_JAKARTA_SANS -> "font_plus_jakarta_sans"
+    AppFont.CUSTOM -> "custom_font"
+}
 /** One font of [FontSection]'s list: its name and its own sentence, both set in
  *  the face they describe, with the radio the row is chosen by. */
 @Composable

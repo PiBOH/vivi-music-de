@@ -14,6 +14,8 @@
 - [DE] **A bare icon button fails the build now.**
 - [DE] **The equalizer can make a profile of its own, not only import one.**
 
+- [DE] **App font keeps every imported face, and each of them can be renamed.**
+
 ### 🔧 Changed
 - [DE] **The installers carry a start archive, and the JVM part of the start is about 160 ms shorter.**
 - [DE] **Every bar in Settings is the Material 3 Expressive slider.**
@@ -78,6 +80,8 @@
 - [DE] **Account is the preview's page: the title.**
 - [DE] **Appearance is the preview's page: the heading in its own place.**
 
+- [DE] **App font's card shows the figures and names the face it is drawing.**
+
 ### 🐛 Fixed
 - [DE] **Portuguese (Brazil), Chinese Simplified and Chinese Traditional get every string again.**
 - [DE] **A settings dropdown opens under the value that was pressed.**
@@ -87,6 +91,7 @@
 - [DE] **The Apple Music player's backdrop covers the window, and the screen follows the background chosen in the settings.**
 - [DE] **The app stops re-running its whole UI every two seconds, and the dev stats stop launching PowerShell every two seconds.**
 - [DE] **A lyrics provider that answers with a web page is reported as that instead of as a JSON dump.**
+- [DE] **App font's heading stood 32 dp under the back row.**
 
 ## [6.0.8.10_DE-1.54.34-beta] - 2026-10-17
 
