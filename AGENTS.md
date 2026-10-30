@@ -725,10 +725,42 @@ Keep an `## [Unreleased]` section at the top; when a version is released,
 convert it to a dated entry (`## [X.Y.Z] - YYYY-MM-DD`) and add the new version
 to the top of `CHANGELOG.md`. Omit sections that have no entries.
 
-**Desktop-specific entries are marked with `[DE]`** (e.g.
-`- [DE] New desktop feature.`), so desktop and Android changes stay
-distinguishable in the changelog. Desktop releases use the combined
-`<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
+**Every bullet is tagged with the surface it changes, and no bullet is left
+untagged** (`- [DE] …` for the desktop edition, `- [APK] …` for the Android
+app, `- [DE][APK] …` for one change that reaches both), so desktop and Android
+changes stay distinguishable in the changelog. Desktop releases use the
+combined `<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
+
+**A bullet is written for the person using the app, at 60 % shorter than the
+natural first draft (MANDATORY).** This applies to every entry, both a new one
+and an entry already written that is being edited. The rules, in order:
+
+- **One bullet per change.** A change is one thing the reader notices: a screen
+  rebuilt, a defect fixed, an option added, a start made faster. Two unrelated
+  changes are two bullets, never one paragraph.
+- **60 % shorter than the draft.** Write the bullet as it naturally comes out,
+  then cut it to about 40 % of that length. What stays is what the reader sees
+  and can act on: the screen or the option, what it does now, and the one limit
+  that changes the answer. The bold head line names the change; one to three
+  sentences are everything else.
+- **No developer detail.** Measurements and their figures, check and task
+  names, file, class and function names, flag values, log excerpts, "Watch"
+  notes and "Open sub-item" remarks are not the changelog's business: the end
+  user does not care how it was measured or which file it lives in, only what
+  changed for them. They belong in the commit body, in `TODO.md` or in the pull
+  request. A bullet whose only content is that a class moved is cut to the
+  effect the move has, or kept in the commit body alone when it has none.
+- **Nothing invented, nothing silently lost.** Shortening keeps every fact of
+  the long form at the level of detail above; it never adds a promise the
+  change did not make, and a fact that cannot be said in the short form is
+  carried by the commit body instead of disappearing.
+- **For example**, not "`:desktop:dropdownPositionCheck` opens one for real on
+  the compose ui-test harness and reads the menu against the row: the first
+  option sits 12 px under the row's bottom with its left edge on the row's",
+  but "a settings dropdown opens under the row it belongs to, right-aligned to
+  its value, and flips above the row at the floor of the window".
+- **English and no long dash**, like every other line of this file (see the
+  language rules).
 
 ### `AGENTS.md` changes never go in the CHANGELOG — MANDATORY (do not violate)
 
