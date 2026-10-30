@@ -743,6 +743,14 @@ and an entry already written that is being edited. The rules, in order:
   and can act on: the screen or the option, what it does now, and the one limit
   that changes the answer. The bold head line names the change; one to three
   sentences are everything else.
+- **85 words is the hard ceiling, 60 is the target (MANDATORY).** Count the
+  whole bullet, the bold head line included. An emoji is not a word; a token
+  counts when it carries at least one letter or digit, so `12 dp`, `M3IconButton`
+  and `-2:23` count, while a lone dash, a markdown marker or a smiley does not.
+  A bullet longer than 85 words is compressed by summarising it, never by
+  dropping a fact of the list above and never by truncating a sentence. The
+  same ceiling covers every entry already written: a bullet that was long when
+  it landed is shortened when its section is next touched.
 - **No developer detail.** Measurements and their figures, check and task
   names, file, class and function names, flag values, log excerpts, "Watch"
   notes and "Open sub-item" remarks are not the changelog's business: the end
