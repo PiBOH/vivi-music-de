@@ -1379,6 +1379,31 @@ tasks.register<JavaExec>("fontOrderCheck") {
     mainClass.set("com.music.vivi.desktop.FontOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Intro screen against the preview:
+ *
+ *     ./gradlew :desktop:introOrderCheck
+ *
+ * The preview's `intro` list is the title, the card of the one switch, the two
+ * choices as cards of their own and the action that plays the splash; this
+ * composes the real `SettingsIntroScreen` on the ui-test harness and reads the
+ * semantics tree: every text of the screen in document order must be the
+ * preview's own sequence, which is also what proves the switch carries no
+ * sentence and each choice prints the value in use, and the action is measured
+ * against the pane because the page draws it at its label's width. The heading
+ * stands 16 dp under the back row with the first card 16 dp under it, the three
+ * cards stand 16 dp apart, and they fade up as the screen arrives while the
+ * action is painted on the frame it lands on.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/IntroOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("introOrderCheck") {
+    group = "verification"
+    description = "Checks that the Intro screen is the preview's: blocks, order, measures and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.IntroOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

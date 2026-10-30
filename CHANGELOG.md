@@ -81,6 +81,7 @@
 - [DE] **Appearance is the preview's page: the heading in its own place.**
 
 - [DE] **App font's card shows the figures and names the face it is drawing.**
+- [DE] **Intro is the preview's screen: one switch in a card, two choice cards, and the splash they play.**
 
 ### 🐛 Fixed
 - [DE] **Portuguese (Brazil), Chinese Simplified and Chinese Traditional get every string again.**

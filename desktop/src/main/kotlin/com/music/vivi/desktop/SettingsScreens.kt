@@ -87,6 +87,7 @@ import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Dock
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material.icons.filled.Translate
@@ -862,14 +863,19 @@ fun SettingsIntroScreen(
     }
 
     SettingsSubScreen(language, onBack) {
-        Text(Localization.get(language, "intro"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(vertical = 12.dp))
+        // No padding of its own: `SettingsSubScreen` already puts the page's 16 dp
+        // under the Back row, which is where every settings heading stands.
+        Text(Localization.get(language, "intro"), style = MaterialTheme.typography.titleLarge)
+        // The page gives the first card the same 16 dp it gives the next two; the
+        // heading's own padding used to be what carried it, and it is gone with
+        // the padding (the sub-screen already puts the heading where it belongs).
+        Spacer(Modifier.height(16.dp))
 
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.Movie,
                     title = { Text(Localization.get(language, "show_intro_on_startup")) },
-                    description = { Text(Localization.get(language, "intro_desc")) },
                     trailing = { Switch(checked = showIntroSplash, onCheckedChange = onShowIntroSplashChange) },
                     onClick = { onShowIntroSplashChange(!showIntroSplash) },
                 ),
@@ -880,6 +886,11 @@ fun SettingsIntroScreen(
 
         M3SettingsDropdownItem(
             icon = Icons.Filled.AutoAwesome,
+            // A standalone dropdown card is not a group of this screen's own, so it
+            // asks for the entrance the switch card above gets from its group: the
+            // page fades every `.md-group` in, and a card that jumps in while its
+            // neighbours fade is the jolt the shared entrance exists to avoid.
+            modifier = Modifier.groupEnter(),
             title = Localization.get(language, "intro_style"),
             value = Localization.get(language, when (introStyle) {
                 "logo" -> "intro_style_logo"
@@ -899,7 +910,10 @@ fun SettingsIntroScreen(
         Spacer(Modifier.height(16.dp))
 
         M3SettingsDropdownItem(
-            icon = Icons.Filled.Palette,
+            // The backdrop of the splash, which is the wallpaper's own idea and the
+            // glyph the page draws; the palette belongs to the canvas source.
+            icon = Icons.Filled.Wallpaper,
+            modifier = Modifier.groupEnter(),
             title = Localization.get(language, "intro_background"),
             value = Localization.get(language, when (introBackground) {
                 "gradient" -> "intro_background_gradient"
@@ -916,12 +930,12 @@ fun SettingsIntroScreen(
             onSelect = onIntroBackgroundChange,
         )
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
 
-        Button(
-            onClick = { previewing = true },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
+        // The page draws the action at its label's width, not across the pane: a
+        // filled button the width of the screen reads as a banner, not as the one
+        // thing this screen can do.
+        Button(onClick = { previewing = true }) {
             Text(Localization.get(language, "preview_intro"))
         }
     }
