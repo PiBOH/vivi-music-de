@@ -736,6 +736,7 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "save_notification_history" to "Lagre varslingshistorikk",
         "scan_qr" to "Skann for å koble til",
         "screen_transitions" to "Skjermoverganger",
+        "screen_transitions_desc" to "Animerer overgangen fra én skjerm til den neste.",
         "search" to "Søk",
         "search_button" to "Søk",
         "search_hint" to "Hva vil du spille?",

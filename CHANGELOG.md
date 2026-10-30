@@ -82,6 +82,7 @@
 
 - [DE] **App font's card shows the figures and names the face it is drawing.**
 - [DE] **Intro is the preview's screen: one switch in a card, two choice cards, and the splash they play.**
+- [DE] **Animations is the preview's screen: the two switches say what they do, and the two choices stand 16 dp apart.**
 
 ### 🐛 Fixed
 - [DE] **Portuguese (Brazil), Chinese Simplified and Chinese Traditional get every string again.**

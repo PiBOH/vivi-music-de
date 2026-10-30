@@ -736,6 +736,7 @@ internal fun strings_fr(): Map<String, String> =
         "save_notification_history" to "Enregistrer l'historique des notifications",
         "scan_qr" to "Scannez pour vous connecter",
         "screen_transitions" to "Transitions d'écran",
+        "screen_transitions_desc" to "Anime le passage d'un écran à l'autre.",
         "search" to "Rechercher",
         "search_button" to "Rechercher",
         "search_hint" to "Que voulez-vous écouter ?",

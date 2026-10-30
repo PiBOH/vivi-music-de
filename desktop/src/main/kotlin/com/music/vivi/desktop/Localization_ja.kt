@@ -736,6 +736,7 @@ internal fun strings_ja(): Map<String, String> =
         "save_notification_history" to "通知履歴を保存",
         "scan_qr" to "スキャンして接続",
         "screen_transitions" to "画面の切り替え",
+        "screen_transitions_desc" to "画面から次の画面への切り替えをアニメーションにします。",
         "search" to "検索",
         "search_button" to "検索",
         "search_hint" to "何を再生しますか？",

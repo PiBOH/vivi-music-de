@@ -736,6 +736,7 @@ internal fun strings_vi(): Map<String, String> =
         "save_notification_history" to "Lưu lịch sử thông báo",
         "scan_qr" to "Quét để kết nối",
         "screen_transitions" to "Chuyển tiếp màn hình",
+        "screen_transitions_desc" to "Tạo hiệu ứng chuyển từ màn hình này sang màn hình tiếp theo.",
         "search" to "Tìm kiếm",
         "search_button" to "Tìm kiếm",
         "search_hint" to "Bạn muốn phát gì?",

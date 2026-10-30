@@ -736,6 +736,7 @@ internal fun strings_te(): Map<String, String> =
         "save_notification_history" to "నోటిఫికేషన్ చరిత్రను సేవ్ చేయి",
         "scan_qr" to "కనెక్ట్ చేయడానికి స్కాన్ చేయండి",
         "screen_transitions" to "స్క్రీన్ పరివర్తనలు",
+        "screen_transitions_desc" to "ఒక స్క్రీన్ నుండి తదుపరి స్క్రీన్‌కు మారడాన్ని యానిమేట్ చేస్తుంది.",
         "search" to "వెతుకు",
         "search_button" to "వెతుకు",
         "search_hint" to "మీరు ఏమి ప్లే చేయాలనుకుంటున్నారు?",

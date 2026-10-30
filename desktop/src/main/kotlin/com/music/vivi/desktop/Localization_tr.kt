@@ -736,6 +736,7 @@ internal fun strings_tr(): Map<String, String> =
         "save_notification_history" to "Bildirim geçmişini kaydet",
         "scan_qr" to "Bağlanmak için tarayın",
         "screen_transitions" to "Ekran geçişleri",
+        "screen_transitions_desc" to "Bir ekrandan diğerine geçişi canlandırır.",
         "search" to "Arama",
         "search_button" to "Arama",
         "search_hint" to "Ne dinlemek istersin?",

@@ -736,6 +736,7 @@ internal fun strings_el(): Map<String, String> =
         "save_notification_history" to "Αποθήκευση ιστορικού ειδοποιήσεων",
         "scan_qr" to "Σαρώστε για σύνδεση",
         "screen_transitions" to "Μεταβάσεις οθόνης",
+        "screen_transitions_desc" to "Κινεί με animation τη μετάβαση από τη μία οθόνη στην επόμενη.",
         "search" to "Αναζήτηση",
         "search_button" to "Αναζήτηση",
         "search_hint" to "Τι θέλετε να παίξετε;",

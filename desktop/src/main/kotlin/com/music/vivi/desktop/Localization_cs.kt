@@ -736,6 +736,7 @@ internal fun strings_cs(): Map<String, String> =
         "save_notification_history" to "Ukládat historii oznámení",
         "scan_qr" to "Naskenujte pro připojení",
         "screen_transitions" to "Přechody obrazovky",
+        "screen_transitions_desc" to "Animuje přechod z jedné obrazovky na druhou.",
         "search" to "Vyhledávání",
         "search_button" to "Vyhledávání",
         "search_hint" to "Co chcete přehrát?",

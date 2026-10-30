@@ -736,6 +736,7 @@ internal fun strings_bn(): Map<String, String> =
         "save_notification_history" to "বিজ্ঞপ্তির ইতিহাস সংরক্ষণ করুন",
         "scan_qr" to "সংযোগ করতে স্ক্যান করুন",
         "screen_transitions" to "স্ক্রিন ট্রানজিশন",
+        "screen_transitions_desc" to "এক স্ক্রিন থেকে পরের স্ক্রিনে যাওয়াকে অ্যানিমেট করে।",
         "search" to "সার্চ",
         "search_button" to "সার্চ",
         "search_hint" to "কী চালাতে চান?",

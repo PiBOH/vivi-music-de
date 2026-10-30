@@ -736,6 +736,7 @@ internal fun strings_ml(): Map<String, String> =
         "save_notification_history" to "അറിയിപ്പ് ചരിത്രം സംരക്ഷിക്കുക",
         "scan_qr" to "കണക്റ്റുചെയ്യാൻ സ്കാൻ ചെയ്യുക",
         "screen_transitions" to "സ്ക്രീൻ ട്രാൻസിഷനുകൾ",
+        "screen_transitions_desc" to "ഒരു സ്ക്രീനിൽ നിന്ന് അടുത്തതിലേക്കുള്ള മാറ്റം ആനിമേറ്റ് ചെയ്യുന്നു.",
         "search" to "തിരയുക",
         "search_button" to "തിരയുക",
         "search_hint" to "എന്താണ് പ്ലേ ചെയ്യാൻ ആഗ്രഹിക്കുന്നത്?",

@@ -736,6 +736,7 @@ internal fun strings_sr(): Map<String, String> =
         "save_notification_history" to "Sačuvaj istoriju obaveštenja",
         "scan_qr" to "Skeniraj da se povežeš",
         "screen_transitions" to "Прелази екрана",
+        "screen_transitions_desc" to "Анимира прелаз са једног екрана на следећи.",
         "search" to "Pretraži",
         "search_button" to "Pretraži",
         "search_hint" to "Шта желите да пустите?",

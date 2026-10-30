@@ -736,6 +736,7 @@ internal fun strings_id(): Map<String, String> =
         "save_notification_history" to "Simpan riwayat notifikasi",
         "scan_qr" to "Pindai untuk terhubung",
         "screen_transitions" to "Transisi layar",
+        "screen_transitions_desc" to "Menganimasikan perpindahan dari satu layar ke layar berikutnya.",
         "search" to "Mencari",
         "search_button" to "Mencari",
         "search_hint" to "Apa yang ingin kamu putar?",

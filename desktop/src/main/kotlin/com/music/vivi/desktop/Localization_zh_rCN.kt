@@ -736,6 +736,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "save_notification_history" to "保存通知历史",
         "scan_qr" to "扫码连接",
         "screen_transitions" to "屏幕切换动画",
+        "screen_transitions_desc" to "为从一个屏幕切换到下一个屏幕添加动画。",
         "search" to "搜索",
         "search_button" to "搜索",
         "search_hint" to "你想听什么？",

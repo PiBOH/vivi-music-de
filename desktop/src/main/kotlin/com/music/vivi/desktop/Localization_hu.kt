@@ -736,6 +736,7 @@ internal fun strings_hu(): Map<String, String> =
         "save_notification_history" to "Értesítési előzmények mentése",
         "scan_qr" to "Kapcsolódáshoz olvasd be",
         "screen_transitions" to "Képernyőátmenetek",
+        "screen_transitions_desc" to "Animálja az átmenetet az egyik képernyőről a másikra.",
         "search" to "Keresés",
         "search_button" to "Keresés",
         "search_hint" to "Mit szeretnél lejátszani?",

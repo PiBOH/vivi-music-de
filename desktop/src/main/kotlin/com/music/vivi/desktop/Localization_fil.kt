@@ -736,6 +736,7 @@ internal fun strings_fil(): Map<String, String> =
         "save_notification_history" to "I-save ang history ng notification",
         "scan_qr" to "I-scan para kumonekta",
         "screen_transitions" to "Mga transition ng screen",
+        "screen_transitions_desc" to "Inaanimate ang paglipat mula sa isang screen papunta sa susunod.",
         "search" to "Maghanap",
         "search_button" to "Maghanap",
         "search_hint" to "Ano ang gusto mong i-play?",

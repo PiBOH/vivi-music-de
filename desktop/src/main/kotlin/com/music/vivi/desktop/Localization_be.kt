@@ -736,6 +736,7 @@ internal fun strings_be(): Map<String, String> =
         "save_notification_history" to "Захоўваць гісторыю апавяшчэнняў",
         "scan_qr" to "Сканіруйце для падключэння",
         "screen_transitions" to "Пераходы экрана",
+        "screen_transitions_desc" to "Анімуе пераход з аднаго экрана на іншы.",
         "search" to "Пошук",
         "search_button" to "Пошук",
         "search_hint" to "Што вы хочаце ўключыць?",

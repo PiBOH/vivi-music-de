@@ -736,6 +736,7 @@ internal fun strings_eu(): Map<String, String> =
         "save_notification_history" to "Gorde jakinarazpenen historia",
         "scan_qr" to "Eskanatu konektatzeko",
         "screen_transitions" to "Pantailako trantsizioak",
+        "screen_transitions_desc" to "Animatu pantaila batetik besterako iragana.",
         "search" to "Bilatu",
         "search_button" to "Bilatu",
         "search_hint" to "Zer erreproduitu nahi duzu?",

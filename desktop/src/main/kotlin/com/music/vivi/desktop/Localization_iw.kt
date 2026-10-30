@@ -736,6 +736,7 @@ internal fun strings_iw(): Map<String, String> =
         "save_notification_history" to "שמור היסטוריית הודעות",
         "scan_qr" to "סרוק כדי להתחבר",
         "screen_transitions" to "מעברי מסך",
+        "screen_transitions_desc" to "מנפיש את המעבר ממסך אחד למסך הבא.",
         "search" to "חיפוש",
         "search_button" to "חיפוש",
         "search_hint" to "מה אתה רוצה לנגן?",

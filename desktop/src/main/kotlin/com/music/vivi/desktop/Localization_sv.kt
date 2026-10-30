@@ -736,6 +736,7 @@ internal fun strings_sv(): Map<String, String> =
         "save_notification_history" to "Spara aviseringshistorik",
         "scan_qr" to "Skanna för att ansluta",
         "screen_transitions" to "Skärmsövergångar",
+        "screen_transitions_desc" to "Animerar övergången från en skärm till nästa.",
         "search" to "Sök",
         "search_button" to "Sök",
         "search_hint" to "Vad vill du lyssna på?",

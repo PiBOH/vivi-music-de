@@ -736,6 +736,7 @@ internal fun strings_ru(): Map<String, String> =
         "save_notification_history" to "Сохранять историю уведомлений",
         "scan_qr" to "Отсканируйте для подключения",
         "screen_transitions" to "Переходы экрана",
+        "screen_transitions_desc" to "Анимирует переход с одного экрана на другой.",
         "search" to "Поиск",
         "search_button" to "Поиск",
         "search_hint" to "Что вы хотите послушать?",

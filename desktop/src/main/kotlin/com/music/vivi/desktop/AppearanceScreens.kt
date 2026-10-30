@@ -1223,10 +1223,11 @@ fun TransitionsScreen(
     val transitionsOn = screenTransition != "off"
 
     Column(Modifier.fillMaxWidth()) {
+        // No top padding of its own: the screen host already puts the page's 16 dp
+        // under the Back row, and a second one made this heading stand at 32.
         Text(
             Localization.get(language, "animations"),
             style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(top = 16.dp),
         )
         Spacer(Modifier.height(16.dp))
 
@@ -1245,6 +1246,10 @@ fun TransitionsScreen(
                 M3SettingsItem(
                     icon = Icons.Filled.PlayArrow,
                     title = { Text(Localization.get(language, "screen_transitions")) },
+                    // The switch's own sentence, which the page draws and the row
+                    // did not: without it the two switches of the card read as two
+                    // names and nothing says what the second one turns on.
+                    description = { Text(Localization.get(language, "screen_transitions_desc")) },
                     trailing = {
                         Switch(
                             checked = transitionsOn,
@@ -1257,11 +1262,18 @@ fun TransitionsScreen(
             ),
         )
 
-        // Both choices belong to the switches above and fold with them.
-        Spacer(Modifier.height(16.dp))
+        // Both choices belong to the switches above and fold with them, each with
+        // the page's 16 dp above it *inside* the fold: a spacer outside would be
+        // left behind by a card that folded away, which is the gap the page does
+        // not have.
         M3SettingsFold(visible = animationsEnabled && transitionsOn) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsDropdownItem(
                 icon = Icons.Filled.Movie,
+                // A standalone dropdown card is not a group of this screen's own, and
+                // the page fades every card in, so it asks for the same entrance the
+                // group above gets.
+                modifier = Modifier.groupEnter(),
                 title = Localization.get(language, "transition_style"),
                 value = Localization.get(language, if (screenTransition == "slide") "transition_slide" else "transition_fade"),
                 options = listOf(
@@ -1272,8 +1284,10 @@ fun TransitionsScreen(
             )
         }
         M3SettingsFold(visible = animationsEnabled) {
+            Spacer(Modifier.height(16.dp))
             M3SettingsDropdownItem(
                 icon = Icons.Filled.Speed,
+                modifier = Modifier.groupEnter(),
                 title = Localization.get(language, "animation_speed"),
                 value = Localization.get(language, when (animationSpeed) {
                     "fast" -> "animation_speed_fast"

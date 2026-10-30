@@ -736,6 +736,7 @@ internal fun strings_ta(): Map<String, String> =
         "save_notification_history" to "அறிவிப்பு வரலாற்றைச் சேமி",
         "scan_qr" to "இணைக்க ஸ்கேன் செய்யவும்",
         "screen_transitions" to "திரை மாற்றங்கள்",
+        "screen_transitions_desc" to "ஒரு திரையிலிருந்து அடுத்த திரைக்கு மாறுவதை அனிமேட் செய்கிறது.",
         "search" to "தேடல்",
         "search_button" to "தேடல்",
         "search_hint" to "எதை இயக்க விரும்புகிறீர்கள்?",

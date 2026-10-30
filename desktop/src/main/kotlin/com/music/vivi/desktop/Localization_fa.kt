@@ -736,6 +736,7 @@ internal fun strings_fa(): Map<String, String> =
         "save_notification_history" to "ذخیره تاریخچه اعلان‌ها",
         "scan_qr" to "اسکن برای اتصال",
         "screen_transitions" to "انتقال‌های صفحه",
+        "screen_transitions_desc" to "انتقال از یک صفحه به صفحه بعدی را انیمیشن می‌کند.",
         "search" to "جستجو",
         "search_button" to "جستجو",
         "search_hint" to "چه چیزی می‌خواهید پخش کنید؟",

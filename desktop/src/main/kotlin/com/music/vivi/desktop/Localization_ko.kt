@@ -736,6 +736,7 @@ internal fun strings_ko(): Map<String, String> =
         "save_notification_history" to "알림 기록 저장",
         "scan_qr" to "연결하려면 스캔",
         "screen_transitions" to "화면 전환",
+        "screen_transitions_desc" to "한 화면에서 다음 화면으로 넘어갈 때 애니메이션을 적용합니다.",
         "search" to "검색",
         "search_button" to "검색",
         "search_hint" to "무엇을 재생할까요?",

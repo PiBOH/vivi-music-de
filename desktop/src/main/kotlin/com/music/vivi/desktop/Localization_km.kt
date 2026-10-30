@@ -736,6 +736,7 @@ internal fun strings_km(): Map<String, String> =
         "save_notification_history" to "រក្សាទុកប្រវត្តិការជូនដំណឹង",
         "scan_qr" to "ស្កេនដើម្បីភ្ជាប់",
         "screen_transitions" to "ការផ្លាស់ប្តូរអេក្រង់",
+        "screen_transitions_desc" to "បង្កើតចលនាសម្រាប់ការផ្លាស់ប្តូរពីអេក្រង់មួយទៅអេក្រង់បន្ទាប់។",
         "search" to "ស្វែងរក",
         "search_button" to "ស្វែងរក",
         "search_hint" to "អ្នកចង់លេងអ្វី?",

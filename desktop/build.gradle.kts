@@ -1404,6 +1404,31 @@ tasks.register<JavaExec>("introOrderCheck") {
     mainClass.set("com.music.vivi.desktop.IntroOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Animations screen against the preview:
+ *
+ *     ./gradlew :desktop:animationsOrderCheck
+ *
+ * The preview's `animations` list is the title, one card of two switches (the
+ * master one and the screen transitions it governs, each with its own
+ * sentence), then the transition style and the speed as cards of their own,
+ * which fold away with the switches above them; this composes the real
+ * `SettingsTransitionsScreen` on the ui-test harness and reads the semantics
+ * tree: every text of the screen in document order must be the preview's own
+ * sequence. The pixel harness reads the heading, the card of two rows on the
+ * 3 dp seam, the two cards 16 dp apart and the arrival frame, and the two
+ * folds are read as their own arms (master off: the one switch; transitions
+ * off: the card and the speed).
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/AnimationsOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("animationsOrderCheck") {
+    group = "verification"
+    description = "Checks that the Animations screen is the preview's: rows, order, measures, folds and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.AnimationsOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

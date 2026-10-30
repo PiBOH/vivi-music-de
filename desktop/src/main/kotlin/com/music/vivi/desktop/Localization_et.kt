@@ -736,6 +736,7 @@ internal fun strings_et(): Map<String, String> =
         "save_notification_history" to "Salvesta teavituste ajalugu",
         "scan_qr" to "Skaneeri ühendamiseks",
         "screen_transitions" to "Kuva üleminekud",
+        "screen_transitions_desc" to "Animeerib ülemineku ühelt ekraanilt teisele.",
         "search" to "Otsi",
         "search_button" to "Otsi",
         "search_hint" to "Mida soovid esitada?",

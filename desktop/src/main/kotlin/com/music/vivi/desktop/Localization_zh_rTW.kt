@@ -736,6 +736,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "save_notification_history" to "儲存通知記錄",
         "scan_qr" to "掃碼連線",
         "screen_transitions" to "螢幕切換動畫",
+        "screen_transitions_desc" to "為從一個畫面切換到下一個畫面加上動畫。",
         "search" to "搜尋",
         "search_button" to "搜尋",
         "search_hint" to "你想聽什麼？",

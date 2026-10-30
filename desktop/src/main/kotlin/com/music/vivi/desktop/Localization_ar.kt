@@ -736,6 +736,7 @@ internal fun strings_ar(): Map<String, String> =
         "save_notification_history" to "حفظ سجل الإشعارات",
         "scan_qr" to "امسح للاتصال",
         "screen_transitions" to "انتقالات الشاشة",
+        "screen_transitions_desc" to "يحرّك الانتقال من شاشة إلى الشاشة التالية.",
         "search" to "ابحث",
         "search_button" to "ابحث",
         "search_hint" to "ماذا تريد أن تشغّل؟",

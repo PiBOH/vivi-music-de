@@ -736,6 +736,7 @@ internal fun strings_az(): Map<String, String> =
         "save_notification_history" to "Bildiriş tarixçəsini saxla",
         "scan_qr" to "Qoşulmaq üçün skan et",
         "screen_transitions" to "Ekran keçidləri",
+        "screen_transitions_desc" to "Bir ekrandan digərinə keçidi animasiya edir.",
         "search" to "Axtar",
         "search_button" to "Axtar",
         "search_hint" to "Nə dinləmək istəyirsiniz?",

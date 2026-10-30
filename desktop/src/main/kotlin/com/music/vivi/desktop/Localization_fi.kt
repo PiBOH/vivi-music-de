@@ -736,6 +736,7 @@ internal fun strings_fi(): Map<String, String> =
         "save_notification_history" to "Tallenna ilmoitushistoria",
         "scan_qr" to "Skannaa yhdistääksesi",
         "screen_transitions" to "Näytön siirtymät",
+        "screen_transitions_desc" to "Animoi siirtymisen näytöltä toiselle.",
         "search" to "Etsi",
         "search_button" to "Etsi",
         "search_hint" to "Mitä haluat kuunnella?",

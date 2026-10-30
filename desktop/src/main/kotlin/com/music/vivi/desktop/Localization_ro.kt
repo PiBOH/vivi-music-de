@@ -736,6 +736,7 @@ internal fun strings_ro(): Map<String, String> =
         "save_notification_history" to "Salvează istoricul notificărilor",
         "scan_qr" to "Scanează pentru a te conecta",
         "screen_transitions" to "Tranziții de ecran",
+        "screen_transitions_desc" to "Animează trecerea de la un ecran la altul.",
         "search" to "Caută",
         "search_button" to "Caută",
         "search_hint" to "Ce doriți să redați?",

@@ -1,0 +1,67 @@
+# -*- coding: utf-8 -*-
+"""The sentence under the Animations screen's Screen transitions switch.
+
+The preview draws it (`js/screens.js`, the second row of `animations`) as the
+switch's own description, and the app only had the row's name: the key is new,
+so it is translated here in every language instead of falling back to English.
+"""
+
+SCREEN_TRANSITIONS_DESC = {
+    "en": "Animate the move from one screen to the next.",
+    "ar": "يحرّك الانتقال من شاشة إلى الشاشة التالية.",
+    "as": "এখন স্ক্ৰীনৰ পৰা পৰৱৰ্তী স্ক্ৰীনলৈ যোৱাত এনিমেচন দিয়ে।",
+    "az": "Bir ekrandan digərinə keçidi animasiya edir.",
+    "be": "Анімуе пераход з аднаго экрана на іншы.",
+    "bg": "Анимира прехода от един екран към следващия.",
+    "bn": "এক স্ক্রিন থেকে পরের স্ক্রিনে যাওয়াকে অ্যানিমেট করে।",
+    "bs": "Animira prijelaz s jednog ekrana na sljedeći.",
+    "ca": "Anima el pas d'una pantalla a la següent.",
+    "cs": "Animuje přechod z jedné obrazovky na druhou.",
+    "de": "Animiert den Wechsel von einem Bildschirm zum nächsten.",
+    "el": "Κινεί με animation τη μετάβαση από τη μία οθόνη στην επόμενη.",
+    "es": "Anima el paso de una pantalla a la siguiente.",
+    "et": "Animeerib ülemineku ühelt ekraanilt teisele.",
+    "eu": "Animatu pantaila batetik besterako iragana.",
+    "fa": "انتقال از یک صفحه به صفحه بعدی را انیمیشن می‌کند.",
+    "fi": "Animoi siirtymisen näytöltä toiselle.",
+    "fil": "Inaanimate ang paglipat mula sa isang screen papunta sa susunod.",
+    "fr": "Anime le passage d'un écran à l'autre.",
+    "hi": "एक स्क्रीन से अगली स्क्रीन पर जाने को एनिमेट करें।",
+    "hr": "Animira prijelaz s jednog zaslona na sljedeći.",
+    "hu": "Animálja az átmenetet az egyik képernyőről a másikra.",
+    "id": "Menganimasikan perpindahan dari satu layar ke layar berikutnya.",
+    "in": "Menganimasikan perpindahan dari satu layar ke layar berikutnya.",
+    "it": "Anima il passaggio da una schermata alla successiva.",
+    "iw": "מנפיש את המעבר ממסך אחד למסך הבא.",
+    "ja": "画面から次の画面への切り替えをアニメーションにします。",
+    "km": "បង្កើតចលនាសម្រាប់ការផ្លាស់ប្តូរពីអេក្រង់មួយទៅអេក្រង់បន្ទាប់។",
+    "ko": "한 화면에서 다음 화면으로 넘어갈 때 애니메이션을 적용합니다.",
+    "lt": "Animuoja perėjimą iš vieno ekrano į kitą.",
+    "ml": "ഒരു സ്ക്രീനിൽ നിന്ന് അടുത്തതിലേക്കുള്ള മാറ്റം ആനിമേറ്റ് ചെയ്യുന്നു.",
+    "ms": "Menganimasikan peralihan dari satu skrin ke skrin seterusnya.",
+    "nb": "Animerer overgangen fra én skjerm til den neste.",
+    "nb-rNO": "Animerer overgangen fra én skjerm til den neste.",
+    "nl": "Animeert de overgang van het ene scherm naar het andere.",
+    "pa": "ਇੱਕ ਸਕ੍ਰੀਨ ਤੋਂ ਅਗਲੀ ਸਕ੍ਰੀਨ ਜਾਣ ਨੂੰ ਐਨੀਮੇਟ ਕਰੋ।",
+    "pl": "Animuje przejście z jednego ekranu na następny.",
+    "pt": "Anima a passagem de um ecrã para o seguinte.",
+    "pt-rBR": "Anima a passagem de uma tela para a seguinte.",
+    "ro": "Animează trecerea de la un ecran la altul.",
+    "ru": "Анимирует переход с одного экрана на другой.",
+    "sk": "Animuje prechod z jednej obrazovky na druhú.",
+    "sl": "Animira prehod z enega zaslona na naslednjega.",
+    "sr": "Анимира прелаз са једног екрана на следећи.",
+    "sv": "Animerar övergången från en skärm till nästa.",
+    "ta": "ஒரு திரையிலிருந்து அடுத்த திரைக்கு மாறுவதை அனிமேட் செய்கிறது.",
+    "te": "ఒక స్క్రీన్ నుండి తదుపరి స్క్రీన్‌కు మారడాన్ని యానిమేట్ చేస్తుంది.",
+    "th": "เพิ่มแอนิเมชันให้การเปลี่ยนจากหน้าจอหนึ่งไปยังหน้าจอถัดไป",
+    "tr": "Bir ekrandan diğerine geçişi canlandırır.",
+    "uk": "Анімує перехід з одного екрана на інший.",
+    "vi": "Tạo hiệu ứng chuyển từ màn hình này sang màn hình tiếp theo.",
+    "zh-rCN": "为从一个屏幕切换到下一个屏幕添加动画。",
+    "zh-rTW": "為從一個畫面切換到下一個畫面加上動畫。",
+}
+
+EXTRA_TRANSLATIONS = {
+    "screen_transitions_desc": SCREEN_TRANSITIONS_DESC,
+}

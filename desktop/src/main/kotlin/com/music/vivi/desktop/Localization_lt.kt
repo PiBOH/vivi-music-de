@@ -736,6 +736,7 @@ internal fun strings_lt(): Map<String, String> =
         "save_notification_history" to "Išsaugoti pranešimų istoriją",
         "scan_qr" to "Nuskaitykite, kad prisijungtumėte",
         "screen_transitions" to "Ekrano perėjimai",
+        "screen_transitions_desc" to "Animuoja perėjimą iš vieno ekrano į kitą.",
         "search" to "Paieška",
         "search_button" to "Paieška",
         "search_hint" to "Ką norite leisti?",

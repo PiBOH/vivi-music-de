@@ -736,6 +736,7 @@ internal fun strings_th(): Map<String, String> =
         "save_notification_history" to "บันทึกประวัติการแจ้งเตือน",
         "scan_qr" to "สแกนเพื่อเชื่อมต่อ",
         "screen_transitions" to "การเปลี่ยนหน้าจอ",
+        "screen_transitions_desc" to "เพิ่มแอนิเมชันให้การเปลี่ยนจากหน้าจอหนึ่งไปยังหน้าจอถัดไป",
         "search" to "ค้นหา",
         "search_button" to "ค้นหา",
         "search_hint" to "คุณอยากฟังอะไร?",

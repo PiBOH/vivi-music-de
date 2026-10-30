@@ -736,6 +736,7 @@ internal fun strings_bg(): Map<String, String> =
         "save_notification_history" to "Запазване на историята на известията",
         "scan_qr" to "Сканирайте, за да се свържете",
         "screen_transitions" to "Преходи на екрана",
+        "screen_transitions_desc" to "Анимира прехода от един екран към следващия.",
         "search" to "Търсене",
         "search_button" to "Търсене",
         "search_hint" to "Какво искате да пуснете?",
