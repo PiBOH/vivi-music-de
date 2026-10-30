@@ -88,13 +88,13 @@ dependencies there, or you break the desktop build.
     similar docs material) must be applied and pushed on **both**
     `vivi-music-de` and `vivi-music-de-apk`, with equivalent content (their
     hashes may differ). `main` stays excluded (upstream mirror).
-  - **`CHANGELOG.md` and `version.txt` are not "equivalent", they are the
-    same file on both branches** (same order, same versions, same dates, byte
-    for byte): the APK's changes are part of the DE's own release entry as
-    `[APK]` bullets, so the two are never written separately. A change to
-    either file is applied to one branch and then copied to the other
-    wholesale (`git checkout <other-branch> -- CHANGELOG.md version.txt`), not
-    re-typed — and `TODO.md` follows the same content.
+  - **`CHANGELOG.md`, `CHANGELOG.dev.md` and `version.txt` are not "equivalent",
+    they are the same files on both branches** (same order, same versions, same
+    dates, byte for byte): the APK's changes are part of the DE's own release
+    entry as `[APK]` bullets, so the two are never written separately. A change
+    to any of these files is applied to one branch and then copied to the other
+    wholesale (`git checkout <other-branch> -- CHANGELOG.md CHANGELOG.dev.md
+    version.txt`), not re-typed — and `TODO.md` follows the same content.
   - **An APK change never gets a section, a file or a version of its own**: it
     is added as an `[APK]` bullet to the entry being prepared — the one the
     desktop's changes go into — and pushed to **both** branches as that same
@@ -709,9 +709,32 @@ version of the form `<mobile>_DE-<de>` (e.g. `6.0.5_DE-1.0.0`):
   Keep that derivation in place — do not put the full `_DE-` version into
   `packageVersion`.
 
-### CHANGELOG.md — Keep a Changelog
+### Two changelogs — `CHANGELOG.md` (short) and `CHANGELOG.dev.md` (full)
 
-Update `CHANGELOG.md` on **every important change**, following
+The project keeps the record twice, and they are not written separately:
+
+- **`CHANGELOG.dev.md` is the source.** Every change lands there with the whole
+  story: what was wrong, what it does now, the figures that were measured, the
+  files and checks involved. **No word limit** in this file, and nothing is
+  trimmed on the way in. It is the file a maintainer reads a year later.
+- **`CHANGELOG.md` is generated from it**, by `python3 scripts/split_changelog.py`.
+  It carries one line per change: the entry's own head and nothing else, for
+  example `- [DE] **Content's five switches are one card.**` The detail stays in
+  the dev file. **Never edit `CHANGELOG.md` by hand** - a change made there is
+  gone at the next run of the script, which is also how the two cannot drift.
+- The script keeps the headings, the blank lines and the notes a section
+  carries; it reduces an entry to its bold head (or to its first sentence when
+  it has no bold head), drops the continuation lines that follow it, drops a
+  `### ... Commits` subsection with its list, and drops an untagged line that is
+  only a commit subject (`- v: DE ...`).
+- **The release bodies come from `CHANGELOG.md`**, because that is the file
+  `.github/workflows/auto-release.yml` extracts.
+- **Both files are the same file on both development branches**, like
+  `version.txt`: apply a change on `vivi-music-de`, then copy it to
+  `vivi-music-de-apk` wholesale (`git checkout <other-branch> -- CHANGELOG.md
+  CHANGELOG.dev.md`), never retype it.
+
+Update `CHANGELOG.dev.md` on **every important change**, following
 [Keep a Changelog](https://keepachangelog.com/). Use exactly these sections:
 
 - `Added` — for new features.
@@ -723,7 +746,7 @@ Update `CHANGELOG.md` on **every important change**, following
 
 Keep an `## [Unreleased]` section at the top; when a version is released,
 convert it to a dated entry (`## [X.Y.Z] - YYYY-MM-DD`) and add the new version
-to the top of `CHANGELOG.md`. Omit sections that have no entries.
+to the top of `CHANGELOG.dev.md`. Omit sections that have no entries.
 
 **Every bullet is tagged with the surface it changes, and no bullet is left
 untagged** (`- [DE] …` for the desktop edition, `- [APK] …` for the Android
@@ -731,59 +754,47 @@ app, `- [DE][APK] …` for one change that reaches both), so desktop and Android
 changes stay distinguishable in the changelog. Desktop releases use the
 combined `<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
 
-**A bullet is written for the person using the app, at 60 % shorter than the
-natural first draft (MANDATORY).** This applies to every entry, both a new one
-and an entry already written that is being edited. The rules, in order:
+**An entry's head is written for the person using the app, and its body is
+written for whoever maintains it (MANDATORY).** The head is the one line that
+reaches `CHANGELOG.md` and the release page, so it says the change and nothing
+else; the body under it is the full account, and it may be as long as the
+change needs. The rules, in order:
 
 - **One bullet per change.** A change is one thing the reader notices: a screen
   rebuilt, a defect fixed, an option added, a start made faster. Two unrelated
   changes are two bullets, never one paragraph.
-- **60 % shorter than the draft.** Write the bullet as it naturally comes out,
-  then cut it to about 40 % of that length. What stays is what the reader sees
-  and can act on: the screen or the option, what it does now, and the one limit
-  that changes the answer. The bold head line names the change; one to three
-  sentences are everything else.
-- **85 words is the hard ceiling, 60 is the target (MANDATORY).** Count the
-  whole bullet, the bold head line included. An emoji is not a word; a token
-  counts when it carries at least one letter or digit, so `12 dp`, `M3IconButton`
-  and `-2:23` count, while a lone dash, a markdown marker or a smiley does not.
-  A bullet longer than 85 words is compressed by summarising it, never by
-  dropping a fact of the list above and never by truncating a sentence. The
-  same ceiling covers every entry already written: a bullet that was long when
-  it landed is shortened when its section is next touched.
-- **No developer detail.** Measurements and their figures, check and task
-  names, file, class and function names, flag values, log excerpts, "Watch"
-  notes and "Open sub-item" remarks are not the changelog's business: the end
-  user does not care how it was measured or which file it lives in, only what
-  changed for them. They belong in the commit body, in `TODO.md` or in the pull
-  request. A bullet whose only content is that a class moved is cut to the
-  effect the move has, or kept in the commit body alone when it has none.
-- **What the reader sees is content, not detail.** The options a screen
-  offers, with their names and their values, the platforms something was
-  verified on, and what stays unchanged (a name kept, a drawing untouched) stay
-  in the bullet in one short clause each, even in the short form: cutting them
-  is losing a fact, not shortening. A **count or a coverage** the reader can
-  check against the screen is content too - how many intervals a row offers,
-  how many languages carry a string, which rows are affected, over how many of
-  them - and so is the qualifier that makes a claim true: "the 27 dropdowns
-  drawn as a row" is not the same claim as "all of them", and the qualifier is
-  the fact, not padding. The developer detail is the measurement and the
-  identifier, never the choice on screen or its number.
-- **Nothing invented, nothing silently lost.** Shortening keeps every fact of
-  the long form at the level of detail above; it never adds a promise the
-  change did not make, and a fact that cannot be said in the short form is
-  carried by the commit body instead of disappearing. A bullet that says
-  something the shipped code no longer does is a defect, not a style question:
-  when an entry records two successive states of one screen, only the last one
-  is written in the present tense. A bullet a later change **superseded** does
-  not stay saying something false until someone decides what to do with it: it
-  is corrected to what ships first, and whether the superseded bullet is then
-  removed or folded into the newer one is the owner's call.
-- **For example**, not "`:desktop:dropdownPositionCheck` opens one for real on
-  the compose ui-test harness and reads the menu against the row: the first
-  option sits 12 px under the row's bottom with its left edge on the row's",
-  but "a settings dropdown opens under the row it belongs to, right-aligned to
-  its value, and flips above the row at the floor of the window".
+- **The head names the change in one line.** It is the sentence `CHANGELOG.md`
+  and the release page will show, so it says what changed for the reader and
+  nothing else, in about ten to twenty words. Bold is the convention: `- [DE]
+  **Content's five switches are one card.**` A head that needs a second sentence
+  to be understood is two entries.
+- **The body is the whole account.** What was wrong, what it does now, the
+  options a screen offers with their names and values, the platforms it was
+  verified on, what stays unchanged, the figures that were measured, the check
+  or task that proves it, a `**Watch:**` step and an `**Open sub-item:**` when
+  one is left open. Nothing is invented and nothing is silently lost: an entry
+  that says something the shipped code no longer does is a defect, not a style
+  question, and when an entry records two successive states of one screen only
+  the last one is written in the present tense. A superseded entry does not stay
+  saying something false until someone decides what to do with it: it is
+  corrected to what ships first, and whether it is then removed or folded into
+  the newer one is the owner's call.
+- **A count, a coverage and the qualifier are content.** How many intervals a
+  row offers, how many languages carry a string, which rows are affected, over
+  how many of them, and "the 27 dropdowns drawn as a row" rather than "all of
+  them": those are facts of the entry, not padding, in the body and in the head
+  alike.
+- **Change → dev file → script.** Write the entry in `CHANGELOG.dev.md`, then run
+  `python3 scripts/split_changelog.py`; the short file is the result, never a
+  hand edit. An emoji is never a word; a token counts when it carries at least
+  one letter or digit (`12 dp`, `M3IconButton` and `-2:23` count, a lone dash or
+  a smiley does not).
+- **For example**, the dev file keeps "`:desktop:dropdownPositionCheck` opens one
+  for real on the compose ui-test harness and reads the menu against the row:
+  the first option sits 12 px under the row's bottom with its left edge on the
+  row's", while the short file shows "a settings dropdown opens under the row it
+  belongs to, right-aligned to its value, and flips above the row at the floor
+  of the window".
 - **English and no long dash**, like every other line of this file (see the
   language rules).
 
@@ -817,12 +828,15 @@ never from memory:
    - Verify: `git diff version.txt` actually shows the new values. Forgetting
      this has already produced releases with stale versions — the fix must
      never be left to the user.
-2. **`CHANGELOG.md` updated?**
+2. **`CHANGELOG.dev.md` updated, and `CHANGELOG.md` regenerated?**
    - New dated section `## [<mobile>_DE-<de>-<channel>] - YYYY-MM-DD`
      directly under `## [Unreleased]`, entries in strict descending version
      order, correct `Added`/`Changed`/`Fixed`/… heading, changes marked
-     `[DE]` and/or `[APK]`.
-   - Verify: `git diff CHANGELOG.md` shows the new versioned section.
+     `[DE]` and/or `[APK]`, the whole story in the body.
+   - Then `python3 scripts/split_changelog.py`, which rewrites `CHANGELOG.md`
+     from it. Never hand-edit the short file.
+   - Verify: `git diff CHANGELOG.dev.md` shows the new versioned section and
+     `git diff CHANGELOG.md` shows the same section reduced to its heads.
 3. **`TODO.md` updated?**
    - Completed items marked `[x]`, started-but-unfinished `[~]`, new pending
      work added. Never leave it stale after a change.
@@ -834,8 +848,9 @@ never from memory:
    may use `docs:`. Short title, details in the body, **no agent co-author
    footer** (see §3).
 6. **Final check before push**: `git status --short` shows only the intended
-   files staged, and `git log -1 --stat` shows `version.txt`, `CHANGELOG.md`
-   and `TODO.md` together with the code changes.
+   files staged, and `git log -1 --stat` shows `version.txt`,
+   `CHANGELOG.dev.md`, `CHANGELOG.md` and `TODO.md` together with the code
+   changes.
 
 The checklist is not optional: skipping items has already caused releases
 published with an un-bumped `version.txt` and changelog entries that never
