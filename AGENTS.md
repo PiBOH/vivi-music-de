@@ -750,10 +750,19 @@ and an entry already written that is being edited. The rules, in order:
   changed for them. They belong in the commit body, in `TODO.md` or in the pull
   request. A bullet whose only content is that a class moved is cut to the
   effect the move has, or kept in the commit body alone when it has none.
+- **What the reader sees is content, not detail.** The options a screen
+  offers, with their names and their values, the platforms something was
+  verified on, and what stays unchanged (a name kept, a drawing untouched) stay
+  in the bullet in one short clause each, even in the short form: cutting them
+  is losing a fact, not shortening. The developer detail is the measurement and
+  the identifier, never the choice on screen.
 - **Nothing invented, nothing silently lost.** Shortening keeps every fact of
   the long form at the level of detail above; it never adds a promise the
   change did not make, and a fact that cannot be said in the short form is
-  carried by the commit body instead of disappearing.
+  carried by the commit body instead of disappearing. A bullet that says
+  something the shipped code no longer does is a defect, not a style question:
+  when an entry records two successive states of one screen, only the last one
+  is written in the present tense.
 - **For example**, not "`:desktop:dropdownPositionCheck` opens one for real on
   the compose ui-test harness and reads the menu against the row: the first
   option sits 12 px under the row's bottom with its left edge on the row's",
