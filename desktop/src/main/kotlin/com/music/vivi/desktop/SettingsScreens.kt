@@ -2690,65 +2690,85 @@ fun NotificationHistoryScreen(
 ) {
     var history by remember { mutableStateOf(NotificationHistory.list()) }
     SettingsSubScreen(language, onBack) {
-        Text(Localization.get(language, "notification_history"), style = MaterialTheme.typography.titleLarge)
-        Text(
-            Localization.get(language, "notification_history_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
+        NotificationHistorySection(
+            language = language,
+            history = history,
+            onClear = {
+                NotificationHistory.clear()
+                history = emptyList()
+            },
         )
-        // One card, as the preview draws it: every notification is a row with the
-        // bell it would have shown, its own title and the message a moment ago.
-        // The mode and the time are the row's trailing column, the two things the
-        // list exists to say about it.
-        if (history.isEmpty()) {
-            // Its own key: "history_empty" belongs to the listening-history
-            // screen, and sharing it made this list and that screen print each
-            // other's wording (the History screen said "No notifications yet").
-            Text(
-                Localization.get(language, "notification_history_empty"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 24.dp),
-            )
-        } else {
-            Spacer(Modifier.height(16.dp))
-            M3SettingsGroup(
-                items = history.map { record ->
-                    M3SettingsItem(
-                        icon = Icons.Filled.Notifications,
-                        title = { Text(record.title) },
-                        description = { Text(record.message) },
-                        trailing = {
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    formatNotificationTime(record.timestamp),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    if (record.mode == "native") Localization.get(language, "notification_native")
-                                    else Localization.get(language, "notification_main_window"),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        },
-                    )
-                },
-            )
-        }
-        Spacer(Modifier.height(16.dp))
-        TextButton(onClick = {
-            NotificationHistory.clear()
-            history = emptyList()
-        }) {
-            Text(Localization.get(language, "clear_history"), color = MaterialTheme.colorScheme.error)
-        }
     }
 }
 
-private fun formatNotificationTime(epochMillis: Long): String = runCatching {
+/**
+ * The body of the screen: the page's title, the list and the one action.
+ *
+ * It is a section of its own so a check can compose it with a list of its own,
+ * which is what makes the two states - a list with entries and an empty one -
+ * readable without the machine's own history deciding the answer.
+ */
+@Composable
+internal fun NotificationHistorySection(
+    language: String,
+    history: List<NotificationRecord>,
+    onClear: () -> Unit,
+) {
+    // The page is the title and the card: no sentence of its own under the
+    // heading, so the card stands the sub-screen's 16 dp under it like every
+    // other first block.
+    Text(Localization.get(language, "notification_history"), style = MaterialTheme.typography.titleLarge)
+    Spacer(Modifier.height(16.dp))
+
+    // One card, as the preview draws it: every notification is a row with the
+    // bell it would have shown, its own title and the message it carried. The
+    // mode and the time are the row's trailing column, the two things the list
+    // exists to say about it.
+    if (history.isEmpty()) {
+        // Its own key: "history_empty" belongs to the listening-history
+        // screen, and sharing it made this list and that screen print each
+        // other's wording (the History screen said "No notifications yet").
+        Text(
+            Localization.get(language, "notification_history_empty"),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+    M3SettingsGroup(
+        items = history.map { record ->
+            M3SettingsItem(
+                icon = Icons.Filled.Notifications,
+                title = { Text(record.title) },
+                description = { Text(record.message) },
+                trailing = {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            formatNotificationTime(record.timestamp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            if (record.mode == "native") Localization.get(language, "notification_native")
+                            else Localization.get(language, "notification_main_window"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                },
+            )
+        },
+    )
+    // Only with something to clear: an action over an empty list is a control
+    // that cannot do what it says.
+    Spacer(Modifier.height(16.dp))
+    TextButton(onClick = onClear) {
+        Text(Localization.get(language, "clear_history"), color = MaterialTheme.colorScheme.error)
+    }
+}
+
+/** The stamp a history row carries, in the local zone (`yyyy-MM-dd HH:mm`). */
+internal fun formatNotificationTime(epochMillis: Long): String = runCatching {
     val dt = java.time.Instant.ofEpochMilli(epochMillis).atZone(java.time.ZoneId.systemDefault())
     java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").format(dt)
 }.getOrDefault("")

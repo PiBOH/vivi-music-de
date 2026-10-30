@@ -1429,6 +1429,29 @@ tasks.register<JavaExec>("animationsOrderCheck") {
     mainClass.set("com.music.vivi.desktop.AnimationsOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Notification history screen against the preview:
+ *
+ *     ./gradlew :desktop:notificationHistoryOrderCheck
+ *
+ * The preview's `notificationsHistory` list is the title and one card of rows,
+ * with no sentence under the heading and no action of its own; this composes the
+ * real `NotificationHistorySection` with a list of its own, so neither state
+ * depends on the machine's own history. With entries it reads the sequence, the
+ * heading 16 dp under the back row, the card of rows on the 3 dp seams, the
+ * action 16 dp under the card and the arrival frame, then presses that action
+ * and reads the emptied list; with nothing in it, it reads the app's own
+ * sentence and proves that no card and no action are drawn.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/NotificationHistoryOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("notificationHistoryOrderCheck") {
+    group = "verification"
+    description = "Checks that Notification history is the preview's: rows, order, measures, action and entrance"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.NotificationHistoryOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"
