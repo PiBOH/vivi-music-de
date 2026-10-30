@@ -85,6 +85,7 @@
 - [DE] **Animations is the preview's screen: the two switches say what they do, and the two choices stand 16 dp apart.**
 - [DE] **Notification history is the preview's page: the title, one card of rows, and the action only while there is something to clear.**
 - [DE] **Data Saver is the preview's page: the switch says what it turns off, and the five things are the app's info card.**
+- [DE] **Backup and restore is the preview's page: its two actions, its card and its stored list.**
 
 ### 🐛 Fixed
 - [DE] **Portuguese (Brazil), Chinese Simplified and Chinese Traditional get every string again.**

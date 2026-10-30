@@ -32,6 +32,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlayCircle
@@ -998,198 +999,70 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
     }
 
     SettingsSubScreen(language, onBack) {
-        Text(
-            Localization.get(language, "backup_restore"),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Text(
-            Localization.get(language, "backup_restore_desc"),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (busy) return@Button
-                busy = true
-                scope.launch {
-                    val file = withContext(Dispatchers.IO) { chooseBackupFile(save = true) }
-                    val ok = file != null && withContext(Dispatchers.IO) { BackupManager.export(file) }
-                    busy = false
-                    DesktopSnackbar.show(Localization.get(language, if (ok) "backup_create_success" else "backup_create_failed"))
-                }
-            },
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(Localization.get(language, "action_backup"))
-        }
-        Text(
-            Localization.get(language, "backup_desc"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        Spacer(Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (busy) return@Button
-                busy = true
-                scope.launch {
-                    val file = withContext(Dispatchers.IO) { chooseBackupFile(save = false) }
-                    val result = if (file == null) null
-                    else withContext(Dispatchers.IO) { BackupManager.import(file) }
-                    busy = false
-                    // The reason is no longer always the same sentence: a file
-                    // that is not a DE backup (the phone's archive, say) and one
-                    // whose settings entry cannot be read are different answers,
-                    // and the log keeps the sentence for whoever has to dig.
-                    when {
-                        result == null -> Unit
-                        result.ok -> showRestartDialog = true
-                        else -> DesktopSnackbar.show(Localization.get(language, result.messageKey))
-                    }
-                }
-            },
-            enabled = !busy,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(Localization.get(language, "action_restore"))
-        }
-        Text(
-            Localization.get(language, "restore_desc"),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-
-        HorizontalDivider(Modifier.padding(vertical = 20.dp))
-
-        // Automatic backups
-        Text(Localization.get(language, "auto_backup"), style = MaterialTheme.typography.titleMedium)
-
-        // The three switches are one card: they are one subject, and a row of a
-        // settings screen wears the card every other setting wears instead of
-        // standing on the page's own background. The two that depend on the
-        // automatic backup fold away with it.
-        Spacer(Modifier.height(16.dp))
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    icon = Icons.Filled.Schedule,
-                    title = { Text(Localization.get(language, "enable_automatic_backup")) },
-                    description = { Text(Localization.get(language, "automatic_backup_desc")) },
-                    trailing = {
-                        Switch(
-                            checked = autoBackupEnabled,
-                            onCheckedChange = { v ->
-                                autoBackupEnabled = v
-                                DesktopSettings.update { s -> s.copy(autoBackupEnabled = v) }
-                            },
-                        )
-                    },
-                    onClick = {
-                        autoBackupEnabled = !autoBackupEnabled
-                        DesktopSettings.update { s ->
-                            s.copy(autoBackupEnabled = !autoBackupEnabled)
-                        }
-                    },
-                ),
-                M3SettingsItem(
-                    icon = Icons.Filled.DateRange,
-                    title = { Text(Localization.get(language, "weekly_backup")) },
-                    description = { Text(Localization.get(language, "weekly_backup_desc")) },
-                    visible = autoBackupEnabled,
-                    trailing = {
-                        Switch(
-                            checked = autoBackupWeekly,
-                            onCheckedChange = { v ->
-                                autoBackupWeekly = v
-                                DesktopSettings.update { s -> s.copy(autoBackupWeekly = v) }
-                            },
-                        )
-                    },
-                    onClick = {
-                        autoBackupWeekly = !autoBackupWeekly
-                        DesktopSettings.update { s -> s.copy(autoBackupWeekly = !autoBackupWeekly) }
-                    },
-                ),
-                M3SettingsItem(
-                    icon = Icons.Filled.SystemUpdate,
-                    title = { Text(Localization.get(language, "backup_before_update")) },
-                    description = { Text(Localization.get(language, "backup_before_update_desc")) },
-                    visible = autoBackupEnabled,
-                    trailing = {
-                        Switch(
-                            checked = autoBackupBeforeUpdate,
-                            onCheckedChange = { v ->
-                                autoBackupBeforeUpdate = v
-                                DesktopSettings.update { s -> s.copy(autoBackupBeforeUpdate = v) }
-                            },
-                        )
-                    },
-                    onClick = {
-                        autoBackupBeforeUpdate = !autoBackupBeforeUpdate
-                        DesktopSettings.update { s ->
-                            s.copy(autoBackupBeforeUpdate = !autoBackupBeforeUpdate)
-                        }
-                    },
-                ),
-            ),
-        )
-
-        // Stored automatic backups
-        Text(
-            Localization.get(language, "stored_backups"),
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 20.dp),
-        )
-        if (backups.isEmpty()) {
-            Text(
-                Localization.get(language, "backups_empty"),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        } else {
-            backups.forEach { file ->
+        BackupSection(
+            language = language,
+            backups = backups.map { file ->
                 val (date, type) = parseAutoBackupName(file.name)
-                Row(
-                    Modifier.fillMaxWidth().padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(date, style = MaterialTheme.typography.bodyLarge)
-                        Text(
-                            Localization.get(language, type),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                StoredBackup(file, date, type, file.length())
+            },
+            autoBackupEnabled = autoBackupEnabled,
+            autoBackupWeekly = autoBackupWeekly,
+            autoBackupBeforeUpdate = autoBackupBeforeUpdate,
+            onToggleAutoBackup = { v ->
+                autoBackupEnabled = v
+                DesktopSettings.update { s -> s.copy(autoBackupEnabled = v) }
+            },
+            onToggleWeekly = { v ->
+                autoBackupWeekly = v
+                DesktopSettings.update { s -> s.copy(autoBackupWeekly = v) }
+            },
+            onToggleBeforeUpdate = { v ->
+                autoBackupBeforeUpdate = v
+                DesktopSettings.update { s -> s.copy(autoBackupBeforeUpdate = v) }
+            },
+            busy = busy,
+            onBackup = {
+                if (!busy) {
+                    busy = true
+                    scope.launch {
+                        val file = withContext(Dispatchers.IO) { chooseBackupFile(save = true) }
+                        val ok = file != null && withContext(Dispatchers.IO) { BackupManager.export(file) }
+                        busy = false
+                        DesktopSnackbar.show(
+                            Localization.get(language, if (ok) "backup_create_success" else "backup_create_failed"),
                         )
                     }
-                    TextButton(
-                        onClick = {
-                            pendingRestore = file
-                            restoreTarget = file
-                        },
-                    ) {
-                        Text(Localization.get(language, "action_restore"))
-                    }
-                    TextButton(
-                        onClick = {
-                            pendingDelete = file
-                            deleteTarget = file
-                        },
-                    ) {
-                        Text(Localization.get(language, "delete"), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            onRestoreFile = {
+                if (!busy) {
+                    busy = true
+                    scope.launch {
+                        val file = withContext(Dispatchers.IO) { chooseBackupFile(save = false) }
+                        val result = if (file == null) null
+                        else withContext(Dispatchers.IO) { BackupManager.import(file) }
+                        busy = false
+                        // The reason is no longer always the same sentence: a file
+                        // that is not a DE backup (the phone's archive, say) and one
+                        // whose settings entry cannot be read are different answers,
+                        // and the log keeps the sentence for whoever has to dig.
+                        when {
+                            result == null -> Unit
+                            result.ok -> showRestartDialog = true
+                            else -> DesktopSnackbar.show(Localization.get(language, result.messageKey))
+                        }
                     }
                 }
-            }
-        }
+            },
+            onRestoreStored = { backup ->
+                pendingRestore = backup.file
+                restoreTarget = backup.file
+            },
+            onDeleteStored = { backup ->
+                pendingDelete = backup.file
+                deleteTarget = backup.file
+            },
+        )
     }
 
     if (showRestartDialog) {
@@ -1247,6 +1120,167 @@ fun SettingsBackupScreen(language: String, onBack: () -> Unit) {
     }
 }
 
+
+/**
+ * A stored automatic backup as the screen lists it: the file, the date it was
+ * taken (the row's title), the type it was taken for and its size.
+ */
+internal data class StoredBackup(
+    val file: File,
+    val date: String,
+    val typeKey: String,
+    val bytes: Long,
+)
+
+/**
+ * Backup & restore, the preview's own blocks: the heading, the two actions each
+ * in a block of its own with its sentence under it, the automatic-backup card
+ * with its header inside the card, and the stored list under the page's label.
+ *
+ * The page draws each action at its label's width - a filled button the width of
+ * the pane reads as a banner - and keeps the two in two blocks rather than one
+ * row, because each carries its own sentence. The stored rows are the app's
+ * settings rows: the archive mark, the date, the type and the size, and the two
+ * actions the app has there (restore this one, delete it) in the trailing slot.
+ * An empty list says so instead of drawing a row.
+ */
+@Composable
+internal fun BackupSection(
+    language: String,
+    backups: List<StoredBackup>,
+    autoBackupEnabled: Boolean,
+    autoBackupWeekly: Boolean,
+    autoBackupBeforeUpdate: Boolean,
+    onToggleAutoBackup: (Boolean) -> Unit,
+    onToggleWeekly: (Boolean) -> Unit,
+    onToggleBeforeUpdate: (Boolean) -> Unit,
+    onBackup: () -> Unit,
+    onRestoreFile: () -> Unit,
+    onRestoreStored: (StoredBackup) -> Unit,
+    onDeleteStored: (StoredBackup) -> Unit,
+    busy: Boolean = false,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            Localization.get(language, "backup_restore"),
+            style = MaterialTheme.typography.titleLarge,
+        )
+
+        // The page's 16 dp above every block, its two buttons (`.md-button-row`)
+        // included; the button sits at its label's width and the sentence under it
+        // is the note the page insets 4 dp from the card's own edge.
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onBackup, enabled = !busy) {
+            Text(Localization.get(language, "action_backup"))
+        }
+        Text(
+            Localization.get(language, "backup_desc"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+        )
+
+        Spacer(Modifier.height(16.dp))
+        Button(onClick = onRestoreFile, enabled = !busy) {
+            Text(Localization.get(language, "action_restore"))
+        }
+        Text(
+            Localization.get(language, "restore_desc"),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 4.dp, top = 8.dp),
+        )
+
+        // The three switches are one card and the card carries its own header:
+        // the page's `.md-group__title` sits inside it, so the loose heading the
+        // app drew above it is gone. The two that depend on the automatic backup
+        // fold away with it.
+        Spacer(Modifier.height(16.dp))
+        M3SettingsGroup(
+            title = Localization.get(language, "auto_backup"),
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Schedule,
+                    title = { Text(Localization.get(language, "auto_backup")) },
+                    description = { Text(Localization.get(language, "automatic_backup_desc")) },
+                    trailing = {
+                        Switch(checked = autoBackupEnabled, onCheckedChange = onToggleAutoBackup)
+                    },
+                    onClick = { onToggleAutoBackup(!autoBackupEnabled) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.DateRange,
+                    title = { Text(Localization.get(language, "weekly_backup")) },
+                    visible = autoBackupEnabled,
+                    trailing = {
+                        Switch(checked = autoBackupWeekly, onCheckedChange = onToggleWeekly)
+                    },
+                    onClick = { onToggleWeekly(!autoBackupWeekly) },
+                ),
+                M3SettingsItem(
+                    icon = Icons.Filled.SystemUpdate,
+                    title = { Text(Localization.get(language, "backup_before_update")) },
+                    visible = autoBackupEnabled,
+                    trailing = {
+                        Switch(checked = autoBackupBeforeUpdate, onCheckedChange = onToggleBeforeUpdate)
+                    },
+                    onClick = { onToggleBeforeUpdate(!autoBackupBeforeUpdate) },
+                ),
+            ),
+        )
+
+        // The page's label above the list: the accent, 12 dp over it and 6 under
+        // it, 4 dp in from the card's edge like the group's own header.
+        Text(
+            Localization.get(language, "stored_backups"),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 4.dp, end = 4.dp, top = 12.dp, bottom = 6.dp),
+        )
+        if (backups.isEmpty()) {
+            // The truth rather than a mock row: a machine with no automatic backup
+            // yet says so where the list would be.
+            Text(
+                Localization.get(language, "backups_empty"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        } else {
+            // The page's 12 dp between the label and the card.
+            Spacer(Modifier.height(12.dp))
+            M3SettingsGroup(
+                items = backups.map { backup ->
+                    M3SettingsItem(
+                        icon = Icons.Filled.Archive,
+                        title = { Text(backup.date) },
+                        description = {
+                            Text(
+                                Localization.get(language, backup.typeKey) + " \u00b7 " + formatBytes(backup.bytes),
+                            )
+                        },
+                        trailing = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                TextButton(onClick = { onRestoreStored(backup) }) {
+                                    Text(Localization.get(language, "action_restore"))
+                                }
+                                TextButton(onClick = { onDeleteStored(backup) }) {
+                                    Text(
+                                        Localization.get(language, "delete"),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                }
+                            }
+                        },
+                    )
+                },
+            )
+        }
+    }
+}
 
 /** Extracts a display date + a type key (`backup_type_weekly`/`backup_type_before_update`) from a backup filename. */
 private fun parseAutoBackupName(name: String): Pair<String, String> {

@@ -1473,6 +1473,28 @@ tasks.register<JavaExec>("dataSaverOrderCheck") {
     mainClass.set("com.music.vivi.desktop.DataSaverOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Backup and restore screen against the preview:
+ *
+ *     ./gradlew :desktop:backupOrderCheck
+ *
+ * The preview's `backup` list is the heading, the two actions each in a block of
+ * its own at its label's width, the automatic-backup card with its header inside
+ * it and the two rows that fold with the master switch, and the stored list under
+ * the page's label. This composes the real screen body with two stored backups and
+ * with none, and reads the sequence of texts, the heading under the back row, the
+ * cards and their 3 dp seams, the label 12 dp over the stored card, both states of
+ * the master switch, the arrival frame, and every button's own action.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/BackupOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("backupOrderCheck") {
+    group = "verification"
+    description = "Checks that Backup and restore is the preview's: blocks, order, measures and the presses"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.BackupOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"
