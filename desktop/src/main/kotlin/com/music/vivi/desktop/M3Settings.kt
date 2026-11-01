@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -99,6 +100,14 @@ data class M3SettingsItem(
      * of its own with the `Slider` floating under the group.
      */
     val slider: (@Composable () -> Unit)? = null,
+    /**
+     * A field the row carries beside its title, inside the row: the Integrations
+     * screen's Discord application ID is one line of the card, not a box under
+     * it. It is the preview's `.md-row__field`, a slot that flexes and is capped
+     * at 320 dp, so the title keeps its room and the field ends at the row's
+     * right edge.
+     */
+    val field: (@Composable () -> Unit)? = null,
     /**
      * Whether the row is drawn.
      *
@@ -599,6 +608,20 @@ private fun M3SettingsItemRow(
                     Spacer(Modifier.width(7.dp))
                     Box(Modifier.onGloballyPositioned { trailingRightPx = it.boundsInWindow().right }) {
                         M3DropdownTrailing(dropdown.value)
+                    }
+                } else if (item.field != null) {
+                    // The field shares the row with the title instead of standing
+                    // under the card: the page's `.md-row__field` is a slot that
+                    // flexes with the title's (`flex: 1` each), is capped at 320 dp
+                    // and is pushed to the row's right edge (`margin-left: auto`).
+                    // A bare max-width took the cap at once and squeezed the title
+                    // into three lines, which is not the row the page draws.
+                    Spacer(Modifier.width(7.dp))
+                    Box(
+                        modifier = Modifier.weight(1f),
+                        contentAlignment = Alignment.CenterEnd,
+                    ) {
+                        Box(Modifier.widthIn(max = 320.dp)) { item.field() }
                     }
                 }
             }

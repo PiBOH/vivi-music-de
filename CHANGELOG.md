@@ -87,6 +87,7 @@
 - [DE] **Data Saver is the preview's page: the switch says what it turns off, and the five things are the app's info card.**
 - [DE] **Backup and restore is the preview's page: its two actions, its card and its stored list.**
 - [DE] **VIVI Wrapped is the preview's page: the heading, one card of the one switch, and the session's numbers under it.**
+- [DE] **Integrations is the preview's page: one card of four rows and the two official marks.**
 
 ### 🐛 Fixed
 - [DE] **Portuguese (Brazil), Chinese Simplified and Chinese Traditional get every string again.**

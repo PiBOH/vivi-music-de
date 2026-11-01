@@ -1516,6 +1516,30 @@ tasks.register<JavaExec>("wrappedOrderCheck") {
     mainClass.set("com.music.vivi.desktop.WrappedOrderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+/**
+ * Headless check of the Integrations screen against the preview:
+ *
+ *     ./gradlew :desktop:integrationsOrderCheck
+ *
+ * The preview's `integrations` list is the heading and one card of four rows - the
+ * Discord mark and *Discord Rich Presence* with its switch, *Discord application
+ * ID* with its field inside the row, the Last.fm mark and *Last.fm* with its
+ * switch, and *Send Now Playing* with its switch - with the ID and Send Now
+ * Playing folding with the switch above them. This composes the real screen in
+ * both states, reads the sequence of texts, the heading under the back row, the
+ * cards and their 3 dp seams, the 16 dp to the app's session card, the switches,
+ * the fields' place inside their rows, the presses and the arrival frame, and
+ * writes the settled screen to `build/reports/integrations-screen.png`.
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/IntegrationsOrderCheck.kt`.
+ * A manual check, not part of `check`.
+ */
+tasks.register<JavaExec>("integrationsOrderCheck") {
+    group = "verification"
+    description = "Checks that Integrations is the preview's: rows, order, measures and the presses"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.IntegrationsOrderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
 tasks.register<JavaExec>("appearanceOrderCheck") {
     group = "verification"
     description = "Checks that the Appearance screen is the preview's: rows, order, measures and entrance"

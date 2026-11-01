@@ -64,6 +64,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.BlurOn
@@ -2962,94 +2963,96 @@ fun SettingsIntegrationsScreen(
 ) {
     SettingsSubScreen(language, onBack) {
         Text(Localization.get(language, "integrations"), style = MaterialTheme.typography.titleLarge)
-
-        Text(
-            Localization.get(language, "discord_presence"),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 16.dp),
-        )
         Spacer(Modifier.height(16.dp))
+
+        // The page's card: four rows and no group title. The three sentences stay
+        // under their names by the owner's decision (the page draws none), and the
+        // ID and Send Now Playing belong to the switch above each of them and fold
+        // away with it.
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.Forum,
-                    title = { Text(Localization.get(language, "discord_presence_enable")) },
+                    icon = BrandIcons.Discord,
+                    title = { Text(Localization.get(language, "discord_presence")) },
                     description = { Text(Localization.get(language, "discord_presence_desc")) },
                     trailing = {
                         Switch(checked = discordEnabled, onCheckedChange = onDiscordEnabledChange)
                     },
                     onClick = { onDiscordEnabledChange(!discordEnabled) },
                 ),
-            ),
-        )
-        OutlinedTextField(
-            value = discordClientId,
-            onValueChange = onDiscordClientIdChange,
-            label = { Text(Localization.get(language, "discord_client_id")) },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        )
-        if (discordEnabled && discordClientId.isBlank()) {
-            Text(
-                Localization.get(language, "discord_client_id_hint"),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            Localization.get(language, "lastfm"),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(16.dp))
-        M3SettingsGroup(
-            items = listOf(
                 M3SettingsItem(
-                    icon = Icons.Filled.MusicNote,
-                    title = { Text(Localization.get(language, "lastfm_enable")) },
+                    icon = Icons.Filled.Key,
+                    title = { Text(Localization.get(language, "discord_client_id")) },
+                    // A blank ID is the one state Rich Presence cannot work in, and
+                    // the page has no field for it to say so: the warning is the
+                    // row's own sentence, under the field it belongs to.
+                    description = if (discordEnabled && discordClientId.isBlank()) {
+                        {
+                            Text(
+                                Localization.get(language, "discord_client_id_hint"),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    field = {
+                        OutlinedTextField(
+                            value = discordClientId,
+                            onValueChange = onDiscordClientIdChange,
+                            singleLine = true,
+                            shape = MaterialTheme.shapes.extraSmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    },
+                    visible = discordEnabled,
+                ),
+                M3SettingsItem(
+                    icon = BrandIcons.LastFm,
+                    title = { Text(Localization.get(language, "lastfm")) },
                     description = { Text(Localization.get(language, "lastfm_enable_desc")) },
                     trailing = {
                         Switch(checked = lastfmEnabled, onCheckedChange = onLastfmEnabledChange)
                     },
                     onClick = { onLastfmEnabledChange(!lastfmEnabled) },
                 ),
+                M3SettingsItem(
+                    icon = Icons.Filled.PlayCircle,
+                    title = { Text(Localization.get(language, "lastfm_now_playing")) },
+                    description = { Text(Localization.get(language, "lastfm_now_playing_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = lastfmNowPlaying,
+                            onCheckedChange = onLastfmNowPlayingChange,
+                        )
+                    },
+                    onClick = { onLastfmNowPlayingChange(!lastfmNowPlaying) },
+                    visible = lastfmEnabled,
+                ),
             ),
         )
-        // The session field and the Now Playing switch belong to the switch above
-        // them, so they fold away with it instead of vanishing in one frame.
+
+        // The session key is the app's own row: the page draws no field for it,
+        // and without it scrobbling cannot be configured at all. It stands in a
+        // card of its own under the page's, folded away with the Last.fm switch it
+        // belongs to, so the page's card keeps its four rows.
         M3SettingsFold(visible = lastfmEnabled) {
-            OutlinedTextField(
-                value = lastfmSession,
-                onValueChange = onLastfmSessionChange,
-                label = { Text(Localization.get(language, "lastfm_session")) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            )
-            Text(
-                Localization.get(language, "lastfm_session_hint"),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 4.dp),
-            )
             Spacer(Modifier.height(16.dp))
             M3SettingsGroup(
                 items = listOf(
                     M3SettingsItem(
-                        icon = Icons.Filled.PlayCircle,
-                        title = { Text(Localization.get(language, "lastfm_now_playing")) },
-                        description = { Text(Localization.get(language, "lastfm_now_playing_desc")) },
-                        trailing = {
-                            Switch(
-                                checked = lastfmNowPlaying,
-                                onCheckedChange = onLastfmNowPlayingChange,
+                        icon = Icons.Filled.VpnKey,
+                        title = { Text(Localization.get(language, "lastfm_session")) },
+                        description = { Text(Localization.get(language, "lastfm_session_hint")) },
+                        field = {
+                            OutlinedTextField(
+                                value = lastfmSession,
+                                onValueChange = onLastfmSessionChange,
+                                singleLine = true,
+                                shape = MaterialTheme.shapes.extraSmall,
+                                modifier = Modifier.fillMaxWidth(),
                             )
                         },
-                        onClick = { onLastfmNowPlayingChange(!lastfmNowPlaying) },
                     ),
                 ),
             )
