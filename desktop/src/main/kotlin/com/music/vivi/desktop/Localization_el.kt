@@ -877,6 +877,8 @@ internal fun strings_el(): Map<String, String> =
         "undo" to "Αναίρεση",
         "unknown" to "Άγνωστο",
         "unlike" to "Ακύρωση «Μου αρέσει»",
+        "unlock_frame_rate" to "Ξεκλείδωμα ρυθμού καρέ",
+        "unlock_frame_rate_desc" to "Σχεδιάζει πάνω από τον ρυθμό της οθόνης. Εφαρμόζεται στην επόμενη εκκίνηση.",
         "unpair" to "Κατάργηση σύζευξης",
         "up_next" to "Στη συνέχεια",
         "up_to_date" to "Είστε ενημερωμένοι",

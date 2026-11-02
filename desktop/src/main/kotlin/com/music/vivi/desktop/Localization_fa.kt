@@ -877,6 +877,8 @@ internal fun strings_fa(): Map<String, String> =
         "undo" to "واگرد",
         "unknown" to "ناشناخته",
         "unlike" to "نپسندیدن",
+        "unlock_frame_rate" to "رفع محدودیت نرخ فریم",
+        "unlock_frame_rate_desc" to "سریع‌تر از نرخ نوسازی نمایشگر رسم می‌کند. در اجرای بعدی اعمال می‌شود.",
         "unpair" to "لغو جفت شدن",
         "up_next" to "بعدی",
         "up_to_date" to "به‌روز هستید",

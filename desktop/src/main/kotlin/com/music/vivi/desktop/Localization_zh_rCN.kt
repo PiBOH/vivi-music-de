@@ -877,6 +877,8 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "undo" to "撤销",
         "unknown" to "未知",
         "unlike" to "取消喜欢",
+        "unlock_frame_rate" to "解锁帧率",
+        "unlock_frame_rate_desc" to "以高于显示器刷新率的速率绘制。下次启动时生效。",
         "unpair" to "取消配对",
         "up_next" to "接下来播放",
         "up_to_date" to "已是最新",

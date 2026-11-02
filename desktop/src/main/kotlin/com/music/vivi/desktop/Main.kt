@@ -133,6 +133,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.key.Key
@@ -1705,10 +1707,11 @@ fun WindowScope.App(
             ) {
                 Surface(
                     modifier = Modifier.fillMaxHeight(),
-                    // The preview's rail is the pane itself: no floating card,
-                    // no rounded corner, `surfaceContainer` edge to edge.
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    shape = androidx.compose.ui.graphics.RectangleShape,
+                    // The preview's rail is the pane itself: it carries the same
+                    // accent-tinted surface and the same top-left curve as the
+                    // classic layout, so the two modes are one rail.
+                    color = sidebarSurfaceColor(),
+                    shape = sidebarShape(),
                 ) {
                     Sidebar(
                         hideHistory = pauseListenHistory,
@@ -3097,6 +3100,30 @@ private data class SidebarEntry(
  * Solid surfaceContainer background, spring collapsible sections, active indicator pills,
  * and pinned bottom user account capsule.
  */
+/**
+ * The rail's own surface: the page's `surfaceContainer` pushed a little toward
+ * the accent, so the sidebar reads as the app's frame rather than as one more
+ * card of the page. A role mixed with a role, never a literal colour.
+ */
+@Composable
+private fun sidebarSurfaceColor(): Color {
+    val dark = isAppInDarkTheme()
+    return lerp(
+        MaterialTheme.colorScheme.surfaceContainer,
+        MaterialTheme.colorScheme.primary,
+        if (dark) 0.12f else 0.08f,
+    )
+}
+
+/**
+ * The rail's outline: only the top-left corner is rounded, which is the curve
+ * the owner asked for (the window background shows through it). The radius is
+ * taken from the theme's shape scale so it cannot drift from the rest of the
+ * app.
+ */
+@Composable
+private fun sidebarShape(): Shape = RoundedCornerShape(topStart = ShapeRadii.large)
+
 @Composable
 fun Sidebar(
     language: String,
@@ -3187,7 +3214,8 @@ fun Sidebar(
     )
 
     Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer
+        color = sidebarSurfaceColor(),
+        shape = sidebarShape(),
     ) {
         Column(
             Modifier

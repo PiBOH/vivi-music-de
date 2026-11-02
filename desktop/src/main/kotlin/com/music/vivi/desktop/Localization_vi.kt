@@ -877,6 +877,8 @@ internal fun strings_vi(): Map<String, String> =
         "undo" to "Hoàn tác",
         "unknown" to "Không rõ",
         "unlike" to "Bỏ thích",
+        "unlock_frame_rate" to "Mở khóa tốc độ khung hình",
+        "unlock_frame_rate_desc" to "Vẽ nhanh hơn tốc độ làm mới của màn hình. Áp dụng ở lần khởi động sau.",
         "unpair" to "Hủy ghép nối",
         "up_next" to "Tiếp theo",
         "up_to_date" to "Bạn đã cập nhật",

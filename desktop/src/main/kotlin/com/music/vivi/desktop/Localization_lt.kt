@@ -877,6 +877,8 @@ internal fun strings_lt(): Map<String, String> =
         "undo" to "Atšaukti",
         "unknown" to "Nežinoma",
         "unlike" to "Nebepatinka",
+        "unlock_frame_rate" to "Atrakinti kadrų dažnį",
+        "unlock_frame_rate_desc" to "Piešia greičiau nei monitoriaus atnaujinimo dažnis. Taikoma kitą kartą paleidus.",
         "unpair" to "Atšaukti poravimą",
         "up_next" to "Toliau",
         "up_to_date" to "Esate atnaujinti",

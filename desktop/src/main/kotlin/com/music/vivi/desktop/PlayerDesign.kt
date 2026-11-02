@@ -32,6 +32,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -495,17 +496,12 @@ fun QueueRowArtwork(
 /**
  * The shape a track's own artwork takes, in the player and in the mini player.
  *
- * The 4-sided cookie is the shape of every cover in the DE, but a picture that
- * revolves inside it keeps swinging its corners around a fixed outline. So the
- * rotating option decides the shape family as well as the movement: while the
- * artwork turns it is an ordinary squared cover, a level of the theme's shape
- * scale, and the cookie comes back as soon as the rotation is off. Both the big
- * artwork and the mini player's thumbnail ask here, so the two cannot disagree
- * about the same option.
+ * It is a plain square, rotating or not: the cover is a picture, and the owner
+ * asked for the squared form instead of the theme's cookie. Both the big
+ * artwork and the mini player's thumbnail ask here, so the two cannot disagree.
  */
 @Composable
-fun trackArtworkShape(rotating: Boolean): Shape =
-    if (rotating) MaterialTheme.shapes.medium else CookieShapes.fourSided
+fun trackArtworkShape(rotating: Boolean): Shape = RectangleShape
 
 /**
  * Album artwork that slowly rotates when [rotating] is enabled (the mobile
@@ -522,7 +518,7 @@ fun PlayerThumbnail(
     // covers then get a high-resolution variant while the 46 dp queue rows keep
     // a small one.
     val requestedPx = with(LocalDensity.current) { size.toPx().toInt() }.coerceAtLeast(544)
-    // The cookie at rest, a squared cover while it turns: see [trackArtworkShape].
+    // A plain square, rotating or not: see [trackArtworkShape].
     val shape = trackArtworkShape(rotating)
     if (!rotating) {
         Box(

@@ -877,6 +877,8 @@ internal fun strings_sk(): Map<String, String> =
         "undo" to "Späť",
         "unknown" to "Neznáme",
         "unlike" to "Zrušiť páči sa mi",
+        "unlock_frame_rate" to "Odomknúť obnovovaciu frekvenciu",
+        "unlock_frame_rate_desc" to "Vykresľuje nad obnovovacou frekvenciou monitora. Prejaví sa pri ďalšom spustení.",
         "unpair" to "Zrušiť spárovanie",
         "up_next" to "Ďalej",
         "up_to_date" to "Máte aktuálnu verziu",

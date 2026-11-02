@@ -877,6 +877,8 @@ internal fun strings_ta(): Map<String, String> =
         "undo" to "செயல்தவிர்",
         "unknown" to "தெரியாது",
         "unlike" to "விருப்பத்தை நீக்கு",
+        "unlock_frame_rate" to "பிரேம் வீதத்தைத் திற",
+        "unlock_frame_rate_desc" to "மானிட்டரின் வீதத்தை விட வேகமாக வரைகிறது. அடுத்த தொடக்கத்தில் பயன்படும்.",
         "unpair" to "இணைப்பை நீக்கு",
         "up_next" to "அடுத்து",
         "up_to_date" to "நீங்கள் புதுப்பித்த நிலையில் உள்ளீர்கள்",

@@ -877,6 +877,8 @@ internal fun strings_id(): Map<String, String> =
         "undo" to "Urungkan",
         "unknown" to "Tidak diketahui",
         "unlike" to "Batalkan suka",
+        "unlock_frame_rate" to "Buka kunci laju bingkai",
+        "unlock_frame_rate_desc" to "Menggambar melebihi laju monitor. Berlaku saat mulai berikutnya.",
         "unpair" to "Batalkan pasangan",
         "up_next" to "Berikutnya",
         "up_to_date" to "Anda sudah terbaru",

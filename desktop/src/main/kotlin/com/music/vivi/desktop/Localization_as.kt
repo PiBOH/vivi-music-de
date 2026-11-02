@@ -877,6 +877,8 @@ internal fun strings_as(): Map<String, String> =
         "undo" to "পূৰ্বৱৰ্তী কৰক",
         "unknown" to "অজ্ঞাত",
         "unlike" to "পছন্দ নহয়",
+        "unlock_frame_rate" to "ফ্ৰেম ৰেট আনলক কৰক",
+        "unlock_frame_rate_desc" to "মনিটৰৰ নিজৰ হাৰতকৈ বেছি ৰেণ্ডাৰ কৰে। পৰৱৰ্তী আৰম্ভণিত প্ৰযোজ্য।",
         "unpair" to "যোৰা বিচ্ছিন্ন কৰক",
         "up_next" to "পৰবৰ্তী",
         "up_to_date" to "আপুনি আপডেট",

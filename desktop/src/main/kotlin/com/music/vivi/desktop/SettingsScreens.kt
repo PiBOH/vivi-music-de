@@ -48,6 +48,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Description
@@ -2276,6 +2277,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var detailedLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedPlaybackLogging) }
     var startupLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedStartupLogs) }
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
+    var frameRate by remember(revision) { mutableStateOf(DesktopSettings.load().unlockFrameRate) }
     var confirmDisable by remember { mutableStateOf(false) }
     // A heap size the user has just picked and that is waiting for the "restart
     // now or later" answer. The value is stored the moment it is picked either
@@ -2416,6 +2418,27 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     onClick = {
                         hideApk = !hideApk
                         DesktopSettings.update { it.copy(hideCustomApkDownloadButton = hideApk) }
+                    },
+                ),
+                // The frame rate is not a preference the running window can
+                // adopt: Skiko takes the vsync setting when it creates its
+                // redrawer, so the row says that it applies at the next start.
+                M3SettingsItem(
+                    icon = Icons.Filled.FlashOn,
+                    title = { Text(Localization.get(language, "unlock_frame_rate")) },
+                    description = { Text(Localization.get(language, "unlock_frame_rate_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = frameRate,
+                            onCheckedChange = { v ->
+                                frameRate = v
+                                DesktopSettings.update { it.copy(unlockFrameRate = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        frameRate = !frameRate
+                        DesktopSettings.update { it.copy(unlockFrameRate = frameRate) }
                     },
                 ),
             ),
@@ -2965,10 +2988,11 @@ fun SettingsIntegrationsScreen(
         Text(Localization.get(language, "integrations"), style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(16.dp))
 
-        // The page's card: four rows and no group title. The three sentences stay
-        // under their names by the owner's decision (the page draws none), and the
-        // ID and Send Now Playing belong to the switch above each of them and fold
-        // away with it.
+        // Two cards, one per integration: Discord and Last.fm are separate
+        // services with separate switches, and the owner asked for them not to
+        // share one card. Everything Last.fm owns (its switch, Send Now Playing
+        // and the session key it needs) lives in the second card, so nothing
+        // about Last.fm is left standing on its own below the page.
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
@@ -3007,6 +3031,16 @@ fun SettingsIntegrationsScreen(
                     },
                     visible = discordEnabled,
                 ),
+            ),
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        // Last.fm's own card: the switch, Send Now Playing and the session key
+        // the service cannot scrobble without. The last two fold away with the
+        // switch they belong to, in the same card.
+        M3SettingsGroup(
+            items = listOf(
                 M3SettingsItem(
                     icon = BrandIcons.LastFm,
                     title = { Text(Localization.get(language, "lastfm")) },
@@ -3029,34 +3063,23 @@ fun SettingsIntegrationsScreen(
                     onClick = { onLastfmNowPlayingChange(!lastfmNowPlaying) },
                     visible = lastfmEnabled,
                 ),
+                M3SettingsItem(
+                    icon = Icons.Filled.VpnKey,
+                    title = { Text(Localization.get(language, "lastfm_session")) },
+                    description = { Text(Localization.get(language, "lastfm_session_hint")) },
+                    field = {
+                        OutlinedTextField(
+                            value = lastfmSession,
+                            onValueChange = onLastfmSessionChange,
+                            singleLine = true,
+                            shape = MaterialTheme.shapes.extraSmall,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    },
+                    visible = lastfmEnabled,
+                ),
             ),
         )
-
-        // The session key is the app's own row: the page draws no field for it,
-        // and without it scrobbling cannot be configured at all. It stands in a
-        // card of its own under the page's, folded away with the Last.fm switch it
-        // belongs to, so the page's card keeps its four rows.
-        M3SettingsFold(visible = lastfmEnabled) {
-            Spacer(Modifier.height(16.dp))
-            M3SettingsGroup(
-                items = listOf(
-                    M3SettingsItem(
-                        icon = Icons.Filled.VpnKey,
-                        title = { Text(Localization.get(language, "lastfm_session")) },
-                        description = { Text(Localization.get(language, "lastfm_session_hint")) },
-                        field = {
-                            OutlinedTextField(
-                                value = lastfmSession,
-                                onValueChange = onLastfmSessionChange,
-                                singleLine = true,
-                                shape = MaterialTheme.shapes.extraSmall,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        },
-                    ),
-                ),
-            )
-        }
         Spacer(Modifier.height(16.dp))
     }
 }

@@ -77,6 +77,21 @@ private fun configureRenderApi() {
 }
 
 /**
+ * Applies Developer options → *Unlock frame rate*.
+ *
+ * Skiko builds its redrawer with the vsync setting it finds when the layer is
+ * created, so the property has to be in place before the first window exists:
+ * `false` lets the app paint as fast as the machine allows instead of one frame
+ * per display refresh. Nothing is written when the property is already set from
+ * outside, so a command line `-D` keeps the last word.
+ */
+private fun configureFrameRate() {
+    if (System.getProperty("skiko.vsync.enabled") != null) return
+    val unlocked = runCatching { DesktopSettings.load().unlockFrameRate }.getOrDefault(false)
+    if (unlocked) System.setProperty("skiko.vsync.enabled", "false")
+}
+
+/**
  * The startup stages already written to `app.log`, so a recomposition of the app
  * scope cannot write one twice (`startupStage`, in `main`).
  */
@@ -121,6 +136,8 @@ fun main(args: Array<String>) {
     // frame), fall back to the software renderer before the first Skia layer is
     // created. Must run before application { }.
     configureRenderApi()
+    // Developer options → Unlock frame rate, same reason: before the layer.
+    configureFrameRate()
 
     // Apply a heap size chosen in Developer options before anything else grabs
     // the single-instance lock: when it differs from the current one this starts

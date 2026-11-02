@@ -877,6 +877,8 @@ internal fun strings_ca(): Map<String, String> =
         "undo" to "Desfés",
         "unknown" to "Desconegut",
         "unlike" to "Deixa de m'agradar",
+        "unlock_frame_rate" to "Desbloqueja la freqüència de fotogrames",
+        "unlock_frame_rate_desc" to "Dibuixa per sobre de la freqüència del monitor. S'aplica al proper inici.",
         "unpair" to "Desaparella",
         "up_next" to "A continuació",
         "up_to_date" to "Estàs al dia",

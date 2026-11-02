@@ -877,6 +877,8 @@ internal fun strings_en(): Map<String, String> =
         "undo" to "Undo",
         "unknown" to "Unknown",
         "unlike" to "Unlike",
+        "unlock_frame_rate" to "Unlock frame rate",
+        "unlock_frame_rate_desc" to "Paints above the monitor's own rate. Applied at the next start.",
         "unpair" to "Unpair device",
         "up_next" to "Up next",
         "up_to_date" to "You're up to date",

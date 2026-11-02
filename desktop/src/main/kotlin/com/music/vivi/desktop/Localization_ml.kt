@@ -877,6 +877,8 @@ internal fun strings_ml(): Map<String, String> =
         "undo" to "പഴയപടിയാക്കുക",
         "unknown" to "അജ്ഞാതം",
         "unlike" to "ഇഷ്ടം നീക്കുക",
+        "unlock_frame_rate" to "ഫ്രെയിം നിരക്ക് അൺലോക്ക് ചെയ്യുക",
+        "unlock_frame_rate_desc" to "മോണിറ്ററിന്റെ നിരക്കിനേക്കാൾ വേഗത്തിൽ വരയ്ക്കുന്നു. അടുത്ത തുടക്കത്തിൽ പ്രാബല്യത്തിൽ വരും.",
         "unpair" to "ജോടി നീക്കുക",
         "up_next" to "അടുത്തത്",
         "up_to_date" to "നിങ്ങൾ അപ്ഡേറ്റാണ്",

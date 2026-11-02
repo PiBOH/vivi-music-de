@@ -877,6 +877,8 @@ internal fun strings_pa(): Map<String, String> =
         "undo" to "ਵਾਪਸ",
         "unknown" to "ਅਣਜਾਣ",
         "unlike" to "ਪਸੰਦ ਹਟਾਓ",
+        "unlock_frame_rate" to "ਫਰੇਮ ਰੇਟ ਅਣਲਾਕ ਕਰੋ",
+        "unlock_frame_rate_desc" to "ਮਾਨੀਟਰ ਦੀ ਤਾਜ਼ਾ ਦਰ ਤੋਂ ਤੇਜ਼ ਰੈਂਡਰ ਕਰਦਾ ਹੈ। ਅਗਲੀ ਸ਼ੁਰੂਆਤ 'ਤੇ ਲਾਗੂ ਹੁੰਦਾ ਹੈ।",
         "unpair" to "ਪੇਅਰ ਹਟਾਓ",
         "up_next" to "ਅਗਲਾ",
         "up_to_date" to "ਤੁਸੀਂ ਅੱਪਡੇਟ ਹੋ",

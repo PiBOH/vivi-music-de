@@ -877,6 +877,8 @@ internal fun strings_ko(): Map<String, String> =
         "undo" to "실행 취소",
         "unknown" to "알 수 없음",
         "unlike" to "좋아요 취소",
+        "unlock_frame_rate" to "프레임 속도 제한 해제",
+        "unlock_frame_rate_desc" to "모니터 주사율보다 빠르게 그립니다. 다음 시작 시 적용됩니다.",
         "unpair" to "페어링 해제",
         "up_next" to "다음 곡",
         "up_to_date" to "최신 상태입니다",

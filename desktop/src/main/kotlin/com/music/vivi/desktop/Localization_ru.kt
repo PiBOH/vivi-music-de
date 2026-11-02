@@ -877,6 +877,8 @@ internal fun strings_ru(): Map<String, String> =
         "undo" to "Отменить",
         "unknown" to "Неизвестно",
         "unlike" to "Убрать лайк",
+        "unlock_frame_rate" to "Разблокировать частоту кадров",
+        "unlock_frame_rate_desc" to "Отрисовка чаще частоты обновления монитора. Применяется при следующем запуске.",
         "unpair" to "Отменить сопряжение",
         "up_next" to "Далее",
         "up_to_date" to "У вас актуальная версия",

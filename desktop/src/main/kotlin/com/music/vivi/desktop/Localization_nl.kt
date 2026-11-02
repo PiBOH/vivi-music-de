@@ -877,6 +877,8 @@ internal fun strings_nl(): Map<String, String> =
         "undo" to "Ongedaan maken",
         "unknown" to "Onbekend",
         "unlike" to "Vind ik niet meer leuk",
+        "unlock_frame_rate" to "Beeldsnelheid ontgrendelen",
+        "unlock_frame_rate_desc" to "Tekent sneller dan de verversingssnelheid van het scherm. Geldt vanaf de volgende start.",
         "unpair" to "Koppeling verbreken",
         "up_next" to "Hierna",
         "up_to_date" to "Je bent up-to-date",

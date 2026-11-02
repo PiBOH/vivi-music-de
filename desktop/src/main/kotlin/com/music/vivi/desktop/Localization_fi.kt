@@ -877,6 +877,8 @@ internal fun strings_fi(): Map<String, String> =
         "undo" to "Kumoa",
         "unknown" to "Tuntematon",
         "unlike" to "Poista tykkäys",
+        "unlock_frame_rate" to "Vapauta kuvataajuus",
+        "unlock_frame_rate_desc" to "Piirtää näytön virkistystaajuutta nopeammin. Otetaan käyttöön seuraavalla käynnistyksellä.",
         "unpair" to "Poista yhteys",
         "up_next" to "Seuraavaksi",
         "up_to_date" to "Olet ajan tasalla",

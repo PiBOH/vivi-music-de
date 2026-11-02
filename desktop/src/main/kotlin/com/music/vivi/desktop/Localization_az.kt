@@ -877,6 +877,8 @@ internal fun strings_az(): Map<String, String> =
         "undo" to "Geri al",
         "unknown" to "Naməlum",
         "unlike" to "Bəyənməni geri al",
+        "unlock_frame_rate" to "Kadr tezliyini aç",
+        "unlock_frame_rate_desc" to "Monitorun öz tezliyindən yuxarı çəkir. Növbəti başlatmada tətbiq olunur.",
         "unpair" to "Qoşalaşdırmanı ləğv et",
         "up_next" to "Növbəti",
         "up_to_date" to "Siz yeniləmisiniz",

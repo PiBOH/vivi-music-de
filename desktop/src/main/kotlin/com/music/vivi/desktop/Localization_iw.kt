@@ -877,6 +877,8 @@ internal fun strings_iw(): Map<String, String> =
         "undo" to "בטל",
         "unknown" to "לא ידוע",
         "unlike" to "בטל לייק",
+        "unlock_frame_rate" to "שחרור קצב הפריימים",
+        "unlock_frame_rate_desc" to "מצייר מהר יותר מקצב הרענון של הצג. יחול בהפעלה הבאה.",
         "unpair" to "בטל חיבור",
         "up_next" to "בהמשך",
         "up_to_date" to "אתה מעודכן",

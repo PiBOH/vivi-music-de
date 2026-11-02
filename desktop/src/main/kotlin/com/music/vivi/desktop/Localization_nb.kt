@@ -877,6 +877,8 @@ internal fun strings_nb(): Map<String, String> =
         "undo" to "Angre",
         "unknown" to "Ukjent",
         "unlike" to "Fjern liker",
+        "unlock_frame_rate" to "Lås opp bildefrekvensen",
+        "unlock_frame_rate_desc" to "Tegner raskere enn skjermens oppdateringsfrekvens. Brukes ved neste start.",
         "unpair" to "Opphev paring",
         "up_next" to "Neste",
         "up_to_date" to "Du er oppdatert",

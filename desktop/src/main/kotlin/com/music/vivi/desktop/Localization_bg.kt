@@ -877,6 +877,8 @@ internal fun strings_bg(): Map<String, String> =
         "undo" to "Отмяна",
         "unknown" to "Неизвестно",
         "unlike" to "Премахване на харесването",
+        "unlock_frame_rate" to "Отключване на честотата на кадрите",
+        "unlock_frame_rate_desc" to "Рендира над честотата на монитора. Прилага се при следващото стартиране.",
         "unpair" to "Премахване на сдвояването",
         "up_next" to "Следващо",
         "up_to_date" to "Имате най-новата версия",

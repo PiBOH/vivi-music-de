@@ -568,9 +568,22 @@ fun LyricsList(
         derivedStateOf { rows.indexOfFirst { it.lineIndex == currentIndex }.coerceAtLeast(0) }
     }
 
-    LaunchedEffect(activeRow, options.autoScroll) {
-        if (options.autoScroll && activeRow >= 0) {
-            listState.animateScrollToItem(maxOf(0, activeRow - 3))
+    // The rows the list was last scrolled for. A new lyric set is a new song
+    // (or a new provider), and it must not inherit the previous list's scroll
+    // position: when the two happened to share an active index the follow
+    // effect below did not re-run at all, and a panel opened at the end of the
+    // previous track's lyrics stayed at the end - the "lyrics start from the
+    // bottom" report. A set change jumps instead of gliding, too: animating
+    // from the old offset would sweep the whole song in front of the reader.
+    var scrolledRows by remember { mutableStateOf<List<LyricsRow>?>(null) }
+    LaunchedEffect(rows, activeRow, options.autoScroll) {
+        if (!options.autoScroll || activeRow < 0) return@LaunchedEffect
+        val target = maxOf(0, activeRow - 3)
+        if (scrolledRows !== rows) {
+            listState.scrollToItem(target)
+            scrolledRows = rows
+        } else {
+            listState.animateScrollToItem(target)
         }
     }
 

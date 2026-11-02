@@ -877,6 +877,8 @@ internal fun strings_hu(): Map<String, String> =
         "undo" to "Visszavonás",
         "unknown" to "Ismeretlen",
         "unlike" to "Tetszik visszavonása",
+        "unlock_frame_rate" to "Képsebesség feloldása",
+        "unlock_frame_rate_desc" to "A monitor frissítésénél gyorsabban rajzol. A következő indításkor lép életbe.",
         "unpair" to "Párosítás megszüntetése",
         "up_next" to "Következik",
         "up_to_date" to "Naprakész",

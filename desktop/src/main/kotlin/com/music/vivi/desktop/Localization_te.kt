@@ -877,6 +877,8 @@ internal fun strings_te(): Map<String, String> =
         "undo" to "రద్దు చేయి",
         "unknown" to "తెలియదు",
         "unlike" to "ఇష్టం తొలగించు",
+        "unlock_frame_rate" to "ఫ్రేమ్ రేటును అన్‌లాక్ చేయి",
+        "unlock_frame_rate_desc" to "మానిటర్ రేటు కంటే వేగంగా గీస్తుంది. తదుపరి ప్రారంభంలో వర్తిస్తుంది.",
         "unpair" to "జత తొలగించు",
         "up_next" to "తర్వాత",
         "up_to_date" to "మీరు తాజాగా ఉన్నారు",

@@ -877,6 +877,8 @@ internal fun strings_de(): Map<String, String> =
         "undo" to "Rückgängig",
         "unknown" to "Unbekannt",
         "unlike" to "Gefällt mir nicht mehr",
+        "unlock_frame_rate" to "Bildrate freigeben",
+        "unlock_frame_rate_desc" to "Zeichnet über der Bildwiederholrate des Monitors. Gilt ab dem nächsten Start.",
         "unpair" to "Kopplung aufheben",
         "up_next" to "Als Nächstes",
         "up_to_date" to "Du bist auf dem neuesten Stand",

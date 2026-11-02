@@ -877,6 +877,8 @@ internal fun strings_ja(): Map<String, String> =
         "undo" to "元に戻す",
         "unknown" to "不明",
         "unlike" to "いいねを取り消す",
+        "unlock_frame_rate" to "フレームレートを解除",
+        "unlock_frame_rate_desc" to "モニターのリフレッシュレートを超えて描画します。次回起動時に適用されます。",
         "unpair" to "ペアリング解除",
         "up_next" to "次の曲",
         "up_to_date" to "最新です",

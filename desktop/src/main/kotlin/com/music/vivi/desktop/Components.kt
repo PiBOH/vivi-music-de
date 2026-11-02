@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -309,8 +310,20 @@ fun Thumbnail(
     // resolved URL is remembered against the settings revision too.
     val revision = settingsFileRevision()
     val dataSaver = remember(revision) { DesktopSettings.load().dataSaver }
-    val model = remember(url, sizePx, dataSaver) { adjustedThumbnailUrl(url, sizePx, dataSaver) }
-    Box(modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant)) {
+    // The size the image is ACTUALLY drawn at, measured off the layout: the
+    // fixed default above is a guess, and a cover drawn wider than it (a big
+    // header, the full player on a large window) came out soft because the
+    // request stayed at 544 px. The measured size wins when it is the larger
+    // of the two, so a thumbnail can never ask for less than it shows.
+    var measuredPx by remember { mutableStateOf(0) }
+    val pixels = maxOf(sizePx, measuredPx)
+    val model = remember(url, pixels, dataSaver) { adjustedThumbnailUrl(url, pixels, dataSaver) }
+    Box(
+        modifier
+            .clip(shape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .onSizeChanged { measuredPx = maxOf(it.width, it.height) },
+    ) {
         if (!model.isNullOrBlank()) {
             AsyncImage(
                 model = model,

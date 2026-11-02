@@ -877,6 +877,8 @@ internal fun strings_hi(): Map<String, String> =
         "undo" to "पूर्ववत करें",
         "unknown" to "अज्ञात",
         "unlike" to "पसंद हटाएं",
+        "unlock_frame_rate" to "फ़्रेम दर अनलॉक करें",
+        "unlock_frame_rate_desc" to "मॉनीटर की ताज़ा दर से तेज़ रेंडर करता है। अगली बार शुरू होने पर लागू होगा।",
         "unpair" to "पेयर हटाएं",
         "up_next" to "अगला",
         "up_to_date" to "आप अपडेट हैं",

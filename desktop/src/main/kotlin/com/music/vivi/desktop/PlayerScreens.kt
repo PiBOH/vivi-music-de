@@ -117,6 +117,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -2807,7 +2808,20 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
     modifier: Modifier = Modifier,
 ) {
     val dark = isAppInDarkTheme()
-    val baseSurface = if (pureBlack && dark) PaletteBlack else MaterialTheme.colorScheme.surfaceContainerHigh
+    // The docked bar sits under the content and was the same tone as the cards
+    // around it; the owner asked for it a touch deeper, so the card's role is
+    // darkened toward the palette's black instead of a literal colour being
+    // picked. The light theme gets a much smaller step, where the same amount
+    // would read as a grey band rather than as depth.
+    val baseSurface = if (pureBlack && dark) {
+        PaletteBlack
+    } else {
+        lerp(
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+            PaletteBlack,
+            if (dark) 0.35f else 0.06f,
+        )
+    }
     var extractedColors by remember(thumbnailUrl) { mutableStateOf<List<Color>>(emptyList()) }
 
     LaunchedEffect(thumbnailUrl, style) {

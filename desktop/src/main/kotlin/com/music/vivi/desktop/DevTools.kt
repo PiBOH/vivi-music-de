@@ -19,7 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -129,8 +131,9 @@ object DeveloperOptions {
      * to its default, exactly like Android's own "turn off developer options":
      * the screen is locked again (seven-tap to return) and, in the same write,
      * the JVM heap goes back to the launcher default (`0`), both verbose-log
-     * switches go off and the APK-download button is hidden again. A single
-     * update keeps the file consistent for the reader recomposition follows.
+     * switches go off, the frame rate goes back to the display's own and the
+     * APK-download button is hidden again. A single update keeps the file
+     * consistent for the reader recomposition follows.
      */
     fun resetToDefaults() {
         _unlocked.value = false
@@ -140,6 +143,7 @@ object DeveloperOptions {
                 jvmHeapMb = 0,
                 detailedPlaybackLogging = false,
                 detailedStartupLogs = false,
+                unlockFrameRate = false,
                 hideCustomApkDownloadButton = true,
             )
         }
@@ -494,10 +498,39 @@ private fun StatRow(label: String, value: String) {
     }
 }
 
-/** Full dev-tools content, shared by the overlay and the dedicated window. */
+/**
+ * Frames actually painted in the last second, measured off the frame clock
+ * itself - the only number that answers "does it really run at 60?".
+ *
+ * The loop lives with the panel that shows it: it asks for a frame every tick,
+ * which is exactly the state a frame-rate reading is about, so it is not
+ * something to leave running behind a closed developer surface.
+ */
+@Composable
+private fun rememberMeasuredFps(): Int {
+    var fps by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        var frames = 0
+        var windowStart = 0L
+        while (true) {
+            withFrameNanos { now ->
+                if (windowStart == 0L) windowStart = now
+                frames++
+                if (now - windowStart >= 1_000_000_000L) {
+                    fps = frames
+                    frames = 0
+                    windowStart = now
+                }
+            }
+        }
+    }
+    return fps
+}
+
 @Composable
 fun DevToolsPanel(syncManager: DesktopSyncManager?, language: String) {
     val stats by SystemMonitor.stats.collectAsState()
+    val fps = rememberMeasuredFps()
     val peerName = syncManager?.peerDeviceName?.collectAsState()?.value.orEmpty()
     val paired = syncManager?.paired?.collectAsState()?.value == true
     val profile by DeveloperOptions.profile.collectAsState()
@@ -507,6 +540,9 @@ fun DevToolsPanel(syncManager: DesktopSyncManager?, language: String) {
         Text(Localization.get(language, "developer_options"), style = MaterialTheme.typography.titleMedium)
         HorizontalDivider(Modifier.padding(vertical = 6.dp))
 
+        // The frame rate first: it is what "the app feels slow" is measured
+        // in, and the only line here that changes when the UI is the problem.
+        StatRow("FPS", if (fps > 0) fps.toString() else "—")
         StatRow(
             "${Localization.get(language, "cpu")} · ${Localization.get(language, "process")}",
             pct(stats.cpuProcess),

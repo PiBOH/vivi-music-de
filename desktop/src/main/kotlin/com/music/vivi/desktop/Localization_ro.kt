@@ -877,6 +877,8 @@ internal fun strings_ro(): Map<String, String> =
         "undo" to "Anulează",
         "unknown" to "Necunoscut",
         "unlike" to "Nu mai apreciez",
+        "unlock_frame_rate" to "Deblochează rata cadrelor",
+        "unlock_frame_rate_desc" to "Desenează peste rata monitorului. Se aplică la următoarea pornire.",
         "unpair" to "Anulează asocierea",
         "up_next" to "Urmează",
         "up_to_date" to "Ești la zi",

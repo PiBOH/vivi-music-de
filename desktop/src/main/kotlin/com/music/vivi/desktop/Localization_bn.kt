@@ -877,6 +877,8 @@ internal fun strings_bn(): Map<String, String> =
         "undo" to "পূর্বাবস্থায়",
         "unknown" to "অজানা",
         "unlike" to "পছন্দ সরান",
+        "unlock_frame_rate" to "ফ্রেম রেট আনলক করুন",
+        "unlock_frame_rate_desc" to "মনিটরের নিজস্ব হারের বেশি রেন্ডার করে। পরবর্তী শুরুতে প্রয়োগ হয়।",
         "unpair" to "পেয়ার সরান",
         "up_next" to "পরবর্তী",
         "up_to_date" to "আপনি আপডেট আছেন",

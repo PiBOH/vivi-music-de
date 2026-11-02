@@ -1,6 +1,7 @@
 package com.music.vivi.desktop
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
@@ -22,12 +23,12 @@ import androidx.compose.ui.unit.dp
 object BrandIcons {
 
     /** Discord's mark, the face of Rich Presence. */
-    val Discord: ImageVector by lazy { mark("Discord", DISCORD_PATH) }
+    val Discord: ImageVector by lazy { mark("Discord", DISCORD_PATH, evenOdd = true) }
 
     /** Last.fm's mark, the scrobble's own. */
     val LastFm: ImageVector by lazy { mark("Last.fm", LASTFM_PATH) }
 
-    private fun mark(name: String, path: String): ImageVector = ImageVector.Builder(
+    private fun mark(name: String, path: String, evenOdd: Boolean = false): ImageVector = ImageVector.Builder(
         name = name,
         defaultWidth = 24.dp,
         defaultHeight = 24.dp,
@@ -35,6 +36,10 @@ object BrandIcons {
         viewportHeight = 24f,
     ).addPath(
         pathData = PathParser().parsePathString(path).toNodes(),
+        // Discord's two eyes are holes in the head: they are separate subpaths
+        // that the non-zero rule fills in, which is what turned the mark into a
+        // solid blob. Even-odd cuts them out whatever their winding.
+        pathFillType = if (evenOdd) PathFillType.EvenOdd else PathFillType.NonZero,
         fill = SolidColor(Color.Black),
     ).build()
 

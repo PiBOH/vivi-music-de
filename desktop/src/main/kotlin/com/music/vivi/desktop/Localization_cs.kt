@@ -877,6 +877,8 @@ internal fun strings_cs(): Map<String, String> =
         "undo" to "Zpět",
         "unknown" to "Neznámé",
         "unlike" to "Zrušit líbí se mi",
+        "unlock_frame_rate" to "Odemknout snímkovou frekvenci",
+        "unlock_frame_rate_desc" to "Vykresluje nad obnovovací frekvencí monitoru. Projeví se při příštím spuštění.",
         "unpair" to "Zrušit spárování",
         "up_next" to "Další",
         "up_to_date" to "Máte aktuální verzi",

@@ -877,6 +877,8 @@ internal fun strings_tr(): Map<String, String> =
         "undo" to "Geri al",
         "unknown" to "Bilinmiyor",
         "unlike" to "Beğenmeyi geri al",
+        "unlock_frame_rate" to "Kare hızının kilidini aç",
+        "unlock_frame_rate_desc" to "Monitörün yenileme hızının üstünde çizer. Bir sonraki açılışta uygulanır.",
         "unpair" to "Eşleştirmeyi kaldır",
         "up_next" to "Sıradaki",
         "up_to_date" to "Güncelsiniz",

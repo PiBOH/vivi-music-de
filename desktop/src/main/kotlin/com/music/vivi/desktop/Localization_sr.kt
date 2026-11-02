@@ -877,6 +877,8 @@ internal fun strings_sr(): Map<String, String> =
         "undo" to "Опозови",
         "unknown" to "Nepoznato",
         "unlike" to "Ukloni sviđanje",
+        "unlock_frame_rate" to "Откључај брзину кадрова",
+        "unlock_frame_rate_desc" to "Црта изнад брзине освежавања монитора. Примењује се при следећем покретању.",
         "unpair" to "Raskini uparivanje",
         "up_next" to "Следеће",
         "up_to_date" to "Ažurirani ste",

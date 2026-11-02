@@ -877,6 +877,8 @@ internal fun strings_pl(): Map<String, String> =
         "undo" to "Cofnij",
         "unknown" to "Nieznany",
         "unlike" to "Cofnij polubienie",
+        "unlock_frame_rate" to "Odblokuj liczbę klatek",
+        "unlock_frame_rate_desc" to "Rysuje szybciej niż odświeżanie monitora. Zacznie działać po ponownym uruchomieniu.",
         "unpair" to "Rozparuj",
         "up_next" to "Następnie",
         "up_to_date" to "Masz najnowszą wersję",

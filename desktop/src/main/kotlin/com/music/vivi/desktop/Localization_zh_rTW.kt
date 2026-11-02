@@ -877,6 +877,8 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "undo" to "復原",
         "unknown" to "未知",
         "unlike" to "取消喜歡",
+        "unlock_frame_rate" to "解鎖影格率",
+        "unlock_frame_rate_desc" to "以高於螢幕更新率的速率繪製。下次啟動時生效。",
         "unpair" to "取消配對",
         "up_next" to "接下來播放",
         "up_to_date" to "已是最新",

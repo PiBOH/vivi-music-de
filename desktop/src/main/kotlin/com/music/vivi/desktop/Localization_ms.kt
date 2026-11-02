@@ -877,6 +877,8 @@ internal fun strings_ms(): Map<String, String> =
         "undo" to "Buat asal",
         "unknown" to "Tidak diketahui",
         "unlike" to "Nyahsuka",
+        "unlock_frame_rate" to "Buka kunci kadar bingkai",
+        "unlock_frame_rate_desc" to "Melukis melebihi kadar penyegaran monitor. Digunakan pada permulaan seterusnya.",
         "unpair" to "Nyahpasang",
         "up_next" to "Seterusnya",
         "up_to_date" to "Anda sudah terkini",

@@ -877,6 +877,8 @@ internal fun strings_ar(): Map<String, String> =
         "undo" to "تراجع",
         "unknown" to "غير معروف",
         "unlike" to "إلغاء الإعجاب",
+        "unlock_frame_rate" to "إلغاء تحديد معدل الإطارات",
+        "unlock_frame_rate_desc" to "الرسم بمعدل أعلى من معدل تحديث الشاشة. يُطبَّق عند التشغيل التالي.",
         "unpair" to "إلغاء الاقتران",
         "up_next" to "التالي",
         "up_to_date" to "أنت محدَّث",

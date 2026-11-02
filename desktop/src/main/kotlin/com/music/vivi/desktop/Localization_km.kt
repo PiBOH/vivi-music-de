@@ -877,6 +877,8 @@ internal fun strings_km(): Map<String, String> =
         "undo" to "មិនធ្វើវិញ",
         "unknown" to "មិនស្គាល់",
         "unlike" to "មិនចូលចិត្ត",
+        "unlock_frame_rate" to "ដោះសោអត្រាស៊ុម",
+        "unlock_frame_rate_desc" to "គូរលឿនជាងអត្រាធ្វើឱ្យស្រស់របស់អេក្រង់។ អនុវត្តនៅពេលបើកបន្ទាប់។",
         "unpair" to "ផ្ដាច់ការផ្គូផ្គង",
         "up_next" to "បន្ទាប់",
         "up_to_date" to "អ្នកទាន់សម័យហើយ",

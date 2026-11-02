@@ -877,6 +877,8 @@ internal fun strings_eu(): Map<String, String> =
         "undo" to "Desegin",
         "unknown" to "Ezezaguna",
         "unlike" to "Gustatu gabe utzi",
+        "unlock_frame_rate" to "Desblokeatu fotograma-tasa",
+        "unlock_frame_rate_desc" to "Monitorearen maiztasunetik gora marrazten du. Hurrengo abiaraztean aplikatzen da.",
         "unpair" to "Desparekatu",
         "up_next" to "Jarraian",
         "up_to_date" to "Eguneratuta zaude",

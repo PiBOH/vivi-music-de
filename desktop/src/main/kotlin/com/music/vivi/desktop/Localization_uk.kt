@@ -877,6 +877,8 @@ internal fun strings_uk(): Map<String, String> =
         "undo" to "Скасувати",
         "unknown" to "Невідомо",
         "unlike" to "Прибрати вподобання",
+        "unlock_frame_rate" to "Розблокувати частоту кадрів",
+        "unlock_frame_rate_desc" to "Малює частіше за частоту оновлення монітора. Застосовується при наступному запуску.",
         "unpair" to "Скасувати спарювання",
         "up_next" to "Далі",
         "up_to_date" to "У вас актуальна версія",

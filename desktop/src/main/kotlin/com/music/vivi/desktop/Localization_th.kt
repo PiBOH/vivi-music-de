@@ -877,6 +877,8 @@ internal fun strings_th(): Map<String, String> =
         "undo" to "เลิกทำ",
         "unknown" to "ไม่ทราบ",
         "unlike" to "เลิกถูกใจ",
+        "unlock_frame_rate" to "ปลดล็อกอัตราเฟรม",
+        "unlock_frame_rate_desc" to "วาดเร็วกว่าอัตรารีเฟรชของจอ จะมีผลเมื่อเริ่มครั้งถัดไป",
         "unpair" to "ยกเลิกการจับคู่",
         "up_next" to "ถัดไป",
         "up_to_date" to "คุณเป็นเวอร์ชันล่าสุดแล้ว",

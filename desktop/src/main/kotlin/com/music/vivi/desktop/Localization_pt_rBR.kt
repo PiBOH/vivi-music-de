@@ -877,6 +877,8 @@ internal fun strings_pt_rBR(): Map<String, String> =
         "undo" to "Desfazer",
         "unknown" to "Desconhecido",
         "unlike" to "Deixar de gostar",
+        "unlock_frame_rate" to "Desbloquear a taxa de quadros",
+        "unlock_frame_rate_desc" to "Desenha acima da taxa do monitor. Aplica-se na próxima inicialização.",
         "unpair" to "Desemparelhar",
         "up_next" to "A seguir",
         "up_to_date" to "Actualizado",

@@ -877,6 +877,8 @@ internal fun strings_et(): Map<String, String> =
         "undo" to "Võta tagasi",
         "unknown" to "Teadmata",
         "unlike" to "Eemalda meeldimine",
+        "unlock_frame_rate" to "Vabasta kaadrisagedus",
+        "unlock_frame_rate_desc" to "Joonistab monitori värskendussagedusest kiiremini. Rakendub järgmisel käivitusel.",
         "unpair" to "Tühista sidumine",
         "up_next" to "Järgmisena",
         "up_to_date" to "Olete ajakohane",

@@ -877,6 +877,8 @@ internal fun strings_be(): Map<String, String> =
         "undo" to "Адмяніць",
         "unknown" to "Невядома",
         "unlike" to "Прыбраць лайк",
+        "unlock_frame_rate" to "Разблакаваць частату кадраў",
+        "unlock_frame_rate_desc" to "Малюе часцей за частату абнаўлення манітора. Прымяняецца пры наступным запуску.",
         "unpair" to "Раз'яднаць",
         "up_next" to "Далей",
         "up_to_date" to "У вас апошняя версія",

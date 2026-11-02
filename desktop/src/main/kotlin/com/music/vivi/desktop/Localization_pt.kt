@@ -877,6 +877,8 @@ internal fun strings_pt(): Map<String, String> =
         "undo" to "Desfazer",
         "unknown" to "Desconhecido",
         "unlike" to "Deixar de gostar",
+        "unlock_frame_rate" to "Desbloquear a taxa de fotogramas",
+        "unlock_frame_rate_desc" to "Desenha acima da taxa do monitor. Aplica-se no próximo arranque.",
         "unpair" to "Desemparelhar",
         "up_next" to "A seguir",
         "up_to_date" to "Estás atualizado",

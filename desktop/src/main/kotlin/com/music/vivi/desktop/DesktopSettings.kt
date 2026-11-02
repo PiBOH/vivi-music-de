@@ -280,6 +280,14 @@ data class DesktopSyncState(
      * [JvmMemory], which relaunches the app once with the matching `-Xmx`.
      */
     val jvmHeapMb: Int = 0,
+    /**
+     * Developer options: paint without waiting for the display's refresh
+     * (`skiko.vsync.enabled=false`). Skiko reads the property when it creates
+     * its redrawer, so the choice applies at the next start; the frame rate can
+     * then go above the monitor's own rate, at the cost of tearing and of the
+     * GPU working without a brake.
+     */
+    val unlockFrameRate: Boolean = false,
     val devToolsMode: String = "OVERLAY",
     val devOverlayMovable: Boolean = true,
     val devShowInTitleBar: Boolean = false,

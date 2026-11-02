@@ -877,6 +877,8 @@ internal fun strings_sv(): Map<String, String> =
         "undo" to "Ångra",
         "unknown" to "Okänd",
         "unlike" to "Ta bort gilla",
+        "unlock_frame_rate" to "Lås upp bildfrekvensen",
+        "unlock_frame_rate_desc" to "Ritar snabbare än skärmens uppdateringsfrekvens. Gäller vid nästa start.",
         "unpair" to "Ta bort parkoppling",
         "up_next" to "Härnäst",
         "up_to_date" to "Du är uppdaterad",

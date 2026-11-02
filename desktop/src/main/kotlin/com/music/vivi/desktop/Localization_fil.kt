@@ -877,6 +877,8 @@ internal fun strings_fil(): Map<String, String> =
         "undo" to "I-undo",
         "unknown" to "Hindi alam",
         "unlike" to "I-unlike",
+        "unlock_frame_rate" to "I-unlock ang frame rate",
+        "unlock_frame_rate_desc" to "Gumuguhit nang mas mabilis sa refresh rate ng monitor. Gagana sa susunod na paglulunsad.",
         "unpair" to "I-unpair",
         "up_next" to "Susunod",
         "up_to_date" to "Ikaw ay updated",
