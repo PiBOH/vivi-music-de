@@ -534,7 +534,10 @@ fun PlayerThumbnail(
                 .background(PaletteBlack.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center,
         ) {
-            Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx)
+            // The shape is passed down, not only clipped outside: `Thumbnail`
+            // defaults to the 4-sided cookie, so leaving it out put a cookie
+            // inside the square and the square never showed.
+            Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx, shape = shape)
         }
         return
     }
@@ -558,6 +561,6 @@ fun PlayerThumbnail(
             .background(PaletteBlack.copy(alpha = 0.15f)),
         contentAlignment = Alignment.Center,
     ) {
-        Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx)
+        Thumbnail(url, Modifier.fillMaxSize(), sizePx = requestedPx, shape = shape)
     }
 }

@@ -284,9 +284,16 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
                     "https://i.ytimg.com/vi/$id/default.jpg"
                 }
             } else {
+                // The tiers are the video's own: 480x360 (`hqdefault`) is what
+                // the player used to ask for above 320 px, and cropped to a
+                // square it is only 360 px of cover - upscaled into the 400-500
+                // px the full player draws it at, which is the soft cover the
+                // owner kept reporting with *Data saver* off. Above 200 px the
+                // request is the original (`maxresdefault`); a video without one
+                // answers 404 and [fallbackThumbnailUrl] takes over.
                 when {
-                    requestedPx >= 800 -> "https://i.ytimg.com/vi/$id/maxresdefault.jpg"
-                    requestedPx >= 320 -> "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+                    requestedPx >= 200 -> "https://i.ytimg.com/vi/$id/maxresdefault.jpg"
+                    requestedPx >= 100 -> "https://i.ytimg.com/vi/$id/hqdefault.jpg"
                     else -> "https://i.ytimg.com/vi/$id/mqdefault.jpg"
                 }
             }
@@ -302,6 +309,22 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
  * the owner reported as soft, and both are well above it.
  */
 private const val BIG_ART_PX = 260
+
+/**
+ * The tier to ask for when the best one the provider has is not there.
+ *
+ * `maxresdefault` exists for most official videos and not for every upload; a
+ * 404 in the image loader leaves the placeholder behind, so the cover falls back
+ * to the 480x360 original tier instead of showing nothing. Null means "there is
+ * no simpler URL to try" and the retry is skipped.
+ */
+fun fallbackThumbnailUrl(url: String?): String? {
+    if (url.isNullOrBlank()) return null
+    if (!url.contains("ytimg")) return null
+    val id = ytThumbVideoId.find(url)?.groupValues?.get(1) ?: return null
+    val fallback = "https://i.ytimg.com/vi/$id/hqdefault.jpg"
+    return fallback.takeIf { it != url }
+}
 
 /**
  * Square-ish artwork with a neutral placeholder behind it while loading.
@@ -337,17 +360,25 @@ fun Thumbnail(
     // as "big artwork" and pull a full-resolution original.
     val drawnPx = if (measuredPx > 0) measuredPx else sizePx
     val model = remember(url, drawnPx, dataSaver) { adjustedThumbnailUrl(url, drawnPx, dataSaver) }
+    // One step down, once: a video without a `maxresdefault` answers 404, and a
+    // soft cover beats the placeholder. The step is remembered against the model
+    // so a new track starts from the best tier again.
+    var fellBack by remember(model) { mutableStateOf(false) }
+    val shown = remember(model, fellBack) {
+        if (fellBack) fallbackThumbnailUrl(model) ?: model else model
+    }
     Box(
         modifier
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .onSizeChanged { measuredPx = maxOf(it.width, it.height) },
     ) {
-        if (!model.isNullOrBlank()) {
+        if (!shown.isNullOrBlank()) {
             AsyncImage(
-                model = model,
+                model = shown,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
+                onError = { if (!fellBack) fellBack = true },
                 modifier = Modifier.matchParentSize(),
             )
         }

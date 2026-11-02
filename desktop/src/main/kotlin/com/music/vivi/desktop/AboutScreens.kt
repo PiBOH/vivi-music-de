@@ -318,19 +318,28 @@ fun ContributorsSection(language: String) {
     }
     // The list is grouped the way the preview groups it (`js/about.js`,
     // `contributors()`): the people who build it, the people who contribute and
-    // the community around it, each under its own name, one card per group. The
-    // `group` field of `contributorsde.json` decides; a value the file does not
-    // use reads as a contributor, so nobody falls out of the list.
+    // the community around it, each under its own name, one card per group.
+    //
+    // The `group` values the data file actually carries are `developer`,
+    // `supporter` and `contributor` - the app used to look for `community`
+    // instead of `supporter`, so the supporters fell into the contributors' card
+    // and the third group was never drawn at all (which is why the screen showed
+    // two sections where the preview shows three). `community` is still
+    // accepted, and a person the file gives no group reads as a contributor,
+    // exactly as the preview does, so nobody falls out of the list.
     val groupOrder = listOf(
         "developer" to "developer_section",
-        "contributor" to "contributors_section",
-        "community" to "community_section",
+        "supporter" to "contributors_section",
+        "contributor" to "community_section",
     )
     var written = false
     groupOrder.forEach { (groupId, titleKey) ->
         val people = contributors.filter { person ->
-            person.group?.lowercase()?.takeIf { it in setOf("developer", "contributor", "community") }
-                ?.let { it == groupId } ?: (groupId == "contributor")
+            when (person.group?.lowercase()) {
+                "developer" -> groupId == "developer"
+                "supporter", "community" -> groupId == "supporter"
+                else -> groupId == "contributor"
+            }
         }
         if (people.isEmpty()) return@forEach
         if (written) Spacer(Modifier.height(20.dp))

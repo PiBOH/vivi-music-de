@@ -190,7 +190,12 @@ object Motion {
     @Composable
     fun hoverProgress(hovered: Boolean, enabled: Boolean = true, label: String = "hover"): Float {
         val progress by animateFloatAsState(
-            targetValue = if (hovered && enabled) 1f else 0f,
+            // With Animations off the pointer changes nothing: not an instant
+            // scale, not an instant round corner - no movement at all. The owner
+            // asked for exactly this: the master switch is about the interface
+            // moving, and a surface that jumped to its hovered state instead of
+            // travelling to it is still the interface moving.
+            targetValue = if (hovered && enabled && !Animations.instant) 1f else 0f,
             // The master switch covers pointer feedback too: with Animations off
             // a hover must not scale, round or turn anything - it changes
             // instantly, like every transition does in that mode.
@@ -276,11 +281,15 @@ fun Modifier.pointerTilt(
     maxDegrees: Float = Motion.TILT_MAX_DEGREES,
     label: String = "pointerTilt",
 ): Modifier {
+    // The master switch turns the tilt off entirely, not down to no duration: a
+    // card that snapped to its tilted angle the moment the pointer touched it
+    // would be a movement, and with Animations off the pointer moves nothing.
+    val tilts = enabled && !Animations.instant
     // Where in the box (0..1 on each axis) the pointer is, and the middle when it
     // is not on the shape at all.
     val pointer = remember { mutableStateOf(Offset(0.5f, 0.5f)) }
-    val track = Modifier.pointerInput(enabled) {
-        if (!enabled) return@pointerInput
+    val track = Modifier.pointerInput(tilts) {
+        if (!tilts) return@pointerInput
         awaitPointerEventScope {
             while (true) {
                 val event = awaitPointerEvent()

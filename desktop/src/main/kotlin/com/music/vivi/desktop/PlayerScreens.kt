@@ -3010,7 +3010,10 @@ fun ClassicDesktopMiniPlayer(
                                 .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious)
                                 .clickable(onClick = onOpenPlayer),
                         ) {
-                            Thumbnail(nowPlaying.thumbnail, Modifier.fillMaxSize())
+                            // The cover itself, so the option reaches the mini
+                            // player too: it turns while the rotation is on and
+                            // is a sharp square while it is off.
+                            PlayerThumbnail(nowPlaying.thumbnail, 52.dp, rotatingThumbnail)
                         }
                         Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f).clickable(onClick = onOpenPlayer)) {
@@ -3344,7 +3347,7 @@ fun NewDesktopMiniPlayer(
                         .clip(trackArtworkShape(rotatingThumbnail))
                         .swipeToChangeTrack(swipeThumbnail, swipeSensitivity, nowPlaying.videoId, onNext, onPrevious),
                 ) {
-                    Thumbnail(nowPlaying.thumbnail, Modifier.fillMaxSize())
+                    PlayerThumbnail(nowPlaying.thumbnail, 38.dp, rotatingThumbnail)
                     Box(
                         Modifier
                             .fillMaxSize()
@@ -3579,7 +3582,7 @@ fun AppleDesktopMiniPlayer(
                     .clickable(enabled = !transportOff, onClick = onTogglePlay),
                 contentAlignment = Alignment.Center,
             ) {
-                Thumbnail(nowPlaying.thumbnail, Modifier.fillMaxSize())
+                PlayerThumbnail(nowPlaying.thumbnail, 42.dp, rotatingThumbnail)
                 Box(
                     Modifier
                         .fillMaxSize()
