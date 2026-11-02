@@ -14,11 +14,19 @@ import androidx.compose.ui.unit.dp
  * are the brands' own marks, and the Material set has nothing that means either
  * one, so the row carries the mark itself instead of a glyph that only looks
  * close. They are built the way the app's other marks are ([GoogleMark], the
- * GitHub mark in `AboutScreens`, the Spotify mark): the official 24x24 path,
- * filled with a placeholder colour that the `Icon`'s tint replaces, so they sit
- * in the row's tile exactly like a Material icon.
+ * GitHub mark in `AboutScreens`, the Spotify mark): the official path, filled
+ * with a placeholder colour that the `Icon`'s tint replaces, so they sit in the
+ * row's tile exactly like a Material icon.
  *
- * Paths: Simple Icons (`discord.svg`, `lastdotfm.svg`), viewBox 0 0 24 24.
+ * Mark: Simple Icons (`discord.svg`, `lastdotfm.svg`), viewBox 0 0 24 24.
+ *
+ * The Discord path is not the file's text. Its arcs pack the two flags into the
+ * numbers around them (`0 00-4.885`), and a parser that reads `00` as one number
+ * then draws a broken face - which is what shipped twice and was reported as
+ * "il logo di Discord continua a non essere corretto". The path below is the
+ * same mark rewritten by `scripts` arithmetic: every command absolute, every
+ * number and every flag separated by a space, so there is nothing left to read
+ * two ways.
  */
 object BrandIcons {
 
@@ -37,27 +45,31 @@ object BrandIcons {
     ).addPath(
         pathData = PathParser().parsePathString(path).toNodes(),
         // Discord's two eyes are holes in the head: they are separate subpaths
-        // that the non-zero rule fills in, which is what turned the mark into a
-        // solid blob. Even-odd cuts them out whatever their winding.
+        // inside it, so even-odd cuts them out whatever their winding.
         pathFillType = if (evenOdd) PathFillType.EvenOdd else PathFillType.NonZero,
         fill = SolidColor(Color.Black),
     ).build()
 
+    /** Discord, absolute and space-separated (see the object's own note). */
     private const val DISCORD_PATH =
-        "M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648" +
-            "-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 " +
-            "00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 " +
-            "13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777" +
-            ".0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528" +
-            "-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a" +
-            ".0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202" +
-            ".099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 " +
-            "00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495" +
-            "-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061" +
-            ".061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 " +
-            "2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 " +
-            "0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 " +
-            "1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"
+        "M 20.317 4.3698 A 19.7913 19.7913 0 0 0 15.4319 2.8546 A 0.0741 0.0741 0 0 0 15.3534 2.8917 C " +
+            "15.1424 3.267 14.9087 3.7565 14.7451 4.1412 C 12.9004 3.865 11.0651 3.865 9.2583 4.1412 C 9.0947 " +
+            "3.7479 8.8525 3.267 8.6406 2.8917 A 0.077 0.077 0 0 0 8.5621 2.8547 A 19.7363 19.7363 0 0 0 " +
+            "3.6769 4.3697 A 0.0699 0.0699 0 0 0 3.6448 4.3974 C 0.5334 9.0458 -0.319 13.5799 0.0992 18.0578 " +
+            "A 0.0824 0.0824 0 0 0 0.1304 18.1139 C 2.1832 19.6215 4.1717 20.5367 6.1233 21.1433 A 0.0777 " +
+            "0.0777 0 0 0 6.2075 21.1157 C 6.6691 20.4853 7.0806 19.8205 7.4335 19.1215 A 0.076 0.076 0 0 0 " +
+            "7.3919 19.0158 C 6.7391 18.7682 6.1176 18.4663 5.5197 18.1235 A 0.077 0.077 0 0 1 5.5121 17.9958 " +
+            "C 5.6379 17.9015 5.7638 17.8035 5.8839 17.7044 A 0.0743 0.0743 0 0 1 5.9615 17.6939 C 9.8893 " +
+            "19.4872 14.1415 19.4872 18.0229 17.6939 A 0.0739 0.0739 0 0 1 18.1014 17.7034 C 18.2216 17.8024 " +
+            "18.3474 17.9015 18.4742 17.9958 A 0.077 0.077 0 0 1 18.4676 18.1234 A 12.2986 12.2986 0 0 1 " +
+            "16.5946 19.0148 A 0.0766 0.0766 0 0 0 16.5539 19.1215 C 16.9143 19.8195 17.3258 20.4843 17.7789 " +
+            "21.1147 A 0.076 0.076 0 0 0 17.8631 21.1433 C 19.8241 20.5366 21.8126 19.6214 23.8654 18.1139 A " +
+            "0.077 0.077 0 0 0 23.8967 18.0587 C 24.3971 12.8817 23.0585 8.3848 20.3482 4.3983 A 0.061 0.061 " +
+            "0 0 0 20.317 4.3697 Z M 8.02 15.3312 C 6.8375 15.3312 5.8631 14.2455 5.8631 12.9122 C 5.8631 " +
+            "11.579 6.8186 10.4933 8.0201 10.4933 C 9.2309 10.4933 10.1958 11.5885 10.1769 12.9123 C 10.1769 " +
+            "14.2455 9.2214 15.3312 8.02 15.3312 Z M 15.9948 15.3312 C 14.8123 15.3312 13.8379 14.2455 " +
+            "13.8379 12.9122 C 13.8379 11.579 14.7933 10.4933 15.9948 10.4933 C 17.2056 10.4933 18.1705 " +
+            "11.5885 18.1516 12.9123 C 18.1516 14.2455 17.2056 15.3312 15.9948 15.3312 Z"
 
     private const val LASTFM_PATH =
         "M10.584 17.21l-.88-2.392s-1.43 1.594-3.573 1.594c-1.897 0-3.244-1.649-3.244-4.288 0-3.382 " +

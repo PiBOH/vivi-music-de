@@ -536,6 +536,7 @@ fun SettingsDensityScreen(
     onDensityScaleChange: (Float) -> Unit,
     gridItemSize: Int,
     onGridItemSizeChange: (Int) -> Unit,
+    effectiveDensityScale: Float = densityScale,
 ) {
     SettingsSubScreen(language, onBack) {
         DensityScreen(
@@ -544,6 +545,7 @@ fun SettingsDensityScreen(
             onDensityScaleChange = onDensityScaleChange,
             gridItemSize = gridItemSize,
             onGridItemSizeChange = onGridItemSizeChange,
+            effectiveDensityScale = effectiveDensityScale,
         )
     }
 }

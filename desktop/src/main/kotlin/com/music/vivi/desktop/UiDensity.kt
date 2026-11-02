@@ -34,11 +34,18 @@ const val FULL_LAYOUT_MIN_WIDTH_DP = 800f
  * rail. It is the LAST thing to go: the density steps down and the right panel
  * hides first, so the sidebar is only traded away when the window is genuinely
  * too narrow for it.
+ *
+ * 980 is the threshold release 1.54.34 used, and the owner asked for that
+ * automatic collapse back: a window that is being made smaller should give up
+ * the rail's labels before it starts clipping them.
  */
-const val SIDEBAR_AUTO_COLLAPSE_DP = 700f
+const val SIDEBAR_AUTO_COLLAPSE_DP = 980f
 
-/** Below this window width (raw layout dp) the right Now Playing panel is hidden. */
-const val RIGHT_PANEL_AUTO_HIDE_DP = FULL_LAYOUT_MIN_WIDTH_DP
+/**
+ * Below this window width (raw layout dp) the right Now Playing panel is
+ * hidden - the 1150 of release 1.54.34, restored with the sidebar's own.
+ */
+const val RIGHT_PANEL_AUTO_HIDE_DP = 1150f
 
 /**
  * How many presets to step down for a window this wide. A window at or above

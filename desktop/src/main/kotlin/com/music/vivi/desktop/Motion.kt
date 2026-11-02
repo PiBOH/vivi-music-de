@@ -191,7 +191,10 @@ object Motion {
     fun hoverProgress(hovered: Boolean, enabled: Boolean = true, label: String = "hover"): Float {
         val progress by animateFloatAsState(
             targetValue = if (hovered && enabled) 1f else 0f,
-            animationSpec = effectsDefault<Float>(),
+            // The master switch covers pointer feedback too: with Animations off
+            // a hover must not scale, round or turn anything - it changes
+            // instantly, like every transition does in that mode.
+            animationSpec = if (Animations.instant) snap() else effectsDefault<Float>(),
             label = label,
         )
         return progress

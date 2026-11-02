@@ -149,7 +149,8 @@ fun WindowScope.SpotifyTopHeader(
             Modifier
                 .fillMaxWidth()
                 .height(48.dp)
-                .background(MaterialTheme.colorScheme.surfaceContainer)
+                // Same accent-tinted chrome as the rail: the two are one frame.
+                .background(chromeSurfaceColor())
                 .padding(start = 12.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,

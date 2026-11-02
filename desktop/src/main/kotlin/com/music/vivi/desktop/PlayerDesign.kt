@@ -110,17 +110,20 @@ enum class MiniPlayerDesign(val key: String) {
     }
 }
 
-/** Mini-player dynamic background style (mirrors Android app's 5 background styles). */
+/**
+ * Mini-player dynamic background style (the Android app's set, less the
+ * gradient one: the owner asked for it to go, and a stored `gradient` value now
+ * reads as the theme's own surface instead of leaving a bar nobody can change).
+ */
 enum class MiniPlayerBackgroundStyle(val key: String) {
     FOLLOW_THEME("follow_theme"),
-    GRADIENT("gradient"),
     BLUR("blur"),
     GLOW_MOTION("glow_motion"),
     LIVE_MESH("live_mesh");
 
     companion object {
         fun from(key: String?): MiniPlayerBackgroundStyle = when (key) {
-            "gradient" -> GRADIENT
+            "gradient" -> FOLLOW_THEME
             "blur" -> BLUR
             "glow", "glow_motion" -> GLOW_MOTION
             "live_mesh", "mesh" -> LIVE_MESH
@@ -496,12 +499,15 @@ fun QueueRowArtwork(
 /**
  * The shape a track's own artwork takes, in the player and in the mini player.
  *
- * It is a plain square, rotating or not: the cover is a picture, and the owner
- * asked for the squared form instead of the theme's cookie. Both the big
- * artwork and the mini player's thumbnail ask here, so the two cannot disagree.
+ * The owner asked for the release-1.54.34 pair back: while the artwork turns it
+ * sits in a rounded square (a level of the theme's shape scale), and with the
+ * rotation off it is a plain, sharp square - no cookie, no corner. Both the big
+ * artwork and every mini player's thumbnail ask here, so the two cannot
+ * disagree about the same option.
  */
 @Composable
-fun trackArtworkShape(rotating: Boolean): Shape = RectangleShape
+fun trackArtworkShape(rotating: Boolean): Shape =
+    if (rotating) MaterialTheme.shapes.medium else RectangleShape
 
 /**
  * Album artwork that slowly rotates when [rotating] is enabled (the mobile

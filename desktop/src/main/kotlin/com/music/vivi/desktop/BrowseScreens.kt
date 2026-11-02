@@ -42,6 +42,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -290,13 +293,19 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             val quickPicksSelected = !useLastListen
+                            // The two halves are one control, so the selection
+                            // travels between them instead of jumping: the fill
+                            // and the ink are animated, and the master switch
+                            // still makes the change instant.
+                            val quickPicksBg by animateColorAsState(
+                                targetValue = if (quickPicksSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                animationSpec = if (Animations.instant) snap() else tween(Animations.ms(200)),
+                                label = "quickPicksSelected",
+                            )
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(
-                                        if (quickPicksSelected) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.Transparent
-                                    )
+                                    .background(quickPicksBg)
                                     .clickable {
                                         AppLog.click("Home quick picks")
                                         onUseLastListenChange(false)
@@ -315,13 +324,15 @@ fun HomeScreen(
                             }
 
                             val lastListenSelected = useLastListen
+                            val lastListenBg by animateColorAsState(
+                                targetValue = if (lastListenSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                animationSpec = if (Animations.instant) snap() else tween(Animations.ms(200)),
+                                label = "lastListenSelected",
+                            )
                             Box(
                                 modifier = Modifier
                                     .clip(CircleShape)
-                                    .background(
-                                        if (lastListenSelected) MaterialTheme.colorScheme.primaryContainer
-                                        else Color.Transparent
-                                    )
+                                    .background(lastListenBg)
                                     .clickable {
                                         AppLog.click("Home last listen")
                                         onUseLastListenChange(true)
@@ -422,8 +433,11 @@ fun HomeScreen(
                 val isSongsOnly = section.items.isNotEmpty() && songs.size == section.items.size
 
                 item(key = "header-$index-${section.title}") {
+                    // A new feed (a chip, the quick-picks switch, a refresh) fades
+                    // its sections in and out instead of swapping them under the
+                    // pointer; `Animations` still turns the whole thing off.
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = if (Animations.instant) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().animateItem(),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -467,6 +481,7 @@ fun HomeScreen(
                     if (isSongsOnly) {
                         HorizontalCarousel(
                             language = language,
+                            modifier = if (Animations.instant) Modifier else Modifier.animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             val sectionSongs = songs.distinctBy { it.id }
@@ -493,6 +508,7 @@ fun HomeScreen(
                     } else {
                         HorizontalCarousel(
                             language = language,
+                            modifier = if (Animations.instant) Modifier else Modifier.animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
                         ) {
                             items(section.items, key = { it.id }) { item ->

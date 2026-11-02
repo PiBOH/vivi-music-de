@@ -257,12 +257,21 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
     val isYtimg = url.contains("ytimg") || url.contains("youtube.com") || url.contains("/vi/")
     return when {
         isGoogleCdn -> {
-            val w = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
-            val h = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
-            if (googleCdnSizeSegment.containsMatchIn(url)) {
-                url.replace(googleCdnSizeSegment, "w$w-h$h")
+            if (!dataSaver && requestedPx >= BIG_ART_PX) {
+                // Big artwork asks for the stored original: every `=wNNN` is a
+                // RENDER of it, so asking for a number only ever downscales what
+                // the provider is willing to serve (and a provider that hands out
+                // a 120 px variant leaves nothing to upscale from). The original
+                // is what makes the full player and the Now Playing panel sharp.
+                url.split(googleCdnParam, limit = 2)[0].substringBefore("=s")
             } else {
-                url.split(googleCdnParam, limit = 2)[0] + "=w$w-h$h-p-l90-rj"
+                val w = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
+                val h = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
+                if (googleCdnSizeSegment.containsMatchIn(url)) {
+                    url.replace(googleCdnSizeSegment, "w$w-h$h")
+                } else {
+                    url.split(googleCdnParam, limit = 2)[0] + "=w$w-h$h-p-l90-rj"
+                }
             }
         }
 
@@ -286,6 +295,13 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
         else -> url
     }
 }
+
+/**
+ * Drawn width at which a cover is worth the stored original instead of a
+ * rendered size: the full player and the Now Playing panel are the two surfaces
+ * the owner reported as soft, and both are well above it.
+ */
+private const val BIG_ART_PX = 260
 
 /**
  * Square-ish artwork with a neutral placeholder behind it while loading.
@@ -316,8 +332,11 @@ fun Thumbnail(
     // request stayed at 544 px. The measured size wins when it is the larger
     // of the two, so a thumbnail can never ask for less than it shows.
     var measuredPx by remember { mutableStateOf(0) }
-    val pixels = maxOf(sizePx, measuredPx)
-    val model = remember(url, pixels, dataSaver) { adjustedThumbnailUrl(url, pixels, dataSaver) }
+    // The tier is decided on what is DRAWN, not on the caller's default: a 48 dp
+    // row asks for 544 px because the default says so, and it must not be read
+    // as "big artwork" and pull a full-resolution original.
+    val drawnPx = if (measuredPx > 0) measuredPx else sizePx
+    val model = remember(url, drawnPx, dataSaver) { adjustedThumbnailUrl(url, drawnPx, dataSaver) }
     Box(
         modifier
             .clip(shape)

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -136,6 +137,9 @@ fun AppleMusicPlayer(
             minOf(maxWidth * 0.6f, maxHeight * 0.42f)
         }
 
+        // Read here, before the Row's own scope: inside it `maxWidth` would be
+        // the scope's trying to reach the `BoxWithConstraints` above it.
+        val paneWidth = maxWidth
         Row(
             Modifier.fillMaxSize().padding(horizontal = 28.dp, vertical = 22.dp),
             // One column on a narrow window, centred: pinned to the left it read
@@ -146,6 +150,15 @@ fun AppleMusicPlayer(
                 Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally)
             },
         ) {
+            // The column sits in the MIDDLE of the left half, not against the
+            // window's edge (the owner: the Apple player's block is centred in
+            // its half, like the Expressive player's). The lyrics keep the other
+            // half, so the two stay one reference layout.
+            val leftPaneWidth = if (twoColumns) (paneWidth - 56.dp - 28.dp) / 2 else cover
+            Box(
+                Modifier.width(leftPaneWidth).fillMaxHeight(),
+                contentAlignment = Alignment.TopCenter,
+            ) {
             Column(
                 Modifier
                     .width(cover)
@@ -307,6 +320,7 @@ fun AppleMusicPlayer(
                     }
                 }
                 if (twoColumns) Spacer(Modifier.height(18.dp))
+            }
             }
 
             if (twoColumns) {

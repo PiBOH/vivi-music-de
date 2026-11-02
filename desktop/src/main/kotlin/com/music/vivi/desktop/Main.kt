@@ -1707,11 +1707,9 @@ fun WindowScope.App(
             ) {
                 Surface(
                     modifier = Modifier.fillMaxHeight(),
-                    // The preview's rail is the pane itself: it carries the same
-                    // accent-tinted surface and the same top-left curve as the
-                    // classic layout, so the two modes are one rail.
-                    color = sidebarSurfaceColor(),
-                    shape = sidebarShape(),
+                    // The rail is part of the chrome: the same accent-tinted
+                    // surface as the top bar, square against it.
+                    color = chromeSurfaceColor(),
                 ) {
                     Sidebar(
                         hideHistory = pauseListenHistory,
@@ -1786,9 +1784,17 @@ fun WindowScope.App(
                     onFilterSelect = { f -> headerSearchFilter = f },
                 )
             }
-            // The preview's content pane is flat: the top bar and the rail are
-            // the chrome, and the page is painted on the window itself.
-            Row(Modifier.weight(1f).fillMaxWidth()) {
+            // The page is the pane under the chrome: the rail and the top bar are
+            // one tinted frame, and the pane's top-left corner is the curve that
+            // frame leaves free (the owner's reference). The corner is clipped so
+            // the chrome's colour shows behind it.
+            Row(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clip(contentPaneShape())
+                    .background(MaterialTheme.colorScheme.background),
+            ) {
             Surface(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 color = Color.Transparent,
@@ -2005,6 +2011,9 @@ fun WindowScope.App(
                     is Screen.SettingsDensity -> SettingsDensityScreen(
                         language = language,
                         onBack = goBack,
+                        // The picker reads the drawn scale, so a small window is
+                        // visible here too (see DensityScreen).
+                        effectiveDensityScale = effectiveDensityScale,
                         densityScale = densityScale,
                         onDensityScaleChange = { s ->
                             densityScale = s
@@ -3101,28 +3110,34 @@ private data class SidebarEntry(
  * and pinned bottom user account capsule.
  */
 /**
- * The rail's own surface: the page's `surfaceContainer` pushed a little toward
- * the accent, so the sidebar reads as the app's frame rather than as one more
- * card of the page. A role mixed with a role, never a literal colour.
+ * The colour of the app's chrome - the rail and the top bar - and the pane
+ * underneath it.
+ *
+ * The chrome is the page's `surfaceContainer` pushed toward the accent, so the
+ * frame of the app reads as tinted while the page stays the page; the pane is
+ * the theme's own background. A role mixed with a role, never a literal colour.
+ *
+ * The owner asked for the top bar to carry the same accent as the rail, so the
+ * two ask this one function and cannot drift apart.
  */
 @Composable
-private fun sidebarSurfaceColor(): Color {
+internal fun chromeSurfaceColor(): Color {
     val dark = isAppInDarkTheme()
     return lerp(
         MaterialTheme.colorScheme.surfaceContainer,
         MaterialTheme.colorScheme.primary,
-        if (dark) 0.12f else 0.08f,
+        if (dark) 0.16f else 0.10f,
     )
 }
 
 /**
- * The rail's outline: only the top-left corner is rounded, which is the curve
- * the owner asked for (the window background shows through it). The radius is
+ * The pane's outline: only its top-left corner is rounded. That corner is the
+ * curve the owner asked for - the chrome shows through it - and the radius is
  * taken from the theme's shape scale so it cannot drift from the rest of the
  * app.
  */
 @Composable
-private fun sidebarShape(): Shape = RoundedCornerShape(topStart = ShapeRadii.large)
+internal fun contentPaneShape(): Shape = RoundedCornerShape(topStart = ShapeRadii.large)
 
 @Composable
 fun Sidebar(
@@ -3205,17 +3220,14 @@ fun Sidebar(
         ),
     )
 
-    // The rail collapse is a panel resize: it follows "Animation speed" and
-    // becomes instant when the master "Animations" switch is off.
-    val width by animateDpAsState(
-        targetValue = if (collapsed) 72.dp else 230.dp,
-        animationSpec = tween(Animations.sizeMs(), easing = FastOutSlowInEasing),
-        label = "sidebarWidth",
-    )
+    // The rail's width is not a transition: the owner reported that animating it
+    // dragged the page through the middle of the window on the way, so the bar
+    // changes width at once and only the labels inside it fade. The page keeps
+    // its left edge where it is.
+    val width = if (collapsed) 72.dp else 230.dp
 
     Surface(
-        color = sidebarSurfaceColor(),
-        shape = sidebarShape(),
+        color = chromeSurfaceColor()
     ) {
         Column(
             Modifier

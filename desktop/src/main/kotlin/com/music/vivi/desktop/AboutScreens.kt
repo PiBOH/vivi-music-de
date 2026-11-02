@@ -316,11 +316,34 @@ fun ContributorsSection(language: String) {
         )
         return
     }
-    // One card, a row per person: the avatar is the row's own mark, so the list
-    // reads as people rather than as an index of them.
-    M3SettingsGroup(
-        items = contributors.map { contributor -> contributorRow(contributor) },
+    // The list is grouped the way the preview groups it (`js/about.js`,
+    // `contributors()`): the people who build it, the people who contribute and
+    // the community around it, each under its own name, one card per group. The
+    // `group` field of `contributorsde.json` decides; a value the file does not
+    // use reads as a contributor, so nobody falls out of the list.
+    val groupOrder = listOf(
+        "developer" to "developer_section",
+        "contributor" to "contributors_section",
+        "community" to "community_section",
     )
+    var written = false
+    groupOrder.forEach { (groupId, titleKey) ->
+        val people = contributors.filter { person ->
+            person.group?.lowercase()?.takeIf { it in setOf("developer", "contributor", "community") }
+                ?.let { it == groupId } ?: (groupId == "contributor")
+        }
+        if (people.isEmpty()) return@forEach
+        if (written) Spacer(Modifier.height(20.dp))
+        written = true
+        Text(
+            Localization.get(language, titleKey),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 4.dp, bottom = 8.dp),
+        )
+        // One card, a row per person: the avatar is the row's own mark, so the
+        // list reads as people rather than as an index of them.
+        M3SettingsGroup(items = people.map { contributor -> contributorRow(contributor) })
+    }
     Spacer(Modifier.height(24.dp))
 }
 
@@ -500,6 +523,8 @@ private data class ContributorEntry(
     val description: String = "",
     val name: String? = null,
     val url: String? = null,
+    /** `developer`, `contributor` or `community`, as the JSON file says. */
+    val group: String? = null,
 )
 
 private val contributorsJson = sharedJson

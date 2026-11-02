@@ -2825,7 +2825,7 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
     var extractedColors by remember(thumbnailUrl) { mutableStateOf<List<Color>>(emptyList()) }
 
     LaunchedEffect(thumbnailUrl, style) {
-        if (!thumbnailUrl.isNullOrBlank() && (style == MiniPlayerBackgroundStyle.GRADIENT || style == MiniPlayerBackgroundStyle.GLOW_MOTION || style == MiniPlayerBackgroundStyle.LIVE_MESH)) {
+        if (!thumbnailUrl.isNullOrBlank() && (style == MiniPlayerBackgroundStyle.GLOW_MOTION || style == MiniPlayerBackgroundStyle.LIVE_MESH)) {
             withContext(Dispatchers.IO) {
                 runCatching {
                     val url = java.net.URL(thumbnailUrl)
@@ -2865,17 +2865,6 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
         when (style) {
             MiniPlayerBackgroundStyle.FOLLOW_THEME -> {
                 Box(Modifier.matchParentSize().background(baseSurface))
-            }
-            MiniPlayerBackgroundStyle.GRADIENT -> {
-                val c1 = extractedColors.getOrNull(0) ?: MaterialTheme.colorScheme.primaryContainer
-                val c2 = extractedColors.getOrNull(1) ?: MaterialTheme.colorScheme.surface
-                Box(
-                    Modifier.matchParentSize().background(
-                        Brush.horizontalGradient(
-                            listOf(c1.copy(alpha = 0.75f), c2.copy(alpha = 0.85f), baseSurface)
-                        )
-                    )
-                )
             }
             MiniPlayerBackgroundStyle.BLUR -> {
                 if (!thumbnailUrl.isNullOrBlank()) {
@@ -2919,12 +2908,15 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
                         .matchParentSize()
                         .background(baseSurface)
                         .drawBehind {
+                            // Darker than it was: the owner asked for the mesh to
+                            // sit deeper, so the same three roles tint the bar
+                            // instead of painting over it.
                             drawRect(
                                 brush = Brush.linearGradient(
                                     colors = listOf(
-                                        accent.copy(alpha = 0.4f),
-                                        secColor.copy(alpha = 0.3f),
-                                        tertColor.copy(alpha = 0.3f),
+                                        accent.copy(alpha = 0.24f),
+                                        secColor.copy(alpha = 0.16f),
+                                        tertColor.copy(alpha = 0.16f),
                                     ),
                                     start = Offset(size.width * meshDx, 0f),
                                     end = Offset(size.width * (1f + meshDx), size.height),
@@ -4462,7 +4454,6 @@ private fun miniPlayerDesignLabelKey(design: MiniPlayerDesign): String = when (d
 
 /** The localized name of a [MiniPlayerBackgroundStyle]. */
 private fun miniPlayerBackgroundLabelKey(style: MiniPlayerBackgroundStyle): String = when (style) {
-    MiniPlayerBackgroundStyle.GRADIENT -> "mini_player_bg_gradient"
     MiniPlayerBackgroundStyle.BLUR -> "mini_player_bg_blur"
     MiniPlayerBackgroundStyle.GLOW_MOTION -> "mini_player_bg_glow_motion"
     MiniPlayerBackgroundStyle.LIVE_MESH -> "mini_player_bg_live_mesh"

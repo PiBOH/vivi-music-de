@@ -1605,6 +1605,8 @@ fun DensityScreen(
     onDensityScaleChange: (Float) -> Unit,
     gridItemSize: Int,
     onGridItemSizeChange: (Int) -> Unit,
+    /** The scale actually in use, after the small-window step-down. */
+    effectiveDensityScale: Float = densityScale,
 ) {
     Column(Modifier.fillMaxWidth()) {
         Text(Localization.get(language, "density_and_grid"), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp))
@@ -1616,7 +1618,15 @@ fun DensityScreen(
             icon = Icons.Filled.SettingsBrightness,
             title = Localization.get(language, "density_and_grid"),
             description = Localization.get(language, "density_desc"),
-            value = densityLabel(densityScale),
+            // The value the picker reads is the one the interface is DRAWN at: a
+            // window small enough to step the scale down shows "100% → 75%", so
+            // the setting and the screen agree (the owner's report: the shrink
+            // was visible everywhere except here).
+            value = if (effectiveDensityScale == densityScale) {
+                densityLabel(densityScale)
+            } else {
+                "${densityLabel(densityScale)} → ${densityLabel(effectiveDensityScale)}"
+            },
             options = DENSITY_PRESETS.map { it.toString() to densityLabel(it) },
             onSelect = { s -> onDensityScaleChange(s.toFloatOrNull() ?: densityScale) },
         )

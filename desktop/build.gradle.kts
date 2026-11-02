@@ -1770,4 +1770,22 @@ val iconButtonCheck = tasks.register("iconButtonCheck") {
     }
 }
 
+/**
+ * Headless check of the two brand marks the Integrations rows draw:
+ *
+ *     ./gradlew :desktop:brandIconCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/BrandIconCheck.kt`. The
+ * Discord mark's eyes are subpaths inside its head, so a fill rule that is not
+ * even-odd paints them in and the logo reads as a solid blob; the check paints
+ * both marks on white and reads the eye centres back.
+ */
+tasks.register<JavaExec>("brandIconCheck") {
+    group = "verification"
+    description = "Paints the Discord and Last.fm marks and checks the Discord eyes are holes"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.BrandIconCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.named("compileKotlin") { dependsOn(iconButtonCheck) }
