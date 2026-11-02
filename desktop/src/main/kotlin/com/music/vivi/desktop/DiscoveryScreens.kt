@@ -59,7 +59,6 @@ fun NewReleasesScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(Localization.get(language, "new_release_albums"), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         when {
@@ -123,7 +122,6 @@ fun ChartsScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(Localization.get(language, "charts"), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         when {
@@ -220,7 +218,6 @@ fun MoodGenresScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(Localization.get(language, "mood_and_genres"), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         when {
@@ -289,7 +286,6 @@ fun AutoPlaylistScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(title, style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(8.dp))
         when {

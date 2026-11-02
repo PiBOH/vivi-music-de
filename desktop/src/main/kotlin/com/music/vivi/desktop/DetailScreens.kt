@@ -85,7 +85,6 @@ fun AlbumScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         when {
             error != null -> ErrorBox(language, error)
             page == null -> LoadingBox(language)
@@ -136,19 +135,25 @@ fun AlbumScreen(
                             refreshKey++
                         },
                     ),
+                    // The preview puts the two actions inside the hero, under
+                    // the subtitle and the meta (`appHero`'s `actions`), not
+                    // beside the *Songs* heading.
+                    actions = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Button(onClick = { onPlayAll(albumSongs) }) { Text(Localization.get(language, "play_all")) }
+                            TextButton(onClick = { onShuffleAll(albumSongs) }) {
+                                Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(Localization.get(language, "shuffle_all"))
+                            }
+                        }
+                    },
                 )
                 Spacer(Modifier.height(16.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(Localization.get(language, "songs"), style = MaterialTheme.typography.titleLarge)
-                    Spacer(Modifier.weight(1f))
-                    Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = { onShuffleAll(page!!.songs) }) {
-                        Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(Localization.get(language, "shuffle_all"))
-                    }
-                }
+                Text(Localization.get(language, "songs"), style = MaterialTheme.typography.titleLarge)
                 LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                     items(page!!.songs, key = { it.id }) { song ->
                         SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
@@ -211,7 +216,6 @@ fun ArtistScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         when {
             error != null -> ErrorBox(language, error)
             page == null -> LoadingBox(language)
@@ -268,6 +272,23 @@ fun ArtistScreen(
                             refreshKey++
                         },
                     ),
+                    // The preview's artist hero carries the same two actions the
+                    // album's and the playlist's do (`appHero`'s `actions`).
+                    actions = {
+                        if (artistSongs.isNotEmpty()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Button(onClick = { onPlayAll(artistSongs) }) { Text(Localization.get(language, "play_all")) }
+                                TextButton(onClick = { onShuffleAll(artistSongs) }) {
+                                    Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(Localization.get(language, "shuffle_all"))
+                                }
+                            }
+                        }
+                    },
                 )
                 if (showDescription) {
                     page!!.description?.takeIf { it.isNotBlank() }?.let { description ->
@@ -405,7 +426,6 @@ fun PlaylistScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         when {
             error != null -> ErrorBox(language, error)
             page == null -> LoadingBox(language)
@@ -451,6 +471,21 @@ fun PlaylistScreen(
                             refreshKey++
                         },
                     ),
+                    actions = {
+                        if (playlistSongs.isNotEmpty()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Button(onClick = { onPlayAll(playlistSongs) }) { Text(Localization.get(language, "play_all")) }
+                                TextButton(onClick = { onShuffleAll(playlistSongs) }) {
+                                    Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(Localization.get(language, "shuffle_all"))
+                                }
+                            }
+                        }
+                    },
                 )
                 Spacer(Modifier.height(16.dp))
                 // An account playlist can be genuinely empty (an auto playlist
@@ -467,16 +502,6 @@ fun PlaylistScreen(
                         modifier = Modifier.padding(top = 8.dp),
                     )
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Button(onClick = { onPlayAll(page!!.songs) }) { Text(Localization.get(language, "play_all")) }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(onClick = { onShuffleAll(page!!.songs) }) {
-                            Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(Localization.get(language, "shuffle_all"))
-                        }
-                    }
-                    Spacer(Modifier.height(8.dp))
                     LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
                         items(page!!.songs, key = { it.id }) { song ->
                             SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
@@ -528,7 +553,6 @@ fun HistoryScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(Localization.get(language, "history"), style = MaterialTheme.typography.headlineMedium)
         LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
             if (localSearches.isNotEmpty()) {

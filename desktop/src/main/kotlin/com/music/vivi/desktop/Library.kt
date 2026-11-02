@@ -324,7 +324,30 @@ fun LibraryScreen(
     onShuffleAll: (List<SongItem>) -> Unit,
 ) {
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text(Localization.get(language, "library"), style = MaterialTheme.typography.headlineMedium)
+        val tabs = listOf("songs", "albums", "artists", "playlists")
+        // The tab is read by the header: the preview puts *Shuffle all* on the
+        // title's own row, and only while Songs is the tab on screen
+        // (`js/app-screens.js` `appLibrary`).
+        var selectedTab by remember { mutableStateOf(0) }
+        var page by remember { mutableStateOf<LibraryPage?>(null) }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                Localization.get(language, "library"),
+                style = MaterialTheme.typography.headlineMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (isLoggedIn && selectedTab == 0 && page?.items?.isNotEmpty() == true) {
+                Button(onClick = { onShuffleAll(page!!.items.filterIsInstance<SongItem>()) }) {
+                    Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(Localization.get(language, "shuffle_all"))
+                }
+            }
+        }
 
         if (!isLoggedIn) {
             Text(
@@ -340,15 +363,12 @@ fun LibraryScreen(
             return@Column
         }
 
-        val tabs = listOf("songs", "albums", "artists", "playlists")
         val browseIds = listOf(
             "FEmusic_liked_videos",
             "FEmusic_liked_albums",
             ARTISTS_BROWSE_ID,
             "FEmusic_liked_playlists",
         )
-        var selectedTab by remember { mutableStateOf(0) }
-        var page by remember { mutableStateOf<LibraryPage?>(null) }
         var loading by remember { mutableStateOf(false) }
         var error by remember { mutableStateOf<String?>(null) }
         var sortAsc by remember { mutableStateOf(true) }
@@ -385,7 +405,7 @@ fun LibraryScreen(
         }
 
         Row(
-            Modifier.fillMaxWidth().padding(top = 12.dp),
+            Modifier.fillMaxWidth().padding(top = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             tabs.forEachIndexed { i, key ->
@@ -395,14 +415,6 @@ fun LibraryScreen(
                     label = { Text(Localization.get(language, key)) },
                 )
                 if (i != tabs.lastIndex) Spacer(Modifier.width(8.dp))
-            }
-            Spacer(Modifier.weight(1f))
-            if (selectedTab == 0 && page?.items?.isNotEmpty() == true) {
-                Button(onClick = { onShuffleAll(page!!.items.filterIsInstance<SongItem>()) }) {
-                    Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(Localization.get(language, "shuffle_all"))
-                }
             }
         }
 

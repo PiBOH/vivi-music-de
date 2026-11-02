@@ -1704,11 +1704,11 @@ fun WindowScope.App(
                 exit = Animations.panelExit(),
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxHeight().padding(start = 6.dp, top = 6.dp, end = 4.dp, bottom = 6.dp),
-                    // Spotify mode: the black sidebar floats directly on the
-                    // flat background (no surface frame around it).
-                    color = if (spotifyLayout) Color.Transparent else MaterialTheme.colorScheme.surfaceContainer,
-                    shape = MaterialTheme.shapes.small,
+                    modifier = Modifier.fillMaxHeight(),
+                    // The preview's rail is the pane itself: no floating card,
+                    // no rounded corner, `surfaceContainer` edge to edge.
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shape = androidx.compose.ui.graphics.RectangleShape,
                 ) {
                     Sidebar(
                         hideHistory = pauseListenHistory,
@@ -1783,11 +1783,13 @@ fun WindowScope.App(
                     onFilterSelect = { f -> headerSearchFilter = f },
                 )
             }
-            Row(Modifier.weight(1f).fillMaxWidth().padding(if (spotifyLayout) androidx.compose.foundation.layout.PaddingValues(horizontal = 2.dp) else androidx.compose.foundation.layout.PaddingValues(0.dp))) {
+            // The preview's content pane is flat: the top bar and the rail are
+            // the chrome, and the page is painted on the window itself.
+            Row(Modifier.weight(1f).fillMaxWidth()) {
             Surface(
-                modifier = Modifier.weight(1f).fillMaxHeight().padding(if (spotifyLayout) androidx.compose.foundation.layout.PaddingValues(start = 2.dp, top = 0.dp, end = 2.dp, bottom = 6.dp) else androidx.compose.foundation.layout.PaddingValues(0.dp)),
-                color = if (spotifyLayout) MaterialTheme.colorScheme.surfaceContainer else Color.Transparent,
-                shape = if (spotifyLayout) MaterialTheme.shapes.small else androidx.compose.ui.graphics.RectangleShape,
+                modifier = Modifier.weight(1f).fillMaxHeight(),
+                color = Color.Transparent,
+                shape = androidx.compose.ui.graphics.RectangleShape,
             ) {
                     Box(Modifier.fillMaxSize()) {
                         AnimatedContent(
@@ -3111,12 +3113,13 @@ fun Sidebar(
 ) {
     // Spotify style: pure-black sidebar (dark) / white (light) with a grey
     // selected pill; the classic layout keeps the accent-filled selection.
-    val selectedBg = if (spotify) MaterialTheme.colorScheme.surfaceContainerHighest
-    else MaterialTheme.colorScheme.primaryContainer
-    val selectedFg = if (spotify) MaterialTheme.colorScheme.onSurface
-    else MaterialTheme.colorScheme.onPrimaryContainer
-    val mainRadius = if (spotify) 8.dp else 14.dp
-    val subRadius = if (spotify) 8.dp else 12.dp
+    // The preview's rail, in both layouts: the selected entry is
+    // `primaryContainer` and an entry wears one 12 dp corner
+    // (`css/shell.css`, `.rail-row` on `--md-sys-shape-corner-small`).
+    val selectedBg = MaterialTheme.colorScheme.primaryContainer
+    val selectedFg = MaterialTheme.colorScheme.onPrimaryContainer
+    val mainRadius = 12.dp
+    val subRadius = 12.dp
     var libraryExpanded by remember { mutableStateOf(true) }
     var playlistsExpanded by remember { mutableStateOf(true) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -3184,11 +3187,7 @@ fun Sidebar(
     )
 
     Surface(
-        color = if (spotify) {
-            if (isAppInDarkTheme()) PaletteBlack else MaterialTheme.colorScheme.surface
-        } else {
-            MaterialTheme.colorScheme.surfaceContainer
-        }
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(
             Modifier
@@ -3276,13 +3275,13 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        spotify && hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
                                         else -> Color.Transparent
                                     }
                                 )
                                 .clickable(
                                     interactionSource = interaction,
-                                    indication = if (spotify) null else LocalIndication.current,
+                                    indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
                                 .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -3361,13 +3360,13 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        spotify && hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
                                         else -> Color.Transparent
                                     }
                                 )
                                 .clickable(
                                     interactionSource = interaction,
-                                    indication = if (spotify) null else LocalIndication.current,
+                                    indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
                                 .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -3492,13 +3491,13 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        spotify && hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
                                         else -> Color.Transparent
                                     }
                                 )
                                 .clickable(
                                     interactionSource = interaction,
-                                    indication = if (spotify) null else LocalIndication.current,
+                                    indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylist(p.id)) }
                                 .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -3508,7 +3507,6 @@ fun Sidebar(
                                 imageVector = Icons.Filled.PlaylistPlay,
                                 contentDescription = p.name,
                                 tint = if (selected) selectedFg
-                                else if (spotify) MaterialTheme.colorScheme.onSurfaceVariant
                                 else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
                             )
@@ -3594,13 +3592,13 @@ fun Sidebar(
                                     .background(
                                         when {
                                             selected -> selectedBg
-                                            spotify && hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                            hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
                                             else -> Color.Transparent
                                         }
                                     )
                                     .clickable(
                                         interactionSource = interaction,
-                                        indication = if (spotify) null else LocalIndication.current,
+                                        indication = LocalIndication.current,
                                     ) { onSelect(Screen.Playlist(op.id)) }
                                     .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -3645,13 +3643,13 @@ fun Sidebar(
                                 .background(
                                     when {
                                         favSelected -> selectedBg
-                                        spotify && hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
                                         else -> Color.Transparent
                                     }
                                 )
                                 .clickable(
                                     interactionSource = interaction,
-                                    indication = if (spotify) null else LocalIndication.current,
+                                    indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylists) }
                                 .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -3720,7 +3718,7 @@ fun Sidebar(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(MaterialTheme.shapes.small)
                     .clickable { onSelect(Screen.SettingsAccount) },
                 color = if (settingsSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
             ) {

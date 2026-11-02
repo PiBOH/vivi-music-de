@@ -343,35 +343,29 @@ fun HomeScreen(
 
                     Spacer(Modifier.weight(1f))
 
-                    val shuffleColor = if (randomizeOrder) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    Surface(
+                    // The preview draws this one as a FilterChip with the shuffle
+                    // glyph, selected on `secondaryContainer` (`js/app-screens.js`
+                    // `appHome`, `chip chip--shuffle`).
+                    FilterChip(
+                        selected = randomizeOrder,
                         onClick = {
                             AppLog.click("Home randomize order")
                             onRandomizeOrderChange(!randomizeOrder)
                         },
-                        shape = CircleShape,
-                        color = if (randomizeOrder) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                        else MaterialTheme.colorScheme.surfaceContainerHigh,
-                        modifier = Modifier.height(34.dp),
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
+                        leadingIcon = {
                             Icon(
                                 Icons.Filled.Shuffle,
-                                contentDescription = Localization.get(language, "randomize_home_order"),
-                                tint = shuffleColor,
+                                contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                             )
-                            Spacer(Modifier.width(6.dp))
+                        },
+                        label = {
                             Text(
                                 text = Localization.get(language, "randomize"),
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = shuffleColor
+                                maxLines = 1,
                             )
-                        }
-                    }
+                        },
+                    )
                 }
             }
 
@@ -389,30 +383,22 @@ fun HomeScreen(
                         // duplicated LazyColumn key crashes the whole screen.
                         itemsIndexed(chipsList, key = { i, chip -> "chip-$i-${chip.title}" }) { _, chip ->
                             val selected = selectedChip?.title == chip.title
-                            Surface(
+                            // The preview's chips are Material 3 FilterChips
+                            // (`appChip`): `secondaryContainer` when picked, the
+                            // outline while not, 8 dp apart.
+                            FilterChip(
+                                selected = selected,
                                 onClick = {
                                     AppLog.click("Home chip '${chip.title}'")
                                     selectedChip = if (selected) null else chip
                                 },
-                                shape = CircleShape,
-                                color = if (selected) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceContainerHigh,
-                                modifier = Modifier.height(32.dp),
-                            ) {
-                                Box(
-                                    modifier = Modifier.padding(horizontal = 14.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
+                                label = {
                                     Text(
                                         text = chip.title,
-                                        style = MaterialTheme.typography.labelMedium.copy(
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
-                                        ),
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimary
-                                        else MaterialTheme.colorScheme.onSurface,
+                                        maxLines = 1,
                                     )
-                                }
-                            }
+                                },
+                            )
                         }
                     }
                 }

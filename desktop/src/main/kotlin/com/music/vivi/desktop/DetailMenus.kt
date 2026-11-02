@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -120,6 +121,12 @@ fun GradientHeader(
     menuEntries: List<DetailMenuEntry>,
     subtitle: String? = null,
     meta: String? = null,
+    /**
+     * The actions the preview draws inside the hero, under the meta line
+     * (`js/app-screens.js` `appHero`): *Play all* and *Shuffle all* on an
+     * album, a playlist or an artist.
+     */
+    actions: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     val fade = MaterialTheme.colorScheme.background
@@ -190,6 +197,10 @@ fun GradientHeader(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
+                }
+                actions?.let {
+                    Spacer(Modifier.height(8.dp))
+                    it()
                 }
             }
             DetailMenu(language, menuEntries, tint = PaletteInk)

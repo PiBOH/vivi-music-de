@@ -454,7 +454,6 @@ fun SongRecognitionScreen(
     var result by remember { mutableStateOf<RecognitionResult?>(null) }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Text(Localization.get(language, "song_recognition"), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(12.dp))
 

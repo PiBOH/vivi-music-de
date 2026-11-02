@@ -624,7 +624,6 @@ fun LocalPlaylistsScreen(
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
-        BackButton(language, onBack)
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(Localization.get(language, "playlists"), style = MaterialTheme.typography.headlineMedium)
             Spacer(Modifier.weight(1f))
