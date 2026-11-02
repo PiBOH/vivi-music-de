@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.11",
+  "versionCode": 149,
+  "channel": "beta",
+  "title": "docs(changelog): file the 2 Nov changes under 1.55.0 beta",
+  "builtAt": "2026-11-02T21:05:03Z",
+  "commit": "6913005a45426a1d93e4d41140e49876f65d81a5",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30133916,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31652358,
+      "url": "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
