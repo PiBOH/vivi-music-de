@@ -329,8 +329,8 @@ fun ContributorsSection(language: String) {
     // exactly as the preview does, so nobody falls out of the list.
     val groupOrder = listOf(
         "developer" to "developer_section",
-        "supporter" to "contributors_section",
-        "contributor" to "community_section",
+        "contributor" to "contributors_section",
+        "supporter" to "community_section",
     )
     var written = false
     groupOrder.forEach { (groupId, titleKey) ->

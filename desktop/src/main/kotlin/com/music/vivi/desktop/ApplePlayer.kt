@@ -21,8 +21,11 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Repeat
@@ -32,7 +35,10 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +58,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.music.vivi.desktop.player.LoadPhase
 import com.music.vivi.desktop.player.RepeatMode
+import kotlinx.coroutines.launch
 
 /**
  * The "Apple Music" player: the web player's full-screen view, on a desktop.
@@ -155,9 +163,12 @@ fun AppleMusicPlayer(
             // its half, like the Expressive player's). The lyrics keep the other
             // half, so the two stay one reference layout.
             val leftPaneWidth = if (twoColumns) (paneWidth - 56.dp - 28.dp) / 2 else cover
+            // Centred on BOTH axes: pinned to the top the block read as a
+            // screen that had only half rendered, with the bottom of a 800 dp
+            // window left empty under the controls.
             Box(
                 Modifier.width(leftPaneWidth).fillMaxHeight(),
-                contentAlignment = Alignment.TopCenter,
+                contentAlignment = Alignment.Center,
             ) {
             Column(
                 Modifier
@@ -208,10 +219,17 @@ fun AppleMusicPlayer(
                             )
                         }
                     }
-                    if (onAddToPlaylist != null) {
-                        Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(8.dp))
+                    // The three dots are a MENU, not a shortcut: they sat here
+                    // wired straight to "add to playlist", so the only thing the
+                    // control could do was the one action nobody looks for under
+                    // a ⋮. It opens the player's own actions now.
+                    var menuOpen by remember { mutableStateOf(false) }
+                    val scope = rememberCoroutineScope()
+                    val liked = SongActions.isLiked(np.videoId)
+                    Box {
                         Surface(
-                            onClick = onAddToPlaylist,
+                            onClick = { menuOpen = true },
                             shape = CircleShape,
                             color = PaletteInk.copy(alpha = 0.16f),
                             modifier = Modifier.size(26.dp),
@@ -224,6 +242,50 @@ fun AppleMusicPlayer(
                                     modifier = Modifier.size(15.dp),
                                 )
                             }
+                        }
+                        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                            DropdownMenuItem(
+                                text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
+                                leadingIcon = {
+                                    Icon(
+                                        if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = null,
+                                        tint = if (liked) MaterialTheme.colorScheme.error else LocalContentColor.current,
+                                    )
+                                },
+                                onClick = {
+                                    menuOpen = false
+                                    val next = !liked
+                                    SongActions.setLiked(
+                                        np.videoId,
+                                        next,
+                                        title = np.title,
+                                        artist = np.artist,
+                                        thumbnail = np.thumbnail,
+                                    )
+                                    scope.launch { com.music.innertube.YouTube.likeVideo(np.videoId, next) }
+                                },
+                            )
+                            if (onAddToPlaylist != null) {
+                                DropdownMenuItem(
+                                    text = { Text(Localization.get(language, "add_to_playlist")) },
+                                    leadingIcon = {
+                                        Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        menuOpen = false
+                                        onAddToPlaylist.invoke()
+                                    },
+                                )
+                            }
+                            DropdownMenuItem(
+                                text = { Text(Localization.get(language, "queue")) },
+                                leadingIcon = { Icon(Icons.Filled.QueueMusic, contentDescription = null) },
+                                onClick = {
+                                    menuOpen = false
+                                    onOpenQueue()
+                                },
+                            )
                         }
                     }
                 }
@@ -325,6 +387,21 @@ fun AppleMusicPlayer(
 
             if (twoColumns) {
                 Box(Modifier.weight(1f).fillMaxSize()) {
+                    // The right half sits a touch deeper than the left, and the
+                    // darkening grows toward the middle where the two halves
+                    // meet: the lyrics are read against it, and the seam between
+                    // the cover and the words is where the eye lands.
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .background(
+                                Brush.horizontalGradient(
+                                    0f to PaletteBlack.copy(alpha = 0.20f),
+                                    0.45f to PaletteBlack.copy(alpha = 0.04f),
+                                    1f to Color.Transparent,
+                                )
+                            )
+                    )
                     LyricsScreen(
                         nowPlaying = np,
                         positionMs = positionMs,

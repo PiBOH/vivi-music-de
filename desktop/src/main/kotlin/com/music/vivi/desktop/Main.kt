@@ -135,6 +135,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
@@ -1795,7 +1796,12 @@ fun WindowScope.App(
             // itself.
             // No top bar on the full player, so there is no frame up there for a
             // corner to cut into: only the rail's own corner stays rounded.
+            // The right corner is the top bar meeting the Now Playing panel, so
+            // it exists only while that panel does: width-wise the panel is gone
+            // under 1150 dp too, and a curve there would cut into the page with
+            // nothing beside it to explain it.
             val hasTopBar = spotifyLayout && current != Screen.Player
+            val roundTopEnd = hasTopBar && showRightSidebar && !narrowRightPanel
             val paneBackdrop = if (hasTopBar) chromeSurfaceColor() else MaterialTheme.colorScheme.background
             Row(
                 Modifier
@@ -1807,7 +1813,7 @@ fun WindowScope.App(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(contentPaneShape(roundTopEnd = hasTopBar)),
+                    .clip(contentPaneShape(roundTopEnd = roundTopEnd)),
                 color = MaterialTheme.colorScheme.background,
                 shape = androidx.compose.ui.graphics.RectangleShape,
             ) {
@@ -3134,11 +3140,17 @@ private data class SidebarEntry(
 @Composable
 internal fun chromeSurfaceColor(): Color {
     val dark = isAppInDarkTheme()
-    return lerp(
-        MaterialTheme.colorScheme.surfaceContainer,
-        MaterialTheme.colorScheme.primary,
-        if (dark) 0.26f else 0.14f,
-    )
+    // Pure black is the one mode the owner wants the frame to almost lose its
+    // colour in: the accent keeps 30 % of its weight there, so the rail and the
+    // top bar read as black chrome with a trace of the theme instead of as a
+    // coloured band next to a black page.
+    val pureBlack = remember(settingsFileRevision()) { DesktopSettings.load().pureBlack }
+    // The accent the frame is mixed from is 20 % darker than the theme's own
+    // (`primary` pulled toward the palette's black), so the rail and the top bar
+    // sit under the page's accents instead of competing with them.
+    val accent = lerp(MaterialTheme.colorScheme.primary, PaletteBlack, 0.20f)
+    val mix = (if (dark) 0.26f else 0.14f) * if (pureBlack) 0.30f else 1f
+    return lerp(MaterialTheme.colorScheme.surfaceContainer, accent, mix)
 }
 
 /**
@@ -3157,23 +3169,6 @@ internal fun contentPaneShape(roundTopEnd: Boolean = false): Shape = RoundedCorn
     topStart = ShapeRadii.large,
     topEnd = if (roundTopEnd) ShapeRadii.large else 0.dp,
 )
-
-/**
- * A rail label, and the way it leaves: the text fades with the rail's own
- * collapse instead of disappearing on its first frame.
- *
- * The rows keep the icon at a fixed offset (see [Sidebar]), so what is left to
- * animate is the words: they go out on the same short curve the width travels on
- * and come back the same way, and `Animations` off still means one step.
- */
-@Composable
-private fun RailLabel(visible: Boolean, content: @Composable () -> Unit) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = if (Animations.instant) EnterTransition.None else fadeIn(animationSpec = tween(Animations.ms(Motion.SHORT3))),
-        exit = if (Animations.instant) ExitTransition.None else fadeOut(animationSpec = tween(Animations.ms(Motion.SHORT2))),
-    ) { content() }
-}
 
 @Composable
 fun Sidebar(
@@ -3256,37 +3251,36 @@ fun Sidebar(
         ),
     )
 
-    // The collapse is ONE movement: the rail's width and everything that is
-    // derived from it travel together on the emphasized curve, so the page
-    // follows the bar sideways instead of the bar vanishing under it.
+    // The collapse is ONE movement, and it is a REVEAL: the rail's content is
+    // laid out at the width it is going to (72 or 230) and the box around it is
+    // what travels, clipping it. That is the difference between a smooth
+    // collapse and a stuttering one: the rail's twenty rows, their tooltips and
+    // the logos are measured once per state change instead of once per frame,
+    // which is what made the old width animation drop frames.
     //
-    // The parts that used to jump ahead of the width are gone with it: the rows
-    // kept their own `Arrangement.Center` in the collapsed state (and a zero
-    // padding), so at the first frame of a collapse the icons were already
-    // sitting in the middle of a still-wide rail and only then did the rail
-    // shrink around them - which is what the owner described as the content
-    // being taken to the centre before the bar reduced. The icons now keep their
-    // left offset for the whole movement and only the rail's right edge travels.
+    // It also puts every icon where it ends up from the first frame (the rows
+    // centre their glyph in the 72 dp strip), so the bar narrows around a rail
+    // that is already the final one instead of dragging its content with it.
     //
-    // `Animations` off keeps the change in one step, like every other transition.
-    val collapseProgress by animateFloatAsState(
-        targetValue = if (collapsed) 1f else 0f,
+    // `Animations` off keeps the change in one step, like every other
+    // transition.
+    val targetWidth = if (collapsed) 72.dp else 230.dp
+    val animatedWidth by animateDpAsState(
+        targetValue = targetWidth,
         animationSpec = if (Animations.instant) snap() else tween(Animations.ms(Motion.SHORT4), easing = Motion.emphasized),
         label = "railCollapse",
     )
-    val railPadding = androidx.compose.ui.unit.lerp(12.dp, 8.dp, collapseProgress)
-    val railRowPadding = androidx.compose.ui.unit.lerp(14.dp, 6.dp, collapseProgress)
-    val railBrandPadding = androidx.compose.ui.unit.lerp(8.dp, 0.dp, collapseProgress)
-    val width = androidx.compose.ui.unit.lerp(230.dp, 72.dp, collapseProgress)
+    val width = targetWidth
 
     Surface(
         color = chromeSurfaceColor()
     ) {
+        Box(Modifier.width(animatedWidth).fillMaxHeight().clipToBounds()) {
         Column(
             Modifier
                 .width(width)
                 .fillMaxHeight()
-                .padding(horizontal = railPadding, vertical = 12.dp),
+                .padding(horizontal = if (collapsed) 8.dp else 12.dp, vertical = 12.dp),
         ) {
             // The brand IS the rail's control: clicking "VIVI Music" (or the
             // logo alone, when the rail is collapsed to the icon strip) opens and
@@ -3303,9 +3297,9 @@ fun Sidebar(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,
                         ) { onToggleCollapsed() }
-                        .padding(vertical = 6.dp, horizontal = railBrandPadding),
+                        .padding(vertical = 6.dp, horizontal = if (collapsed) 0.dp else 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Start,
+                    horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                 ) {
                     // The mark is 26-30 dp here: it is resampled to that size (x
                     // the density in use) instead of being left to Compose to
@@ -3324,7 +3318,7 @@ fun Sidebar(
                                 .clip(MaterialTheme.shapes.extraSmall),
                         )
                     }
-                    RailLabel(visible = !collapsed) {
+                    if (!collapsed) {
                         Spacer(Modifier.width(10.dp))
                         // The row itself carries the tooltip ("Collapse sidebar"
                         // / "Expand sidebar"), so the brand label does not add a
@@ -3376,9 +3370,9 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
-                                .padding(horizontal = railRowPadding, vertical = 10.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 if (selected) entry.selectedIcon else entry.icon,
@@ -3386,7 +3380,7 @@ fun Sidebar(
                                 tint = if (selected) selectedFg
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                            RailLabel(visible = !collapsed) {
+                            if (!collapsed) {
                                 Spacer(Modifier.width(14.dp))
                                 Tooltip(Localization.get(language, entry.key)) {
                                     Text(
@@ -3409,7 +3403,7 @@ fun Sidebar(
                 Spacer(Modifier.height(12.dp))
 
                 // Library Section Header (Collapsible)
-                RailLabel(visible = !collapsed) {
+                if (!collapsed) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3461,9 +3455,9 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
-                                .padding(horizontal = railRowPadding, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 if (selected) entry.selectedIcon else entry.icon,
@@ -3472,7 +3466,7 @@ fun Sidebar(
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(20.dp),
                             )
-                            RailLabel(visible = !collapsed) {
+                            if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
                                 Tooltip(Localization.get(language, entry.key)) {
                                     Text(
@@ -3498,7 +3492,7 @@ fun Sidebar(
                 // Playlists Section Header: clicking the label opens the full
                 // playlist list screen; only the chevron arrow expands/collapses
                 // the inline playlist list in the sidebar.
-                RailLabel(visible = !collapsed) {
+                if (!collapsed) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3548,9 +3542,9 @@ fun Sidebar(
                             .fillMaxWidth()
                             .clip(MaterialTheme.shapes.small)
                             .clickable { showCreateDialog = true }
-                            .padding(horizontal = railRowPadding, vertical = 8.dp),
+                            .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Start,
+                        horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -3558,7 +3552,7 @@ fun Sidebar(
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp),
                         )
-                        RailLabel(visible = !collapsed) {
+                        if (!collapsed) {
                             Spacer(Modifier.width(12.dp))
                             Tooltip(Localization.get(language, "new_playlist").let { if (it == "new_playlist" || it.isBlank()) "Create New..." else it }) {
                                 Text(
@@ -3592,9 +3586,9 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylist(p.id)) }
-                                .padding(horizontal = railRowPadding, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.PlaylistPlay,
@@ -3603,7 +3597,7 @@ fun Sidebar(
                                 else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
                             )
-                            RailLabel(visible = !collapsed) {
+                            if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
                                 Tooltip(text = p.name) {
                                     Text(
@@ -3693,9 +3687,9 @@ fun Sidebar(
                                         interactionSource = interaction,
                                         indication = LocalIndication.current,
                                     ) { onSelect(Screen.Playlist(op.id)) }
-                                    .padding(horizontal = railRowPadding, vertical = 8.dp),
+                                    .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Start,
+                                horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.MusicNote,
@@ -3705,7 +3699,7 @@ fun Sidebar(
                                     else MaterialTheme.colorScheme.secondary,
                                     modifier = Modifier.size(20.dp),
                                 )
-                                RailLabel(visible = !collapsed) {
+                                if (!collapsed) {
                                     Spacer(Modifier.width(12.dp))
                                     Tooltip(text = op.title) {
                                         Text(
@@ -3744,9 +3738,9 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylists) }
-                                .padding(horizontal = railRowPadding, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
+                            horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Favorite,
@@ -3756,7 +3750,7 @@ fun Sidebar(
                                 else MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(20.dp),
                             )
-                            RailLabel(visible = !collapsed) {
+                            if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
                                 Tooltip("Favourite Songs") {
                                     Text(
@@ -3833,7 +3827,7 @@ fun Sidebar(
                         )
                     }
 
-                    RailLabel(visible = !collapsed) {
+                    if (!collapsed) {
                         Spacer(Modifier.width(10.dp))
                         // No `weight` here: the column's parent is the label's
                         // own AnimatedVisibility, not the card's row, so a weight
@@ -3864,6 +3858,7 @@ fun Sidebar(
                 }
             }
         }
+    }
     }
 }
 
