@@ -144,6 +144,7 @@ object DeveloperOptions {
                 detailedPlaybackLogging = false,
                 detailedStartupLogs = false,
                 unlockFrameRate = false,
+                showFps = false,
                 hideCustomApkDownloadButton = true,
             )
         }

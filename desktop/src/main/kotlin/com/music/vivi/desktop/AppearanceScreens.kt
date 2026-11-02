@@ -391,6 +391,11 @@ fun ThemeSection(
         // page computes (`accentSwatch`); a saved colour shows itself, because
         // that is the colour that was chosen.
         val dark = isAppInDarkTheme()
+        // The flat palette applies the accent itself, the tonal one the tone its
+        // engine derives from it (see [LocalFlatAccent]). A circle has to show
+        // the colour the app will actually use, or picking one gives something
+        // other than what was picked.
+        val flat = LocalFlatAccent.current
         PaletteGrid(Modifier.fillMaxWidth().padding(top = 12.dp)) {
             AccentPalette.colors.forEach { entry ->
                 val isSelected = if (entry.color == Color.Transparent) {
@@ -398,22 +403,23 @@ fun ThemeSection(
                 } else {
                     accent == entry.color
                 }
-                val seed = if (entry.color == Color.Transparent) {
-                    AccentPalette.effective(entry.color)
-                } else {
-                    entry.color
-                }
+                // The same seed `AppTheme` builds its scheme from: the preset
+                // keeps its own colour and only a custom one follows the
+                // intensity slider.
+                val seed = appliedAccentSeed(entry.color, accentIntensity)
                 val scheme = rememberDynamicColorScheme(
                     seedColor = seed,
                     isDark = dark,
                     specVersion = ColorSpec.SpecVersion.SPEC_2025,
                     style = PaletteStyle.TonalSpot,
                 )
+                val fill = if (flat) seed else scheme.primary
+                val ink = if (flat) contrastInk(seed) else scheme.onPrimary
                 val colorName = Localization.get(language, "accent_${entry.key}")
                 Tooltip(colorName) {
                     AccentSwatch(
-                        fill = scheme.primary,
-                        ink = scheme.onPrimary,
+                        fill = fill,
+                        ink = ink,
                         selected = isSelected,
                         // The system colour is not one of the app's own, so its
                         // circle says whose it is: the page draws the OS's mark
@@ -424,7 +430,7 @@ fun ThemeSection(
                                 Icon(
                                     Icons.Filled.BrightnessAuto,
                                     contentDescription = null,
-                                    tint = scheme.onPrimary,
+                                    tint = ink,
                                     modifier = Modifier.size(18.dp),
                                 )
                             }
@@ -446,10 +452,14 @@ fun ThemeSection(
                 val saved = argbIntToColor(argb)
                 val isSelected = accent == saved
                 Tooltip(Localization.get(language, "remove_custom_color")) {
+                    // A saved colour follows the intensity slider in the app, so
+                    // its circle shows the same settled seed: the raw colour only
+                    // while the slider is at 100 %.
+                    val applied = appliedAccentSeed(saved, accentIntensity)
                     Box {
                         AccentSwatch(
-                            fill = saved,
-                            ink = contrastInk(saved),
+                            fill = applied,
+                            ink = contrastInk(applied),
                             selected = isSelected,
                             onClick = { onAccentChange(saved) },
                         )

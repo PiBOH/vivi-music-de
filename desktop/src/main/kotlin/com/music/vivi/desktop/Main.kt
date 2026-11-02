@@ -2993,7 +2993,11 @@ fun WindowScope.App(
                 },
                 onOpenLyrics = { navigate(Screen.Lyrics) },
                 onAddToPlaylist = addNowPlayingToPlaylist,
-                modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
+                // Flush to the window's own edges: the 4/6 dp gutter that used
+                // to sit here was the chrome's colour all the way around the
+                // panel, so the panel read as a card laid on the frame instead
+                // of as part of it (the owner's report).
+                modifier = Modifier,
             )
         }
     }
@@ -3150,7 +3154,10 @@ internal fun chromeSurfaceColor(): Color {
     // sit under the page's accents instead of competing with them.
     val accent = lerp(MaterialTheme.colorScheme.primary, PaletteBlack, 0.20f)
     val mix = (if (dark) 0.26f else 0.14f) * if (pureBlack) 0.30f else 1f
-    return lerp(MaterialTheme.colorScheme.surfaceContainer, accent, mix)
+    val chrome = lerp(MaterialTheme.colorScheme.surfaceContainer, accent, mix)
+    // ...and then darkened once more (the owner's second pass): the frame sits a
+    // step under the page instead of competing with the accents inside it.
+    return lerp(chrome, PaletteBlack, 0.20f)
 }
 
 /**

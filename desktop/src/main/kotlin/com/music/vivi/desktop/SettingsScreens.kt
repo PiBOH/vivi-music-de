@@ -29,6 +29,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.SystemUpdate
@@ -2280,6 +2282,7 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var startupLogs by remember(revision) { mutableStateOf(DesktopSettings.load().detailedStartupLogs) }
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
     var frameRate by remember(revision) { mutableStateOf(DesktopSettings.load().unlockFrameRate) }
+    var showFps by remember(revision) { mutableStateOf(DesktopSettings.load().showFps) }
     var confirmDisable by remember { mutableStateOf(false) }
     // A heap size the user has just picked and that is waiting for the "restart
     // now or later" answer. The value is stored the moment it is picked either
@@ -2441,6 +2444,30 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     onClick = {
                         frameRate = !frameRate
                         DesktopSettings.update { it.copy(unlockFrameRate = frameRate) }
+                    },
+                ),
+                // The two rows that belong to the switch above, on the same
+                // card and directly under it: the counter that proves the rate
+                // and the cap that keeps it from pinning the GPU. They are
+                // `visible` rather than appended, so the card folds them open
+                // and closed with the switch.
+                M3SettingsItem(
+                    visible = frameRate,
+                    icon = Icons.Filled.Timer,
+                    title = { Text(Localization.get(language, "show_fps_counter")) },
+                    description = { Text(Localization.get(language, "show_fps_counter_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = showFps,
+                            onCheckedChange = { v ->
+                                showFps = v
+                                DesktopSettings.update { it.copy(showFps = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        showFps = !showFps
+                        DesktopSettings.update { it.copy(showFps = showFps) }
                     },
                 ),
             ),
@@ -4517,7 +4544,7 @@ fun SettingsScreen(
         "wrapped_title" to listOf("wrapped_desc", "wrapped_show_on_home", "wrapped_show_on_home_desc", "wrapped_title"),
         "integrations" to listOf("discord_client_id", "discord_presence", "lastfm", "lastfm_session", "discord_presence_desc", "lastfm_enable", "lastfm_now_playing"),
         "desktop_features" to listOf("desktop_features", "desktop_features_desc", "media_keys", "media_keys_desc", "now_playing_widget", "now_playing_widget_desc", "requires_accessibility", "tray_menu", "tray_menu_desc"),
-        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "debug_developer_options", "disable_developer_options", "disable_developer_options_desc", "disable_developer_options_confirm", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "detailed_startup_logs", "detailed_startup_logs_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint"),
+        "system" to listOf("system", "performance_options", "performance_options_desc", "performance_options_enabled", "developer_options", "developer_options_desc", "developer_options_unlocked", "debug_developer_options", "disable_developer_options", "disable_developer_options_desc", "disable_developer_options_confirm", "advanced", "jvm_memory", "jvm_memory_desc", "jvm_memory_default", "jvm_memory_restart", "detailed_playback_logging", "detailed_playback_logging_desc", "detailed_startup_logs", "detailed_startup_logs_desc", "hide_custom_apk_download_button", "hide_custom_apk_download_button_desc", "dev_tools_live_monitor", "dev_tools_mode", "dev_tools_movable", "dev_tools_overlay", "dev_tools_window", "dev_tools_profile", "dev_tools_title_bar", "dev_tools_disabled", "intro", "show_intro_on_startup", "intro_style", "intro_background", "intro_desc", "preview_intro", "dev_open_live_log", "dev_open_live_log_desc", "dev_logs_export", "dev_logs_export_desc", "dev_unlocked_title", "dev_unlocked_desc", "dev_unlocked_open", "tap_version_code_hint", "show_fps_counter", "show_fps_counter_desc"),
         "about" to listOf("about", "version_code", "current_version", "app_developer", "developer_section", "community", "community_section", "license", "github_repository", "telegram_channel", "website", "changelog", "contributors_section", "app_info_section", "installed_date_title"),
     )
 

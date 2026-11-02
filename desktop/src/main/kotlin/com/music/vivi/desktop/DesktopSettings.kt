@@ -288,6 +288,11 @@ data class DesktopSyncState(
      * GPU working without a brake.
      */
     val unlockFrameRate: Boolean = false,
+    /**
+     * Paint counter shown over the window while the frame rate is unlocked: the
+     * measured figure is what tells an unlocked 120 Hz panel from a 60 Hz one.
+     */
+    val showFps: Boolean = false,
     val devToolsMode: String = "OVERLAY",
     val devOverlayMovable: Boolean = true,
     val devShowInTitleBar: Boolean = false,

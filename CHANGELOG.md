@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+### ✨ Added
+- [DE] **Unlock frame rate can show the rate it actually reaches.**
+- [DE] **The Apple player's queue button swaps the lyrics for the queue.**
+
+### 🔧 Changed
+- [DE] **An accent swatch is the colour the app will actually paint.**
+- [DE] **A palette colour keeps its own colour; only a custom one follows the intensity slider.**
+- [DE] **The rail and the top bar are another 20 % darker.**
+- [DE] **The Now Playing panel is part of the frame, not a card laid on it.**
+- [DE] **Developer options says *Enable developer options*.**
+- [DE] **Swipe sensitivity folds open with its switch.**
+- [DE] **The version code is 434.**
+
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23
 
 ### ✨ Added

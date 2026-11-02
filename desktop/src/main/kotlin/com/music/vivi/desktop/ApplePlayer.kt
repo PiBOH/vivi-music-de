@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -23,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlaylistAdd
@@ -107,7 +111,15 @@ fun AppleMusicPlayer(
     onCycleRepeat: () -> Unit,
     onOpenQueue: () -> Unit,
     onAddToPlaylist: (() -> Unit)? = null,
+    /** The play queue, drawn in the right half in place of the lyrics. */
+    queue: List<NowPlaying> = emptyList(),
+    queueIndex: Int = 0,
+    onSkipTo: (Int) -> Unit = {},
 ) {
+    // Which of the two the right half shows. The queue button swaps them, which
+    // is what its icon then says: the reference player toggles its words for the
+    // queue instead of leaving the screen for another page.
+    var showQueue by remember { mutableStateOf(false) }
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // No backdrop of its own: `PlayerScreen` paints `PlayerBackground` once
         // behind every design, with the style the user chose. This screen used to
@@ -204,19 +216,34 @@ fun AppleMusicPlayer(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    Surface(
-                        onClick = onOpenQueue,
-                        shape = CircleShape,
-                        color = PaletteInk.copy(alpha = 0.16f),
-                        modifier = Modifier.size(26.dp),
+                    // The queue button swaps the right half between the words
+                    // and the queue, and the icon says which one is behind it:
+                    // a queue mark while the lyrics are drawn, the lyrics mark
+                    // while the queue is. On a window too narrow for a second
+                    // column there is nothing to swap, so it opens the queue
+                    // screen instead.
+                    Tooltip(
+                        Localization.get(language, if (showQueue) "lyrics" else "queue"),
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                Icons.Filled.QueueMusic,
-                                contentDescription = Localization.get(language, "queue"),
-                                tint = PaletteInk,
-                                modifier = Modifier.size(15.dp),
-                            )
+                        Surface(
+                            onClick = {
+                                if (twoColumns) showQueue = !showQueue else onOpenQueue()
+                            },
+                            shape = CircleShape,
+                            color = PaletteInk.copy(alpha = 0.16f),
+                            modifier = Modifier.size(26.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    if (showQueue) Icons.Filled.Lyrics else Icons.Filled.QueueMusic,
+                                    contentDescription = Localization.get(
+                                        language,
+                                        if (showQueue) "lyrics" else "queue",
+                                    ),
+                                    tint = PaletteInk,
+                                    modifier = Modifier.size(15.dp),
+                                )
+                            }
                         }
                     }
                     Spacer(Modifier.width(8.dp))
@@ -402,23 +429,32 @@ fun AppleMusicPlayer(
                                 )
                             )
                     )
-                    LyricsScreen(
-                        nowPlaying = np,
-                        positionMs = positionMs,
-                        isPlaying = isPlaying,
-                        language = language,
-                        display = LyricsDisplayOptions(
-                            textSizeSp = 26f,
-                            lineSpacing = 1.55f,
-                            appleMusicBlur = true,
-                        ),
-                        onSeek = onSeek,
-                        onTogglePlay = onTogglePlay,
-                        onBack = null,
-                        // The header belongs to the lyrics screen: here the
-                        // column starts at the top of the window.
-                        showHeader = false,
-                    )
+                    if (showQueue) {
+                        AppleQueuePanel(
+                            queue = queue,
+                            index = queueIndex,
+                            language = language,
+                            onSkipTo = onSkipTo,
+                        )
+                    } else {
+                        LyricsScreen(
+                            nowPlaying = np,
+                            positionMs = positionMs,
+                            isPlaying = isPlaying,
+                            language = language,
+                            display = LyricsDisplayOptions(
+                                textSizeSp = 26f,
+                                lineSpacing = 1.55f,
+                                appleMusicBlur = true,
+                            ),
+                            onSeek = onSeek,
+                            onTogglePlay = onTogglePlay,
+                            onBack = null,
+                            // The header belongs to the lyrics screen: here the
+                            // column starts at the top of the window.
+                            showHeader = false,
+                        )
+                    }
                 }
             }
         }
@@ -588,6 +624,98 @@ private fun AppleTransport(
                     tint = PaletteInk.copy(alpha = if (repeatMode == RepeatMode.OFF) 0.65f else 1f),
                     modifier = Modifier.size(20.dp),
                 )
+            }
+        }
+    }
+}
+/**
+ * The play queue in the right half of the Apple player, where the lyrics were:
+ * the same rows the queue screen draws, without its reorder handles, so a track
+ * is one click away while the words are one click behind the same button.
+ *
+ * It opens on the playing track, a couple of rows under the top, so the queue
+ * reads as "what is next" rather than as a list that starts at the beginning.
+ */
+@Composable
+private fun AppleQueuePanel(
+    queue: List<NowPlaying>,
+    index: Int,
+    language: String,
+    onSkipTo: (Int) -> Unit,
+) {
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = (index - 2).coerceAtLeast(0),
+    )
+    Column(Modifier.fillMaxSize()) {
+        Text(
+            Localization.get(language, "queue"),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = PaletteInk,
+        )
+        if (queue.isEmpty()) {
+            Text(
+                Localization.get(language, "queue_empty"),
+                style = MaterialTheme.typography.bodyMedium,
+                color = PaletteInk.copy(alpha = 0.7f),
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            return@Column
+        }
+        Text(
+            "${queue.size}",
+            style = MaterialTheme.typography.bodySmall,
+            color = PaletteInk.copy(alpha = 0.6f),
+            modifier = Modifier.padding(top = 2.dp),
+        )
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize().padding(top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            // A queue may hold the same track twice, so the position is part of
+            // the key (a duplicated key crashes the list).
+            itemsIndexed(queue, key = { i, item -> "apple-queue-$i-${item.videoId}" }) { i, item ->
+                val current = i == index
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            if (current) PaletteInk.copy(alpha = 0.10f) else Color.Transparent,
+                            MaterialTheme.shapes.small,
+                        )
+                        .clickable { onSkipTo(i) }
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PlayerThumbnail(item.thumbnail, 40.dp, false)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            item.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
+                            color = PaletteInk,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            item.artist,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = PaletteInk.copy(alpha = 0.65f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    if (current) {
+                        Icon(
+                            Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = PaletteInk,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
             }
         }
     }

@@ -345,6 +345,9 @@ fun PlayerScreen(
                 PlayerContent(
                     np = track,
                     queueSize = queue.size,
+                    queue = queue,
+                    queueIndex = index,
+                    onSkipTo = onSkipTo,
                     onBack = onBack,
                     isPlaying = isPlaying,
                     positionMs = positionMs,
@@ -994,6 +997,10 @@ private fun M3EPlayerContent(
 private fun PlayerContent(
     np: NowPlaying,
     queueSize: Int,
+    /** The queue itself, for the Apple design's lyrics/queue toggle. */
+    queue: List<NowPlaying> = emptyList(),
+    queueIndex: Int = 0,
+    onSkipTo: (Int) -> Unit = {},
     onBack: (() -> Unit)? = null,
     isPlaying: Boolean,
     positionMs: Long,
@@ -1056,6 +1063,11 @@ private fun PlayerContent(
             onCycleRepeat = onCycleRepeat,
             onOpenQueue = onOpenQueue,
             onAddToPlaylist = onAddToPlaylist,
+            // The queue the toggle reveals in the right half, and the way to
+            // pick a row of it without leaving the player.
+            queue = queue,
+            queueIndex = queueIndex,
+            onSkipTo = onSkipTo,
         )
         return
     }
@@ -2549,9 +2561,14 @@ fun SpotifyRightNowPlayingPanel(
     val np = nowPlaying
     Surface(
         modifier = modifier.fillMaxHeight().width(310.dp),
-        // Theme panel color (was hardcoded #121212 — broken in light mode).
+        // Theme panel color (was hardcoded #121212 - broken in light mode).
         color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = MaterialTheme.shapes.small,
+        // The panel is flush with the window's top, right and bottom edges, so
+        // only the two corners on the page's side are cut: its upper one is the
+        // page's own curve continued on the other side of the seam, and the
+        // lower one mirrors it. A rounding on the outer corners would cut the
+        // panel's own surface open onto the frame behind it.
+        shape = RoundedCornerShape(topStart = ShapeRadii.large, bottomStart = ShapeRadii.large),
     ) {
         if (np == null) {
             Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
@@ -4375,49 +4392,47 @@ fun PlayerDesignScreen(
                     trailing = { Switch(checked = swipeThumbnail, onCheckedChange = onSwipeThumbnailChange) },
                     onClick = { onSwipeThumbnailChange(!swipeThumbnail) },
                 ),
-            ) + if (swipeThumbnail) {
                 // The sensitivity is a derivative of the switch above and a row of
                 // the same card, directly under it: it tunes the gesture that row
                 // turns on, so a card of its own made it look like an unrelated
-                // setting that happened to be nearby. It exists only while the
-                // swipe is on, the same rule as the other derived rows (the
-                // skip-silence sub-options).
-                listOf(
-                    M3SettingsItem(
-                        icon = Icons.Filled.Swipe,
-                        // The page keeps the title plain and prints the value in
-                        // the row's trailing slot (`.md-slider__value`: 56 dp at
-                        // least, right-aligned, `onSurfaceVariant`), so the row
-                        // reads "Swipe sensitivity" with the number beside it.
-                        title = { Text(Localization.get(language, "swipe_sensitivity")) },
-                        description = { Text(Localization.get(language, "swipe_sensitivity_desc")) },
-                        trailing = {
-                            Text(
-                                "${(swipeSensitivity * 100).roundToInt()}%",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.End,
-                                modifier = Modifier.widthIn(min = 56.dp),
-                            )
-                        },
-                        slider = {
-                            M3SettingsSlider(
-                                value = swipeSensitivity,
-                                onValueChange = onSwipeSensitivityChange,
-                                valueRange = 0f..1f,
-                                // The page's own granularity: `min: 0, max: 100,
-                                // step: 1`, i.e. one step per percent (99 marks
-                                // between the ends), not the ten 10 % stops this
-                                // row used to snap to.
-                                steps = 99,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                        },
-                    ),
-                )
-            } else {
-                emptyList()
-            },
+                // setting that happened to be nearby. It is `visible` rather than
+                // appended to the list, so the group folds it open and closed
+                // (`Animations.rowEnter`/`rowExit`) instead of dropping a row
+                // between two frames - the same rule as the other derived rows
+                // (the skip-silence sub-options).
+                M3SettingsItem(
+                    visible = swipeThumbnail,
+                    icon = Icons.Filled.Swipe,
+                    // The page keeps the title plain and prints the value in
+                    // the row's trailing slot (`.md-slider__value`: 56 dp at
+                    // least, right-aligned, `onSurfaceVariant`), so the row
+                    // reads "Swipe sensitivity" with the number beside it.
+                    title = { Text(Localization.get(language, "swipe_sensitivity")) },
+                    description = { Text(Localization.get(language, "swipe_sensitivity_desc")) },
+                    trailing = {
+                        Text(
+                            "${(swipeSensitivity * 100).roundToInt()}%",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.End,
+                            modifier = Modifier.widthIn(min = 56.dp),
+                        )
+                    },
+                    slider = {
+                        M3SettingsSlider(
+                            value = swipeSensitivity,
+                            onValueChange = onSwipeSensitivityChange,
+                            valueRange = 0f..1f,
+                            // The page's own granularity: `min: 0, max: 100,
+                            // step: 1`, i.e. one step per percent (99 marks
+                            // between the ends), not the ten 10 % stops this
+                            // row used to snap to.
+                            steps = 99,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    },
+                ),
+            ),
         )
         Spacer(Modifier.height(16.dp))
         M3SettingsGroup(

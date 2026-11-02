@@ -21,7 +21,9 @@ import androidx.compose.runtime.remember
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
 import com.materialkolor.rememberDynamicColorScheme
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.font.FontWeight
@@ -142,6 +144,17 @@ object AccentPalette {
     /** Resolve a sentinel (dynamic) swatch to the OS accent (or the default). */
     fun effective(color: Color): Color = if (color == Color.Transparent) (systemAccent() ?: default) else color
 
+    /**
+     * True when [color] is one of the palette's own swatches (or the dynamic
+     * sentinel), i.e. a colour that is not one the user mixed on the wheel.
+     *
+     * A preset keeps the colour it is drawn with: the accent-intensity slider
+     * tunes a colour the user made, not a catalogue entry, so choosing "Teal"
+     * has to give the teal the circle showed even when the slider sits at 40 %.
+     */
+    fun isPreset(color: Color): Boolean =
+        color == Color.Transparent || colors.any { it.color == color }
+
     val colors: List<AccentColor> = listOf(
         AccentColor("Dynamic", Color.Transparent),
         AccentColor("Crimson", Color(0xFFEC5464)),
@@ -240,6 +253,21 @@ fun argbIntToColor(argb: Int): Color = Color(
     blue = (argb and 0xFF) / 255f,
     alpha = ((argb ushr 24) and 0xFF) / 255f,
 )
+
+/**
+ * The colour the theme is actually built from: the accent, with the intensity
+ * slider applied to a custom colour and never to a palette swatch (see
+ * [AccentPalette.isPreset]).
+ *
+ * One function for both sides, so the circle the user picks and the scheme the
+ * app draws cannot disagree: the palette draws its swatch with the very seed
+ * this returns.
+ */
+fun appliedAccentSeed(accent: Color, accentIntensity: Float): Color =
+    adjustAccentIntensity(
+        AccentPalette.effective(accent),
+        if (AccentPalette.isPreset(accent)) 1f else accentIntensity,
+    )
 
 /**
  * Scales the saturation (vividness) of [color] by [intensity] (0..1).
@@ -532,6 +560,15 @@ fun opaqueRgb(rgb: Int): Color = Color(0xFF000000.toInt() or rgb)
 val LocalAppIsDark = compositionLocalOf<Boolean?> { null }
 
 /**
+ * True while the flat Spotify palette is in use, i.e. while `primary` IS the
+ * accent itself instead of the tone the tonal engine derives from it.
+ *
+ * The accent palette draws its circles from this: a swatch has to show the
+ * colour the app will apply, and the two palettes apply the seed differently.
+ */
+val LocalFlatAccent = compositionLocalOf { false }
+
+/**
  * Whether the app currently renders the dark scheme. Inside [AppTheme] this
  * returns the mode resolved from [ThemeMode] (LIGHT -> false even when the OS
  * is dark, DARK -> true even when the OS is light); outside [AppTheme] it
@@ -570,8 +607,9 @@ fun AppTheme(
     }
     // Resolve the sentinel (dynamic) accent, then apply the user-set intensity
     // (saturation) so it seeds both the flat Spotify primary and the tonal
-    // Material scheme.
-    val appliedAccent = adjustAccentIntensity(AccentPalette.effective(accent), accentIntensity)
+    // Material scheme. A palette swatch keeps its own colour: the slider tunes
+    // the colours the user mixes on the wheel, not the catalogue.
+    val appliedAccent = appliedAccentSeed(accent, accentIntensity)
     val colorScheme = if (spotify) {
         // Flat Spotify palette — no tonal engine; the accent is the flat primary.
         spotifyScheme(useDark, pureBlack && useDark, appliedAccent)
@@ -675,13 +713,28 @@ fun AppTheme(
         // instead of the OS one.
         CompositionLocalProvider(
             LocalAppIsDark provides useDark,
+            LocalFlatAccent provides spotify,
             LocalContentColor provides effective.onBackground,
             // Copy / Cut / Paste / Select all of the right-click text menu, in
             // the app's language (see `platformLocalization`).
             LocalLocalization provides platformLocalization(language),
         ) {
+            // Developer options -> Unlock frame rate -> Show frame rate. Read
+            // here because every window of the app comes through this theme, so
+            // the reading follows the window it is measuring.
+            val revision = settingsFileRevision()
+            val showFps = remember(revision) { DesktopSettings.load().showFps }
             Box(Modifier.fillMaxSize().background(effective.background)) {
                 content()
+                if (showFps) {
+                    FpsCounterOverlay(
+                        Modifier
+                            .align(Alignment.TopEnd)
+                            // Under the title bar / top bar, clear of the window
+                            // controls.
+                            .padding(top = 52.dp, end = 14.dp),
+                    )
+                }
             }
         }
     }
