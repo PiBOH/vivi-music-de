@@ -12,6 +12,9 @@
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
 
 ### ✨ Added
+- [DE] **Explore takes the place of "New", and the Library is BitChord's.**
+
+### ✨ Added
 - [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
 
 ### 🔧 Changed

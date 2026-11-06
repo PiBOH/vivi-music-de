@@ -195,6 +195,8 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     "player" -> Screen.Player
     "queue" -> Screen.Queue
     "radio" -> Screen.Charts
+    "explore" -> Screen.NewReleases
+    "library" -> Screen.Library
     else -> null
 }
 
@@ -1920,7 +1922,7 @@ fun WindowScope.App(
                         onFilterChange = { f -> headerSearchFilter = f },
                         showFiltersInBody = !spotifyLayout,
                     )
-                    is Screen.Library -> LibraryScreen(
+                    is Screen.Library -> BitChordLibraryScreen(
                         language = language,
                         isLoggedIn = isLoggedIn,
                         gridItemSize = gridItemSize,
@@ -1931,6 +1933,7 @@ fun WindowScope.App(
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
+                        onOpenLocalPlaylist = { navigate(Screen.LocalPlaylist(it)) },
                         onPlaySong = playSong,
                         onAddToQueue = addToQueue,
                         onAddToPlaylist = addToPlaylist,
@@ -1949,10 +1952,11 @@ fun WindowScope.App(
                             navigate(Screen.Search)
                         },
                     )
-                    is Screen.NewReleases -> NewReleasesScreen(
+                    // BitChord's Explore: the moods and genres as one grid of
+                    // big cards, the screen that replaced "New".
+                    is Screen.NewReleases -> BitChordExploreScreen(
                         language = language,
-                        gridItemSize = gridItemSize,
-                        onBack = goBack,
+                        onOpenBrowse = { browseId, params -> navigate(Screen.Browse(browseId, params)) },
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                     )
                     // BitChord's radio: the stations are its cards, and a card
@@ -3275,7 +3279,7 @@ fun Sidebar(
 
     val mainEntries = listOf(
         SidebarEntry(Screen.Home, "home", Icons.Outlined.Home, Icons.Filled.Home),
-        SidebarEntry(Screen.NewReleases, "new", Icons.Outlined.Explore, Icons.Filled.Explore),
+        SidebarEntry(Screen.NewReleases, "explore", Icons.Outlined.Explore, Icons.Filled.Explore),
         SidebarEntry(Screen.Charts, "radio", Icons.Outlined.Radio, Icons.Filled.Radio),
     )
 
