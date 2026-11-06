@@ -763,6 +763,25 @@ tasks.register<JavaExec>("applePlayerRenderCheck") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * Headless render of Apple Player v17 and its mini player:
+ *
+ *     ./gradlew :desktop:applePlayerV17RenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/ApplePlayerV17RenderCheck.kt`.
+ * Paints the two-column player at 1280x800, 1024x680, 700x800 and 860x560, the
+ * queue in its right column, the Stats for nerds line and the mini player at
+ * 1100 px and 640 px, writes the frames under `.ignore/render-v17/` and reads
+ * them back.
+ */
+tasks.register<JavaExec>("applePlayerV17RenderCheck") {
+    group = "verification"
+    description = "Paints Apple Player v17 at several sizes, with the queue, the stats line and the mini player"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.ApplePlayerV17RenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("cookieShapesCheck") {
     group = "verification"
     description = "Paints the cookie and clover shapes headlessly and checks their outlines"
