@@ -1,5 +1,19 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta] - 2026-11-05
+
+### ✨ Added
+- [DE] **"Apple Player v17" is the main player, and it is BitChord's.**
+- [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.**
+- [DE] **Stats for nerds is an overlay of the real audio figures.**
+- [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
+
+### 🔧 Changed
+- [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
+
+### 🔧 Changed
+- [DE] **The Apple Player v17 gains the row of controls under the artwork, inline lyrics, the background styles and its queue menu.**
+
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23
 
 ### ✨ Added

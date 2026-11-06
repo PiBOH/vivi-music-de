@@ -67,7 +67,7 @@ data class DesktopSyncState(
     /** Player slider style: slim / squiggly / wavy. */
     val sliderStyle: String = "slim",
     /** Full-player layout variant: classic / new / expressive. */
-    val playerDesign: String = "classic",
+    val playerDesign: String = "apple_player_v17",
     /** Full-player background style: canvas / gradient / blur / glow / apple_music / live_mesh. */
     val playerBackground: String = "canvas",
     /** Slowly rotate the player artwork while playing. */
@@ -273,6 +273,16 @@ data class DesktopSyncState(
      * until then, so the options it exposes are not reachable by accident.
      */
     val developerUnlocked: Boolean = false,
+    /** Show the old Apple player ("Vivi Music 1.55") in the player picker. */
+    val legacyApplePlayer: Boolean = false,
+    /** Developer overlay with the live codec, bitrate, output and buffer. */
+    val statsForNerds: Boolean = false,
+    /**
+     * The Apple Player v17 prints the line being sung right above its scrubber,
+     * the way Apple Music does. Off, that row is the plain link to the lyrics
+     * page and no lyrics are fetched for it.
+     */
+    val inlineLyrics: Boolean = true,
     /**
      * Heap the JVM is asked to allocate, in megabytes, chosen from Developer
      * options. `0` means "use the launcher default" (currently `-Xmx2g` from

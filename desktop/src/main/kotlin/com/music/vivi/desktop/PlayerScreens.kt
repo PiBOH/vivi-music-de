@@ -263,14 +263,21 @@ fun PlayerScreen(
     ) { id ->
         val track = queue.firstOrNull { it.videoId == id }
         Box(Modifier.fillMaxSize()) {
-            PlayerBackground(
-                style = background,
-                bgUrl = if (track?.videoId == np?.videoId) bgUrl else CanvasResolver.displayUrl(canvasArt, track?.thumbnail),
-                accent = accent,
-                modifier = Modifier.fillMaxSize(),
-                audioLevel = audioLevel,
-                isPlaying = isPlaying,
-            )
+            // Apple Player v17 paints its own blurred cover and scrim, full size.
+            // Drawing the configured background under it as well put the
+            // visualizer's bar wall behind that scrim, where a narrow window has
+            // no controls to cover it: it showed through as a bright wave in the
+            // empty lower half of the player.
+            if (design != PlayerDesign.APPLE_PLAYER_V17) {
+                PlayerBackground(
+                    style = background,
+                    bgUrl = if (track?.videoId == np?.videoId) bgUrl else CanvasResolver.displayUrl(canvasArt, track?.thumbnail),
+                    accent = accent,
+                    modifier = Modifier.fillMaxSize(),
+                    audioLevel = audioLevel,
+                    isPlaying = isPlaying,
+                )
+            }
             if (track == null) {
                 // Nothing is playing (e.g. the queue was just cleared from the
                 // player): still offer the collapse control, otherwise the full
@@ -302,6 +309,39 @@ fun PlayerScreen(
                         }
                     }
                 }
+            } else if (design == PlayerDesign.APPLE_PLAYER_V17) {
+                ApplePlayerV17Screen(
+                    np = track,
+                    isPlaying = isPlaying,
+                    isLoading = loadPhase != LoadPhase.NONE,
+                    positionMs = positionMs,
+                    durationMs = durationMs,
+                    volume = volume,
+                    isShuffle = isShuffle,
+                    repeatMode = repeatMode,
+                    errorKey = errorKey,
+                    errorDetail = errorDetail,
+                    onTogglePlay = onTogglePlay,
+                    onNext = onNext,
+                    onPrevious = onPrevious,
+                    onSeek = onSeek,
+                    onVolume = onVolume,
+                    onToggleShuffle = onToggleShuffle,
+                    onCycleRepeat = onCycleRepeat,
+                    language = language,
+                    onOpenLyrics = onOpenLyrics,
+                    onOpenQueue = onOpenQueue,
+                    onAddToPlaylist = { onAddToPlaylist(track) },
+                    sliderStyle = sliderStyle,
+                    onBack = onBack,
+                    queue = queue,
+                    queueIndex = index,
+                    onSkipTo = onSkipTo,
+                    onRemoveAt = onRemoveAt,
+                    background = background,
+                    accent = accent,
+                    onAddToPlaylistSong = onAddToPlaylist,
+                )
             } else if (design.isExpressive) {
                 M3EPlayerContent(
                     np = track,
@@ -2975,6 +3015,7 @@ fun ClassicDesktopMiniPlayer(
     onOpenLyrics: () -> Unit,
     showRightSidebar: Boolean,
     onToggleRightSidebar: () -> Unit,
+    rightPanelAvailable: Boolean = true,
     isFullscreen: Boolean,
     onToggleFullscreen: () -> Unit,
     language: String,
@@ -3238,14 +3279,16 @@ fun ClassicDesktopMiniPlayer(
                             )
                         }
                         Spacer(Modifier.width(4.dp))
-                        Tooltip(Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel")) {
-                            M3IconButton(onClick = onToggleRightSidebar) {
-                                Icon(
-                                    Icons.Filled.VerticalSplit,
-                                    contentDescription = Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel"),
-                                    tint = if (showRightSidebar) MaterialTheme.colorScheme.primary else mutedColor,
-                                    modifier = Modifier.size(20.dp),
-                                )
+                        if (rightPanelAvailable) {
+                            Tooltip(Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel")) {
+                                M3IconButton(onClick = onToggleRightSidebar) {
+                                    Icon(
+                                        Icons.Filled.VerticalSplit,
+                                        contentDescription = Localization.get(language, if (showRightSidebar) "tooltip_hide_right_panel" else "tooltip_show_right_panel"),
+                                        tint = if (showRightSidebar) MaterialTheme.colorScheme.primary else mutedColor,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                }
                             }
                         }
                         Tooltip(Localization.get(language, "tooltip_open_full_player")) {
@@ -3731,7 +3774,7 @@ fun AppleDesktopMiniPlayer(
  * the tap (play/pause, open the player) stays on `clickable` outside it, so a
  * drag never turns into a click.
  */
-private fun Modifier.swipeToChangeTrack(
+internal fun Modifier.swipeToChangeTrack(
     enabled: Boolean,
     sensitivity: Float,
     key: Any?,
@@ -3821,6 +3864,7 @@ fun DesktopMiniPlayer(
     onOpenLyrics: () -> Unit,
     showRightSidebar: Boolean,
     onToggleRightSidebar: () -> Unit,
+    rightPanelAvailable: Boolean = true,
     isFullscreen: Boolean,
     onToggleFullscreen: () -> Unit,
     language: String,
@@ -3883,6 +3927,31 @@ fun DesktopMiniPlayer(
                 modifier = modifier,
             )
         }
+        MiniPlayerDesign.APPLE_MUSIC_V17 -> {
+            AppleMusicV17MiniPlayer(
+                nowPlaying = np,
+                isPlaying = isPlaying,
+                isLoading = isLoading,
+                swipeThumbnail = swipeThumbnail,
+                swipeSensitivity = swipeSensitivity,
+                onTogglePlay = onTogglePlay,
+                onNext = onNext,
+                onPrevious = onPrevious,
+                onOpenPlayer = onOpenPlayer,
+                language = language,
+                volume = volume,
+                isShuffle = isShuffle,
+                repeatMode = repeatMode,
+                positionMs = positionMs,
+                durationMs = durationMs,
+                onVolume = onVolume,
+                onToggleShuffle = onToggleShuffle,
+                onCycleRepeat = onCycleRepeat,
+                onOpenLyrics = onOpenLyrics,
+                onOpenQueue = onOpenQueue,
+                modifier = modifier,
+            )
+        }
         else -> {
             ClassicDesktopMiniPlayer(
                 nowPlaying = np,
@@ -3910,6 +3979,7 @@ fun DesktopMiniPlayer(
                 onOpenLyrics = onOpenLyrics,
                 showRightSidebar = showRightSidebar,
                 onToggleRightSidebar = onToggleRightSidebar,
+                rightPanelAvailable = rightPanelAvailable,
                 isFullscreen = isFullscreen,
                 onToggleFullscreen = onToggleFullscreen,
                 language = language,
@@ -3950,6 +4020,7 @@ fun SpotifyPlayerBar(
     onOpenLyrics: () -> Unit,
     showRightSidebar: Boolean,
     onToggleRightSidebar: () -> Unit,
+    rightPanelAvailable: Boolean = true,
     isFullscreen: Boolean,
     onToggleFullscreen: () -> Unit,
     language: String,
@@ -4249,6 +4320,7 @@ fun SettingsPlayerDesignScreen(
  */
 internal fun playerDesignLabel(language: String, design: PlayerDesign): String {
     val name = Localization.get(language, when (design) {
+        PlayerDesign.APPLE_PLAYER_V17 -> "player_design_apple_player_v17"
         PlayerDesign.NEW -> "player_design_new"
         PlayerDesign.EXPRESSIVE, PlayerDesign.EXPRESSIVE_TRANSLUCENT -> "player_design_expressive"
         else -> "player_design_classic"
@@ -4291,6 +4363,7 @@ fun PlayerDesignScreen(
     // said the seven choices were unrelated, two cards plus one say what each
     // belongs to. Slider style stands alone at the end because it styles both
     // players and neither of them alone.
+    val legacyPlayer = remember(settingsFileRevision()) { DesktopSettings.load().legacyApplePlayer }
     Column(Modifier.fillMaxWidth()) {
         // No top padding of its own: `SettingsSubScreen` already puts the page's
         // 16 dp under the Back row, and the preview's heading stands there. The
@@ -4316,7 +4389,9 @@ fun PlayerDesignScreen(
                     // other two.
                     dropdown = M3Dropdown(
                         value = playerDesignLabel(language, design),
-                        options = PlayerDesign.entries.map { v -> v.key to playerDesignLabel(language, v) },
+                        options = PlayerDesign.entries
+                            .filter { it != PlayerDesign.NEW || legacyPlayer }
+                            .map { v -> v.key to playerDesignLabel(language, v) },
                         onSelect = { key -> onDesignChange(PlayerDesign.from(key)) },
                     ),
                 ),
@@ -4360,6 +4435,7 @@ fun PlayerDesignScreen(
                             MiniPlayerDesign.CLASSIC to "mini_player_classic",
                             MiniPlayerDesign.NEW to "mini_player_new",
                             MiniPlayerDesign.APPLE to "mini_player_apple",
+                            MiniPlayerDesign.APPLE_MUSIC_V17 to "mini_player_apple_music_v17",
                         ).map { (v, k) -> v.key to Localization.get(language, k) },
                         onSelect = { key -> onMiniPlayerDesignChange(MiniPlayerDesign.from(key)) },
                     ),
@@ -4467,6 +4543,7 @@ private fun playerBackgroundLabelKey(style: PlayerBackgroundStyle): String = whe
 private fun miniPlayerDesignLabelKey(design: MiniPlayerDesign): String = when (design) {
     MiniPlayerDesign.NEW -> "mini_player_new"
     MiniPlayerDesign.APPLE -> "mini_player_apple"
+    MiniPlayerDesign.APPLE_MUSIC_V17 -> "mini_player_apple_music_v17"
     else -> "mini_player_classic"
 }
 

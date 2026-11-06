@@ -49,7 +49,9 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.RocketLaunch
 import androidx.compose.material.icons.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -2283,6 +2285,9 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var hideApk by remember(revision) { mutableStateOf(DesktopSettings.load().hideCustomApkDownloadButton) }
     var frameRate by remember(revision) { mutableStateOf(DesktopSettings.load().unlockFrameRate) }
     var showFps by remember(revision) { mutableStateOf(DesktopSettings.load().showFps) }
+    var legacyPlayer by remember(revision) { mutableStateOf(DesktopSettings.load().legacyApplePlayer) }
+    var statsForNerds by remember(revision) { mutableStateOf(DesktopSettings.load().statsForNerds) }
+    var inlineLyrics by remember(revision) { mutableStateOf(DesktopSettings.load().inlineLyrics) }
     var confirmDisable by remember { mutableStateOf(false) }
     // A heap size the user has just picked and that is waiting for the "restart
     // now or later" answer. The value is stored the moment it is picked either
@@ -2468,6 +2473,68 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     onClick = {
                         showFps = !showFps
                         DesktopSettings.update { it.copy(showFps = showFps) }
+                    },
+                ),
+                // The Apple player this build replaced. The row is the only place
+                // that offers it: with the switch off, the player picker does not
+                // list *Vivi Music 1.55*, and a saved choice of it opens the new
+                // player instead (`Main.kt`).
+                M3SettingsItem(
+                    icon = Icons.Filled.Science,
+                    title = { Text(Localization.get(language, "legacy_apple_player")) },
+                    description = { Text(Localization.get(language, "legacy_apple_player_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = legacyPlayer,
+                            onCheckedChange = { v ->
+                                legacyPlayer = v
+                                DesktopSettings.update { it.copy(legacyApplePlayer = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        legacyPlayer = !legacyPlayer
+                        DesktopSettings.update { it.copy(legacyApplePlayer = legacyPlayer) }
+                    },
+                ),
+                // The overlay is drawn by the Apple Player v17 screen and reads
+                // the real stream, format and device figures (`PlaybackTech`).
+                M3SettingsItem(
+                    icon = Icons.Filled.Analytics,
+                    title = { Text(Localization.get(language, "stats_for_nerds")) },
+                    description = { Text(Localization.get(language, "stats_for_nerds_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = statsForNerds,
+                            onCheckedChange = { v ->
+                                statsForNerds = v
+                                DesktopSettings.update { it.copy(statsForNerds = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        statsForNerds = !statsForNerds
+                        DesktopSettings.update { it.copy(statsForNerds = statsForNerds) }
+                    },
+                ),
+                // Apple Music prints the line being sung right above the
+                // scrubber; off, that row is the plain link to the lyrics page.
+                M3SettingsItem(
+                    icon = Icons.Filled.MusicNote,
+                    title = { Text(Localization.get(language, "lyrics")) },
+                    description = { Text(Localization.get(language, "tooltip_lyrics")) },
+                    trailing = {
+                        Switch(
+                            checked = inlineLyrics,
+                            onCheckedChange = { v ->
+                                inlineLyrics = v
+                                DesktopSettings.update { it.copy(inlineLyrics = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        inlineLyrics = !inlineLyrics
+                        DesktopSettings.update { it.copy(inlineLyrics = inlineLyrics) }
                     },
                 ),
             ),
