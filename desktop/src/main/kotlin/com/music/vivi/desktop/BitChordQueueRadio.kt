@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -57,7 +55,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
+import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.pages.MoodAndGenres
+import com.music.innertube.models.SongItem
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -84,11 +84,43 @@ fun BitChordQueueScreen(
     onAddToPlaylist: (NowPlaying) -> Unit,
     onPlayNext: (Int) -> Unit,
     onAddToQueue: (NowPlaying) -> Unit,
+    onPlayRelated: (SongItem) -> Unit = {},
 ) {
     val contentColor = MaterialTheme.colorScheme.onSurface
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
     val current = queue.getOrNull(index)
     val upcoming = queue.drop(index + 1)
+    // Discovery: the Related tab of the track that is playing, which is the
+    // chain the Home "Recommended" row uses (`YouTube.next(videoId)` for the
+    // related endpoint, then `YouTube.related(endpoint)` for the songs). It is
+    // a real browse of the service, not a list built here.
+    var discoverySeed by remember { mutableStateOf<NowPlaying?>(null) }
+    var discovery by remember { mutableStateOf<List<SongItem>?>(null) }
+    var discoveryError by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(discoverySeed) {
+        val seed = discoverySeed ?: return@LaunchedEffect
+        discovery = null
+        discoveryError = null
+        // Both halves of the recipe the player itself uses: the Related tab of
+        // the seed, then the automix/"up next" queue for the same video, which
+        // is served for the tracks that have no Related tab at all.
+        val next = YouTube.next(WatchEndpoint(videoId = seed.videoId)).getOrNull()
+        if (next == null) {
+            discoveryError = "the service returned no page for this track"
+            return@LaunchedEffect
+        }
+        val relatedSongs = next.relatedEndpoint
+            ?.let { endpoint -> YouTube.related(endpoint).getOrNull()?.songs }
+            .orEmpty()
+        val songs = (relatedSongs + next.items)
+            .filter { it.id != seed.videoId }
+            .distinctBy { it.id }
+        if (songs.isEmpty()) {
+            discoveryError = "the service returned no related songs for this track"
+        } else {
+            discovery = songs
+        }
+    }
 
     val listState = rememberLazyListState()
     val local = remember { mutableStateListOf<NowPlaying>() }
@@ -116,6 +148,48 @@ fun BitChordQueueScreen(
     // come from `withOccurrences` rather than from the video id alone.
     val localSnapshot = local.toList()
     val keys = remember(localSnapshot) { localSnapshot.map { it.videoId }.withOccurrences() }
+
+    // Its own sub-page: opened from the discovery row, closed with Back, with the
+    // songs of the related page as rows that play on click.
+    if (discoverySeed != null) {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            BackButton(language) { discoverySeed = null }
+            Text(
+                "Discover",
+                style = MaterialTheme.typography.headlineMedium,
+                color = contentColor,
+            )
+            Text(
+                discoverySeed?.title.orEmpty(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = mutedColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp, bottom = 10.dp),
+            )
+            when {
+                discoveryError != null -> ErrorBox(language, discoveryError)
+                discovery == null -> LoadingBox(language)
+                discovery!!.isEmpty() -> Text(
+                    Localization.get(language, "charts_empty"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = mutedColor,
+                )
+                else -> LazyColumn(Modifier.fillMaxSize()) {
+                    items(discovery!!, key = { it.id }) { song ->
+                        SongRow(
+                            song,
+                            language,
+                            { onPlayRelated(song) },
+                            onAddToQueue = {},
+                            onAddToPlaylist = {},
+                        )
+                    }
+                }
+            }
+        }
+        return
+    }
 
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         BackButton(language, onBack)
@@ -177,7 +251,53 @@ fun BitChordQueueScreen(
                         Localization.get(language, "up_next") + ": " + upcoming.size,
                     )
                 }
-                itemsIndexed(local, key = { i, _ -> keys[i] }) { i, song ->
+                if (current != null) {
+                    item(key = "discovery") {
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.outlineVariant,
+                            modifier = Modifier.padding(vertical = 10.dp),
+                        )
+                        Surface(
+                            onClick = { discoverySeed = current },
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    Icons.Filled.Radio,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Column(Modifier.weight(1f)) {
+                                    Text(
+                                        "Discover",
+                                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                                        color = contentColor,
+                                    )
+                                    Text(
+                                        "Related to ${current.title}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = mutedColor,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                                Text(
+                                    "\u203A",
+                                    style = MaterialTheme.typography.titleLarge,
+                                    color = mutedColor,
+                                )
+                            }
+                        }
+                    }
+                }
+                itemsIndexed(local, key = { i, song -> song.videoId + "#" + i }) { i, song ->
                     ReorderableItem(state = reorderState, key = song.videoId) {
                         BitChordQueueRow(
                             song = song,

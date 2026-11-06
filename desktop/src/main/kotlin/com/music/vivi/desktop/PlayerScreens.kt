@@ -341,6 +341,7 @@ fun PlayerScreen(
                     background = background,
                     accent = accent,
                     onAddToPlaylistSong = onAddToPlaylist,
+                    onReorderQueue = onReorderQueue,
                 )
             } else if (design.isExpressive) {
                 M3EPlayerContent(

@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.QueuePlayNext
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
@@ -133,6 +134,8 @@ internal fun ApplePlayerV17Screen(
     accent: Color = MaterialTheme.colorScheme.primary,
     /** Opens the playlist picker for a queue row. */
     onAddToPlaylistSong: ((NowPlaying) -> Unit)? = null,
+    /** Replaces the queue, used by the rows' Play next and Add to queue. */
+    onReorderQueue: (List<NowPlaying>) -> Unit = {},
     /** Opens on the queue instead of the controls, for the render harness. */
     initialQueueOpen: Boolean = false,
     modifier: Modifier = Modifier,
@@ -636,6 +639,7 @@ internal fun ApplePlayerV17Screen(
                 onSkipTo = onSkipTo,
                 onRemoveAt = onRemoveAt,
                 onAddToPlaylist = onAddToPlaylistSong,
+                onReorderQueue = onReorderQueue,
                 modifier = Modifier
                     .widthIn(max = 520.dp)
                     .fillMaxHeight(),
@@ -735,6 +739,7 @@ private fun AppleV17QueuePanel(
     onSkipTo: (Int) -> Unit,
     onRemoveAt: (Int) -> Unit,
     onAddToPlaylist: ((NowPlaying) -> Unit)? = null,
+    onReorderQueue: (List<NowPlaying>) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val contentColor = MaterialTheme.colorScheme.onSurface
@@ -774,6 +779,8 @@ private fun AppleV17QueuePanel(
                 onOpen = {},
                 onRemove = { onRemoveAt(index) },
                 onAddToPlaylist = onAddToPlaylist?.let { add -> { add(current) } },
+                onPlayNext = null,
+                onAddToQueue = { onReorderQueue(queue + current) },
             )
         }
         Spacer(Modifier.height(10.dp))
@@ -794,6 +801,15 @@ private fun AppleV17QueuePanel(
                 onOpen = { onSkipTo(index + 1 + offset) },
                 onRemove = { onRemoveAt(index + 1 + offset) },
                 onAddToPlaylist = onAddToPlaylist?.let { add -> { add(song) } },
+                onPlayNext = {
+                    val list = queue.toMutableList()
+                    if (index + 1 + offset in list.indices) {
+                        val moved = list.removeAt(index + 1 + offset)
+                        list.add((index + 1).coerceIn(0, list.size), moved)
+                        onReorderQueue(list)
+                    }
+                },
+                onAddToQueue = { onReorderQueue(queue + song) },
             )
         }
     }
@@ -807,10 +823,14 @@ private fun QueueEntry(
     onOpen: () -> Unit,
     onRemove: () -> Unit,
     onAddToPlaylist: (() -> Unit)? = null,
+    onPlayNext: (() -> Unit)? = null,
+    onAddToQueue: (() -> Unit)? = null,
 ) {
     val contentColor = MaterialTheme.colorScheme.onSurface
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
     var menuOpen by remember { mutableStateOf(false) }
+    var liked by remember(song.videoId) { mutableStateOf(SongActions.isLiked(song.videoId)) }
+    val scope = rememberCoroutineScope()
     Row(
         Modifier
             .fillMaxWidth()
@@ -868,19 +888,43 @@ private fun QueueEntry(
         // BitChord's context menu on a queue row: the actions that make sense
         // on a track that is already in the queue, each one running the same
         // call the rest of the app uses for it.
-        if (onAddToPlaylist != null) {
-            Box {
-                Tooltip(Localization.get(language, "more")) {
-                    M3IconButton(onClick = { menuOpen = true }) {
-                        Icon(
-                            Icons.Filled.MoreVert,
-                            contentDescription = Localization.get(language, "more"),
-                            tint = mutedColor,
-                            modifier = Modifier.size(16.dp),
-                        )
-                    }
+        // The same context menu the standalone queue shows, on the same rows:
+        // every entry runs the same call, so the two surfaces cannot drift.
+        Box {
+            Tooltip(Localization.get(language, "more")) {
+                M3IconButton(onClick = { menuOpen = true }) {
+                    Icon(
+                        Icons.Filled.MoreVert,
+                        contentDescription = Localization.get(language, "more"),
+                        tint = mutedColor,
+                        modifier = Modifier.size(16.dp),
+                    )
                 }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            }
+            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                DropdownMenuItem(
+                    text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
+                    leadingIcon = {
+                        Icon(
+                            if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = null,
+                        )
+                    },
+                    onClick = {
+                        menuOpen = false
+                        val next = !liked
+                        liked = next
+                        SongActions.setLiked(
+                            song.videoId,
+                            next,
+                            title = song.title,
+                            artist = song.artist,
+                            thumbnail = song.thumbnail,
+                        )
+                        scope.launch { YouTube.likeVideo(song.videoId, next) }
+                    },
+                )
+                if (onAddToPlaylist != null) {
                     DropdownMenuItem(
                         text = { Text(Localization.get(language, "add_to_playlist")) },
                         leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
@@ -889,15 +933,37 @@ private fun QueueEntry(
                             onAddToPlaylist()
                         },
                     )
+                }
+                if (onPlayNext != null) {
                     DropdownMenuItem(
-                        text = { Text("Remove from queue") },
-                        leadingIcon = { Icon(Icons.Filled.Close, contentDescription = null) },
+                        text = { Text("Play next") },
+                        leadingIcon = { Icon(Icons.Filled.QueuePlayNext, contentDescription = null) },
                         onClick = {
                             menuOpen = false
-                            onRemove()
+                            onPlayNext()
                         },
                     )
                 }
+                if (onAddToQueue != null) {
+                    DropdownMenuItem(
+                        text = { Text("Add to queue") },
+                        leadingIcon = {
+                            Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                        },
+                        onClick = {
+                            menuOpen = false
+                            onAddToQueue()
+                        },
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text("Remove from queue") },
+                    leadingIcon = { Icon(Icons.Filled.Close, contentDescription = null) },
+                    onClick = {
+                        menuOpen = false
+                        onRemove()
+                    },
+                )
             }
         }
         Tooltip(Localization.get(language, "close")) {

@@ -2910,6 +2910,7 @@ fun WindowScope.App(
                             }
                         },
                         onAddToQueue = { song -> player.addToQueue(song) },
+                        onPlayRelated = { song -> playSong(song) },
                     )
                     is Screen.Changelog -> ChangelogScreen(
                         language = language,
