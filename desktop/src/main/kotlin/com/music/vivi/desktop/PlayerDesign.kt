@@ -66,7 +66,20 @@ enum class PlayerDesign(val key: String) {
      * only mattered in one of the three layouts was a control that does nothing
      * two thirds of the time.
      */
-    EXPRESSIVE_TRANSLUCENT("expressive_translucent");
+    EXPRESSIVE_TRANSLUCENT("expressive_translucent"),
+
+    /**
+     * BitChord's Apple Music player, ported to the DE and the default of a
+     * fresh install.
+     *
+     * It is a layout over the same [com.music.vivi.desktop.player.PlayerController]
+     * as every other entry: large artwork with the play/pause gesture and the
+     * swipe, the title and the artist, the scrubber with the remaining time,
+     * the filled transport, the volume and the lyrics / queue / playlist
+     * actions. The previous Apple player ([NEW]) stays reachable as
+     * *Vivi Music 1.55* and only while the developer option turns it on.
+     */
+    APPLE_PLAYER_V17("apple_player_v17");
 
     /** True for both expressive finishes (layout, not only the tab finish). */
     val isExpressive: Boolean
@@ -97,13 +110,15 @@ enum class PlayerBackgroundStyle(val key: String) {
 enum class MiniPlayerDesign(val key: String) {
     CLASSIC("classic"),
     NEW("new"),
-    APPLE("apple");
+    APPLE("apple"),
+    APPLE_MUSIC_V17("apple_music_v17");
 
     companion object {
         fun from(key: String?): MiniPlayerDesign = when (key) {
             "classic", "mini_player_classic" -> CLASSIC
             "new", "mini_player_new" -> NEW
             "apple", "mini_player_apple" -> APPLE
+            "apple_music_v17", "mini_player_apple_music_v17" -> APPLE_MUSIC_V17
             // Unknown/missing key: fall back to the enum's declared default.
             else -> CLASSIC
         }
@@ -155,6 +170,7 @@ fun PlayerDesign.metrics(): PlayerDesignMetrics = when (this) {
     PlayerDesign.EXPRESSIVE,
     PlayerDesign.EXPRESSIVE_TRANSLUCENT,
     -> PlayerDesignMetrics(521.dp, true, ShapeRadii.small)
+    PlayerDesign.APPLE_PLAYER_V17 -> PlayerDesignMetrics(400.dp, false, ShapeRadii.small)
 }
 
 /**
@@ -180,7 +196,7 @@ private val BLURRED_BACKDROP_SIZE = 256.dp
  * "Apple Music" variant applies.
  */
 @Composable
-private fun BlurredBackdrop(
+internal fun BlurredBackdrop(
     url: String,
     blurRadius: Dp,
     modifier: Modifier = Modifier,

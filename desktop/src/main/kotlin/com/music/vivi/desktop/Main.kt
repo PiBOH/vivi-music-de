@@ -197,6 +197,7 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     "radio" -> Screen.Charts
     "explore" -> Screen.NewReleases
     "library" -> Screen.Library
+    "search" -> Screen.Search
     else -> null
 }
 
@@ -1900,15 +1901,12 @@ fun WindowScope.App(
                         showWrapped = showWrappedOnHome,
                         recentSeedTracks = recentSeedTracks,
                     )
-                    is Screen.Search -> SearchScreen(
+                    is Screen.Search -> BitChordSearchScreen(
                         language = language,
-                        gridItemSize = gridItemSize,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
                         onPlaySong = playSong,
-                        onAddToQueue = addToQueue,
-                        onAddToPlaylist = addToPlaylist,
                         searchHistory = if (pauseSearchHistory) emptyList() else searchHistory,
                         onRecordSearch = recordSearch,
                         onClearSearchHistory = {
@@ -1917,10 +1915,8 @@ fun WindowScope.App(
                         },
                         externalQuery = headerSearchQuery,
                         onQueryChange = { newQ -> headerSearchQuery = newQ },
-                        showTextField = !spotifyLayout,
                         externalFilter = headerSearchFilter,
                         onFilterChange = { f -> headerSearchFilter = f },
-                        showFiltersInBody = !spotifyLayout,
                     )
                     is Screen.Library -> BitChordLibraryScreen(
                         language = language,
@@ -2795,12 +2791,13 @@ fun WindowScope.App(
                         onBack = goBack,
                         onOpenPlaylist = { navigate(Screen.LocalPlaylist(it)) },
                     )
-                    is Screen.LocalPlaylist -> LocalPlaylistScreen(
+                    is Screen.LocalPlaylist -> BitChordLocalPlaylistScreen(
                         playlistId = screen.playlistId,
                         language = language,
                         onBack = goBack,
                         onPlay = { s -> player.play(NowPlaying(videoId = s.id, title = s.title, artist = s.artist, thumbnail = s.thumbnail)) },
                         onPlayAll = { songs -> player.playAll(songs.map { NowPlaying(videoId = it.id, title = it.title, artist = it.artist, thumbnail = it.thumbnail) }) },
+                        onAddToQueue = { s -> player.addToQueue(NowPlaying(videoId = s.id, title = s.title, artist = s.artist, thumbnail = s.thumbnail)) },
                     )
                     is Screen.Browse -> BrowseScreen(
                         browseId = screen.browseId,

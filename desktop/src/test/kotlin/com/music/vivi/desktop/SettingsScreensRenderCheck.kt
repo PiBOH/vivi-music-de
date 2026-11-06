@@ -527,14 +527,16 @@ object SettingsScreensRenderCheck {
         if (seams(aboutCards) != 5) failures += "About should join 3 + 3 + 2 rows (5 seams), read ${seams(aboutCards)}"
 
         // Debug & Developer Options: the switch that locks the screen again, then
-        // the Advanced card of the heap and the three switches.
+        // the Advanced card of the heap, the three logging / APK switches, the
+        // frame rate with its counter, the legacy Apple player and Stats for
+        // nerds.
         // The sentence under the title is a note, not a row: `cards` drops it.
         val developerCards = cards(developerBands)
-        if (developerCards.size != 5) {
-            failures += "Debug & Developer Options should read five rows (the lock row plus 4), read ${developerCards.size}"
+        if (developerCards.size != 9) {
+            failures += "Debug & Developer Options should read nine rows (the lock row plus 8), read ${developerCards.size}"
         }
-        if (seams(developerCards) != 3) {
-            failures += "Debug & Developer Options should join the four Advanced rows (3 seams), read ${seams(developerCards)}"
+        if (seams(developerCards) != 7) {
+            failures += "Debug & Developer Options should join the eight Advanced rows (7 seams), read ${seams(developerCards)}"
         }
 
         // Desktop features: one card of the three switches.

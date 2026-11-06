@@ -1,0 +1,364 @@
+@file:OptIn(ExperimentalComposeUiApi::class)
+
+package com.music.vivi.desktop
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.ImageComposeScene
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.unit.dp
+import com.music.vivi.desktop.player.PlaybackTech
+import com.music.vivi.desktop.player.RepeatMode
+import org.jetbrains.skia.EncodedImageFormat
+import java.awt.image.BufferedImage
+import java.io.File
+
+/**
+ * Headless render of "Apple Player v17", run with
+ *
+ *     ./gradlew :desktop:applePlayerV17RenderCheck
+ *
+ * The player is a two-column layout over an artwork, and both halves have to be
+ * seen to know they were drawn: the artwork and its statistics line on the left,
+ * the caption, title, artist, lyric row, scrubber, transport and volume on the
+ * right, and the queue taking that right column when it is open. Below 820 dp
+ * the columns stack, which is the case a wide-only render would never show.
+ *
+ * No display is attached, so every size is painted into an off-screen
+ * `ImageComposeScene`, written under `.ignore/render-v17/` and read back:
+ *
+ *  * wide (1280x800), medium (1024x680), narrow (700x800) and the minimum
+ *    (860x560) all paint a darkened screen with ink on both the artwork and the
+ *    controls;
+ *  * the wide render with the queue open paints the queue in the right column
+ *    instead of the controls;
+ *  * the "Stats for nerds" render differs from the same frame without it, which
+ *    is what says the overlay is really on the artwork;
+ *  * the mini player paints its transport at 1100 px and at 640 px, where it
+ *    drops the shuffle, repeat and volume;
+ *  * a press on the mini player's title reaches the bar and opens the player,
+ *    which is what the hover tooltip wrapping each text used to swallow.
+ */
+object ApplePlayerV17RenderCheck {
+
+    private val outDir = File(".ignore/render-v17")
+
+    private val artwork: String by lazy {
+        // A cover cropped out of the reference screenshot: the screenshot itself
+        // carries BitChord's own controls, and using it whole would paint those
+        // into the artwork and the backdrop of every frame.
+        val candidates = listOf(
+            File(".ignore/render-v17/cover.png"),
+            File("../.ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
+            File(".ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
+        )
+        val file = candidates.firstOrNull { it.exists() } ?: candidates.first()
+        "file:///" + file.absolutePath.replace('\\', '/').replace(" ", "%20")
+    }
+
+    private fun track(index: Int = 0) = NowPlaying(
+        videoId = "v17Render$index",
+        title = if (index == 0) "Around the World (La La La La La)" else "Track $index of the queue",
+        artist = if (index == 0) "A Touch of Class" else "Artist $index",
+        album = "Planet Pop",
+        durationMs = 234_000,
+        thumbnail = artwork,
+    )
+
+    private fun queue() = List(6) { track(it) }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        outDir.mkdirs()
+        // A throwaway home: turning "Stats for nerds" on has to go through the
+        // real settings file, and it must not touch the user's own one.
+        val tempHome = File(outDir, "home")
+        // A fresh home on every run: the previous run left `statsForNerds` on,
+        // which drew the overlay over every frame of this one.
+        tempHome.deleteRecursively()
+        tempHome.mkdirs()
+        System.setProperty("user.home", tempHome.absolutePath)
+
+        val rows = queue()
+        val failures = mutableListOf<String>()
+
+        val wide = render(1280, 800, "wide.png", rows)
+        val wideQueue = render(1280, 800, "wide-queue.png", rows, queueOpen = true)
+        val medium = render(1024, 680, "medium.png", rows)
+        val narrow = render(700, 800, "narrow.png", rows)
+        val narrowQueue = render(700, 800, "narrow-queue.png", rows, queueOpen = true)
+        val minimum = render(860, 560, "minimum.png", rows)
+        val minimumQueue = render(860, 560, "minimum-queue.png", rows, queueOpen = true)
+
+        PlaybackTech.stream("https://example.invalid/stream?itag=140&mime=audio%2Fmp4")
+        PlaybackTech.output(48000, 16, 2, 1000, 2000)
+        DesktopSettings.update { it.copy(statsForNerds = true) }
+        val wideStats = render(1280, 800, "wide-stats.png", rows)
+        val statsInk = differingPixels(wide, wideStats)
+
+        val miniWide = mini(1100, 96, "mini-wide.png", rows[0])
+        val miniCompact = mini(640, 96, "mini-compact.png", rows[0])
+
+        data class Case(val name: String, val image: BufferedImage, val artInk: Int, val controlsInk: Int)
+        val cases = listOf(
+            Case("1280x800", wide, ink(wide, 0.06, 0.42, 0.10, 0.90), ink(wide, 0.48, 0.97, 0.10, 0.90)),
+            Case("1280x800 queue", wideQueue, ink(wideQueue, 0.06, 0.42, 0.10, 0.90), ink(wideQueue, 0.48, 0.97, 0.10, 0.90)),
+            Case("1024x680", medium, ink(medium, 0.06, 0.42, 0.10, 0.90), ink(medium, 0.48, 0.97, 0.10, 0.90)),
+            Case("700x800", narrow, ink(narrow, 0.10, 0.90, 0.04, 0.45), ink(narrow, 0.10, 0.90, 0.50, 0.99)),
+            Case("860x560", minimum, ink(minimum, 0.10, 0.90, 0.04, 0.45), ink(minimum, 0.10, 0.90, 0.50, 0.99)),
+            Case("860x560 queue", minimumQueue, ink(minimumQueue, 0.06, 0.42, 0.10, 0.90), ink(minimumQueue, 0.48, 0.97, 0.10, 0.90)),
+        )
+
+        cases.forEach { case ->
+            val brightness = meanLuminance(case.image)
+            val miniInk = ink(case.image, 0.0, 1.0, 0.0, 1.0)
+            println("%-16s brightness %.2f, artwork ink %d, controls ink %d".format(case.name, brightness, case.artInk, case.controlsInk))
+            if (brightness > 0.62) failures += "${case.name}: the screen is not dark (%.2f), the backdrop and its scrim are missing".format(brightness)
+            if (case.artInk < 500) failures += "${case.name}: the artwork drew almost no ink (${case.artInk} px)"
+            if (case.controlsInk < 200) failures += "${case.name}: the control column drew almost no ink (${case.controlsInk} px), so the title, the scrubber or the transport are missing"
+            if (miniInk < 1000) failures += "${case.name}: the frame is almost empty (${miniInk} ink px in total)"
+        }
+
+        val narrowQueueDiff = differingPixels(narrow, narrowQueue)
+        println("queue under 820 dp: %d pixels differ from the plain player".format(narrowQueueDiff))
+        if (narrowQueueDiff != 0) {
+            failures += "under 820 dp the queue replaced the column instead of leaving it to the queue screen ($narrowQueueDiff px)"
+        }
+
+        println("stats overlay: %d pixels differ from the frame without it".format(statsInk))
+        if (statsInk < 100) {
+            failures += "the Stats for nerds overlay changed almost nothing ($statsInk px): the line is not drawn on the artwork"
+        }
+
+        val titlePress = miniPressOpensPlayer(rows[0])
+        println("mini player press: the title opened the player %d time(s)".format(titlePress))
+        if (titlePress < 1) {
+            failures += "pressing the mini player title did not open the player ($titlePress call(s))"
+        }
+
+        listOf("mini player 1100" to miniWide, "mini player 640" to miniCompact).forEach { (name, image) ->
+            val miniInk = ink(image, 0.0, 1.0, 0.0, 1.0)
+            println("%-16s ink %d".format(name, miniInk))
+            if (miniInk < 400) failures += "$name drew almost no ink ($miniInk px)"
+        }
+
+        if (failures.isEmpty()) {
+            println()
+            println("OK: the artwork, the controls, the queue, the stats line and both mini player widths are painted")
+            return
+        }
+        println()
+        println("FAILED:")
+        failures.forEach { println("  - $it") }
+        throw IllegalStateException("Apple Player v17 render check failed (${failures.size} case(s))")
+    }
+
+    private fun playerComposable(
+        rows: List<NowPlaying>,
+        queueOpen: Boolean,
+    ): @Composable () -> Unit = {
+        ApplePlayerV17Screen(
+            np = rows[0],
+            isPlaying = true,
+            isLoading = false,
+            positionMs = 81_000,
+            durationMs = 234_000,
+            volume = 0.72f,
+            isShuffle = true,
+            repeatMode = RepeatMode.ALL,
+            errorKey = null,
+            errorDetail = null,
+            onTogglePlay = {},
+            onNext = {},
+            onPrevious = {},
+            onSeek = {},
+            onVolume = {},
+            onToggleShuffle = {},
+            onCycleRepeat = {},
+            language = "en",
+            onOpenLyrics = {},
+            onOpenQueue = {},
+            onAddToPlaylist = {},
+            sliderStyle = ViviSliderStyle.SLIM,
+            onBack = {},
+            queue = rows,
+            queueIndex = 0,
+            initialQueueOpen = queueOpen,
+        )
+    }
+
+    private fun render(width: Int, height: Int, name: String, rows: List<NowPlaying>, queueOpen: Boolean = false): BufferedImage {
+        val scene = ImageComposeScene(width, height) {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+                Box(Modifier.fillMaxSize()) {
+                    playerComposable(rows, queueOpen)()
+                }
+            }
+        }
+        val png = try {
+            repeat(5) {
+                scene.render()
+                Thread.sleep(120)
+            }
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, name).writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    private fun mini(width: Int, height: Int, name: String, song: NowPlaying): BufferedImage {
+        val scene = ImageComposeScene(width, height) {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    Box(Modifier.fillMaxWidth().padding(8.dp)) {
+                        AppleMusicV17MiniPlayer(
+                            nowPlaying = song,
+                            isPlaying = true,
+                            isLoading = false,
+                            swipeThumbnail = true,
+                            swipeSensitivity = 0.7f,
+                            onTogglePlay = {},
+                            onNext = {},
+                            onPrevious = {},
+                            onOpenPlayer = {},
+                            language = "en",
+                            volume = 0.72f,
+                            isShuffle = false,
+                            repeatMode = RepeatMode.OFF,
+                            positionMs = 81_000,
+                            durationMs = 234_000,
+                            onVolume = {},
+                            onToggleShuffle = {},
+                            onCycleRepeat = {},
+                            onOpenLyrics = {},
+                            onOpenQueue = {},
+                        )
+                    }
+                }
+            }
+        }
+        val png = try {
+            repeat(4) {
+                scene.render()
+                Thread.sleep(100)
+            }
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, name).writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
+    }
+
+    /**
+     * A press on the title has to open the player. It is read here and not on a
+     * window because a synthetic window click also has to activate the window
+     * first, which makes a miss ambiguous; a scene delivers the press to the
+     * composition and nothing else.
+     */
+    private fun miniPressOpensPlayer(song: NowPlaying): Int {
+        var opened = 0
+        var x = 0f
+        var y = 0f
+        val scene = ImageComposeScene(900, 120) {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+                Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+                    Box(Modifier.fillMaxWidth().padding(8.dp)) {
+                        AppleMusicV17MiniPlayer(
+                            nowPlaying = song,
+                            isPlaying = true,
+                            isLoading = false,
+                            swipeThumbnail = true,
+                            swipeSensitivity = 0.7f,
+                            onTogglePlay = {},
+                            onNext = {},
+                            onPrevious = {},
+                            onOpenPlayer = { opened++ },
+                            language = "en",
+                            volume = 0.72f,
+                            isShuffle = false,
+                            repeatMode = RepeatMode.OFF,
+                            positionMs = 81_000,
+                            durationMs = 234_000,
+                            onVolume = {},
+                            onToggleShuffle = {},
+                            onCycleRepeat = {},
+                            onOpenLyrics = {},
+                            onOpenQueue = {},
+                        )
+                    }
+                }
+            }
+        }
+        try {
+            repeat(4) {
+                scene.render()
+                Thread.sleep(80)
+            }
+            // The bar is 64 dp tall inside the 8 dp padding, so its middle is
+            // 40 dp down, and the title column is the middle of the width.
+            x = 450f
+            y = 40f
+            scene.sendPointerEvent(PointerEventType.Move, Offset(x, y))
+            scene.sendPointerEvent(PointerEventType.Press, Offset(x, y))
+            scene.sendPointerEvent(PointerEventType.Release, Offset(x, y))
+            repeat(3) {
+                scene.render()
+                Thread.sleep(80)
+            }
+            println("mini player press: pressed at %.0f,%.0f".format(x, y))
+        } finally {
+            scene.close()
+        }
+        return opened
+    }
+
+    private fun meanLuminance(image: BufferedImage): Double {
+        var total = 0.0
+        for (y in 0 until image.height) {
+            for (x in 0 until image.width) {
+                val rgb = image.getRGB(x, y)
+                total += (((rgb shr 16) and 255) + ((rgb shr 8) and 255) + (rgb and 255)) / (3.0 * 255)
+            }
+        }
+        return total / (image.width.toLong() * image.height)
+    }
+
+    private fun ink(image: BufferedImage, fromX: Double, toX: Double, fromY: Double, toY: Double): Int {
+        var count = 0
+        val x0 = (fromX * image.width).toInt().coerceIn(0, image.width - 1)
+        val x1 = (toX * image.width).toInt().coerceIn(x0 + 1, image.width)
+        val y0 = (fromY * image.height).toInt().coerceIn(0, image.height - 1)
+        val y1 = (toY * image.height).toInt().coerceIn(y0 + 1, image.height)
+        for (y in y0 until y1) {
+            for (x in x0 until x1) {
+                val rgb = image.getRGB(x, y)
+                val brightness = (((rgb shr 16) and 255) + ((rgb shr 8) and 255) + (rgb and 255)) / (3.0 * 255)
+                if (brightness >= 0.30) count++
+            }
+        }
+        return count
+    }
+
+    private fun differingPixels(a: BufferedImage, b: BufferedImage): Int {
+        if (a.width != b.width || a.height != b.height) return Int.MAX_VALUE
+        var count = 0
+        for (y in 0 until a.height) {
+            for (x in 0 until a.width) {
+                if (a.getRGB(x, y) != b.getRGB(x, y)) count++
+            }
+        }
+        return count
+    }
+}

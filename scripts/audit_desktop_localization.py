@@ -49,6 +49,7 @@ BRAND_KEYS = {
     "lyrics_style_apple", "lyrics_style_apple_v2", "lyrics_style_vivimusic",
     "lyrics_style_metro", "lyrics_style_lyrics_v2", "lyrics_style_alpha",
     "lyrics_style_karaoke", "apple_mini_player", "mini_player_apple",
+    "mini_player_apple_music_v17",
     "player_background_apple", "canvas_source_tidal", "canvas_source_vivimusic",
     "canvas_source_apple_music", "vivi_equalizer", "lastfm", "discord",
     "de", "mobile", "website", "telegram_channel", "wrapped_title",
@@ -62,6 +63,10 @@ BRAND_KEYS = {
     # The window/app title; "desktop" is the same loanword everywhere it is
     # not already translated, and the product name never changes.
     "header",
+    # The two player names are product names: the previous Apple player's
+    # build ("Vivi Music 1.55") and the ported BitChord player ("Apple Player
+    # v17"). The developer option's title uses the same build name.
+    "player_design_new", "legacy_apple_player", "player_design_apple_player_v17",
 }
 # Device/technical readouts, font names and unit labels: English by design.
 TECHNICAL_KEYS = {
@@ -71,6 +76,10 @@ TECHNICAL_KEYS = {
     "font_google_sans", "font_sans_flex", "font_outfit", "font_plus_jakarta_sans",
     "sort_az", "sort_za", "ok", "preview_text_quote",
     "ai_api_key", "ai_base_url", "ai_deepl_formality_default",
+    # The stats-for-nerds overlay reads out the stream and the device: the
+    # field names are the audio stack's own and are English by design.
+    "stats_for_nerds", "stats_codec", "stats_bitrate", "stats_output",
+    "stats_device_buffer", "stats_pcm_queue", "stats_position",
 }
 
 # Letters that belong to one language's alphabet and to no other in the list,

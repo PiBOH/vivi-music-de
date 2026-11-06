@@ -1268,6 +1268,14 @@ class AudioPlayer {
                     "(${if (deviceGain != null) "device gain" else "pcm scaling"}), " +
                     "skip silence $silenceMode, equalizer ${if (equalizer != null) "on" else "off"}",
             )
+            PlaybackTech.stream(currentStreams?.firstOrNull()?.url)
+            PlaybackTech.output(
+                sampleRateHz = format.sampleRate.toInt(),
+                bitDepth = format.sampleSizeInBits,
+                channels = format.channels,
+                deviceBufferMs = lineBufferMs,
+                pcmQueueMs = (AUDIO_QUEUE_SECONDS * 1000).toInt(),
+            )
 
             val bigEndian = buffer.isBigEndian
             val bitsPerSample = buffer.bitsPerSample

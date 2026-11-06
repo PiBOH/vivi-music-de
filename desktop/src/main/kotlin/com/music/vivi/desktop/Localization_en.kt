@@ -21,6 +21,10 @@ package com.music.vivi.desktop
  */
 internal fun strings_en(): Map<String, String> =
     mapOf(
+        "album" to "Album",
+        "artist" to "Artist",
+        "playlist" to "Playlist",
+        "search_no_results" to "No results",
         "about" to "About",
         "accent_amber" to "Amber",
         "accent_blue" to "Blue",
