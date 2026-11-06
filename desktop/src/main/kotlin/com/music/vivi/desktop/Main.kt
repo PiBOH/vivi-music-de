@@ -189,6 +189,12 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     "updates" -> Screen.SettingsUpdates
     "developer" -> Screen.SettingsDeveloper
     "devices" -> Screen.SettingsDevices
+    // The player and the queue can be opened from a launch as well, which is
+    // what a check of the player in a window of a given size needs: the screens
+    // have no other entry point than the mini player's own controls.
+    "player" -> Screen.Player
+    "queue" -> Screen.Queue
+    "radio" -> Screen.Charts
     else -> null
 }
 
@@ -447,7 +453,20 @@ fun WindowScope.App(
     var animationsEnabled by remember(settingsFileRevision()) { mutableStateOf(startupSettings.animationsEnabled) }
     var animationSpeed by remember(settingsFileRevision()) { mutableStateOf(startupSettings.animationSpeed) }
     var sliderStyle by remember(settingsFileRevision()) { mutableStateOf(startupSettings.sliderStyle) }
-    var playerDesign by remember(settingsFileRevision()) { mutableStateOf(PlayerDesign.from(startupSettings.playerDesign)) }
+    var playerDesign by remember(settingsFileRevision()) {
+        mutableStateOf(
+            PlayerDesign.from(startupSettings.playerDesign).let {
+                // "Vivi Music 1.55" (the old Apple player) is offered only while
+                // the developer option turns it on: a saved choice of it opens
+                // Apple Player v17 instead of a player the picker hides.
+                if (it == PlayerDesign.NEW && !startupSettings.legacyApplePlayer) {
+                    PlayerDesign.APPLE_PLAYER_V17
+                } else {
+                    it
+                }
+            },
+        )
+    }
     var playerBackground by remember(settingsFileRevision()) { mutableStateOf(PlayerBackgroundStyle.from(startupSettings.playerBackground)) }
     var rotatingThumbnail by remember(settingsFileRevision()) { mutableStateOf(startupSettings.rotatingThumbnail) }
     var miniPlayerDesign by remember(settingsFileRevision()) { mutableStateOf(MiniPlayerDesign.from(DesktopSettings.load().miniPlayerDesign)) }
@@ -1675,6 +1694,9 @@ fun WindowScope.App(
     val narrowSidebar = unscaledWindowWidthDp < SIDEBAR_AUTO_COLLAPSE_DP
     val narrowRightPanel = unscaledWindowWidthDp < RIGHT_PANEL_AUTO_HIDE_DP
     CompositionLocalProvider(
+        // The player's narrow layout reads the window the user resized, not the
+        // dp space left after the density below has shrunk it.
+        LocalWindowWidthDp provides unscaledWindowWidthDp,
         LocalDensity provides Density(baseDensity.density * effectiveDensityScale * DENSITY_CALIBRATION, baseDensity.fontScale),
         // The right-click menu is Compose Desktop's own flat popup; the Material 3
         // representation replaces it everywhere so every context menu (text
@@ -1933,15 +1955,12 @@ fun WindowScope.App(
                         onBack = goBack,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                     )
-                    is Screen.Charts -> ChartsScreen(
+                    // BitChord's radio: the stations are its cards, and a card
+                    // opens the mood/genre page it stands for. The charts list
+                    // that used to live on this sidebar entry is gone.
+                    is Screen.Charts -> BitChordRadioScreen(
                         language = language,
-                        onBack = goBack,
-                        onOpenAlbum = { navigate(Screen.Album(it)) },
-                        onOpenArtist = { navigate(Screen.Artist(it)) },
-                        onOpenPlaylist = { navigate(Screen.Playlist(it)) },
-                        onPlaySong = playSong,
-                        onAddToQueue = addToQueue,
-                        onAddToPlaylist = addToPlaylist,
+                        onOpenBrowse = { browseId, params -> navigate(Screen.Browse(browseId, params)) },
                     )
                     is Screen.MoodGenres -> MoodGenresScreen(
                         language = language,
@@ -2868,7 +2887,7 @@ fun WindowScope.App(
                         onTogglePlay = { player.toggle() },
                         onBack = goBack,
                     )
-                    is Screen.Queue -> QueueScreen(
+                    is Screen.Queue -> BitChordQueueScreen(
                         queue = playerState.queue,
                         index = playerState.index,
                         language = language,
@@ -2878,6 +2897,19 @@ fun WindowScope.App(
                         onClear = { player.clearQueue() },
                         onReorder = { player.reorder(it) },
                         onAddToPlaylist = addNowPlayingToPlaylist,
+                        // Play next and Add to queue are real moves on the same
+                        // queue the controller plays: the first reorders the
+                        // list just after the current track, the second appends.
+                        onPlayNext = { i ->
+                            val list = playerState.queue.toMutableList()
+                            val song = list.getOrNull(i)
+                            if (song != null) {
+                                list.removeAt(i)
+                                list.add((playerState.index + 1).coerceIn(0, list.size), song)
+                                player.reorder(list)
+                            }
+                        },
+                        onAddToQueue = { song -> player.addToQueue(song) },
                     )
                     is Screen.Changelog -> ChangelogScreen(
                         language = language,

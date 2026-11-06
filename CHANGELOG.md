@@ -11,6 +11,9 @@
 ### 🔧 Changed
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
 
+### ✨ Added
+- [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
+
 ### 🔧 Changed
 - [DE] **The Apple Player v17 gains the row of controls under the artwork, inline lyrics, the background styles and its queue menu.**
 
