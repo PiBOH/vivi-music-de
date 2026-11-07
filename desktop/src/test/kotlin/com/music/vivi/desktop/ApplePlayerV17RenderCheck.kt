@@ -23,6 +23,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.dp
+import com.music.innertube.models.BrowseEndpoint
+import com.music.innertube.pages.MoodAndGenres
 import com.music.vivi.desktop.player.PlaybackTech
 import com.music.vivi.desktop.player.RepeatMode
 import org.jetbrains.skia.EncodedImageFormat
@@ -67,16 +69,20 @@ object ApplePlayerV17RenderCheck {
 
     private val outDir = File(".ignore/render-v17")
 
-    private val artwork: String by lazy {
-        // A cover cropped out of the reference screenshot: the screenshot itself
-        // carries BitChord's own controls, and using it whole would paint those
-        // into the artwork and the backdrop of every frame.
+    private val artworkFile: File by lazy {
         val candidates = listOf(
             File(".ignore/render-v17/cover.png"),
             File("../.ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
             File(".ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
         )
-        val file = candidates.firstOrNull { it.exists() } ?: candidates.first()
+        candidates.firstOrNull { it.exists() } ?: candidates.first()
+    }
+
+    private val artwork: String by lazy {
+        // A cover cropped out of the reference screenshot: the screenshot itself
+        // carries BitChord's own controls, and using it whole would paint those
+        // into the artwork and the backdrop of every frame.
+        val file = artworkFile
         "file:///" + file.absolutePath.replace('\\', '/').replace(" ", "%20")
     }
 
@@ -130,6 +136,8 @@ object ApplePlayerV17RenderCheck {
         )
 
         val failures = mutableListOf<String>()
+
+        artworkReport(rows, failures)
 
         val wide = render(1280, 800, "wide.png", rows)
         val wideQueue = render(1280, 800, "wide-queue.png", rows, queueOpen = true)
@@ -270,6 +278,98 @@ object ApplePlayerV17RenderCheck {
      * `V17PlayerMenuContent`, the block the real menu mounts inside its popup, so
      * the picture cannot drift from the menu itself.
      */
+
+    /**
+     * What the artwork frames actually load: the source the card or the player
+     * asks the loader for, the pixels it decodes to, and the pixels it is drawn
+     * at. The rule is the mobile one - at least twice the drawn size, or the
+     * largest variant the provider has.
+     */
+    private fun artworkReport(rows: List<NowPlaying>, failures: MutableList<String>) {
+        // What the app actually asks the provider for: a mood page hands out a
+        // 120 px crop, and both the card and the player rewrite it upwards, so
+        // the loader never receives the small variant.
+        val smallMood = "https://lh3.googleusercontent.com/moodArt=w120-h120-l90-rj"
+        println("mood source -> card request:  %s".format(adjustedThumbnailUrl(smallMood, 640)))
+        println("mood source -> player request: %s".format(adjustedThumbnailUrl(smallMood, 1200)))
+        val ytSmall = "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
+        println("ytimg source -> player request: %s".format(adjustedThumbnailUrl(ytSmall, 1200)))
+
+        val decoded = org.jetbrains.skia.Image.makeFromEncoded(artworkFile.readBytes())
+        // The narrow frame (700x800) draws the cover at 0.36 of the height, 288
+        // px: it is the tightest artwork slot the player has, so it is the one a
+        // source has to beat by 2x to be sharp everywhere. The wide frame draws
+        // it at 512 px and is reported too, for the record.
+        val playerDraw = 288
+        val wideDraw = 512
+        val playerRatio = decoded.width.toFloat() / playerDraw
+        println(
+            "player artwork: %s -> %dx%d decoded, drawn at %d px (%.2fx)".format(
+                artwork, decoded.width, decoded.height, playerDraw, playerRatio,
+            ),
+        )
+        println(
+            "player artwork at the wide frame: %dx%d decoded, drawn at %d px (%.2fx)".format(
+                decoded.width, decoded.height, wideDraw, decoded.width.toFloat() / wideDraw,
+            ),
+        )
+        if (playerRatio < 2f) {
+            failures += "the player artwork decodes to %dx%d for a %d px draw (%.2fx, needs 2x)".format(
+                decoded.width, decoded.height, playerDraw, playerRatio,
+            )
+        }
+
+        // An Explore card: 210x118 dp, so ~315 px of artwork across at 1.5x.
+        val item = MoodAndGenres.Item(
+            title = "Chill",
+            stripeColor = 0xFF334455,
+            endpoint = BrowseEndpoint(browseId = "FEmusic_moods", params = null),
+        )
+        MoodArtworkCache.seed(item, artwork)
+        val cardUrl = adjustedThumbnailUrl(
+            MoodArtworkCache.cached(item),
+            requestedPx = 640,
+            dataSaver = false,
+        )
+        val cardDecoded = org.jetbrains.skia.Image.makeFromEncoded(artworkFile.readBytes())
+        // 210 dp of card at density 1, which is what the harness scene draws at.
+        val cardDraw = 210
+        val cardRatio = cardDecoded.width.toFloat() / cardDraw
+        println(
+            "explore card artwork: %s -> %dx%d decoded, drawn at %d px (%.2fx)".format(
+                cardUrl, cardDecoded.width, cardDecoded.height, cardDraw, cardRatio,
+            ),
+        )
+        if (cardRatio < 2f) {
+            failures += "the Explore card artwork decodes to %dx%d for a %d px draw (%.2fx, needs 2x)".format(
+                cardDecoded.width, cardDecoded.height, cardDraw, cardRatio,
+            )
+        }
+
+        // And the card really paints it: one frame of the tile itself.
+        val scene = ImageComposeScene(320, 200) {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+                Box(Modifier.fillMaxSize()) {
+                    MoodTile(item = item, ink = Color.White, onClick = {})
+                }
+            }
+        }
+        val inkPx = try {
+            repeat(4) {
+                scene.render()
+                Thread.sleep(120)
+            }
+            val png = scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+            javax.imageio.ImageIO.read(png.inputStream())
+        } finally {
+            scene.close()
+        }.let { ink(it, 0.0, 1.0, 0.0, 1.0) }
+        println("explore card frame: %d ink px".format(inkPx))
+        if (inkPx < 1000) {
+            failures += "the Explore card painted almost nothing ($inkPx px), so its artwork is missing"
+        }
+    }
+
     private fun renderMenu(rows: List<NowPlaying>): BufferedImage {
         val scene = ImageComposeScene(1280, 800) {
             AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {

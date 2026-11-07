@@ -172,7 +172,7 @@ fun BitChordExploreScreen(
  * again. Only a resolved URL is stored: a tile whose page has no artwork keeps
  * its stripe colour and is not retried on every recomposition.
  */
-private object MoodArtworkCache {
+internal object MoodArtworkCache {
     private val resolved = androidx.compose.runtime.mutableStateMapOf<String, String>()
     private val inFlight = mutableSetOf<String>()
 
@@ -180,6 +180,14 @@ private object MoodArtworkCache {
         item.endpoint.browseId + "|" + (item.endpoint.params ?: "")
 
     fun cached(item: MoodAndGenres.Item): String? = resolved[key(item)]
+
+    /**
+     * Puts an artwork in the cache without asking the network, which is how the
+     * off-screen render check paints a real card (no display, no fetch).
+     */
+    fun seed(item: MoodAndGenres.Item, url: String) {
+        resolved[key(item)] = url
+    }
 
     suspend fun resolve(item: MoodAndGenres.Item): String? {
         val k = key(item)
@@ -197,7 +205,7 @@ private object MoodArtworkCache {
 
 /** One mood/genre card: the resolved artwork, a scrim that keeps the name readable, and the name. */
 @Composable
-private fun MoodTile(
+internal fun MoodTile(
     item: MoodAndGenres.Item,
     ink: Color,
     onClick: () -> Unit,
@@ -217,7 +225,15 @@ private fun MoodTile(
         Box(Modifier.fillMaxSize()) {
             if (!picture.isNullOrBlank()) {
                 AsyncImage(
-                    model = picture,
+                    // The mood page's own artwork is whatever the grid gave it,
+                    // often a `=w120-h120` crop: the card asks for the largest
+                    // variant of it, the same rule the player and the rows use,
+                    // so 210x118 dp is never a stretched thumbnail.
+                    model = adjustedThumbnailUrl(
+                        picture,
+                        requestedPx = 640,
+                        dataSaver = DesktopSettings.load().dataSaver,
+                    ),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.matchParentSize(),
