@@ -1,8 +1,5 @@
 ## [Unreleased]
 
-### 🔧 Changed
-- [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
-
 ## [6.0.8.11_DE-1.56.0-beta] - 2026-11-05
 
 ### ✨ Added
@@ -10,9 +7,12 @@
 - [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.**
 - [DE] **Stats for nerds is an overlay of the real audio figures.**
 - [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
+- [DE] **The player's inline lyrics animate with the reader's own style.**
 
 ### 🔧 Changed
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
+- [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
+- [DE] **The artwork check fetches its own sleeve and measures every Explore card.**
 
 ### ✨ Added
 - [DE] **The playlist is BitChord's screen and the search is its field.**

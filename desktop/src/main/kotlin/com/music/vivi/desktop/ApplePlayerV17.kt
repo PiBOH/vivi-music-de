@@ -1,5 +1,7 @@
 ﻿package com.music.vivi.desktop
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -619,6 +621,18 @@ internal fun ApplePlayerV17Screen(
             }
         }
 
+        // The lyrics settings the rest of the app runs, read here too: the style
+        // (fade, glow, karaoke, Apple and the rest), the glow, the blur, the
+        // auto-scroll and the click-to-seek are the user's, so the words in this
+        // column animate like the words on the lyrics screen instead of falling
+        // back to the defaults. Only the typography is the panel's own, because
+        // this is the large Apple surface (the size `ApplePlayer` uses for it).
+        val lyricsOptions = remember(settingsFileRevision()) {
+            lyricsDisplayOptionsFrom(DesktopSettings.load()).copy(
+                textSizeSp = 26f,
+                lineSpacing = 1.55f,
+            )
+        }
         val lyricsPanel: @Composable () -> Unit = {
             // The player's own lyrics view: headerless, no back control, and the
             // same loader/cache the lyrics screen uses, so nothing is fetched a
@@ -628,6 +642,7 @@ internal fun ApplePlayerV17Screen(
                 positionMs = positionMs,
                 isPlaying = isPlaying,
                 language = language,
+                display = lyricsOptions,
                 onSeek = onSeek,
                 onTogglePlay = onTogglePlay,
                 onBack = null,
@@ -663,11 +678,20 @@ internal fun ApplePlayerV17Screen(
                 // Centred, not left-aligned: on a wide window the column keeps
                 // its own 620 dp and the rest of the cell used to stay empty, so
                 // the player read as a layout with a hole on the right.
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    when {
-                        showLyricsPanel -> lyricsPanel()
-                        showQueuePanel -> queuePanel()
-                        else -> info()
+                V17ColumnSwap(
+                    target = when {
+                        showLyricsPanel -> 1
+                        showQueuePanel -> 2
+                        else -> 0
+                    },
+                    modifier = Modifier.weight(1f),
+                ) { face ->
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        when (face) {
+                            1 -> lyricsPanel()
+                            2 -> queuePanel()
+                            else -> info()
+                        }
                     }
                 }
             }
@@ -691,10 +715,15 @@ internal fun ApplePlayerV17Screen(
                 ) {
                     artwork()
                     Spacer(Modifier.height(18.dp))
-                    if (showLyricsPanel) {
-                        Box(Modifier.fillMaxWidth().height(320.dp)) { lyricsPanel() }
-                    } else {
-                        info()
+                    V17ColumnSwap(
+                        target = if (showLyricsPanel) 1 else 0,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { face ->
+                        if (face == 1) {
+                            Box(Modifier.fillMaxWidth().height(320.dp)) { lyricsPanel() }
+                        } else {
+                            info()
+                        }
                     }
                 }
             }
@@ -1301,6 +1330,31 @@ private fun V17BottomBar(
  * (an `ImageComposeScene` draws no popups), so the entries live here once: the
  * menu and the picture of the menu are then the same code and cannot drift.
  */
+/**
+ * The player column changing face: the controls, the inline lyrics or the queue.
+ *
+ * The swap used to be a hard cut, so the large lyrics arrived as a replaced
+ * frame instead of as a surface. It is a cross-fade on the project's own motion
+ * tokens - one SHORT4 step on the decelerating curve - and it goes instant when
+ * the Animations switch is off, like every other transition in the app.
+ */
+@Composable
+private fun V17ColumnSwap(
+    target: Int,
+    modifier: Modifier = Modifier,
+    content: @Composable (Int) -> Unit,
+) {
+    Crossfade(
+        targetState = target,
+        animationSpec = tween(
+            if (Animations.enabled) Animations.ms(Motion.SHORT4) else 0,
+            easing = Motion.standardDecelerate,
+        ),
+        label = "v17ColumnSwap",
+        modifier = modifier,
+    ) { face -> content(face) }
+}
+
 @Composable
 internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent(
     language: String,

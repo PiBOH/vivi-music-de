@@ -23,6 +23,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.dp
+import com.music.innertube.YouTube
 import com.music.innertube.models.BrowseEndpoint
 import com.music.innertube.pages.MoodAndGenres
 import com.music.vivi.desktop.player.PlaybackTech
@@ -90,11 +91,65 @@ object ApplePlayerV17RenderCheck {
      */
     private val artworkFile: File by lazy {
         File(".ignore/render-v17/cover-hires.jpg").also { file ->
+            if (!file.isFile) downloadArtwork(file)
             check(file.isFile) {
                 "artwork fixture missing: ${file.absolutePath}; the fixture must be a real cover " +
                     "at its native size ($ARTWORK_SOURCE), never a screenshot of the app"
             }
         }
+    }
+
+    /** The pixels a card's sleeve is drawn across: the card is 210 dp wide. */
+    private const val CARD_DRAW_PX = 210
+
+    private val http: java.net.http.HttpClient by lazy {
+        java.net.http.HttpClient.newBuilder()
+            .followRedirects(java.net.http.HttpClient.Redirect.NORMAL)
+            .connectTimeout(java.time.Duration.ofSeconds(20))
+            .build()
+    }
+
+    /**
+     * The fixture the check needs, fetched from the provider when it is not
+     * already beside the renders: a clean machine runs the check without a
+     * hand-placed file. The bytes are the sleeve at the size the provider serves
+     * for it and are written untouched, so the report still measures the
+     * decoded size of the real source and not a resize this task did.
+     */
+    private fun downloadArtwork(target: File) {
+        target.parentFile?.mkdirs()
+        println("artwork fixture: missing, downloading $ARTWORK_SOURCE")
+        val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(ARTWORK_SOURCE))
+            .timeout(java.time.Duration.ofSeconds(40))
+            .header("User-Agent", "vivi-music-desktop-render-check")
+            .GET()
+            .build()
+        val response = http.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray())
+        check(response.statusCode() == 200) {
+            "the artwork download answered HTTP ${response.statusCode()} for $ARTWORK_SOURCE"
+        }
+        val body = response.body()
+        check(body.size > 20_000) { "the artwork download returned ${body.size} bytes, which is no sleeve" }
+        target.writeBytes(body)
+        val decoded = org.jetbrains.skia.Image.makeFromEncoded(body)
+        check(decoded.width >= 1024) {
+            "the downloaded sleeve is only ${decoded.width} px wide, below the 1024 a cover has to reach"
+        }
+        println("artwork fixture: downloaded %d bytes, %dx%d".format(body.size, decoded.width, decoded.height))
+    }
+
+    /** The artwork behind a URL, decoded, or null when it cannot be read. */
+    private fun decodeUrl(url: String): org.jetbrains.skia.Image? = try {
+        val request = java.net.http.HttpRequest.newBuilder(java.net.URI.create(url))
+            .timeout(java.time.Duration.ofSeconds(30))
+            .header("User-Agent", "vivi-music-desktop-render-check")
+            .GET()
+            .build()
+        val response = http.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray())
+        if (response.statusCode() != 200) null else org.jetbrains.skia.Image.makeFromEncoded(response.body())
+    } catch (e: Exception) {
+        println("  artwork unreadable: $url (${e.message})")
+        null
     }
 
     private val artwork: String by lazy {
@@ -400,6 +455,89 @@ object ApplePlayerV17RenderCheck {
         if (inkPx < 1000) {
             failures += "the Explore card painted almost nothing ($inkPx px), so its artwork is missing"
         }
+
+        exploreCardsReport(failures)
+    }
+
+    /**
+     * Every mood and genre card of the Explore grid, measured one by one.
+     *
+     * The card asks the service's own page for the picture it carries and then
+     * rewrites it to the size it draws, so the figures are the ones the app
+     * really loads: the request URL, the pixels it decodes to, the 210 px the
+     * card is across, and their ratio. A page that hands out nothing is named as
+     * such; a card whose sleeve is smaller than the 2x rule is reported as
+     * "max available" with its cap, because there is nothing larger to ask for.
+     */
+    private fun exploreCardsReport(failures: MutableList<String>) {
+        val sections = kotlinx.coroutines.runBlocking { YouTube.moodAndGenres() }.getOrElse { error ->
+            failures += "the Explore card report could not read the moods and genres: ${error.message}"
+            return
+        }
+        val items = sections.flatMap { it.items }
+        println(
+            "explore cards: %d mood(s) and genre(s) in %d section(s)".format(items.size, sections.size),
+        )
+        val pool = java.util.concurrent.Executors.newFixedThreadPool(8)
+        data class Measured(val title: String, val request: String?, val decoded: org.jetbrains.skia.Image?)
+        val measured = try {
+            items.map { item ->
+                pool.submit(
+                    java.util.concurrent.Callable {
+                        val source = kotlinx.coroutines.runBlocking {
+                            YouTube.moodArtwork(item.endpoint.browseId, item.endpoint.params)
+                        }.getOrNull()
+                        if (source == null) {
+                            return@Callable Measured(item.title, null, null)
+                        }
+                        MoodArtworkCache.seed(item, source)
+                        val request = adjustedThumbnailUrl(source, requestedPx = 640, dataSaver = false)
+                        Measured(item.title, request, request?.let { decodeUrl(it) })
+                    },
+                )
+            }.map { it.get() }
+        } finally {
+            pool.shutdown()
+        }
+
+        var sharp = 0
+        var capped = 0
+        var empty = 0
+        measured.forEach { card ->
+            when {
+                card.request == null -> {
+                    empty++
+                    println("explore card %-24s no artwork on its page".format(card.title))
+                }
+                card.decoded == null ->
+                    failures += "explore card ${card.title}: the artwork did not decode (${card.request})"
+                else -> {
+                    val ratio = card.decoded.width.toFloat() / CARD_DRAW_PX
+                    val tag = if (ratio < 2f) {
+                        capped++
+                        " max available"
+                    } else {
+                        sharp++
+                        ""
+                    }
+                    println(
+                        "explore card %-24s %s -> %dx%d decoded, drawn at %d px (%.2fx)%s".format(
+                            EN,
+                            card.title,
+                            card.request,
+                            card.decoded.width,
+                            card.decoded.height,
+                            CARD_DRAW_PX,
+                            ratio,
+                            tag,
+                        ),
+                    )
+                }
+            }
+        }
+        println(
+            "explore cards: $sharp at 2x or better, $capped at the provider's cap, $empty without artwork",
+        )
     }
 
     /**

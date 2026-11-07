@@ -1,9 +1,5 @@
 ## [Unreleased]
 
-### 🔧 Changed
-- [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.** The rail now reads Home, Explore, Library, Search, History and then the playlists: the radio entry is removed with the screen behind it (that client has no radio screen), and the separate Songs, Albums and Artists entries are gone because one Library screen holds them, so the empty Library group header and its chevron are no longer drawn either. The radio screen itself is deleted from the sources (`BitChordRadioScreen` and its unused icon imports), not merely unreachable: a search for it in `desktop/src` returns nothing. `NowPlaying`, the model every screen and the bar receive, is annotated `@Immutable` so Compose can treat it as a stable value across composable boundaries instead of comparing it defensively on every pass. The entry list is remembered instead of being rebuilt on every recomposition of the rail. The mini bar no longer caps itself at 1200 dp, which is what left the parent's colour uncovered to the right of its last control on a wide window. **Measured:** `:desktop:compileKotlin` passes and `:desktop:createDistributable` builds the image the Inno Setup setup was compiled from.
-
-
 ## [6.0.8.11_DE-1.56.0-beta] - 2026-11-05
 
 ### ✨ Added
@@ -11,9 +7,12 @@
 - [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.** *Legacy Apple player* (`legacyApplePlayer`, off by default, `Icons.Filled.Science`) sits on the Advanced card of Developer options and is the one control that puts the old Apple player back: with it off the player picker hides the entry, and a `new` saved by an older build opens Apple Player v17 at start-up (`Main.kt`). Its label is renamed in all 52 desktop tables, from "Apple Music" to "Vivi Music 1.55", so the two Apple layouts cannot be confused; the stored key is untouched. **Measured:** `:desktop:compileKotlin` passes; `:desktop:settingsScreensRenderCheck` reads the developer page.
 - [DE] **Stats for nerds is an overlay of the real audio figures.** The *Stats for nerds* switch (`statsForNerds`, Developer options' Advanced card, `Icons.Filled.Analytics`) prints the codec, the sample rate, the bitrate and the channel layout in BitChord's own monospace line on the artwork, and the full detail (output format, device buffer, PCM queue, position) sits one hover away through the shared tooltip. Every figure is measured: `PlaybackTech` reads the `itag` and `mime` of the URL the resolver returned, and `AudioPlayer` reports the sample rate, bit depth and channels of the line it actually opened plus the buffer the device granted and the PCM queue it keeps. A field nothing has reported yet is left out of the line or shown as `n/a`, never guessed. **Measured:** `:desktop:compileKotlin` passes, and the running app draws the line over the artwork: `44.1 kHz - Stereo` once the decoder has opened the line, and `n/a` for the fields nothing has reported yet, which is what a track that has not started shows.
 - [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.** The whole bar of that client is the mini player (shuffle, previous, play/pause, next, repeat, the artwork with its swipe, the title and the artist, the volume, the output-device picker, the lyrics and the queue), with BitChord's hairline showing the position along the bottom edge. It is selectable in *Player & mini-player design* as *Apple Music v17* beside Classic, New and Apple, stored as `apple_music_v17`, and every control is wired to the player controller; in a window narrower than 720 dp the bar drops the shuffle, repeat and volume to keep the title and the transport readable. **Measured:** `:desktop:compileKotlin` passes; the label is in all 52 desktop tables and `scripts/audit_desktop_localization.py` reports no missing key; the packaged app draws the bar at 1130 px with the whole transport, and pressing the title opens the player, which needed a fix: the hover tooltip wraps each text and took the press, so the bar's own clickable never saw the tap and the press only highlighted the title. The title and the artist now read the press on the initial pass, and `:desktop:applePlayerV17RenderCheck` presses the title in a scene and reads one call to the player.
+- [DE] **The player's inline lyrics animate with the reader's own style.** The lyrics column of Apple Player v17 asked the renderer for its defaults, so the style chosen in Settings (fade, glow, karaoke, Apple and the rest), the glow, the blur, the auto-scroll, the click-to-seek and the text position never reached the words and the panel always ran the fallback. The column reads the persisted lyrics settings through `lyricsDisplayOptionsFrom` and keeps only the typography of the large Apple page (26 sp, 1.55 line spacing, the size the other Apple player already gives it), and the three faces of the column (controls, lyrics, queue) change with a cross-fade on the project's motion tokens, one `Motion.SHORT4` step on the decelerating curve that goes instant with the Animations switch off, instead of a hard cut. **Measured:** `:desktop:compileKotlin` passes and `:desktop:applePlayerV17RenderCheck` still paints the lyrics frame as a real difference from the controls.
 
 ### 🔧 Changed
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.** At a window under 820 dp the player sat at the top of the frame and left the whole lower half empty; it is one scrolling column now that centres itself when the window is tall enough (`heightIn(min = windowMaxHeight)`), so a 700x800 window reads the cover and the controls around the middle. The screen's own base under the blurred cover is opaque: it is the one surface drawn over a translucent backdrop, and whatever the window had behind it reached the eye through it as a band of white blocks across the bottom of a narrow frame. With the base in place the band is gone at 700x800 and at 400x300, and the non-player frames at the same sizes (the Queue screen) were read for comparison. The configured player background is no longer drawn under this player either: v17 paints its own blurred cover and scrim full size, so the configured style only reached the eye as a second backdrop behind them. **Measured:** `:desktop:applePlayerV17RenderCheck` still paints 1280x800, 1024x680, 700x800, 860x560, the queue, the statistics line and both mini bar widths; the packaged app was started fresh at 700x800 and at 400x300, and the player, the queue screen, the statistics line and the mini bar were read on its own screen.
+- [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.** The rail now reads Home, Explore, Library, Search, History and then the playlists: the radio entry is removed with the screen behind it (that client has no radio screen), and the separate Songs, Albums and Artists entries are gone because one Library screen holds them, so the empty Library group header and its chevron are no longer drawn either. The radio screen itself is deleted from the sources (`BitChordRadioScreen` and its unused icon imports), not merely unreachable: a search for it in `desktop/src` returns nothing. `NowPlaying`, the model every screen and the bar receive, is annotated `@Immutable` so Compose can treat it as a stable value across composable boundaries instead of comparing it defensively on every pass. The entry list is remembered instead of being rebuilt on every recomposition of the rail. The mini bar no longer caps itself at 1200 dp, which is what left the parent's colour uncovered to the right of its last control on a wide window. **Measured:** `:desktop:compileKotlin` passes and `:desktop:createDistributable` builds the image the Inno Setup setup was compiled from.
+- [DE] **The artwork check fetches its own sleeve and measures every Explore card.** The render check needed a cover placed by hand beside the renders and measured a single card. It downloads the sleeve from its own provider URL when the file is missing, writes the bytes untouched and refuses anything under 1024 px, so a clean machine runs it; and it now reports every mood and genre of the Explore grid one by one, with the request its card makes, the pixels it decodes, the 210 px it is drawn across and the ratio, or `max available` with the provider's own cap when nothing larger exists. **Measured:** `:desktop:applePlayerV17RenderCheck` prints one line per card. **Watch:** the per-card report reads the service, so that half needs the network.
 
 ### ✨ Added
 - [DE] **The playlist is BitChord's screen and the search is its field.** A playlist now opens on the reference's header: the 2x2 mosaic built from the first four covers it actually holds, the small PLAYLIST label, the name, the real track count and the round controls (shuffle, the filled play, the menu with Rename and Delete, both running on [PlaylistStore]). The table under it is the stored order, a click plays the track, the heart writes the same like the rest of the app does and the plus appends the track to the queue. Search is one large rounded field with the service's own suggestions under it while typing, the filter chips, and the results as a flat list of cover, title and the line that says what the row is (Album - artist - year, Artist - subscribers, Playlist - author - count, or the song's artists); a song plays, an album, artist or playlist opens its page. **Not drawn:** the reference's Download all has no desktop download store behind it and a local playlist has no share link, so those two menu entries are not there. **Measured:** `:desktop:compileKotlin` and `:desktop:createDistributable` pass, and both screens were opened in the packaged app by clicking through its own interface. The playlist showed the 2x2 mosaic, the PLAYLIST label, the name, `43 songs` and the three round controls, and a click on the second row started Unity - TheFatRat with the bar switching to it playing (`bc-playlist.png`, `bc-playlist-play.png`). The search field took `daft punk` and answered with the artist row (Artist - 67.1M monthly audience) plus song and album rows, and the artist row opened the Daft Punk page with its subscribers, Play all and Shuffle all (`bc-search.png`, `bc-search-artist.png`). The queue crash on the row keys is gone as well (the list opened with no `crash.log`, `bc28-queue-fixed.png`).
@@ -1308,7 +1307,6 @@
 ### 🌍 Translations
 - `home_empty` (the empty Home state message) is now fully translated in all 47 supported languages instead of falling back to English. Thanks to @codebuffai for the translation pass.
 
-
 ## [6.4.46_DE-1.50.25-alpha] - 2026-09-06
 
 ### ✨ Added
@@ -1317,7 +1315,6 @@
 ### 🐛 Fixed
 - [DE] **The Home "Recommended" row no longer disappears on fresh profiles**: when there is no in-session listening history yet, it seeds from the first songs of the loaded Home feed, so the row shows up even right after a clean install. (Closes [#27](https://github.com/PiBOH/vivi-music-de/issues/27))
 - [DE] **The Home empty state shows real text instead of a raw `home_empty` key**: the string was missing from every language table; it is now in the English base table and the other languages pick it up with the next dedicated translation pass.
-
 
 ## [6.4.46_DE-1.50.24-alpha] - 2026-09-05
 
@@ -1348,7 +1345,6 @@
 - [APK] **Fixed a broken CI workflow**: the nightly-flag line added in 1.50.22 for the About-screen badge contained a literal CR/LF inside a shell string, which made the whole `build.yml` workflow file invalid (the Android build job never ran and the APK asset was missing from the release). The line is now valid shell.
 - [DE] The release tag now correctly reads `6.0.6.1_DE-1.50.23-alpha`: the Android part of the combined version follows the APK version (`6.0.6.1`), documented in `AGENTS.md` — the previous tag (`6.4.45_DE-...`) was built from a stale `version.txt` and its release has been replaced.
 
-
 ## [6.4.45_DE-1.50.22-alpha] - 2026-09-04
 
 ### 🔧 Changed
@@ -1358,7 +1354,6 @@
 - [DE] **Players, mini players and the sidebar now follow the app theme in light mode**: they decided dark/light from the OS theme (`isSystemInDarkTheme()`) instead of the app's own mode, so with a dark OS + light app they stayed dark (and could get light text on light surfaces). Closes #14)
 - [DE] **Custom colors now appear in the palette live**: the Theme screen only persisted new/removed custom accents to disk without updating the list it displays, so swatches appeared only after re-entering the screen. Closes #15)
 - [APK] **Debug APK About screen now shows NIGHTLY for non-stable builds**: the CI built the APK without `-Pnightly=true`, so `BuildConfig.IS_NIGHTLY` was false and the About badge read "STABLE". The flag is now derived from the mobile channel in `version.txt` (line 3). (Closes #16)
-
 
 ## [6.4.45_DE-1.50.21-nightly] - 2026-09-04
 
@@ -1384,7 +1379,6 @@
 ### 🔧 Changed
 - [DE] The Inno Setup installer now always shows the installation details box (the extraction log) below the progress bar on the Installing page, instead of hiding it behind the "Show details" toggle.
 
-
 ## [6.4.45_DE-1.50.17-nightly] - 2026-09-04
 
 ### 🐛 Fixed
@@ -1393,12 +1387,10 @@
 - [DE] **Home screen can no longer be silently blank**: an empty response auto-retries once and, if it still comes back empty, shows a clear "Nothing to show here yet" state with a Retry button instead of an endless spinner with no content. Closes #7.
 - [DE] **Changelog issue references are now clickable**: every `#N` mention (e.g. "Closes #2") across the whole changelog — past and future entries — renders as a link that opens the GitHub issue. Closes #8.
 
-
 ## [6.4.45_DE-1.50.16-nightly] - 2026-09-04
 
 ### ✨ Added
 - [DE] **Native system playback controls and "Now Playing" on macOS**: the app now registers with the system media session (Control Center… Closes #4.
-
 
 ## [6.4.45_DE-1.50.15-nightly] - 2026-09-04
 

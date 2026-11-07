@@ -127,3 +127,6 @@ skills-lock.json
 # local source material, never part of the branch
 *.zip
 /.cloud-attachments
+
+# The installers the Windows pipeline writes at the repository root.
+/dist/

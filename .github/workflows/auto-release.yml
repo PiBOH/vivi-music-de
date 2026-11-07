@@ -147,6 +147,18 @@ jobs:
               ' CHANGELOG.md | sed '/./,$!d')"
               [[ -n "$SECTION" ]] && break
             done
+            # A heading that names the same version under another channel
+            # suffix still is this release's section (1.56.0 was written as
+            # -beta and -beta2 while version.txt moved on), so when
+            # the tag and the heading disagree the search takes the newest
+            # versioned section instead of publishing an empty body.
+            if [[ -z "$SECTION" ]]; then
+              SECTION="$(awk '
+                /^## \[Unreleased\]/ { next }
+                /^## \[/ { if (found) exit; found = 1; next }
+                found { print }
+              ' CHANGELOG.md | sed '/./,$!d')"
+            fi
           fi
           if [[ -z "$SECTION" ]]; then
             SECTION="*No changelog entry found for version $VERSION.*"
