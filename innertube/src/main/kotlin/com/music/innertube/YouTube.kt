@@ -1,4 +1,4 @@
-package com.music.innertube
+﻿package com.music.innertube
 
 import com.music.innertube.models.AccountInfo
 import com.music.innertube.models.YTItem
@@ -807,6 +807,24 @@ object YouTube {
         val response = innerTube.browse(WEB_REMIX, browseId = "FEmusic_moods_and_genres").body<BrowseResponse>()
         response.contents?.singleColumnBrowseResultsRenderer?.tabs?.firstOrNull()?.tabRenderer?.content?.sectionListRenderer?.contents!!
             .mapNotNull(MoodAndGenres.Companion::fromSectionListRendererContent)
+    }
+
+    /**
+     * The artwork behind a mood/genre tile.
+     *
+     * The moods payload carries a stripe colour but no picture, so the tile's
+     * own browse page is asked for one and the first artwork it returns becomes
+     * the tile's image. A null result means the page has no artwork at all and
+     * the caller keeps the stripe colour.
+     */
+    suspend fun moodArtwork(browseId: String, params: String?): Result<String?> = runCatching {
+        browse(browseId, params)
+            .getOrThrow()
+            .items
+            .asSequence()
+            .flatMap { it.items.asSequence() }
+            .mapNotNull { it.thumbnail }
+            .firstOrNull()
     }
 
     suspend fun browse(browseId: String, params: String?): Result<BrowseResult> = runCatching {

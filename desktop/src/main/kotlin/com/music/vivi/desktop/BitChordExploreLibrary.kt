@@ -1,4 +1,4 @@
-package com.music.vivi.desktop
+﻿package com.music.vivi.desktop
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
 import androidx.compose.ui.unit.dp
 import com.music.innertube.YouTube
 import com.music.innertube.models.Artist
@@ -55,9 +60,13 @@ import com.music.innertube.pages.MoodAndGenres
  * browse page behind it, while the New releases row is `newReleaseAlbums()` and
  * each album opens its own page.
  *
- * The reference draws a thumbnail over every mood tile; the payload behind that
- * grid carries only a title, a stripe colour and the endpoint, so the tile is
- * the colour the service sent for it. A picture would have to be invented.
+ * Every mood tile carries a real picture, like the reference does. The moods
+ * payload itself has no image (only a title, a stripe colour and the endpoint),
+ * so the tile asks its own browse page for the first artwork it contains and
+ * caches the result per endpoint; the stripe colour is the card background and
+ * stays visible only while the picture is being resolved or when that page has
+ * no artwork at all. The fetch happens per visible tile, not for the whole grid
+ * at once.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -78,12 +87,6 @@ fun BitChordExploreScreen(
         albums = YouTube.newReleaseAlbums().getOrNull()?.distinctBy { it.id }?.take(12)
     }
 
-    val containers = listOf(
-        MaterialTheme.colorScheme.primaryContainer,
-        MaterialTheme.colorScheme.secondaryContainer,
-        MaterialTheme.colorScheme.tertiaryContainer,
-        MaterialTheme.colorScheme.errorContainer,
-    )
     val inks = listOf(
         MaterialTheme.colorScheme.onPrimaryContainer,
         MaterialTheme.colorScheme.onSecondaryContainer,
@@ -130,7 +133,7 @@ fun BitChordExploreScreen(
                     }
                 }
                 sections.orEmpty().forEachIndexed { sectionIndex, section ->
-                    item(key = "header-${section.title}") {
+                    item(key = "header-" + section.title) {
                         Text(
                             section.title,
                             style = MaterialTheme.typography.titleLarge,
@@ -140,44 +143,111 @@ fun BitChordExploreScreen(
                             ),
                         )
                     }
-                    item(key = "grid-${section.title}") {
+                    item(key = "grid-" + section.title) {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             section.items.forEachIndexed { index, item ->
-                                val colorIndex = index % containers.size
-                                Surface(
+                                MoodTile(
+                                    item = item,
+                                    ink = inks[index % inks.size],
                                     onClick = { onOpenBrowse(item.endpoint.browseId, item.endpoint.params) },
-                                    shape = MaterialTheme.shapes.large,
-                                    color = containers[colorIndex],
-                                    modifier = Modifier.width(210.dp).height(118.dp),
-                                ) {
-                                    Box(Modifier.fillMaxSize().padding(14.dp)) {
-                                        Text(
-                                            item.title,
-                                            style = MaterialTheme.typography.titleMedium.copy(
-                                                fontWeight = FontWeight.SemiBold,
-                                            ),
-                                            color = inks[colorIndex],
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.align(Alignment.TopStart),
-                                        )
-                                        Text(
-                                            "\u203A",
-                                            style = MaterialTheme.typography.titleLarge,
-                                            color = inks[colorIndex],
-                                            modifier = Modifier.align(Alignment.BottomEnd),
-                                        )
-                                    }
-                                }
+                                )
                             }
                         }
                     }
                 }
                 item(key = "explore_tail") { Spacer(Modifier.height(16.dp)) }
             }
+        }
+    }
+}
+
+/**
+ * The artwork cache behind the mood tiles.
+ *
+ * One entry per endpoint, filled the first time a tile is composed and kept for
+ * the session, so scrolling the grid back and forth does not ask the network
+ * again. Only a resolved URL is stored: a tile whose page has no artwork keeps
+ * its stripe colour and is not retried on every recomposition.
+ */
+private object MoodArtworkCache {
+    private val resolved = androidx.compose.runtime.mutableStateMapOf<String, String>()
+    private val inFlight = mutableSetOf<String>()
+
+    private fun key(item: MoodAndGenres.Item): String =
+        item.endpoint.browseId + "|" + (item.endpoint.params ?: "")
+
+    fun cached(item: MoodAndGenres.Item): String? = resolved[key(item)]
+
+    suspend fun resolve(item: MoodAndGenres.Item): String? {
+        val k = key(item)
+        resolved[k]?.let { return it }
+        if (!inFlight.add(k)) return null
+        return try {
+            val url = YouTube.moodArtwork(item.endpoint.browseId, item.endpoint.params).getOrNull()
+            if (url != null) resolved[k] = url
+            url
+        } finally {
+            inFlight.remove(k)
+        }
+    }
+}
+
+/** One mood/genre card: the resolved artwork, a scrim that keeps the name readable, and the name. */
+@Composable
+private fun MoodTile(
+    item: MoodAndGenres.Item,
+    ink: Color,
+    onClick: () -> Unit,
+) {
+    val stripe = Color(item.stripeColor)
+    var artwork by remember(item) { mutableStateOf(MoodArtworkCache.cached(item)) }
+    LaunchedEffect(item) {
+        if (artwork == null) artwork = MoodArtworkCache.resolve(item)
+    }
+    val picture = artwork
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = stripe,
+        modifier = Modifier.width(210.dp).height(118.dp),
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            if (!picture.isNullOrBlank()) {
+                AsyncImage(
+                    model = picture,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.matchParentSize(),
+                )
+                Box(
+                    Modifier.matchParentSize().background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.45f to Color.Black.copy(alpha = 0.12f),
+                            1f to Color.Black.copy(alpha = 0.74f),
+                        ),
+                    ),
+                )
+            }
+            Text(
+                item.title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = if (picture.isNullOrBlank()) ink else Color.White,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.align(Alignment.BottomStart).padding(14.dp),
+            )
+            Text(
+                "\u203A",
+                style = MaterialTheme.typography.titleLarge,
+                color = if (picture.isNullOrBlank()) ink else Color.White,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 14.dp, bottom = 12.dp),
+            )
         }
     }
 }
