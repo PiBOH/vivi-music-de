@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalComposeUiApi::class)
+﻿@file:OptIn(ExperimentalComposeUiApi::class)
 
 package com.music.vivi.desktop
 
@@ -41,6 +41,9 @@ import java.io.File
  *    controls;
  *  * the wide render with the queue open paints the queue in the right column
  *    instead of the controls;
+ *  * the bar's playback row (Shuffle, Cycle, Autoplay, Queue) and the large
+ *    lyrics page that replaces the controls are painted and differ from the
+ *    plain frame;
  *  * the "Stats for nerds" render differs from the same frame without it, which
  *    is what says the overlay is really on the artwork;
  *  * the mini player paints its transport at 1100 px and at 640 px, where it
@@ -99,6 +102,13 @@ object ApplePlayerV17RenderCheck {
         val minimum = render(860, 560, "minimum.png", rows)
         val minimumQueue = render(860, 560, "minimum-queue.png", rows, queueOpen = true)
 
+        // The two surfaces this check exists for now: the bar's playback row
+        // (Shuffle, Cycle, Autoplay, Queue) and the large lyrics page taking the
+        // controls' place. Both are drawn from a state the screen takes as a
+        // parameter, so the frames are the real composables and not a mock-up.
+        val wideControls = render(1280, 800, "wide-controls.png", rows, controlsRow = true)
+        val wideLyrics = render(1280, 800, "wide-lyrics.png", rows, lyricsOpen = true)
+
         PlaybackTech.stream("https://example.invalid/stream?itag=140&mime=audio%2Fmp4")
         PlaybackTech.output(48000, 16, 2, 1000, 2000)
         DesktopSettings.update { it.copy(statsForNerds = true) }
@@ -134,6 +144,17 @@ object ApplePlayerV17RenderCheck {
             failures += "under 820 dp the queue replaced the column instead of leaving it to the queue screen ($narrowQueueDiff px)"
         }
 
+        val controlsDiff = differingPixels(wide, wideControls)
+        val lyricsDiff = differingPixels(wide, wideLyrics)
+        println("playback row: %d pixels differ from the page row".format(controlsDiff))
+        println("inline lyrics: %d pixels differ from the controls".format(lyricsDiff))
+        if (controlsDiff < 200) {
+            failures += "the playback row drew almost nothing over the page row ($controlsDiff px)"
+        }
+        if (lyricsDiff < 2000) {
+            failures += "the lyrics page drew almost nothing over the controls ($lyricsDiff px)"
+        }
+
         println("stats overlay: %d pixels differ from the frame without it".format(statsInk))
         if (statsInk < 100) {
             failures += "the Stats for nerds overlay changed almost nothing ($statsInk px): the line is not drawn on the artwork"
@@ -165,6 +186,8 @@ object ApplePlayerV17RenderCheck {
     private fun playerComposable(
         rows: List<NowPlaying>,
         queueOpen: Boolean,
+        lyricsOpen: Boolean = false,
+        controlsRow: Boolean = false,
     ): @Composable () -> Unit = {
         ApplePlayerV17Screen(
             np = rows[0],
@@ -193,14 +216,24 @@ object ApplePlayerV17RenderCheck {
             queue = rows,
             queueIndex = 0,
             initialQueueOpen = queueOpen,
+            initialLyricsOpen = lyricsOpen,
+            initialControlsRow = controlsRow,
         )
     }
 
-    private fun render(width: Int, height: Int, name: String, rows: List<NowPlaying>, queueOpen: Boolean = false): BufferedImage {
+    private fun render(
+        width: Int,
+        height: Int,
+        name: String,
+        rows: List<NowPlaying>,
+        queueOpen: Boolean = false,
+        lyricsOpen: Boolean = false,
+        controlsRow: Boolean = false,
+    ): BufferedImage {
         val scene = ImageComposeScene(width, height) {
             AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
                 Box(Modifier.fillMaxSize()) {
-                    playerComposable(rows, queueOpen)()
+                    playerComposable(rows, queueOpen, lyricsOpen, controlsRow)()
                 }
             }
         }

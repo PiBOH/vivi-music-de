@@ -143,6 +143,10 @@ internal fun ApplePlayerV17Screen(
     onReorderQueue: (List<NowPlaying>) -> Unit = {},
     /** Opens on the queue instead of the controls, for the render harness. */
     initialQueueOpen: Boolean = false,
+    /** Opens on the lyrics page instead of the controls (render harness). */
+    initialLyricsOpen: Boolean = false,
+    /** Draws the bar\'s playback row from the first frame (render harness). */
+    initialControlsRow: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val showStats = remember(settingsFileRevision()) { DesktopSettings.load().statsForNerds }
@@ -154,6 +158,10 @@ internal fun ApplePlayerV17Screen(
     val duration = durationMs.coerceAtLeast(1L)
 
     var showQueuePanel by remember(np.videoId) { mutableStateOf(initialQueueOpen) }
+    // The lyrics page takes the controls' place, the way the reference does it,
+    // instead of pushing the separate lyrics screen with the transport still
+    // underneath it.
+    var showLyricsPanel by remember(np.videoId) { mutableStateOf(initialLyricsOpen) }
     var menuOpen by remember(np.videoId) { mutableStateOf(false) }
     var liked by remember(np.videoId) { mutableStateOf(SongActions.isLiked(np.videoId)) }
     val scope = rememberCoroutineScope()
@@ -635,6 +643,22 @@ internal fun ApplePlayerV17Screen(
             }
         }
 
+        val lyricsPanel: @Composable () -> Unit = {
+            // The player's own lyrics view: headerless, no back control, and the
+            // same loader/cache the lyrics screen uses, so nothing is fetched a
+            // second time. It fills the column the controls occupy.
+            LyricsScreen(
+                nowPlaying = np,
+                positionMs = positionMs,
+                isPlaying = isPlaying,
+                language = language,
+                onSeek = onSeek,
+                onTogglePlay = onTogglePlay,
+                onBack = null,
+                showHeader = false,
+            )
+        }
+
         val queuePanel: @Composable () -> Unit = {
             AppleV17QueuePanel(
                 queue = queue,
@@ -664,7 +688,11 @@ internal fun ApplePlayerV17Screen(
                 // its own 620 dp and the rest of the cell used to stay empty, so
                 // the player read as a layout with a hole on the right.
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    if (showQueuePanel) queuePanel() else info()
+                    when {
+                        showLyricsPanel -> lyricsPanel()
+                        showQueuePanel -> queuePanel()
+                        else -> info()
+                    }
                 }
             }
         } else {
@@ -687,7 +715,11 @@ internal fun ApplePlayerV17Screen(
                 ) {
                     artwork()
                     Spacer(Modifier.height(18.dp))
-                    info()
+                    if (showLyricsPanel) {
+                        Box(Modifier.fillMaxWidth().height(320.dp)) { lyricsPanel() }
+                    } else {
+                        info()
+                    }
                 }
             }
         }
@@ -701,6 +733,9 @@ internal fun ApplePlayerV17Screen(
             repeatMode = repeatMode,
             autoPlayNext = autoPlayNext,
             videoId = np.videoId,
+            lyricsOpen = showLyricsPanel,
+            initialControlsRow = initialControlsRow,
+            onToggleLyrics = { showLyricsPanel = !showLyricsPanel },
             onToggleShuffle = onToggleShuffle,
             onCycleRepeat = onCycleRepeat,
             onToggleAutoPlayNext = onToggleAutoPlayNext,
@@ -1118,15 +1153,15 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: Long): String? {
 /**
  * The v17 bottom row, the way the reference draws it.
  *
- * It has two states. The resting one is the page row - Lyrics, Audio Output,
- * Listening Together, Queue - and the second one, reached from Queue or from
- * Lyrics, is the playback row: Lyrics, Shuffle, Cycle, Autoplay, Queue. Every
- * control carries the state it is in (shuffle on, repeat mode, autoplay off)
- * and the Queue control goes back to the player controls when its panel is
- * already open, so the same button never leads to a dead end.
+ * Two states: the page row (Lyrics, Audio Output, Listening Together, Queue) and
+ * the playback row (Lyrics, Shuffle, Cycle, Autoplay, Queue), reached from Queue
+ * or from Lyrics. Every control draws the state it is in, the Queue control
+ * closes its own panel instead of leading to a dead end, and the Lyrics control
+ * is the one that opens the large lyrics page in place of the controls and comes
+ * back from it.
  *
- * The glyphs are [AppleSymbols]: this is an Apple surface, and the edition
- * keeps Apple's own icon for the action there (see `AGENTS.md`).
+ * The glyphs are [AppleSymbols]: this is an Apple surface, and the edition keeps
+ * Apple's own icon for the action there (see `AGENTS.md`).
  */
 @Composable
 private fun V17BottomBar(
@@ -1135,6 +1170,9 @@ private fun V17BottomBar(
     repeatMode: RepeatMode,
     autoPlayNext: Boolean,
     videoId: String?,
+    lyricsOpen: Boolean,
+    initialControlsRow: Boolean,
+    onToggleLyrics: () -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onToggleAutoPlayNext: (Boolean) -> Unit,
@@ -1146,7 +1184,7 @@ private fun V17BottomBar(
     val activeColor = MaterialTheme.colorScheme.primary
     val pillColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
     val clipboard = LocalClipboardManager.current
-    var controlsRow by remember { mutableStateOf(false) }
+    var controlsRow by remember(lyricsOpen) { mutableStateOf(initialControlsRow || lyricsOpen) }
     var outputOpen by remember { mutableStateOf(false) }
     var togetherOpen by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf(AudioOutput.selectedName) }
@@ -1176,7 +1214,14 @@ private fun V17BottomBar(
             horizontalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             if (!controlsRow) {
-                pill(AppleSymbols.Lyrics, Localization.get(language, "lyrics"), mutedColor, onOpenLyrics)
+                pill(
+                    AppleSymbols.Lyrics,
+                    Localization.get(language, "lyrics"),
+                    if (lyricsOpen) activeColor else mutedColor,
+                ) {
+                    onToggleLyrics()
+                    controlsRow = true
+                }
                 Box {
                     pill(AppleSymbols.AudioOutput, Localization.get(language, "audio_output"), mutedColor) { outputOpen = true }
                     DropdownMenu(expanded = outputOpen, onDismissRequest = { outputOpen = false }) {
@@ -1201,9 +1246,9 @@ private fun V17BottomBar(
                     }
                 }
                 Box {
-                    // Listening Together has no session service in the desktop
-                    // build: the entry that does exist is sharing the track, so
-                    // the menu copies its link instead of standing there inert.
+                    // No session service exists in the desktop build: the nearest
+                    // real action is sharing the track, so the menu copies its
+                    // link and says the session itself is missing.
                     pill(AppleSymbols.ListeningTogether, "Listening Together", mutedColor) { togetherOpen = true }
                     DropdownMenu(expanded = togetherOpen, onDismissRequest = { togetherOpen = false }) {
                         DropdownMenuItem(
@@ -1225,7 +1270,14 @@ private fun V17BottomBar(
                 }
                 pill(AppleSymbols.Queue, Localization.get(language, "queue"), mutedColor) { controlsRow = true }
             } else {
-                pill(AppleSymbols.Lyrics, Localization.get(language, "lyrics"), mutedColor) { controlsRow = false }
+                pill(
+                    AppleSymbols.Lyrics,
+                    Localization.get(language, "lyrics"),
+                    if (lyricsOpen) activeColor else mutedColor,
+                ) {
+                    if (lyricsOpen) onToggleLyrics()
+                    controlsRow = false
+                }
                 pill(
                     AppleSymbols.Shuffle,
                     Localization.get(language, "shuffle"),
@@ -1248,14 +1300,14 @@ private fun V17BottomBar(
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            if (controlsRow) {
-                when (repeatMode) {
+            when {
+                lyricsOpen -> Localization.get(language, "lyrics")
+                controlsRow -> when (repeatMode) {
                     RepeatMode.OFF -> "Repeat off"
                     RepeatMode.ALL -> "Repeat all"
                     RepeatMode.ONE -> "Repeat one"
                 }
-            } else {
-                selectedLabel
+                else -> selectedLabel
             },
             style = MaterialTheme.typography.labelSmall,
             color = mutedColor,
