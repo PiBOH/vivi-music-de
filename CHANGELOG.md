@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+### 🔧 Changed
+- [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
+
 ## [6.0.8.11_DE-1.56.0-beta] - 2026-11-05
 
 ### ✨ Added

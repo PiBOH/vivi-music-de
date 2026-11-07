@@ -194,7 +194,6 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     // have no other entry point than the mini player's own controls.
     "player" -> Screen.Player
     "queue" -> Screen.Queue
-    "radio" -> Screen.Charts
     "explore" -> Screen.NewReleases
     "library" -> Screen.Library
     "search" -> Screen.Search
@@ -1955,13 +1954,11 @@ fun WindowScope.App(
                         onOpenBrowse = { browseId, params -> navigate(Screen.Browse(browseId, params)) },
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                     )
-                    // BitChord's radio: the stations are its cards, and a card
-                    // opens the mood/genre page it stands for. The charts list
-                    // that used to live on this sidebar entry is gone.
-                    is Screen.Charts -> BitChordRadioScreen(
-                        language = language,
-                        onOpenBrowse = { browseId, params -> navigate(Screen.Browse(browseId, params)) },
-                    )
+                    // The radio screen is gone: BitChord has none, and nothing
+                    // navigates here any more. The branch stays so the `when`
+                    // over Screen keeps being exhaustive without an `else` that
+                    // would silently swallow a screen added later.
+                    is Screen.Charts -> Unit
                     is Screen.MoodGenres -> MoodGenresScreen(
                         language = language,
                         onBack = goBack,
@@ -3274,23 +3271,25 @@ fun Sidebar(
         label = "playlistsChevronRotation",
     )
 
-    val mainEntries = listOf(
-        SidebarEntry(Screen.Home, "home", Icons.Outlined.Home, Icons.Filled.Home),
-        SidebarEntry(Screen.NewReleases, "explore", Icons.Outlined.Explore, Icons.Filled.Explore),
-        SidebarEntry(Screen.Charts, "radio", Icons.Outlined.Radio, Icons.Filled.Radio),
-    )
+    // BitChord's sidebar, in that client's own order: Home, Explore, Library,
+    // Search, History, and then the playlists. Two entries are gone on purpose:
+    // the radio one, because that client has no radio screen at all, and the
+    // separate Songs and Albums ones, because one Library screen holds both the
+    // way BitChord's does. The list is remembered: it used to be built on every
+    // recomposition of the rail, which handed the rows a new list each time.
+    val mainEntries = remember {
+        listOf(
+            SidebarEntry(Screen.Home, "home", Icons.Outlined.Home, Icons.Filled.Home),
+            SidebarEntry(Screen.NewReleases, "explore", Icons.Outlined.Explore, Icons.Filled.Explore),
+            SidebarEntry(Screen.Library, "library", Icons.Outlined.LibraryMusic, Icons.Filled.LibraryMusic),
+            SidebarEntry(Screen.Search, "search", Icons.Outlined.Search, Icons.Filled.Search),
+            SidebarEntry(Screen.History, "history", Icons.Outlined.History, Icons.Filled.History),
+        )
+    }
 
-    val librarySubEntries = listOf(
-        SidebarEntry(Screen.History, "history", Icons.Outlined.History, Icons.Filled.History),
-        SidebarEntry(Screen.Library, "songs", Icons.Outlined.MusicNote, Icons.Filled.MusicNote),
-        SidebarEntry(Screen.LocalPlaylists, "albums", Icons.Outlined.LibraryMusic, Icons.Filled.LibraryMusic),
-        SidebarEntry(
-            Screen.ArtistItems("FEmusic_library_corpus_artists", null),
-            "artists",
-            Icons.Outlined.Group,
-            Icons.Filled.Group,
-        ),
-    )
+    // Nothing sits under a Library group any more: the merged Library screen is
+    // the entry above, and the group would only draw an empty header.
+    val librarySubEntries = remember { emptyList<SidebarEntry>() }
 
     // The collapse is ONE movement, and it is a REVEAL: the rail's content is
     // laid out at the width it is going to (72 or 230) and the box around it is
@@ -3443,8 +3442,10 @@ fun Sidebar(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Library Section Header (Collapsible)
-                if (!collapsed) {
+                // Library Section Header (Collapsible). With the merged Library
+                // screen and the flat entry list there is no sub-group to open,
+                // so neither the label nor its chevron is drawn.
+                if (!collapsed && librarySubEntries.isNotEmpty()) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -3470,7 +3471,7 @@ fun Sidebar(
                 }
 
                 AnimatedVisibility(
-                    visible = libraryExpanded || collapsed,
+                    visible = librarySubEntries.isNotEmpty() && (libraryExpanded || collapsed),
                     enter = Animations.sectionEnter(),
                     exit = Animations.sectionExit(),
                 ) {

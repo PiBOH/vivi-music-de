@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -95,9 +94,11 @@ internal fun AppleMusicV17MiniPlayer(
         // the composition's own width.
         val windowWidthDp = LocalWindowWidthDp.current
         val compact = if (windowWidthDp != null) windowWidthDp < 720f else maxWidth < 720.dp
+        // No width cap: the bar is the window's own bottom edge, and the 1200 dp
+        // maximum left the parent's colour uncovered on every wider window,
+        // which is the empty strip that showed to the right of the last control.
         Column(
             Modifier
-                .widthIn(max = 1200.dp)
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.surfaceContainerLow),
         ) {
