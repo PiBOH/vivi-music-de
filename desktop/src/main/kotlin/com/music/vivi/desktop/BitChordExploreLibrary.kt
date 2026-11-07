@@ -467,16 +467,11 @@ fun BitChordLibraryScreen(
             }
         }
 
-        if (!isLoggedIn) {
-            Text(
-                Localization.get(language, "library_login_prompt"),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 20.dp),
-            )
-            LoginContent(language = language, onLoggedIn = onLoggedIn)
-            return@Column
-        }
+        // No sign-in prompt on this screen: the Library draws this machine's own
+        // content (the playlists and the listening history above), and the Google
+        // sign-in lives in Settings -> Account. Signed out, the account tabs below
+        // have nothing to read, so they are not drawn at all.
+        if (!isLoggedIn) return@Column
 
         Row(
             Modifier.fillMaxWidth().padding(top = 18.dp),

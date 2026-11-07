@@ -236,13 +236,12 @@ internal fun ApplePlayerV17Screen(
                     ),
                 ),
         )
-        // The cover is asked for at a size a large window can actually show:
-        // the stored original when the provider has one (see
-        // `adjustedThumbnailUrl`), so the artwork is not a 120 px variant
-        // stretched over half the screen.
+        // The cover is asked for at the reference's player rung (1200 px, see
+        // `ArtworkPx`), the size BitChord loads for the same square, so the
+        // artwork is not a 120 px variant stretched over half the screen.
         val artworkUrl = adjustedThumbnailUrl(
             np.thumbnail,
-            requestedPx = 1200,
+            requestedPx = ArtworkPx.PLAYER,
             dataSaver = DesktopSettings.load().dataSaver,
         )
 
@@ -438,38 +437,44 @@ internal fun ApplePlayerV17Screen(
 
                 Spacer(Modifier.height(14.dp))
 
-                // BitChord prints the line being sung here, right above the
-                // scrubber, and opens the lyrics page from it. The line is read
-                // from the same cache and providers the lyrics screen uses, and
-                // only while the option is on: with it off the row is the page
-                // link it used to be and no fetch is made.
-                val inlineLine = rememberInlineLyricLine(np, positionMs)
-                Tooltip(Localization.get(language, "tooltip_lyrics")) {
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clip(MaterialTheme.shapes.small)
-                            .clickable(onClick = onOpenLyrics)
-                            .padding(vertical = 4.dp, horizontal = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Filled.MusicNote,
-                            contentDescription = null,
-                            tint = mutedColor,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            inlineLine ?: Localization.get(language, "lyrics"),
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = if (inlineLine != null) FontWeight.SemiBold else FontWeight.Normal,
-                            ),
-                            color = if (inlineLine != null) contentColor.copy(alpha = 0.9f) else mutedColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
+                val inlineLyricsOn = remember(settingsFileRevision()) {
+                    DesktopSettings.load().inlineLyrics
+                }
+                if (inlineLyricsOn) {
+                    // BitChord prints the line being sung here, right above the
+                    // scrubber, and opens the lyrics page from it. The line is read
+                    // from the same cache and providers the lyrics screen uses. With
+                    // the option off there is no row at all: nothing is fetched and
+                    // the space it occupied is gone, so the scrubber sits right
+                    // under the artist.
+                    val inlineLine = rememberInlineLyricLine(np, positionMs)
+                    Tooltip(Localization.get(language, "tooltip_lyrics")) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.small)
+                                .clickable(onClick = onOpenLyrics)
+                                .padding(vertical = 4.dp, horizontal = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Filled.MusicNote,
+                                contentDescription = null,
+                                tint = mutedColor,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                inlineLine ?: Localization.get(language, "lyrics"),
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = if (inlineLine != null) FontWeight.SemiBold else FontWeight.Normal,
+                                ),
+                                color = if (inlineLine != null) contentColor.copy(alpha = 0.9f) else mutedColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.weight(1f, fill = false),
+                            )
+                        }
                     }
                 }
 
@@ -480,6 +485,8 @@ internal fun ApplePlayerV17Screen(
                     onValueChange = { onSeek(it.toLong()) },
                     valueRange = 0f..duration.toFloat(),
                     style = sliderStyle,
+                    // Slim from edge to edge, the way the reference draws it.
+                    showThumb = false,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -568,6 +575,7 @@ internal fun ApplePlayerV17Screen(
                         onValueChange = onVolume,
                         valueRange = 0f..1f,
                         style = sliderStyle,
+                        showThumb = false,
                         modifier = Modifier.weight(1f),
                     )
                     Spacer(Modifier.width(8.dp))
@@ -587,7 +595,10 @@ internal fun ApplePlayerV17Screen(
                         Spacer(Modifier.width(6.dp))
                         Text(Localization.get(language, "lyrics"))
                     }
-                    TextButton(onClick = { if (wide) showQueuePanel = true else onOpenQueue() }) {
+                    TextButton(onClick = {
+                        showLyricsPanel = false
+                        if (wide) showQueuePanel = true else onOpenQueue()
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(6.dp))
                         Text(Localization.get(language, "queue"))
@@ -666,6 +677,40 @@ internal fun ApplePlayerV17Screen(
             )
         }
 
+        // The reference's action row, defined once and placed at the bottom of
+        // the artwork column by both layouts.
+        val bottomRow: @Composable (Modifier) -> Unit = { rowModifier ->
+            V17BottomBar(
+                language = language,
+                isShuffle = isShuffle,
+                repeatMode = repeatMode,
+                autoPlayNext = autoPlayNext,
+                videoId = np.videoId,
+                lyricsOpen = showLyricsPanel,
+                // Only the inline panel counts: under 820 dp the queue is the queue
+                // screen, and the row must not claim a panel that is not there.
+                queueOpen = wide && showQueuePanel,
+                onToggleLyrics = {
+                    showLyricsPanel = !showLyricsPanel
+                    // One panel at a time: the column is swapped, not stacked.
+                    if (showLyricsPanel) showQueuePanel = false
+                },
+                onToggleShuffle = onToggleShuffle,
+                onCycleRepeat = onCycleRepeat,
+                onToggleAutoPlayNext = onToggleAutoPlayNext,
+                onOpenQueue = {
+                    when {
+                        showQueuePanel -> showQueuePanel = false
+                        else -> {
+                            showLyricsPanel = false
+                            if (wide) showQueuePanel = true else onOpenQueue()
+                        }
+                    }
+                },
+                modifier = rowModifier,
+            )
+        }
+
         if (wide) {
             Row(
                 Modifier
@@ -674,7 +719,13 @@ internal fun ApplePlayerV17Screen(
                 horizontalArrangement = Arrangement.spacedBy(44.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                artwork()
+                Column(
+                    Modifier.fillMaxHeight().width(artSize),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { artwork() }
+                    bottomRow(Modifier.fillMaxWidth())
+                }
                 // Centred, not left-aligned: on a wide window the column keeps
                 // its own 620 dp and the rest of the cell used to stay empty, so
                 // the player read as a layout with a hole on the right.
@@ -725,37 +776,12 @@ internal fun ApplePlayerV17Screen(
                             info()
                         }
                     }
+                    Spacer(Modifier.height(10.dp))
+                    bottomRow(Modifier.fillMaxWidth())
                 }
             }
         }
 
-        // BitChord's bottom row: the lyrics page, the audio output the sound
-        // card is writing to, and the queue. It is the row of three controls
-        // that sat under the artwork in the reference.
-        V17BottomBar(
-            language = language,
-            isShuffle = isShuffle,
-            repeatMode = repeatMode,
-            autoPlayNext = autoPlayNext,
-            videoId = np.videoId,
-            lyricsOpen = showLyricsPanel,
-            initialControlsRow = initialControlsRow,
-            onToggleLyrics = { showLyricsPanel = !showLyricsPanel },
-            onToggleShuffle = onToggleShuffle,
-            onCycleRepeat = onCycleRepeat,
-            onToggleAutoPlayNext = onToggleAutoPlayNext,
-            onOpenLyrics = onOpenLyrics,
-            onOpenQueue = {
-                when {
-                    showQueuePanel -> showQueuePanel = false
-                    wide -> showQueuePanel = true
-                    else -> onOpenQueue()
-                }
-            },
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 10.dp),
-        )
 
         if (onBack != null) {
             Tooltip(Localization.get(language, "back")) {
@@ -1151,23 +1177,22 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: Long): String? {
 }
 
 /**
- * BitChord's bottom controls: the lyrics page, the audio output device (the
- * caption under it is the one the sound card is writing to) and the queue.
- * They act on the same controller as every other control of the player.
- */
-/**
- * The v17 bottom row, the way the reference draws it.
+ * The v17 action row, the way the reference draws it.
  *
- * Two states: the page row (Lyrics, Audio Output, Listening Together, Queue) and
- * the playback row (Lyrics, Shuffle, Cycle, Autoplay, Queue), reached from Queue
- * or from Lyrics. Every control draws the state it is in, the Queue control
- * closes its own panel instead of leading to a dead end, and the Lyrics control
- * is the one that opens the large lyrics page in place of the controls and comes
- * back from it.
+ * One row under the artwork: the lyrics page on the left, the queue on the
+ * right, and one capsule between them that carries two sets of controls. With
+ * the queue closed it is where the sound goes and who is in the session
+ * (Output, Listening Together); with the queue open it is how the queue plays
+ * (Shuffle, Repeat, Autoplay). The two glyphs on the ends are lit while the
+ * page they open is the one on screen, and the queue glyph closes its own
+ * panel instead of leading to a dead end.
  *
- * The glyphs are [AppleSymbols]: this is an Apple surface, and the edition keeps
- * Apple's own icon for the action there (see `AGENTS.md`).
+ * The glyphs are [BitChordIcons], the reference's own: same paths, same
+ * 2.2 px strokes, same round caps. The fills are the reference's too - a 44 dp
+ * circle and a capsule as tall as it, at 12 to 20 percent of the content
+ * colour, with the icon at full strength when its control is on.
  */
+
 @Composable
 private fun V17BottomBar(
     language: String,
@@ -1176,59 +1201,174 @@ private fun V17BottomBar(
     autoPlayNext: Boolean,
     videoId: String?,
     lyricsOpen: Boolean,
-    initialControlsRow: Boolean,
+    queueOpen: Boolean,
     onToggleLyrics: () -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
     onToggleAutoPlayNext: (Boolean) -> Unit,
-    onOpenLyrics: () -> Unit,
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val contentColor = MaterialTheme.colorScheme.onSurface
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
-    val activeColor = MaterialTheme.colorScheme.primary
-    val pillColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    val capsuleColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+    val highlightColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.14f)
+    val glyphHighlightColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f)
+    val dividerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.20f)
     val clipboard = LocalClipboardManager.current
-    var controlsRow by remember(lyricsOpen) { mutableStateOf(initialControlsRow || lyricsOpen) }
     var outputOpen by remember { mutableStateOf(false) }
     var togetherOpen by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf(AudioOutput.selectedName) }
     val devices = remember { AudioOutput.devices() }
-    val selectedLabel = devices.firstOrNull { it.name == selected }?.label
-        ?: if (selected.isBlank()) "System default" else selected
 
     @Composable
-    fun pill(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color, onClick: () -> Unit) {
+    fun bottomGlyph(
+        icon: androidx.compose.ui.graphics.vector.ImageVector,
+        label: String,
+        highlighted: Boolean,
+        onClick: () -> Unit,
+    ) {
         Tooltip(label) {
-            Surface(
-                onClick = onClick,
-                shape = CircleShape,
-                color = pillColor,
-                modifier = Modifier.size(40.dp),
+            Box(
+                Modifier
+                    .size(V17_ACTION_SIZE)
+                    .clip(CircleShape)
+                    .background(if (highlighted) glyphHighlightColor else Color.Transparent)
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(21.dp))
+                Icon(
+                    icon,
+                    contentDescription = label,
+                    tint = if (highlighted) contentColor else mutedColor,
+                    modifier = Modifier.size(26.dp),
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun pillSegment(
+        label: String,
+        highlighted: Boolean,
+        width: androidx.compose.ui.unit.Dp,
+        icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+        iconSize: androidx.compose.ui.unit.Dp = V17_PILL_ICON,
+        text: String? = null,
+        onClick: () -> Unit,
+    ) {
+        Tooltip(label) {
+            Box(
+                Modifier
+                    .width(width)
+                    .height(V17_ACTION_SIZE)
+                    .background(if (highlighted) highlightColor else Color.Transparent)
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (icon != null) {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        tint = if (highlighted) contentColor else mutedColor,
+                        modifier = Modifier.size(iconSize),
+                    )
+                } else if (text != null) {
+                    Text(
+                        text,
+                        color = if (highlighted) contentColor else mutedColor,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                 }
             }
         }
     }
 
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    @Composable
+    fun pill(content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
         Row(
+            modifier = Modifier
+                .height(V17_ACTION_SIZE)
+                .clip(CircleShape)
+                .background(capsuleColor),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
-            if (!controlsRow) {
-                pill(
-                    AppleSymbols.Lyrics,
-                    Localization.get(language, "lyrics"),
-                    if (lyricsOpen) activeColor else mutedColor,
-                ) {
-                    onToggleLyrics()
-                    controlsRow = true
+            content = content,
+        )
+    }
+
+    @Composable
+    fun pillDivider() {
+        Box(Modifier.width(1.dp).fillMaxHeight().background(dividerColor))
+    }
+
+    Row(
+        modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // The lyrics page, lit while it is the column being shown.
+        bottomGlyph(
+            BitChordIcons.LyricsQuote,
+            Localization.get(language, "lyrics"),
+            lyricsOpen,
+            onToggleLyrics,
+        )
+        // One capsule, two sets: where the sound goes and who is in it while the
+        // queue is closed, how the queue plays while it is open. The reference
+        // swaps the two in place instead of adding a second row.
+        Crossfade(targetState = queueOpen, animationSpec = tween(180), label = "v17BottomCapsule") { showQueueModes ->
+            if (showQueueModes) {
+                pill {
+                    pillSegment(
+                        Localization.get(language, "shuffle"),
+                        isShuffle,
+                        V17_PILL_TRIPLE,
+                        icon = BitChordIcons.Shuffle,
+                        onClick = onToggleShuffle,
+                    )
+                    pillDivider()
+                    pillSegment(
+                        when (repeatMode) {
+                            RepeatMode.OFF -> "Repeat off"
+                            RepeatMode.ALL -> "Repeat all"
+                            RepeatMode.ONE -> "Repeat one"
+                        },
+                        repeatMode != RepeatMode.OFF,
+                        V17_PILL_TRIPLE,
+                        icon = if (repeatMode == RepeatMode.ONE) null else BitChordIcons.Repeat,
+                        text = if (repeatMode == RepeatMode.ONE) "1" else null,
+                        onClick = onCycleRepeat,
+                    )
+                    pillDivider()
+                    pillSegment(
+                        Localization.get(language, "tooltip_autoplay"),
+                        autoPlayNext,
+                        V17_PILL_TRIPLE,
+                        icon = BitChordIcons.Infinity,
+                        onClick = { onToggleAutoPlayNext(!autoPlayNext) },
+                    )
                 }
+            } else {
                 Box {
-                    pill(AppleSymbols.AudioOutput, Localization.get(language, "audio_output"), mutedColor) { outputOpen = true }
+                    pill {
+                        pillSegment(
+                            Localization.get(language, "audio_output"),
+                            selected.isNotBlank(),
+                            V17_PILL_SEGMENT,
+                            icon = Icons.Filled.Headphones,
+                            iconSize = V17_PILL_HEADPHONES,
+                            onClick = { outputOpen = true },
+                        )
+                        pillDivider()
+                        pillSegment(
+                            "Listening Together",
+                            false,
+                            V17_PILL_SEGMENT,
+                            icon = Icons.Filled.Person,
+                            iconSize = V17_PILL_PARTY,
+                            onClick = { togetherOpen = true },
+                        )
+                    }
                     DropdownMenu(expanded = outputOpen, onDismissRequest = { outputOpen = false }) {
                         DropdownMenuItem(
                             text = { Text("System default") },
@@ -1249,12 +1389,9 @@ private fun V17BottomBar(
                             )
                         }
                     }
-                }
-                Box {
                     // No session service exists in the desktop build: the nearest
                     // real action is sharing the track, so the menu copies its
                     // link and says the session itself is missing.
-                    pill(AppleSymbols.ListeningTogether, "Listening Together", mutedColor) { togetherOpen = true }
                     DropdownMenu(expanded = togetherOpen, onDismissRequest = { togetherOpen = false }) {
                         DropdownMenuItem(
                             text = { Text("Copy track link") },
@@ -1273,55 +1410,18 @@ private fun V17BottomBar(
                         )
                     }
                 }
-                pill(AppleSymbols.Queue, Localization.get(language, "queue"), mutedColor) { controlsRow = true }
-            } else {
-                pill(
-                    AppleSymbols.Lyrics,
-                    Localization.get(language, "lyrics"),
-                    if (lyricsOpen) activeColor else mutedColor,
-                ) {
-                    if (lyricsOpen) onToggleLyrics()
-                    controlsRow = false
-                }
-                pill(
-                    AppleSymbols.Shuffle,
-                    Localization.get(language, "shuffle"),
-                    if (isShuffle) activeColor else mutedColor,
-                    onToggleShuffle,
-                )
-                pill(
-                    if (repeatMode == RepeatMode.ONE) AppleSymbols.RepeatOne else AppleSymbols.Repeat,
-                    Localization.get(language, "repeat"),
-                    if (repeatMode == RepeatMode.OFF) mutedColor else activeColor,
-                    onCycleRepeat,
-                )
-                pill(
-                    AppleSymbols.Autoplay,
-                    Localization.get(language, "tooltip_autoplay"),
-                    if (autoPlayNext) activeColor else mutedColor,
-                ) { onToggleAutoPlayNext(!autoPlayNext) }
-                pill(AppleSymbols.Queue, Localization.get(language, "queue"), mutedColor, onOpenQueue)
             }
         }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            when {
-                lyricsOpen -> Localization.get(language, "lyrics")
-                controlsRow -> when (repeatMode) {
-                    RepeatMode.OFF -> "Repeat off"
-                    RepeatMode.ALL -> "Repeat all"
-                    RepeatMode.ONE -> "Repeat one"
-                }
-                else -> selectedLabel
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = mutedColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        // The queue, lit while its panel is up: the same control opens and closes
+        // it, the way the reference's does.
+        bottomGlyph(
+            BitChordIcons.Queue,
+            Localization.get(language, "queue"),
+            queueOpen,
+            onOpenQueue,
         )
     }
 }
-
 /**
  * The three-dot menu's entries, as a block that the real menu mounts inside its
  * popup and the render check draws inline.
@@ -1397,3 +1497,11 @@ internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent
         onClick = onOpenQueue,
     )
 }
+
+/** The reference's action row: a 44 dp round control and a capsule as tall. */
+private val V17_ACTION_SIZE = 44.dp
+private val V17_PILL_SEGMENT = 64.dp
+private val V17_PILL_TRIPLE = 52.dp
+private val V17_PILL_ICON = 24.dp
+private val V17_PILL_HEADPHONES = 23.dp
+private val V17_PILL_PARTY = 22.dp

@@ -131,9 +131,9 @@ object DeveloperOptions {
      * to its default, exactly like Android's own "turn off developer options":
      * the screen is locked again (seven-tap to return) and, in the same write,
      * the JVM heap goes back to the launcher default (`0`), both verbose-log
-     * switches go off, the frame rate goes back to the display's own and the
-     * APK-download button is hidden again. A single update keeps the file
-     * consistent for the reader recomposition follows.
+     * switches go off, the frame rate goes back to its own default (unlocked),
+     * and the APK-download button is hidden again. A single update keeps the
+     * file consistent for the reader recomposition follows.
      */
     fun resetToDefaults() {
         _unlocked.value = false
@@ -143,7 +143,7 @@ object DeveloperOptions {
                 jvmHeapMb = 0,
                 detailedPlaybackLogging = false,
                 detailedStartupLogs = false,
-                unlockFrameRate = false,
+                unlockFrameRate = true,
                 showFps = false,
                 hideCustomApkDownloadButton = true,
             )

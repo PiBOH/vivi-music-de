@@ -21,9 +21,10 @@ import java.io.File
  *     ./gradlew :desktop:playerDesignRenderCheck
  *
  * The screen was a loose stack of ten single-row cards, so every choice looked
- * unrelated to the next one; it is now four blocks - the full player (its design,
- * then the background and the rotating artwork), the mini player (design,
- * background, pure black and the swipe), and the slider style on its own.
+ * unrelated to the next one; it is now three blocks - the full player (its
+ * design, then the background and the rotating artwork) and the mini player
+ * (design, background, pure black and the swipe). The slider style picker is
+ * gone: the player's track is slim everywhere.
  *
  * A claim about how a screen is divided into cards can only be checked against
  * pixels: no display is attached here, so `PlayerDesignScreen` is rendered into
@@ -33,13 +34,13 @@ import java.io.File
  * between two cards - so counting bands and classifying the gaps says whether
  * the rows really share a card or each one still has its own:
  *
- *  * four cards, holding 1 + 2 + 4 + 1 rows (the sensitivity slider is off, so
+ *  * three cards, holding 1 + 2 + 4 rows (the sensitivity slider is off, so
  *    its derived row is not drawn);
  *  * with the swipe on, the sensitivity is the mini player card's fifth row and
- *    not a card of its own: 9 rows and the seam sequence
- *    `[16, 3, 16, 3, 3, 3, 3, 16]`, which is what says which card took the row;
- *  * the chips draw the value they are given: two renders that differ only in
- *    `sliderStyle` must not produce the same image.
+ *    not a card of its own: 8 rows and the seam sequence
+ *    `[16, 3, 16, 3, 3, 3, 3]`, which is what says which card took the row;
+ *  * the removed slider style no longer reaches the screen: two renders that
+ *    differ only in `sliderStyle` must be the same image.
  *
  * PNGs are written under `.ignore/playerdesign/` so the layout can be looked at.
  */
@@ -61,11 +62,11 @@ object PlayerDesignRenderCheck {
 
         val bands = bands(slim)
         println("cards=${bands.cards} rows=${bands.rows} gaps=${bands.gaps}")
-        if (bands.cards != 4) {
-            failures += "expected 4 cards (player, player background + artwork, mini player, slider style), read ${bands.cards}"
+        if (bands.cards != 3) {
+            failures += "expected 3 cards (player, player background + artwork, mini player), read ${bands.cards}"
         }
-        if (bands.rows != 8) {
-            failures += "expected 8 rows in those cards (1 + 2 + 4 + 1), read ${bands.rows}"
+        if (bands.rows != 7) {
+            failures += "expected 7 rows in those cards (1 + 2 + 4), read ${bands.rows}"
         }
 
         // The swipe on: the sensitivity is a row of the mini player's card now,
@@ -76,29 +77,31 @@ object PlayerDesignRenderCheck {
         File(outDir, "player-design-swipe.png").writeBytes(swiped)
         val swipedBands = bands(swiped)
         println("swipe on: cards=${swipedBands.cards} rows=${swipedBands.rows} gaps=${swipedBands.gaps}")
-        if (swipedBands.rows != 9) {
-            failures += "with the swipe on the screen should hold 9 rows (1 + 2 + 5 + 1), read ${swipedBands.rows}"
+        if (swipedBands.rows != 8) {
+            failures += "with the swipe on the screen should hold 8 rows (1 + 2 + 5), read ${swipedBands.rows}"
         }
         // The file's own seam sequence is what says WHICH card the extra row
         // joined: 16 dp between cards (the settings cards' `--md-sys-spacing-4`)
         // and 3 dp between the rows of one card, so the third card holds five
         // rows. A sensitivity appended to the last card instead reads
         // `[16, 3, 16, 3, 3, 3, 16, 3]` and a card of its own puts a 16 among them.
-        val expectedGaps = listOf(16, 3, 16, 3, 3, 3, 3, 16)
+        val expectedGaps = listOf(16, 3, 16, 3, 3, 3, 3)
         if (swipedBands.gaps != expectedGaps) {
             failures += "with the swipe on the seams should read $expectedGaps (5 rows in the mini player card), read ${swipedBands.gaps}"
         }
+        // The picker is gone and the track is slim everywhere, so the stored key
+        // must no longer reach the drawing: the two renders are the same image.
         val wavy = render(sliderStyle = "wavy")
         File(outDir, "player-design-wavy.png").writeBytes(wavy)
         val differing = differingPixels(slim, wavy)
-        println("pixels that follow sliderStyle=$differing")
-        if (differing <= 0) {
-            failures += "changing sliderStyle changed nothing on screen: the chip is not drawing its value"
+        println("pixels that follow sliderStyle=$differing (0 means the key is inert)")
+        if (differing != 0) {
+            failures += "sliderStyle still changes the screen ($differing px): the removed picker still reaches the drawing"
         }
 
         if (failures.isEmpty()) {
             println()
-            println("OK: four cards, 8 rows, the swipe row joining the mini player card, and the chips drawing the value they are given")
+            println("OK: three cards, 7 rows, the swipe row joining the mini player card, and the removed slider style reaching nothing")
             return
         }
         println()

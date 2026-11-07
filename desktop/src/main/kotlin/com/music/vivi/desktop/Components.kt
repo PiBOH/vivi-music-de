@@ -228,9 +228,6 @@ fun playbackPendingSeekFraction(): Float? {
 /** Google CDN size parameter, e.g. `=w120-h120` / `=s120`. */
 private val googleCdnParam = Regex("=[wshd]\\d+")
 
-/** Google CDN size path segment, e.g. `w120-h120`. */
-private val googleCdnSizeSegment = Regex("w\\d+-h\\d+")
-
 /** Video id inside a YouTube thumbnail URL (`/vi/<id>/...` or `/vi_webp/<id>/...`). */
 private val ytThumbVideoId = Regex("/vi(?:_webp)?/([^/]+)/")
 
@@ -257,22 +254,14 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
     val isYtimg = url.contains("ytimg") || url.contains("youtube.com") || url.contains("/vi/")
     return when {
         isGoogleCdn -> {
-            if (!dataSaver && requestedPx >= BIG_ART_PX) {
-                // Big artwork asks for the stored original: every `=wNNN` is a
-                // RENDER of it, so asking for a number only ever downscales what
-                // the provider is willing to serve (and a provider that hands out
-                // a 120 px variant leaves nothing to upscale from). The original
-                // is what makes the full player and the Now Playing panel sharp.
-                url.split(googleCdnParam, limit = 2)[0].substringBefore("=s")
-            } else {
-                val w = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
-                val h = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(544)
-                if (googleCdnSizeSegment.containsMatchIn(url)) {
-                    url.replace(googleCdnSizeSegment, "w$w-h$h")
-                } else {
-                    url.split(googleCdnParam, limit = 2)[0] + "=w$w-h$h-p-l90-rj"
-                }
-            }
+            // BitChord's rule, at BitChord's sizes: the size hint the provider
+            // put in the URL is rewritten in place at the rung the surface draws
+            // at (see `ArtworkPx`), which keeps the crop and the palette around
+            // it. The full player is the ladder's 1200, so a cover that fills
+            // half the window is the 1200 px render instead of the 120 px
+            // variant the provider hands out when nobody asks.
+            val px = if (dataSaver) requestedPx.coerceAtMost(150) else requestedPx.coerceAtLeast(ArtworkPx.ROW)
+            url.artworkAt(px)
         }
 
         isYtimg -> {
@@ -976,11 +965,12 @@ enum class ViviSliderStyle(val key: String) {
 }
 
 /**
- * Custom slider with track styles:
- * - SLIM: thin straight track (default Material look)
- * - EXPRESSIVE: thick rounded capsule track (Apple Music / M3 Expressive look)
- * - SQUIGGLY: tight zig-zag bumps along the track
- * - WAVY: smooth sine wave along the track
+ * The player's slider: one thin straight track, the buffered segment behind the
+ * played part, and no circle at its head unless the caller asks for one.
+ *
+ * The wavy and squiggly tracks and the thick Expressive capsule were removed on
+ * the owner's instruction; [style] stays only so a stored `sliderStyle` key keeps
+ * resolving, and it no longer changes the drawing.
  */
 @Composable
 fun ViviSlider(
@@ -988,8 +978,11 @@ fun ViviSlider(
     onValueChange: (Float) -> Unit,
     valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
     onValueChangeFinished: (() -> Unit)? = null,
+    /** Kept for the stored key: the wavy and squiggly tracks are gone. */
     style: ViviSliderStyle = ViviSliderStyle.SLIM,
     enabled: Boolean = true,
+    /** The circle at the head of the line. BitChord's sliders have none. */
+    showThumb: Boolean = true,
     /** Optional buffered fraction (0..1) drawn as a fainter secondary segment
      *  behind the played portion (YouTube-style). Null hides it entirely;
      *  a full buffer (1f) draws it full-width behind the played fill, like a
@@ -1049,109 +1042,46 @@ fun ViviSlider(
         }
         Canvas(Modifier.fillMaxWidth().height(28.dp)) {
             val cy = size.height / 2f
-            val amp = when (style) {
-                ViviSliderStyle.SLIM, ViviSliderStyle.EXPRESSIVE -> 0f
-                ViviSliderStyle.SQUIGGLY -> 3.5f
-                ViviSliderStyle.WAVY -> 6f
-            }
-            val freq = when (style) {
-                ViviSliderStyle.SLIM, ViviSliderStyle.EXPRESSIVE -> 0f
-                ViviSliderStyle.SQUIGGLY -> 14f
-                ViviSliderStyle.WAVY -> 3f
-            }
-            fun waveY(x: Float): Float = cy + if (freq > 0f) {
-                kotlin.math.sin((x / size.width) * freq * 2f * kotlin.math.PI.toFloat()) * amp
-            } else 0f
-
-            fun buildPath(toX: Float): Path {
-                val p = Path()
-                p.moveTo(0f, waveY(0f))
-                var x = 0f
-                while (x <= toX) {
-                    p.lineTo(x, waveY(x))
-                    x += 4f
-                }
-                return p
-            }
-
-            if (style == ViviSliderStyle.SLIM) {
+            // One track, BitChord's: a 3 px line for the whole length, the
+            // buffered segment behind the played part and the played part on
+            // top. The squiggly zig-zag, the wavy sine and the thick Expressive
+            // capsule are gone, together with the circle that used to sit at the
+            // head of the line.
+            drawRoundRect(
+                color = trackColor,
+                topLeft = Offset(0f, cy - 1.5f),
+                size = androidx.compose.ui.geometry.Size(size.width, 3f),
+                cornerRadius = CornerRadius(1.5f, 1.5f),
+            )
+            if (showBuffer) {
                 drawRoundRect(
-                    color = trackColor,
+                    color = bufferColor,
                     topLeft = Offset(0f, cy - 1.5f),
-                    size = androidx.compose.ui.geometry.Size(size.width, 3f),
+                    size = androidx.compose.ui.geometry.Size(size.width * buffer, 3f),
                     cornerRadius = CornerRadius(1.5f, 1.5f),
                 )
-                if (showBuffer) {
-                    drawRoundRect(
-                        color = bufferColor,
-                        topLeft = Offset(0f, cy - 1.5f),
-                        size = androidx.compose.ui.geometry.Size(size.width * buffer, 3f),
-                        cornerRadius = CornerRadius(1.5f, 1.5f),
-                    )
-                }
-                drawRoundRect(
-                    color = primary,
-                    topLeft = Offset(0f, cy - 1.5f),
-                    size = androidx.compose.ui.geometry.Size(size.width * fraction, 3f),
-                    cornerRadius = CornerRadius(1.5f, 1.5f),
-                )
-            } else if (style == ViviSliderStyle.EXPRESSIVE) {
-                val h = 6.dp.toPx()
-                // Inactive track (thick capsule)
-                drawRoundRect(
-                    color = trackColor.copy(alpha = 0.6f),
-                    topLeft = Offset(0f, cy - h / 2f),
-                    size = androidx.compose.ui.geometry.Size(size.width, h),
-                    cornerRadius = CornerRadius(h / 2f, h / 2f),
-                )
-                // Buffered portion (fainter, behind the played fill)
-                if (showBuffer) {
-                    drawRoundRect(
-                        color = bufferColor,
-                        topLeft = Offset(0f, cy - h / 2f),
-                        size = androidx.compose.ui.geometry.Size(size.width * buffer, h),
-                        cornerRadius = CornerRadius(h / 2f, h / 2f),
-                    )
-                }
-                // Active track (thick capsule fill)
-                if (fraction > 0f) {
-                    drawRoundRect(
-                        color = primary,
-                        topLeft = Offset(0f, cy - h / 2f),
-                        size = androidx.compose.ui.geometry.Size(size.width * fraction, h),
-                        cornerRadius = CornerRadius(h / 2f, h / 2f),
-                    )
-                }
-            } else {
-                val stroke = Stroke(width = trackHeight.toPx(), cap = StrokeCap.Round)
-                drawPath(buildPath(size.width), color = trackColor, style = stroke)
-                if (showBuffer) {
-                    drawPath(buildPath(size.width * buffer), color = bufferColor, style = stroke)
-                }
-                if (fraction > 0.001f) {
-                    drawPath(buildPath(size.width * fraction), color = primary, style = stroke)
-                }
             }
-
-            // Thumb
-            val thumbX = size.width * fraction
-            val thumbRadius = when (style) {
-                ViviSliderStyle.SLIM -> 6f
-                ViviSliderStyle.EXPRESSIVE -> 7f
-                else -> 7f
+            drawRoundRect(
+                color = primary,
+                topLeft = Offset(0f, cy - 1.5f),
+                size = androidx.compose.ui.geometry.Size(size.width * fraction, 3f),
+                cornerRadius = CornerRadius(1.5f, 1.5f),
+            )
+            if (showThumb) {
+                val thumbRadius = 6f
+                drawCircle(
+                    color = thumbColor,
+                    radius = thumbRadius,
+                    center = Offset(size.width * fraction, cy),
+                )
+                // Subtle ring so the thumb is visible on any background.
+                drawCircle(
+                    color = PaletteInk.copy(alpha = 0.35f),
+                    radius = thumbRadius,
+                    center = Offset(size.width * fraction, cy),
+                    style = Stroke(width = 1.5f),
+                )
             }
-            drawCircle(
-                color = thumbColor,
-                radius = thumbRadius,
-                center = Offset(thumbX, waveY(thumbX)),
-            )
-            // Subtle ring so the thumb is visible on any background.
-            drawCircle(
-                color = PaletteInk.copy(alpha = 0.35f),
-                radius = thumbRadius,
-                center = Offset(thumbX, waveY(thumbX)),
-                style = Stroke(width = 1.5f),
-            )
         }
     }
 }

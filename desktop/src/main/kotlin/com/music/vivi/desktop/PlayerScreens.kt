@@ -53,6 +53,7 @@ import androidx.compose.material.icons.filled.Gradient
 import androidx.compose.material.icons.filled.LinearScale
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.RotateRight
+import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Swipe
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.Wallpaper
@@ -4367,6 +4368,10 @@ fun PlayerDesignScreen(
     // belongs to. Slider style stands alone at the end because it styles both
     // players and neither of them alone.
     val legacyPlayer = remember(settingsFileRevision()) { DesktopSettings.load().legacyApplePlayer }
+    // The v17 player's sung-line row, moved here from Developer options: the
+    // choice describes how that player looks, so it is offered beside its
+    // design instead of on a page about the program's internals.
+    var inlineLyrics by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().inlineLyrics) }
     Column(Modifier.fillMaxWidth()) {
         // No top padding of its own: `SettingsSubScreen` already puts the page's
         // 16 dp under the Back row, and the preview's heading stands there. The
@@ -4397,6 +4402,28 @@ fun PlayerDesignScreen(
                             .map { v -> v.key to playerDesignLabel(language, v) },
                         onSelect = { key -> onDesignChange(PlayerDesign.from(key)) },
                     ),
+                ),
+                // Only Apple Player v17 draws a line being sung above its
+                // scrubber, so the switch appears only while that design is the
+                // one in use; the other three layouts have no row to turn off.
+                M3SettingsItem(
+                    visible = design == PlayerDesign.APPLE_PLAYER_V17,
+                    icon = Icons.Filled.Subtitles,
+                    title = { Text(Localization.get(language, "lyrics")) },
+                    description = { Text(Localization.get(language, "tooltip_lyrics")) },
+                    trailing = {
+                        Switch(
+                            checked = inlineLyrics,
+                            onCheckedChange = { v ->
+                                inlineLyrics = v
+                                DesktopSettings.update { it.copy(inlineLyrics = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        inlineLyrics = !inlineLyrics
+                        DesktopSettings.update { it.copy(inlineLyrics = inlineLyrics) }
+                    },
                 ),
             ),
         )
@@ -4513,21 +4540,6 @@ fun PlayerDesignScreen(
                 ),
             ),
         )
-        Spacer(Modifier.height(16.dp))
-        M3SettingsGroup(
-            items = listOf(
-                M3SettingsItem(
-                    // `linear_scale` on the page: the seek bar this choice styles.
-                    icon = Icons.Filled.LinearScale,
-                    title = { Text(Localization.get(language, "slider_style")) },
-                    dropdown = M3Dropdown(
-                        value = sliderStyleLabel(language, sliderStyle),
-                        options = listOf("slim", "squiggly", "wavy").map { it to sliderStyleLabel(language, it) },
-                        onSelect = onSliderStyleChange,
-                    ),
-                ),
-            ),
-        )
     }
 }
 
@@ -4558,9 +4570,3 @@ private fun miniPlayerBackgroundLabelKey(style: MiniPlayerBackgroundStyle): Stri
     else -> "mini_player_bg_follow_theme"
 }
 
-/** The localized name of a [ViviSliderStyle] key. */
-internal fun sliderStyleLabel(language: String, style: String): String = when (style) {
-    "squiggly" -> Localization.get(language, "slider_squiggly")
-    "wavy" -> Localization.get(language, "slider_wavy")
-    else -> Localization.get(language, "slider_slim")
-}

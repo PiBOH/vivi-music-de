@@ -291,13 +291,16 @@ data class DesktopSyncState(
      */
     val jvmHeapMb: Int = 0,
     /**
-     * Developer options: paint without waiting for the display's refresh
+     * Paint without waiting for the display's refresh
      * (`skiko.vsync.enabled=false`). Skiko reads the property when it creates
      * its redrawer, so the choice applies at the next start; the frame rate can
      * then go above the monitor's own rate, at the cost of tearing and of the
      * GPU working without a brake.
+     *
+     * On by default, and applied whatever *Developer options* is set to: the
+     * switch only offers to turn it back off.
      */
-    val unlockFrameRate: Boolean = false,
+    val unlockFrameRate: Boolean = true,
     /**
      * Paint counter shown over the window while the frame rate is unlocked: the
      * measured figure is what tells an unlocked 120 Hz panel from a 60 Hz one.

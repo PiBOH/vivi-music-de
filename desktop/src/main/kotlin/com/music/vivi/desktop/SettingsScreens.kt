@@ -2287,7 +2287,6 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var showFps by remember(revision) { mutableStateOf(DesktopSettings.load().showFps) }
     var legacyPlayer by remember(revision) { mutableStateOf(DesktopSettings.load().legacyApplePlayer) }
     var statsForNerds by remember(revision) { mutableStateOf(DesktopSettings.load().statsForNerds) }
-    var inlineLyrics by remember(revision) { mutableStateOf(DesktopSettings.load().inlineLyrics) }
     var confirmDisable by remember { mutableStateOf(false) }
     // A heap size the user has just picked and that is waiting for the "restart
     // now or later" answer. The value is stored the moment it is picked either
@@ -2515,26 +2514,6 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     onClick = {
                         statsForNerds = !statsForNerds
                         DesktopSettings.update { it.copy(statsForNerds = statsForNerds) }
-                    },
-                ),
-                // Apple Music prints the line being sung right above the
-                // scrubber; off, that row is the plain link to the lyrics page.
-                M3SettingsItem(
-                    icon = Icons.Filled.MusicNote,
-                    title = { Text(Localization.get(language, "lyrics")) },
-                    description = { Text(Localization.get(language, "tooltip_lyrics")) },
-                    trailing = {
-                        Switch(
-                            checked = inlineLyrics,
-                            onCheckedChange = { v ->
-                                inlineLyrics = v
-                                DesktopSettings.update { it.copy(inlineLyrics = v) }
-                            },
-                        )
-                    },
-                    onClick = {
-                        inlineLyrics = !inlineLyrics
-                        DesktopSettings.update { it.copy(inlineLyrics = inlineLyrics) }
                     },
                 ),
             ),

@@ -501,23 +501,55 @@ object SettingsScreensRenderCheck {
             failures += "AI under Custom should join the key and the base URL and the two mode rows (2 seams), read ${seams(customCards)}"
         }
 
-        // Contributors: one card, a row per person (the bundled list is the
-        // fallback the frame draws); License is a document, so it is not read
-        // by the band scan at all.
+        // Contributors: a card per group, a row per person, the rows of a card
+        // joined by the 3 dp seam. The groups are the data file's own
+        // (`developer`, `contributor`, `supporter`), so the expected shape is
+        // read from the bundled list instead of being fixed here: a person or a
+        // group added to `contributorsde.json` moves the counts with it. What
+        // is asserted is the screen's rule, which is what had drifted - the
+        // check demanded one card for all six people while the screen has drawn
+        // one card per group since the supporters got their own section.
+        // License is a document, so it is not read by the band scan at all.
         if (contributorBands.isEmpty()) failures += "Contributors should list the bundled contributors, read nothing"
-        if (seams(contributorBands) != contributorBands.size - 1) {
-            failures += "Contributors should be one card (${contributorBands.size - 1} seams), read ${seams(contributorBands)}"
+        val bundledContributors = javaClass.getResourceAsStream("/contributorsde.json")
+            ?.use { it.readBytes() }
+            ?.decodeToString()
+            .orEmpty()
+        if (bundledContributors.isBlank()) {
+            failures += "Contributors should read the bundled contributorsde.json, read nothing"
+        } else {
+            val people = Regex("\"username\"\\s*:").findAll(bundledContributors).count()
+            val groups = Regex("\"group\"\\s*:\\s*\"([^\"]+)\"")
+                .findAll(bundledContributors)
+                .map { match ->
+                    when (match.groupValues[1].lowercase()) {
+                        "developer" -> "developer"
+                        "supporter", "community" -> "supporter"
+                        else -> "contributor"
+                    }
+                }
+                .distinct()
+                .count()
+            if (contributorBands.size != people) {
+                failures += "Contributors should read one row per person ($people), read ${contributorBands.size}"
+            }
+            // A card is a run of rows joined by the seam: rows minus seams is
+            // how many cards the frame drew.
+            val cardsRead = contributorBands.size - seams(contributorBands)
+            if (cardsRead != groups) {
+                failures += "Contributors should read one card per group ($groups), read $cardsRead"
+            }
         }
 
-        // Player & mini-player design: the design row alone, the background card
-        // of two, the mini player card of five (four with the swipe off) and the
-        // slider style.
+        // Player & mini-player design: the design row alone (the lyrics row
+        // joins it only while Apple Player v17 is picked), the background card of
+        // two and the mini player card of five (four with the swipe off).
         val designCards = cards(playerDesignBands)
         val designNoSwipeCards = cards(playerDesignNoSwipeBands)
-        if (designCards.size != 9) failures += "Player design should read nine rows, read ${designCards.size}"
+        if (designCards.size != 8) failures += "Player design should read eight rows, read ${designCards.size}"
         if (seams(designCards) != 5) failures += "Player design should join 2 + 5 rows (5 seams), read ${seams(designCards)}"
-        if (designNoSwipeCards.size != 8) {
-            failures += "Player design without the swipe should lose its sensitivity row (8), read ${designNoSwipeCards.size}"
+        if (designNoSwipeCards.size != 7) {
+            failures += "Player design without the swipe should lose its sensitivity row (7), read ${designNoSwipeCards.size}"
         }
 
         // About: the head card, then three cards of three, three and two rows
@@ -565,10 +597,10 @@ object SettingsScreensRenderCheck {
                     "Language is one card of every language under its field, " +
                     "Privacy is one card of two switches with its action under them, Lyrics is ${lyricsBands.size} rows in the page order, Debug & Developer Options is ${developerCards.size} rows, the four of Advanced in one card, AI is ${aiCards.size} rows in three cards with $aiSeams seams " +
                     "(${cards(aiDeepLBands).size} under DeepL, ${cards(aiCustomBands).size} under Custom), " +
-                    "Contributors is one card of ${contributorBands.size} rows, " +
+                    "Contributors is a card per group, ${contributorBands.size} rows in total, " +
                     "About is a head and three cards of 3 + 3 + 2 rows under its Community label, Desktop features one card of three switches, " +
                     "Canvas's source folds with its switch, App font joins its six rows, Display density is two cards, " +
-                    "and Player & mini-player design is five cards whose sensitivity row leaves with the swipe",
+                    "and Player & mini-player design is four cards whose sensitivity row leaves with the swipe",
             )
             return
         }

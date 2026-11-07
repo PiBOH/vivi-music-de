@@ -114,7 +114,7 @@ internal fun AppleMusicV17MiniPlayer(
                     Tooltip(Localization.get(language, "shuffle")) {
                         M3IconButton(onClick = onToggleShuffle) {
                             Icon(
-                                Icons.Filled.Shuffle,
+                                BitChordIcons.Shuffle,
                                 contentDescription = Localization.get(language, "shuffle"),
                                 tint = if (isShuffle) primaryColor else mutedColor,
                                 modifier = Modifier.size(18.dp),
@@ -164,7 +164,7 @@ internal fun AppleMusicV17MiniPlayer(
                     Tooltip(Localization.get(language, "repeat")) {
                         M3IconButton(onClick = onCycleRepeat) {
                             Icon(
-                                if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
+                                BitChordIcons.Repeat,
                                 contentDescription = Localization.get(language, "repeat"),
                                 tint = if (repeatMode == RepeatMode.OFF) mutedColor else primaryColor,
                                 modifier = Modifier.size(18.dp),
@@ -262,7 +262,7 @@ internal fun AppleMusicV17MiniPlayer(
                 Tooltip(Localization.get(language, "tooltip_lyrics")) {
                     M3IconButton(onClick = onOpenLyrics) {
                         Icon(
-                            Icons.AutoMirrored.Filled.Subject,
+                            BitChordIcons.LyricsQuote,
                             contentDescription = Localization.get(language, "tooltip_lyrics"),
                             tint = mutedColor,
                             modifier = Modifier.size(19.dp),
@@ -272,7 +272,7 @@ internal fun AppleMusicV17MiniPlayer(
                 Tooltip(Localization.get(language, "tooltip_queue")) {
                     M3IconButton(onClick = onOpenQueue) {
                         Icon(
-                            Icons.AutoMirrored.Filled.QueueMusic,
+                            BitChordIcons.Queue,
                             contentDescription = Localization.get(language, "tooltip_queue"),
                             tint = mutedColor,
                             modifier = Modifier.size(19.dp),

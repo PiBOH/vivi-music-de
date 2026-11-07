@@ -87,7 +87,7 @@ private fun configureRenderApi() {
  */
 private fun configureFrameRate() {
     if (System.getProperty("skiko.vsync.enabled") != null) return
-    val unlocked = runCatching { DesktopSettings.load().unlockFrameRate }.getOrDefault(false)
+    val unlocked = runCatching { DesktopSettings.load().unlockFrameRate }.getOrDefault(true)
     if (unlocked) System.setProperty("skiko.vsync.enabled", "false")
 }
 
