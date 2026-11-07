@@ -69,24 +69,45 @@ object ApplePlayerV17RenderCheck {
 
     private val outDir = File(".ignore/render-v17")
 
+    /** The artwork figures are read as numbers, so they keep the decimal point. */
+    private val EN = java.util.Locale.ROOT
+
+    /**
+     * Where the fixture's cover comes from: a real album sleeve at the 1200 px
+     * the provider serves for it (the record the fixture's own track belongs
+     * to). It is downloaded once and kept beside the renders so the check stays
+     * offline: what it proves is the pixels the app decodes and the size it
+     * paints them at, not a network fetch.
+     */
+    private val ARTWORK_SOURCE =
+        "https://is1-ssl.mzstatic.com/image/thumb/Music115/v4/c2/a2/38/" +
+            "c2a2384d-8c55-8180-53ed-88b152f82db4/743217932756.jpg/1200x1200bb.jpg"
+
+    /**
+     * The cover itself, as cover material and nothing else: a player screenshot
+     * here would paint a thumbnail of the interface into the artwork slot and
+     * the backdrop of every frame instead of a sleeve.
+     */
     private val artworkFile: File by lazy {
-        // The reference at its own resolution (1220x780), not a crop of it: a
-        // 600 px crop capped the source below the 2x the wide player needs and
-        // the log then reported the fixture's limit instead of the app's.
-        val candidates = listOf(
-            File("../.ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
-            File(".ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
-            File(".ignore/render-v17/cover.png"),
-        )
-        candidates.firstOrNull { it.exists() } ?: candidates.first()
+        File(".ignore/render-v17/cover-hires.jpg").also { file ->
+            check(file.isFile) {
+                "artwork fixture missing: ${file.absolutePath}; the fixture must be a real cover " +
+                    "at its native size ($ARTWORK_SOURCE), never a screenshot of the app"
+            }
+        }
     }
 
     private val artwork: String by lazy {
-        // A cover cropped out of the reference screenshot: the screenshot itself
-        // carries BitChord's own controls, and using it whole would paint those
-        // into the artwork and the backdrop of every frame.
         val file = artworkFile
         "file:///" + file.absolutePath.replace('\\', '/').replace(" ", "%20")
+    }
+
+    /** The 1220x780 player reference: the frame the renders are read against, never artwork. */
+    private val referenceFrame: File? by lazy {
+        listOf(
+            File("../.ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
+            File(".ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
+        ).firstOrNull { it.isFile }
     }
 
     /** Timed lines around the frame's 1:21, so one of them is the current one. */
@@ -289,6 +310,10 @@ object ApplePlayerV17RenderCheck {
      * largest variant the provider has.
      */
     private fun artworkReport(rows: List<NowPlaying>, failures: MutableList<String>) {
+        println("artwork source:  %s".format(ARTWORK_SOURCE))
+        println("artwork fixture: %s".format(artworkFile.absolutePath))
+        artworkIsACover(failures)
+
         // What the app actually asks the provider for: a mood page hands out a
         // 120 px crop, and both the card and the player rewrite it upwards, so
         // the loader never receives the small variant.
@@ -308,11 +333,13 @@ object ApplePlayerV17RenderCheck {
         val playerRatio = decoded.width.toFloat() / playerDraw
         println(
             "player artwork: %s -> %dx%d decoded, drawn at %d px (%.2fx)".format(
-                artwork, decoded.width, decoded.height, playerDraw, playerRatio,
+                EN,
+                ARTWORK_SOURCE, decoded.width, decoded.height, playerDraw, playerRatio,
             ),
         )
         println(
             "player artwork at the wide frame: %dx%d decoded, drawn at %d px (%.2fx)%s".format(
+                EN,
                 decoded.width,
                 decoded.height,
                 wideDraw,
@@ -342,9 +369,11 @@ object ApplePlayerV17RenderCheck {
         val cardRatio = cardDecoded.width.toFloat() / cardDraw
         println(
             "explore card artwork: %s -> %dx%d decoded, drawn at %d px (%.2fx)".format(
-                cardUrl, cardDecoded.width, cardDecoded.height, cardDraw, cardRatio,
+                EN,
+                ARTWORK_SOURCE, cardDecoded.width, cardDecoded.height, cardDraw, cardRatio,
             ),
         )
+        println("explore card request: %s".format(cardUrl))
         if (cardRatio < 2f) {
             println("explore card artwork: max available (%dx%d)".format(cardDecoded.width, cardDecoded.height))
         }
@@ -371,6 +400,43 @@ object ApplePlayerV17RenderCheck {
         if (inkPx < 1000) {
             failures += "the Explore card painted almost nothing ($inkPx px), so its artwork is missing"
         }
+    }
+
+    /**
+     * A frame is not artwork. The fixture is rejected when it is the player
+     * reference (byte for byte, or at the reference's own 1220x780), when it is
+     * not square like a sleeve, or when it is smaller than the 1024 px a cover
+     * has to reach for the slots to be sharp: every artwork line below reads it,
+     * so a wrong fixture would make the whole report meaningless.
+     */
+    private fun artworkIsACover(failures: MutableList<String>) {
+        val bytes = artworkFile.readBytes()
+        val decoded = org.jetbrains.skia.Image.makeFromEncoded(bytes)
+        val reference = referenceFrame
+        val sameAsReference = reference != null &&
+            reference.length() == bytes.size.toLong() &&
+            reference.readBytes().contentEquals(bytes)
+        val referenceSized = decoded.width == 1220 && decoded.height == 780
+        if (sameAsReference || referenceSized) {
+            failures += "the artwork fixture is the player reference (${decoded.width}x${decoded.height}), " +
+                "not a cover: every artwork slot would show a screenshot of the interface"
+        }
+        val aspect = decoded.width.toFloat() / decoded.height
+        if (aspect < 0.95f || aspect > 1.05f) {
+            failures += "the artwork fixture is not square (${decoded.width}x${decoded.height}), so it is not a cover"
+        }
+        if (decoded.width < 1024) {
+            failures += "the artwork fixture is only ${decoded.width} px wide: a cover at its native size has to reach 1024"
+        }
+        println(
+            "artwork fixture check: %dx%d, square %s, source of reference %s".format(
+                EN,
+                decoded.width,
+                decoded.height,
+                if (aspect in 0.95f..1.05f) "yes" else "no",
+                if (sameAsReference) "yes" else "no",
+            ),
+        )
     }
 
     private fun renderMenu(rows: List<NowPlaying>): BufferedImage {
@@ -452,8 +518,9 @@ object ApplePlayerV17RenderCheck {
         val ratio = source.width.toFloat() / drawn
         println(
             "%-18s artwork %s %dx%d decoded, drawn at %d px (%.2fx)%s".format(
+                EN,
                 name,
-                artwork,
+                ARTWORK_SOURCE,
                 source.width,
                 source.height,
                 drawn,
