@@ -301,6 +301,7 @@ dependencies there, or you break the desktop build.
   playlist entries/filter → `PlaylistPlay`, add-to-playlist → `PlaylistAdd`,
   right Now-Playing panel → `VerticalSplit`, library/albums → `LibraryMusic`,
   menu (⋯) → `MoreVert`, settings → `Settings`.
+- **Apple surfaces use Apple icons (mandatory):** wherever the edition draws an Apple Music surface (the v17 player, its tab row, the large lyrics view and the mini bar), the icon is the Apple one for that action, never a generic Material glyph: shuffle, repeat and repeat-one, autoplay/infinity, lyrics, queue, audio output and listening together all keep the Apple shape and weight. A Material icon is not a stand-in for an Apple control, and an Apple control is never drawn with the words of a Material icon name.
 - **Button emphasis: filled first, outlined last (always):** a clickable button
   is never an `OutlinedButton` (or `md-button--outlined` in the UI preview)
   unless the owner asks for one. Material 3 gives the hierarchy, and the DE
