@@ -83,6 +83,7 @@ sealed interface Screen {
  * drives the UI.
  */
 @Serializable
+@androidx.compose.runtime.Immutable
 data class NowPlaying(
     val videoId: String,
     val title: String,
