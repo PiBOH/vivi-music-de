@@ -11,6 +11,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -26,6 +33,11 @@ import java.io.File
  * Headless render of "Apple Player v17", run with
  *
  *     ./gradlew :desktop:applePlayerV17RenderCheck
+ *
+ * It writes `wide.png`, `wide-controls.png`, `wide-lyrics.png`, `wide-menu.png`,
+ * `wide-queue.png`, `wide-stats.png`, `medium.png`, `narrow.png`,
+ * `narrow-queue.png`, `minimum.png`, `minimum-queue.png`, `mini-wide.png` and
+ * `mini-compact.png` under `desktop/.ignore/render-v17/`.
  *
  * The player is a two-column layout over an artwork, and both halves have to be
  * seen to know they were drawn: the artwork and its statistics line on the left,
@@ -68,6 +80,22 @@ object ApplePlayerV17RenderCheck {
         "file:///" + file.absolutePath.replace('\\', '/').replace(" ", "%20")
     }
 
+    /** Timed lines around the frame's 1:21, so one of them is the current one. */
+    private val LYRICS = """
+        [00:00.00] Around the world, around the world
+        [00:12.00] Around the world, around the world
+        [00:24.00] Around the world, around the world
+        [00:36.00] Around the world, around the world
+        [00:48.00] Around the world, around the world
+        [01:00.00] Around the world, around the world
+        [01:12.00] Around the world, around the world
+        [01:20.00] La la la la la la la la la la
+        [01:26.00] La la la la la la la la la la
+        [01:32.00] La la la la la la la la la la
+        [01:38.00] La la la la la la la la la la
+        [01:44.00] Around the world, around the world
+    """.trimIndent()
+
     private fun track(index: Int = 0) = NowPlaying(
         videoId = "v17Render$index",
         title = if (index == 0) "Around the World (La La La La La)" else "Track $index of the queue",
@@ -92,6 +120,15 @@ object ApplePlayerV17RenderCheck {
         System.setProperty("user.home", tempHome.absolutePath)
 
         val rows = queue()
+        // The lyrics page is drawn from the app's own cache and parser, so the
+        // frame shows verses instead of a spinner: the lines are seeded through
+        // `LyricsCache.put`, the same entry point the providers write to.
+        LyricsCache.put(
+            rows[0].videoId,
+            LYRICS,
+            preferSynced = true,
+        )
+
         val failures = mutableListOf<String>()
 
         val wide = render(1280, 800, "wide.png", rows)
@@ -106,6 +143,7 @@ object ApplePlayerV17RenderCheck {
         // (Shuffle, Cycle, Autoplay, Queue) and the large lyrics page taking the
         // controls' place. Both are drawn from a state the screen takes as a
         // parameter, so the frames are the real composables and not a mock-up.
+        val wideMenu = renderMenu(rows)
         val wideControls = render(1280, 800, "wide-controls.png", rows, controlsRow = true)
         val wideLyrics = render(1280, 800, "wide-lyrics.png", rows, lyricsOpen = true)
 
@@ -142,6 +180,12 @@ object ApplePlayerV17RenderCheck {
         println("queue under 820 dp: %d pixels differ from the plain player".format(narrowQueueDiff))
         if (narrowQueueDiff != 0) {
             failures += "under 820 dp the queue replaced the column instead of leaving it to the queue screen ($narrowQueueDiff px)"
+        }
+
+        val menuDiff = differingPixels(wide, wideMenu)
+        println("three-dot menu: %d pixels differ from the frame without it".format(menuDiff))
+        if (menuDiff < 1500) {
+            failures += "the open menu drew almost nothing over the player ($menuDiff px)"
         }
 
         val controlsDiff = differingPixels(wide, wideControls)
@@ -219,6 +263,53 @@ object ApplePlayerV17RenderCheck {
             initialLyricsOpen = lyricsOpen,
             initialControlsRow = controlsRow,
         )
+    }
+
+    /**
+     * The player with the three-dot menu open. Its entries come from
+     * `V17PlayerMenuContent`, the block the real menu mounts inside its popup, so
+     * the picture cannot drift from the menu itself.
+     */
+    private fun renderMenu(rows: List<NowPlaying>): BufferedImage {
+        val scene = ImageComposeScene(1280, 800) {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+                Box(Modifier.fillMaxSize()) {
+                    playerComposable(rows, queueOpen = false)()
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(top = 196.dp, end = 30.dp)
+                            .widthIn(max = 260.dp),
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        tonalElevation = 3.dp,
+                        shadowElevation = 6.dp,
+                    ) {
+                        Column(Modifier.padding(vertical = 4.dp)) {
+                            V17PlayerMenuContent(
+                                language = "en",
+                                liked = true,
+                                onLike = {},
+                                onAddToPlaylist = {},
+                                onOpenLyrics = {},
+                                onOpenQueue = {},
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        val png = try {
+            repeat(5) {
+                scene.render()
+                Thread.sleep(120)
+            }
+            scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+        } finally {
+            scene.close()
+        }
+        File(outDir, "wide-menu.png").writeBytes(png)
+        return javax.imageio.ImageIO.read(png.inputStream())
     }
 
     private fun render(

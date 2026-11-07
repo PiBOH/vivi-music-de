@@ -401,16 +401,10 @@ internal fun ApplePlayerV17Screen(
                             }
                         }
                         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                            DropdownMenuItem(
-                                text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
-                                leadingIcon = {
-                                    Icon(
-                                        if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                        contentDescription = null,
-                                        tint = if (liked) MaterialTheme.colorScheme.error else Color.Unspecified,
-                                    )
-                                },
-                                onClick = {
+                            V17PlayerMenuContent(
+                                language = language,
+                                liked = liked,
+                                onLike = {
                                     menuOpen = false
                                     val next = !liked
                                     liked = next
@@ -423,33 +417,15 @@ internal fun ApplePlayerV17Screen(
                                     )
                                     scope.launch { YouTube.likeVideo(np.videoId, next) }
                                 },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(Localization.get(language, "add_to_playlist")) },
-                                leadingIcon = {
-                                    Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
-                                },
-                                onClick = {
+                                onAddToPlaylist = {
                                     menuOpen = false
                                     onAddToPlaylist()
                                 },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(Localization.get(language, "lyrics")) },
-                                leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.Subject, contentDescription = null)
-                                },
-                                onClick = {
+                                onOpenLyrics = {
                                     menuOpen = false
                                     onOpenLyrics()
                                 },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(Localization.get(language, "queue")) },
-                                leadingIcon = {
-                                    Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
-                                },
-                                onClick = {
+                                onOpenQueue = {
                                     menuOpen = false
                                     onOpenQueue()
                                 },
@@ -1315,4 +1291,55 @@ private fun V17BottomBar(
             overflow = TextOverflow.Ellipsis,
         )
     }
+}
+
+/**
+ * The three-dot menu's entries, as a block that the real menu mounts inside its
+ * popup and the render check draws inline.
+ *
+ * The harness that paints the player off-screen cannot paint a `DropdownMenu`
+ * (an `ImageComposeScene` draws no popups), so the entries live here once: the
+ * menu and the picture of the menu are then the same code and cannot drift.
+ */
+@Composable
+internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent(
+    language: String,
+    liked: Boolean,
+    onLike: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onOpenLyrics: () -> Unit,
+    onOpenQueue: () -> Unit,
+) {
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
+        leadingIcon = {
+            Icon(
+                if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = null,
+                tint = if (liked) MaterialTheme.colorScheme.error else Color.Unspecified,
+            )
+        },
+        onClick = onLike,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "add_to_playlist")) },
+        leadingIcon = {
+            Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
+        },
+        onClick = onAddToPlaylist,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "lyrics")) },
+        leadingIcon = {
+            Icon(AppleSymbols.Lyrics, contentDescription = null)
+        },
+        onClick = onOpenLyrics,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "queue")) },
+        leadingIcon = {
+            Icon(AppleSymbols.Queue, contentDescription = null)
+        },
+        onClick = onOpenQueue,
+    )
 }
