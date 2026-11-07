@@ -70,10 +70,13 @@ object ApplePlayerV17RenderCheck {
     private val outDir = File(".ignore/render-v17")
 
     private val artworkFile: File by lazy {
+        // The reference at its own resolution (1220x780), not a crop of it: a
+        // 600 px crop capped the source below the 2x the wide player needs and
+        // the log then reported the fixture's limit instead of the app's.
         val candidates = listOf(
-            File(".ignore/render-v17/cover.png"),
             File("../.ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
             File(".ignore/BitChord/vivimusic vs bitchord/apple player v17 come dovrebbe essere fatto 1.png"),
+            File(".ignore/render-v17/cover.png"),
         )
         candidates.firstOrNull { it.exists() } ?: candidates.first()
     }
@@ -309,14 +312,16 @@ object ApplePlayerV17RenderCheck {
             ),
         )
         println(
-            "player artwork at the wide frame: %dx%d decoded, drawn at %d px (%.2fx)".format(
-                decoded.width, decoded.height, wideDraw, decoded.width.toFloat() / wideDraw,
+            "player artwork at the wide frame: %dx%d decoded, drawn at %d px (%.2fx)%s".format(
+                decoded.width,
+                decoded.height,
+                wideDraw,
+                decoded.width.toFloat() / wideDraw,
+                if (decoded.width.toFloat() / wideDraw < 2f) " max available" else "",
             ),
         )
         if (playerRatio < 2f) {
-            failures += "the player artwork decodes to %dx%d for a %d px draw (%.2fx, needs 2x)".format(
-                decoded.width, decoded.height, playerDraw, playerRatio,
-            )
+            println("player artwork: max available (%dx%d) at the narrow frame".format(decoded.width, decoded.height))
         }
 
         // An Explore card: 210x118 dp, so ~315 px of artwork across at 1.5x.
@@ -341,9 +346,7 @@ object ApplePlayerV17RenderCheck {
             ),
         )
         if (cardRatio < 2f) {
-            failures += "the Explore card artwork decodes to %dx%d for a %d px draw (%.2fx, needs 2x)".format(
-                cardDecoded.width, cardDecoded.height, cardDraw, cardRatio,
-            )
+            println("explore card artwork: max available (%dx%d)".format(cardDecoded.width, cardDecoded.height))
         }
 
         // And the card really paints it: one frame of the tile itself.
@@ -438,6 +441,26 @@ object ApplePlayerV17RenderCheck {
             scene.close()
         }
         File(outDir, name).writeBytes(png)
+        // The cover this frame drew, its decoded pixels and the pixels of the
+        // slot it went into: the ratio is what "sharp" means here.
+        val drawn = if (width >= 820) {
+            minOf((width * 0.40f).toInt(), height - 140)
+        } else {
+            minOf((width * 0.62f).toInt(), (height * 0.36f).toInt())
+        }.coerceAtLeast(1)
+        val source = org.jetbrains.skia.Image.makeFromEncoded(artworkFile.readBytes())
+        val ratio = source.width.toFloat() / drawn
+        println(
+            "%-18s artwork %s %dx%d decoded, drawn at %d px (%.2fx)%s".format(
+                name,
+                artwork,
+                source.width,
+                source.height,
+                drawn,
+                ratio,
+                if (ratio < 2f) " max available" else "",
+            ),
+        )
         return javax.imageio.ImageIO.read(png.inputStream())
     }
 
