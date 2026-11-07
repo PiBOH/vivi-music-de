@@ -1,4 +1,4 @@
-package com.music.vivi.desktop
+﻿package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -64,6 +64,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -118,6 +120,9 @@ internal fun ApplePlayerV17Screen(
     onVolume: (Float) -> Unit,
     onToggleShuffle: () -> Unit,
     onCycleRepeat: () -> Unit,
+    /** The window-level "Autoplay next track" setting (Settings -> Player). */
+    autoPlayNext: Boolean = true,
+    onToggleAutoPlayNext: (Boolean) -> Unit = {},
     language: String,
     onOpenLyrics: () -> Unit,
     onOpenQueue: () -> Unit,
@@ -379,7 +384,7 @@ internal fun ApplePlayerV17Screen(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        Icons.Filled.MoreVert,
+                                        AppleSymbols.More,
                                         contentDescription = Localization.get(language, "more"),
                                         tint = contentColor,
                                         modifier = Modifier.size(20.dp),
@@ -692,8 +697,21 @@ internal fun ApplePlayerV17Screen(
         // that sat under the artwork in the reference.
         V17BottomBar(
             language = language,
+            isShuffle = isShuffle,
+            repeatMode = repeatMode,
+            autoPlayNext = autoPlayNext,
+            videoId = np.videoId,
+            onToggleShuffle = onToggleShuffle,
+            onCycleRepeat = onCycleRepeat,
+            onToggleAutoPlayNext = onToggleAutoPlayNext,
             onOpenLyrics = onOpenLyrics,
-            onOpenQueue = { if (wide) showQueuePanel = true else onOpenQueue() },
+            onOpenQueue = {
+                when {
+                    showQueuePanel -> showQueuePanel = false
+                    wide -> showQueuePanel = true
+                    else -> onOpenQueue()
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 10.dp),
@@ -1097,115 +1115,148 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: Long): String? {
  * caption under it is the one the sound card is writing to) and the queue.
  * They act on the same controller as every other control of the player.
  */
+/**
+ * The v17 bottom row, the way the reference draws it.
+ *
+ * It has two states. The resting one is the page row - Lyrics, Audio Output,
+ * Listening Together, Queue - and the second one, reached from Queue or from
+ * Lyrics, is the playback row: Lyrics, Shuffle, Cycle, Autoplay, Queue. Every
+ * control carries the state it is in (shuffle on, repeat mode, autoplay off)
+ * and the Queue control goes back to the player controls when its panel is
+ * already open, so the same button never leads to a dead end.
+ *
+ * The glyphs are [AppleSymbols]: this is an Apple surface, and the edition
+ * keeps Apple's own icon for the action there (see `AGENTS.md`).
+ */
 @Composable
 private fun V17BottomBar(
     language: String,
+    isShuffle: Boolean,
+    repeatMode: RepeatMode,
+    autoPlayNext: Boolean,
+    videoId: String?,
+    onToggleShuffle: () -> Unit,
+    onCycleRepeat: () -> Unit,
+    onToggleAutoPlayNext: (Boolean) -> Unit,
     onOpenLyrics: () -> Unit,
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val activeColor = MaterialTheme.colorScheme.primary
     val pillColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.72f)
+    val clipboard = LocalClipboardManager.current
+    var controlsRow by remember { mutableStateOf(false) }
     var outputOpen by remember { mutableStateOf(false) }
+    var togetherOpen by remember { mutableStateOf(false) }
     var selected by remember { mutableStateOf(AudioOutput.selectedName) }
     val devices = remember { AudioOutput.devices() }
     val selectedLabel = devices.firstOrNull { it.name == selected }?.label
         ?: if (selected.isBlank()) "System default" else selected
 
+    @Composable
+    fun pill(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, tint: Color, onClick: () -> Unit) {
+        Tooltip(label) {
+            Surface(
+                onClick = onClick,
+                shape = CircleShape,
+                color = pillColor,
+                modifier = Modifier.size(40.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = label, tint = tint, modifier = Modifier.size(21.dp))
+                }
+            }
+        }
+    }
+
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(22.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
         ) {
-            Tooltip(Localization.get(language, "lyrics")) {
-                Surface(
-                    onClick = onOpenLyrics,
-                    shape = CircleShape,
-                    color = pillColor,
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Subject,
-                            contentDescription = Localization.get(language, "lyrics"),
-                            tint = mutedColor,
-                            modifier = Modifier.size(20.dp),
+            if (!controlsRow) {
+                pill(AppleSymbols.Lyrics, Localization.get(language, "lyrics"), mutedColor, onOpenLyrics)
+                Box {
+                    pill(AppleSymbols.AudioOutput, Localization.get(language, "audio_output"), mutedColor) { outputOpen = true }
+                    DropdownMenu(expanded = outputOpen, onDismissRequest = { outputOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("System default") },
+                            onClick = {
+                                AudioOutput.apply("")
+                                selected = ""
+                                outputOpen = false
+                            },
                         )
-                    }
-                }
-            }
-            Box {
-                Tooltip(Localization.get(language, "audio_output")) {
-                    Surface(
-                        onClick = { outputOpen = true },
-                        shape = CircleShape,
-                        color = pillColor,
-                        modifier = Modifier
-                            .width(104.dp)
-                            .height(40.dp),
-                    ) {
-                        Row(
-                            Modifier.fillMaxSize(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceEvenly,
-                        ) {
-                            Icon(
-                                Icons.Filled.Headphones,
-                                contentDescription = null,
-                                tint = mutedColor,
-                                modifier = Modifier.size(19.dp),
-                            )
-                            Icon(
-                                Icons.Filled.Person,
-                                contentDescription = null,
-                                tint = mutedColor,
-                                modifier = Modifier.size(19.dp),
+                        devices.forEach { device ->
+                            DropdownMenuItem(
+                                text = { Text(device.label) },
+                                onClick = {
+                                    AudioOutput.apply(device.name)
+                                    selected = device.name
+                                    outputOpen = false
+                                },
                             )
                         }
                     }
                 }
-                DropdownMenu(expanded = outputOpen, onDismissRequest = { outputOpen = false }) {
-                    DropdownMenuItem(
-                        text = { Text("System default") },
-                        onClick = {
-                            AudioOutput.apply("")
-                            selected = ""
-                            outputOpen = false
-                        },
-                    )
-                    devices.forEach { device ->
+                Box {
+                    // Listening Together has no session service in the desktop
+                    // build: the entry that does exist is sharing the track, so
+                    // the menu copies its link instead of standing there inert.
+                    pill(AppleSymbols.ListeningTogether, "Listening Together", mutedColor) { togetherOpen = true }
+                    DropdownMenu(expanded = togetherOpen, onDismissRequest = { togetherOpen = false }) {
                         DropdownMenuItem(
-                            text = { Text(device.label) },
+                            text = { Text("Copy track link") },
+                            enabled = !videoId.isNullOrBlank(),
                             onClick = {
-                                AudioOutput.apply(device.name)
-                                selected = device.name
-                                outputOpen = false
+                                togetherOpen = false
+                                videoId?.let {
+                                    clipboard.setText(AnnotatedString("https://music.youtube.com/watch?v=$it"))
+                                }
                             },
                         )
-                    }
-                }
-            }
-            Tooltip(Localization.get(language, "queue")) {
-                Surface(
-                    onClick = onOpenQueue,
-                    shape = CircleShape,
-                    color = pillColor,
-                    modifier = Modifier.size(40.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.QueueMusic,
-                            contentDescription = Localization.get(language, "queue"),
-                            tint = mutedColor,
-                            modifier = Modifier.size(20.dp),
+                        DropdownMenuItem(
+                            text = { Text("Listening Together needs a session") },
+                            enabled = false,
+                            onClick = {},
                         )
                     }
                 }
+                pill(AppleSymbols.Queue, Localization.get(language, "queue"), mutedColor) { controlsRow = true }
+            } else {
+                pill(AppleSymbols.Lyrics, Localization.get(language, "lyrics"), mutedColor) { controlsRow = false }
+                pill(
+                    AppleSymbols.Shuffle,
+                    Localization.get(language, "shuffle"),
+                    if (isShuffle) activeColor else mutedColor,
+                    onToggleShuffle,
+                )
+                pill(
+                    if (repeatMode == RepeatMode.ONE) AppleSymbols.RepeatOne else AppleSymbols.Repeat,
+                    Localization.get(language, "repeat"),
+                    if (repeatMode == RepeatMode.OFF) mutedColor else activeColor,
+                    onCycleRepeat,
+                )
+                pill(
+                    AppleSymbols.Autoplay,
+                    Localization.get(language, "tooltip_autoplay"),
+                    if (autoPlayNext) activeColor else mutedColor,
+                ) { onToggleAutoPlayNext(!autoPlayNext) }
+                pill(AppleSymbols.Queue, Localization.get(language, "queue"), mutedColor, onOpenQueue)
             }
         }
         Spacer(Modifier.height(4.dp))
         Text(
-            selectedLabel,
+            if (controlsRow) {
+                when (repeatMode) {
+                    RepeatMode.OFF -> "Repeat off"
+                    RepeatMode.ALL -> "Repeat all"
+                    RepeatMode.ONE -> "Repeat one"
+                }
+            } else {
+                selectedLabel
+            },
             style = MaterialTheme.typography.labelSmall,
             color = mutedColor,
             maxLines = 1,

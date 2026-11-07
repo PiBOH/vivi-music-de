@@ -1,4 +1,4 @@
-package com.music.vivi.desktop
+﻿package com.music.vivi.desktop
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
@@ -328,6 +328,8 @@ fun PlayerScreen(
                     onVolume = onVolume,
                     onToggleShuffle = onToggleShuffle,
                     onCycleRepeat = onCycleRepeat,
+                    autoPlayNext = autoPlayNext,
+                    onToggleAutoPlayNext = onToggleAutoPlayNext,
                     language = language,
                     onOpenLyrics = onOpenLyrics,
                     onOpenQueue = onOpenQueue,
