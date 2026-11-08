@@ -164,6 +164,14 @@ def one_table_per_file(languages):
 # Values come from either strings.xml (base ViMusic strings) or vivi_strings.xml
 # (VIVI-specific strings).
 MAPPING = {
+    # The Apple Music v17 player's right column, added with the panel itself
+    # (1.56.0-beta5): the caption above the title and two of the rows of its
+    # song menu are Android resources, so their wording comes from the phone's
+    # translations and the languages that resource does not reach are filled by
+    # desktop_extra_translations_121.
+    "playing_from": "playing_from",
+    "start_radio": "start_radio",
+    "sleep_timer": "sleep_timer",
     # strings.xml
     "search": "search",
     "search_button": "search",
@@ -1327,6 +1335,41 @@ ENGLISH = {
     "spotify_import_done": "Done: %d of %d tracks matched",
     "spotify_no_sources": "No playlists found on this account",
     "more": "More",
+    # The v17 player's panel (1.56.0-beta5). `dislike` has no Android resource
+    # of its own, so its English wording and its translations both live here and
+    # in desktop_extra_translations_121; the other three are mapped above.
+    "playing_from": "Playing from",
+    "dislike": "Dislike",
+    "start_radio": "Start radio",
+    "sleep_timer": "Sleep timer",
+    # Keys batch 109 translates for every language but whose English wording had
+    # gone from this table: the guard below refuses to write a table that would
+    # print another language in an English build, and these five stopped the
+    # whole generator. Their wording is the one the shipped en table reads.
+    "album": "Album",
+    "artist": "Artist",
+    "explore": "Explore",
+    "playlist": "Playlist",
+    "search_no_results": "No results",
+    # The beta4 round's own rows (statistics, the FPS counter, the legacy
+    # Apple player) reached the tables without the source wording; batch 122
+    # carries what they shipped with, so the guard can write them again.
+    "legacy_apple_player": "Vivi Music 1.55",
+    "legacy_apple_player_desc": "Shows the previous Apple player as an option in Player design.",
+    "mini_player_apple_music_v17": "Apple Music v17",
+    "player_design_apple_player_v17": "Apple Player v17",
+    "show_fps_counter": "Show frame rate",
+    "show_fps_counter_desc": "Draw the measured frame rate in the window's corner.",
+    "stats_bitrate": "Bitrate",
+    "stats_codec": "Codec",
+    "stats_device_buffer": "Device buffer",
+    "stats_for_nerds": "Stats for nerds",
+    "stats_for_nerds_desc": "Shows the codec, bitrate and audio buffer of the track that is playing.",
+    "stats_output": "Output",
+    "stats_pcm_queue": "PCM queue",
+    "stats_position": "Position",
+    "unlock_frame_rate": "Unlock frame rate",
+    "unlock_frame_rate_desc": "Paints above the monitor's own rate. Applied at the next start.",
     "like": "Like",
     "unlike": "Unlike",
     "add_to_library": "Add to library",
@@ -2138,12 +2181,14 @@ from desktop_extra_translations_116 import EXTRA_TRANSLATIONS as _EXTRA_116
 from desktop_extra_translations_117 import EXTRA_TRANSLATIONS as _EXTRA_117
 from desktop_extra_translations_118 import EXTRA_TRANSLATIONS as _EXTRA_118
 from desktop_extra_translations_119 import EXTRA_TRANSLATIONS as _EXTRA_119
+from desktop_extra_translations_121 import EXTRA_TRANSLATIONS as _EXTRA_121
+from desktop_extra_translations_122 import EXTRA_TRANSLATIONS as _EXTRA_122
 
 # Merge per key (deep): the same key can appear in several extra files with
 # different language subsets (e.g. batch 30 defines "comments" for all
 # languages, batch 31 adds only tr). A plain dict.update() would REPLACE the
 # whole language map with the last file's subset, dropping translations.
-for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97, _EXTRA_98, _EXTRA_99, _EXTRA_100, _EXTRA_101, _EXTRA_102, _EXTRA_103, _EXTRA_104, _EXTRA_105, _EXTRA_106, _EXTRA_107, _EXTRA_108, _EXTRA_109, _EXTRA_110, _EXTRA_111, _EXTRA_112, _EXTRA_113, _EXTRA_114, _EXTRA_115, _EXTRA_116, _EXTRA_117, _EXTRA_118, _EXTRA_119):
+for _extra in (_EXTRA_1, _EXTRA_2, _EXTRA_3, _EXTRA_4, _EXTRA_5, _EXTRA_6, _EXTRA_7, _EXTRA_8, _EXTRA_9, _EXTRA_10, _EXTRA_11, _EXTRA_12, _EXTRA_13, _EXTRA_14, _EXTRA_15, _EXTRA_16, _EXTRA_17, _EXTRA_18, _EXTRA_19, _EXTRA_20, _EXTRA_21, _EXTRA_22, _EXTRA_23, _EXTRA_24, _EXTRA_25, _EXTRA_26, _EXTRA_27, _EXTRA_28, _EXTRA_29, _EXTRA_30, _EXTRA_31, _EXTRA_32, _EXTRA_33, _EXTRA_34, _EXTRA_35, _EXTRA_36, _EXTRA_37, _EXTRA_38, _EXTRA_39, _EXTRA_40, _EXTRA_41, _EXTRA_42, _EXTRA_43, _EXTRA_44, _EXTRA_45, _EXTRA_46, _EXTRA_47, _EXTRA_48, _EXTRA_49, _EXTRA_50, _EXTRA_51, _EXTRA_52, _EXTRA_53, _EXTRA_54, _EXTRA_55, _EXTRA_56, _EXTRA_57, _EXTRA_58, _EXTRA_59, _EXTRA_60, _EXTRA_61, _EXTRA_62, _EXTRA_63, _EXTRA_64, _EXTRA_65, _EXTRA_66, _EXTRA_67, _EXTRA_68, _EXTRA_69, _EXTRA_70, _EXTRA_71, _EXTRA_72, _EXTRA_73, _EXTRA_74, _EXTRA_75, _EXTRA_76, _EXTRA_77, _EXTRA_78, _EXTRA_79, _EXTRA_80, _EXTRA_81, _EXTRA_82, _EXTRA_83, _EXTRA_84, _EXTRA_85, _EXTRA_86, _EXTRA_87, _EXTRA_88, _EXTRA_89, _EXTRA_90, _EXTRA_91, _EXTRA_92, _EXTRA_93,    _EXTRA_94, _EXTRA_95, _EXTRA_96, _EXTRA_97, _EXTRA_98, _EXTRA_99, _EXTRA_100, _EXTRA_101, _EXTRA_102, _EXTRA_103, _EXTRA_104, _EXTRA_105, _EXTRA_106, _EXTRA_107, _EXTRA_108, _EXTRA_109, _EXTRA_110, _EXTRA_111, _EXTRA_112, _EXTRA_113, _EXTRA_114, _EXTRA_115, _EXTRA_116, _EXTRA_117, _EXTRA_118, _EXTRA_119, _EXTRA_121, _EXTRA_122):
     for _key, _langmap in _extra.items():
         TRANSLATIONS.setdefault(_key, {}).update(_langmap)
 

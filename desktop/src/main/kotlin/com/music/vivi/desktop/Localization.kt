@@ -51,6 +51,7 @@ object Localization {
         "km" to { strings_km() },
         "ko" to { strings_ko() },
         "lt" to { strings_lt() },
+        "lv" to { strings_lv() },
         "ml" to { strings_ml() },
         "ms" to { strings_ms() },
         "nb" to { strings_nb() },

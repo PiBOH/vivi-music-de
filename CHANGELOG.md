@@ -8,6 +8,8 @@
 - [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
 - [DE] **The queue remembers where it started.**
 
+- [DE] **The string generator writes again, and the beta4 rows it had lost are back in its source.**
+
 ## [6.0.8.11_DE-1.56.0-beta4] - 2026-11-07
 
 ### 🔧 Changed
