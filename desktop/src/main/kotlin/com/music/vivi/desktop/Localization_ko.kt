@@ -709,6 +709,7 @@ internal fun strings_ko(): Map<String, String> =
         "remember_shuffle_repeat" to "셔플 및 반복 기억",
         "remove_custom_color" to "사용자 지정 색상 제거",
         "remove_from_library" to "보관함에서 삭제",
+        "remove_from_liked" to "좋아요 취소",
         "remove_from_queue" to "대기열에서 제거",
         "rename" to "이름 바꾸기",
         "repeat" to "반복",

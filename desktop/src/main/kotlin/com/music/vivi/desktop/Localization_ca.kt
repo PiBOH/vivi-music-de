@@ -709,6 +709,7 @@ internal fun strings_ca(): Map<String, String> =
         "remember_shuffle_repeat" to "Recorda la barreja i la repetició",
         "remove_custom_color" to "Elimina el color personalitzat",
         "remove_from_library" to "Elimina de la col·lecció",
+        "remove_from_liked" to "Treu el m'agrada",
         "remove_from_queue" to "Elimina de la cua",
         "rename" to "Canvia el nom",
         "repeat" to "Repeteix",

@@ -709,6 +709,7 @@ internal fun strings_ml(): Map<String, String> =
         "remember_shuffle_repeat" to "ഷഫിൾ, റിപ്പീറ്റ് ഓർക്കുക",
         "remove_custom_color" to "ഇഷ്ടാനുസൃത നിറം നീക്കുക",
         "remove_from_library" to "ലൈബ്രറിയിൽ നിന്ന് കളയുക",
+        "remove_from_liked" to "ഇഷ്ടം നീക്കുക",
         "remove_from_queue" to "ക്യൂവിൽ നിന്ന് നീക്കുക",
         "rename" to "പേരുമാറ്റുക",
         "repeat" to "ആവർത്തിക്കുക",

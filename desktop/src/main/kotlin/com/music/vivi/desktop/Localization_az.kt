@@ -709,6 +709,7 @@ internal fun strings_az(): Map<String, String> =
         "remember_shuffle_repeat" to "Qarışdırma və təkrarı yadda saxla",
         "remove_custom_color" to "Xüsusi rəngi sil",
         "remove_from_library" to "Kitabxanadan çıxar",
+        "remove_from_liked" to "Bəyənməni sil",
         "remove_from_queue" to "Növbədən çıxar",
         "rename" to "Adını dəyiş",
         "repeat" to "Təkrar",

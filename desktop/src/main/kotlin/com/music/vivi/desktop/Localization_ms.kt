@@ -709,6 +709,7 @@ internal fun strings_ms(): Map<String, String> =
         "remember_shuffle_repeat" to "Ingat kocok dan ulang",
         "remove_custom_color" to "Alih keluar warna tersuai",
         "remove_from_library" to "Keluarkan daripada perpustakaan",
+        "remove_from_liked" to "Alih keluar suka",
         "remove_from_queue" to "Keluarkan daripada giliran",
         "rename" to "Namakan semula",
         "repeat" to "Ulang",

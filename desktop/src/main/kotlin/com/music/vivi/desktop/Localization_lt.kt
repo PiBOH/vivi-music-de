@@ -709,6 +709,7 @@ internal fun strings_lt(): Map<String, String> =
         "remember_shuffle_repeat" to "Įsiminti maišymą ir kartojimą",
         "remove_custom_color" to "Pašalinti pasirinktinę spalvą",
         "remove_from_library" to "Pašalinti iš bibliotekos",
+        "remove_from_liked" to "Pašalinti patiktuką",
         "remove_from_queue" to "Pašalinti iš eilės",
         "rename" to "Pervadinti",
         "repeat" to "Kartoti",

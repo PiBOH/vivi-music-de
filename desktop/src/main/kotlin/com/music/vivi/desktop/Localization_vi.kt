@@ -709,6 +709,7 @@ internal fun strings_vi(): Map<String, String> =
         "remember_shuffle_repeat" to "Nhớ xáo trộn và lặp lại",
         "remove_custom_color" to "Xóa màu tùy chỉnh",
         "remove_from_library" to "Xoá khỏi thư viện",
+        "remove_from_liked" to "Bỏ thích",
         "remove_from_queue" to "Xóa khỏi hàng đợi",
         "rename" to "Đổi tên",
         "repeat" to "Lặp lại",

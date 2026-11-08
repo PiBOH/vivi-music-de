@@ -709,6 +709,7 @@ internal fun strings_sk(): Map<String, String> =
         "remember_shuffle_repeat" to "Zapamätať miešanie a opakovanie",
         "remove_custom_color" to "Odstrániť vlastnú farbu",
         "remove_from_library" to "Odstrániť z knižnice",
+        "remove_from_liked" to "Odstrániť páči sa mi",
         "remove_from_queue" to "Odstrániť z frontu",
         "rename" to "Premenovať",
         "repeat" to "Opakovať",

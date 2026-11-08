@@ -709,6 +709,7 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "remember_shuffle_repeat" to "记住随机播放和重复",
         "remove_custom_color" to "删除自定义颜色",
         "remove_from_library" to "从媒体库中移除",
+        "remove_from_liked" to "取消喜欢",
         "remove_from_queue" to "从队列移除",
         "rename" to "重命名",
         "repeat" to "重复",

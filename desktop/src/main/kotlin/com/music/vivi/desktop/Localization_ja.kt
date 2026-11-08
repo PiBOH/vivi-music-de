@@ -709,6 +709,7 @@ internal fun strings_ja(): Map<String, String> =
         "remember_shuffle_repeat" to "シャッフルとリピートを記憶",
         "remove_custom_color" to "カスタムカラーを削除",
         "remove_from_library" to "ライブラリから削除",
+        "remove_from_liked" to "高評価を取り消す",
         "remove_from_queue" to "キューから削除",
         "rename" to "名前を変更",
         "repeat" to "リピート",

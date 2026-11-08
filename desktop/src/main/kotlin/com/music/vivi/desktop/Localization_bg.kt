@@ -709,6 +709,7 @@ internal fun strings_bg(): Map<String, String> =
         "remember_shuffle_repeat" to "Запомни разбъркването и повторението",
         "remove_custom_color" to "Премахни персонализирания цвят",
         "remove_from_library" to "Премахни от библиотеката",
+        "remove_from_liked" to "Премахни харесването",
         "remove_from_queue" to "Премахни от опашката",
         "rename" to "Преименуване",
         "repeat" to "Повторение",

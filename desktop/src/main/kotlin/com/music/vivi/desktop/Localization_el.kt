@@ -709,6 +709,7 @@ internal fun strings_el(): Map<String, String> =
         "remember_shuffle_repeat" to "Θυμήσου την ανάμειξη και την επανάληψη",
         "remove_custom_color" to "Αφαίρεση προσαρμοσμένου χρώματος",
         "remove_from_library" to "Αφαίρεση από τη βιβλιοθήκη",
+        "remove_from_liked" to "Αφαίρεση του μου αρέσει",
         "remove_from_queue" to "Αφαίρεση από την ουρά",
         "rename" to "Μετονομασία",
         "repeat" to "Επανάληψη",

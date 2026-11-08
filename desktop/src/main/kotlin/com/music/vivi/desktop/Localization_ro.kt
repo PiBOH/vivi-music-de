@@ -709,6 +709,7 @@ internal fun strings_ro(): Map<String, String> =
         "remember_shuffle_repeat" to "Reține amestecarea și repetarea",
         "remove_custom_color" to "Elimină culoarea personalizată",
         "remove_from_library" to "Elimină din bibliotecă",
+        "remove_from_liked" to "Elimină aprecierea",
         "remove_from_queue" to "Elimină din coadă",
         "rename" to "Redenumește",
         "repeat" to "Repetă",

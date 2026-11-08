@@ -709,6 +709,7 @@ internal fun strings_uk(): Map<String, String> =
         "remember_shuffle_repeat" to "Запам'ятовувати перемішування та повтор",
         "remove_custom_color" to "Видалити власний колір",
         "remove_from_library" to "Видалити з бібліотеки",
+        "remove_from_liked" to "Прибрати вподобання",
         "remove_from_queue" to "Прибрати з черги",
         "rename" to "Перейменувати",
         "repeat" to "Повтор",

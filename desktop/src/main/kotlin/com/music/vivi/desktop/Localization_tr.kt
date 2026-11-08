@@ -709,6 +709,7 @@ internal fun strings_tr(): Map<String, String> =
         "remember_shuffle_repeat" to "Karışık listeyi hatırla ve tekrarla",
         "remove_custom_color" to "Özel rengi kaldır",
         "remove_from_library" to "Kütüphaneden kaldır",
+        "remove_from_liked" to "Beğeniyi kaldır",
         "remove_from_queue" to "Sıradan çıkar",
         "rename" to "Yeniden adlandır",
         "repeat" to "Tekrarla",

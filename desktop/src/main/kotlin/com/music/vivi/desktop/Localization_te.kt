@@ -709,6 +709,7 @@ internal fun strings_te(): Map<String, String> =
         "remember_shuffle_repeat" to "షఫుల్ మరియు రిపీట్ గుర్తుంచుకోండి",
         "remove_custom_color" to "కస్టమ్ రంగును తీసివేయండి",
         "remove_from_library" to "లైబ్రరీకి అన్నీ జోడించండి",
+        "remove_from_liked" to "ఇష్టాన్ని తొలగించు",
         "remove_from_queue" to "క్యూ నుండి తొలగించు",
         "rename" to "పేరు మార్చు",
         "repeat" to "పునరావృతం",

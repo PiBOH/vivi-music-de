@@ -709,6 +709,7 @@ internal fun strings_sv(): Map<String, String> =
         "remember_shuffle_repeat" to "Kom ihåg blanda och upprepa",
         "remove_custom_color" to "Ta bort anpassad färg",
         "remove_from_library" to "Ta bort från biblioteket",
+        "remove_from_liked" to "Ta bort gillning",
         "remove_from_queue" to "Ta bort från kö",
         "rename" to "Byt namn",
         "repeat" to "Upprepa",

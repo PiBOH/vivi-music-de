@@ -709,6 +709,7 @@ internal fun strings_et(): Map<String, String> =
         "remember_shuffle_repeat" to "Jäta meelde segamine ja kordamine",
         "remove_custom_color" to "Eemalda kohandatud värv",
         "remove_from_library" to "Eemalda muusikakogust",
+        "remove_from_liked" to "Eemalda meeldimine",
         "remove_from_queue" to "Eemalda järjekorrast",
         "rename" to "Nimeta ümber",
         "repeat" to "Korda",

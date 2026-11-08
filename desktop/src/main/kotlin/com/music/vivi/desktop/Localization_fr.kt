@@ -709,6 +709,7 @@ internal fun strings_fr(): Map<String, String> =
         "remember_shuffle_repeat" to "Mémoriser lecture aléatoire et répétition",
         "remove_custom_color" to "Supprimer la couleur personnalisée",
         "remove_from_library" to "Supprimer de la bibliothèque",
+        "remove_from_liked" to "Retirer le J'aime",
         "remove_from_queue" to "Retirer de la file",
         "rename" to "Renommer",
         "repeat" to "Répéter",

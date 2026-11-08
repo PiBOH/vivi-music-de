@@ -709,6 +709,7 @@ internal fun strings_fa(): Map<String, String> =
         "remember_shuffle_repeat" to "به‌خاطرسپاری تصادفی و تکرار",
         "remove_custom_color" to "حذف رنگ سفارشی",
         "remove_from_library" to "حذف از کتاب‌ خانه",
+        "remove_from_liked" to "حذف پسندیدن",
         "remove_from_queue" to "حذف از صف",
         "rename" to "تغییر نام",
         "repeat" to "تکرار",

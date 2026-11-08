@@ -709,6 +709,7 @@ internal fun strings_km(): Map<String, String> =
         "remember_shuffle_repeat" to "ចងចាំការចាក់ចៃដន្យ និងធ្វើម្តងទៀត",
         "remove_custom_color" to "លុបពណ៌ផ្ទាល់ខ្លួន",
         "remove_from_library" to "ដកចេញពីបណ្ណាល័យ",
+        "remove_from_liked" to "ដកការចូលចិត្ត",
         "remove_from_queue" to "ដកចេញពីជួរចាក់",
         "rename" to "ប្តូរឈ្មោះ",
         "repeat" to "ធ្វើម្ដងទៀត",

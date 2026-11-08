@@ -709,6 +709,7 @@ internal fun strings_hi(): Map<String, String> =
         "remember_shuffle_repeat" to "शफ़ल और रिपीट याद रखें",
         "remove_custom_color" to "कस्टम रंग हटाएं",
         "remove_from_library" to "संग्रह से हटाएं",
+        "remove_from_liked" to "पसंद हटाएँ",
         "remove_from_queue" to "कतार से हटाएं",
         "rename" to "नाम बदलें",
         "repeat" to "दोहराएँ",

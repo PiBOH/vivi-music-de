@@ -27,6 +27,7 @@ internal fun strings_lv(): Map<String, String> =
         "explore" to "Pārlūkot",
         "playing_from" to "Atskaņo no",
         "playlist" to "Atskaņošanas saraksts",
+        "remove_from_liked" to "Noņemt patīk",
         "search_no_results" to "Nav rezultātu",
         "sleep_timer" to "Miega taimeris",
         "start_radio" to "Sākt radio",

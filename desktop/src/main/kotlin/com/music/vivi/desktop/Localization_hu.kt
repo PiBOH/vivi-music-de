@@ -709,6 +709,7 @@ internal fun strings_hu(): Map<String, String> =
         "remember_shuffle_repeat" to "Keverés és ismétlés megjegyzése",
         "remove_custom_color" to "Egyéni szín eltávolítása",
         "remove_from_library" to "Eltávolítás a könyvtárból",
+        "remove_from_liked" to "Tetszés eltávolítása",
         "remove_from_queue" to "Eltávolítás a sorból",
         "rename" to "Átnevezés",
         "repeat" to "Ismétlés",

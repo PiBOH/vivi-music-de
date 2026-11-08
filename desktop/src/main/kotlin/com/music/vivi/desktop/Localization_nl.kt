@@ -709,6 +709,7 @@ internal fun strings_nl(): Map<String, String> =
         "remember_shuffle_repeat" to "Willekeurig en herhalen onthouden",
         "remove_custom_color" to "Aangepaste kleur verwijderen",
         "remove_from_library" to "Verwijderen van bibliotheek",
+        "remove_from_liked" to "Vind-ik-leuk verwijderen",
         "remove_from_queue" to "Uit wachtrij verwijderen",
         "rename" to "Hernoemen",
         "repeat" to "Herhalen",

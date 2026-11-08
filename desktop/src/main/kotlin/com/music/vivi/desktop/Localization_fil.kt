@@ -709,6 +709,7 @@ internal fun strings_fil(): Map<String, String> =
         "remember_shuffle_repeat" to "Tandaan ang shuffle at repeat",
         "remove_custom_color" to "Alisin ang custom na kulay",
         "remove_from_library" to "Alisin sa library",
+        "remove_from_liked" to "Alisin ang gusto",
         "remove_from_queue" to "Alisin sa queue",
         "rename" to "Palitan ang pangalan",
         "repeat" to "Ulitin",

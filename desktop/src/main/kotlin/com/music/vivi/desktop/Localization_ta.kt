@@ -709,6 +709,7 @@ internal fun strings_ta(): Map<String, String> =
         "remember_shuffle_repeat" to "ஷஃபிள் மற்றும் ரிப்பீட்டை நினைவில் கொள்",
         "remove_custom_color" to "தனிப்பயன் வண்ணத்தை அகற்று",
         "remove_from_library" to "நூலகத்திலிருந்து அகற்று",
+        "remove_from_liked" to "விருப்பத்தை நீக்கு",
         "remove_from_queue" to "வரிசையில் இருந்து அகற்று",
         "rename" to "பெயரை மாற்று",
         "repeat" to "மீண்டும்",

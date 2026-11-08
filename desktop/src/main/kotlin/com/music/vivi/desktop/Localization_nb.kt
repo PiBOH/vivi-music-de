@@ -709,6 +709,7 @@ internal fun strings_nb(): Map<String, String> =
         "remember_shuffle_repeat" to "Husk stokking og gjentakelse",
         "remove_custom_color" to "Fjern tilpasset farge",
         "remove_from_library" to "Fjern fra biblioteket",
+        "remove_from_liked" to "Fjern liker",
         "remove_from_queue" to "Fjern fra kø",
         "rename" to "Gi nytt navn",
         "repeat" to "Gjenta",

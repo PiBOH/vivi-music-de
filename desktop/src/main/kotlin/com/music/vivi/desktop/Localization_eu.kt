@@ -709,6 +709,7 @@ internal fun strings_eu(): Map<String, String> =
         "remember_shuffle_repeat" to "Gogoratu nahasketa eta errepikapena",
         "remove_custom_color" to "Ezabatu kolore pertsonalizatua",
         "remove_from_library" to "Kendu liburutegitik",
+        "remove_from_liked" to "Kendu gustukoa",
         "remove_from_queue" to "Kendu ilaratik",
         "rename" to "Berrizendatu",
         "repeat" to "Errepikatu",

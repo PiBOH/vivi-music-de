@@ -709,6 +709,7 @@ internal fun strings_th(): Map<String, String> =
         "remember_shuffle_repeat" to "จำการสับและเล่นซ้ำ",
         "remove_custom_color" to "ลบสีที่กำหนดเอง",
         "remove_from_library" to "นำออกจากคลัง",
+        "remove_from_liked" to "เอาใจออก",
         "remove_from_queue" to "นำออกจากคิว",
         "rename" to "เปลี่ยนชื่อ",
         "repeat" to "เล่นซ้ำ",

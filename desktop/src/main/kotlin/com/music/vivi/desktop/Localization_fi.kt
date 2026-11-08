@@ -709,6 +709,7 @@ internal fun strings_fi(): Map<String, String> =
         "remember_shuffle_repeat" to "Muista sekoitus ja toisto",
         "remove_custom_color" to "Poista mukautettu väri",
         "remove_from_library" to "Poista kirjastosta",
+        "remove_from_liked" to "Poista tykkäys",
         "remove_from_queue" to "Poista jonosta",
         "rename" to "Nimeä uudelleen",
         "repeat" to "Toista",

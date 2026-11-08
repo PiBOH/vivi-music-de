@@ -709,6 +709,7 @@ internal fun strings_sr(): Map<String, String> =
         "remember_shuffle_repeat" to "Zapamti mešanje i ponavljanje",
         "remove_custom_color" to "Уклони прилагођену боју",
         "remove_from_library" to "Ukloni iz biblioteke",
+        "remove_from_liked" to "Уклони свиђање",
         "remove_from_queue" to "Ukloni iz reda",
         "rename" to "Preimenuj",
         "repeat" to "Ponovi",

@@ -709,6 +709,7 @@ internal fun strings_pa(): Map<String, String> =
         "remember_shuffle_repeat" to "ਸ਼ਫਲ ਅਤੇ ਰਿਪੀਟ ਯਾਦ ਰੱਖੋ",
         "remove_custom_color" to "ਕਸਟਮ ਰੰਗ ਹਟਾਓ",
         "remove_from_library" to "ਲਾਇਬ੍ਰੇਰੀ ਤੋਂ ਹਟਾਓ",
+        "remove_from_liked" to "ਪਸੰਦ ਹਟਾਓ",
         "remove_from_queue" to "ਕਤਾਰ ਤੋਂ ਹਟਾਓ",
         "rename" to "ਨਾਮ ਬਦਲੋ",
         "repeat" to "ਦੁਹਰਾਓ",

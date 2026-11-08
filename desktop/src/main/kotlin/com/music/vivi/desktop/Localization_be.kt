@@ -709,6 +709,7 @@ internal fun strings_be(): Map<String, String> =
         "remember_shuffle_repeat" to "Запамятаць перасоўванне і паўтарэнне",
         "remove_custom_color" to "Выдаліць уласны колер",
         "remove_from_library" to "Выдаліць з бібліятэкі",
+        "remove_from_liked" to "Прыбраць падабайку",
         "remove_from_queue" to "Прыбраць з чаргі",
         "rename" to "Перайменаваць",
         "repeat" to "Паўтор",

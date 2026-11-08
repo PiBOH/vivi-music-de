@@ -709,6 +709,7 @@ internal fun strings_in(): Map<String, String> =
         "remember_shuffle_repeat" to "Ingat shuffle dan ulangi",
         "remove_custom_color" to "Hapus warna khusus",
         "remove_from_library" to "Hapus dari pustaka",
+        "remove_from_liked" to "Hapus suka",
         "remove_from_queue" to "Hapus dari antrean",
         "rename" to "Ganti nama",
         "repeat" to "Ulangi",

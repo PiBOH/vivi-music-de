@@ -709,6 +709,7 @@ internal fun strings_cs(): Map<String, String> =
         "remember_shuffle_repeat" to "Zapamatovat zamíchání a opakování",
         "remove_custom_color" to "Odebrat vlastní barvu",
         "remove_from_library" to "Odebrat z knihovny",
+        "remove_from_liked" to "Odebrat líbí se mi",
         "remove_from_queue" to "Odebrat z fronty",
         "rename" to "Přejmenovat",
         "repeat" to "Opakovat",

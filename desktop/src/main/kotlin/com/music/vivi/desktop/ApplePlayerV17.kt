@@ -1543,7 +1543,11 @@ internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent
     onShare: () -> Unit,
 ) {
     DropdownMenuItem(
-        text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
+        // "Remove from liked", not the shared "unlike" of the queue's context
+        // menu: next to Dislike the two rows read as a pair, and "Nel mio cuore"
+        // style wording (Italian "Non mi piace piu" / "Non mi piace") made them
+        // near-identical one under the other.
+        text = { Text(Localization.get(language, if (liked) "remove_from_liked" else "like")) },
         leadingIcon = {
             Icon(
                 if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,

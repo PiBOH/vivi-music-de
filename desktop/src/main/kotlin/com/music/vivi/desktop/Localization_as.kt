@@ -709,6 +709,7 @@ internal fun strings_as(): Map<String, String> =
         "remember_shuffle_repeat" to "শাফল আৰু ৰিপিট মনত ৰাখক",
         "remove_custom_color" to "নিজস্ব ৰং মচক",
         "remove_from_library" to "লাইব্ৰেৰীৰ পৰা আঁতৰাওক",
+        "remove_from_liked" to "পছন্দ আঁতৰাওক",
         "remove_from_queue" to "কিউৰ পৰা আঁতৰাওক",
         "rename" to "নাম সলনি কৰক",
         "repeat" to "পুনৰাবৃত্তি",

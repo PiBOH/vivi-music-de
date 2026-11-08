@@ -705,6 +705,7 @@ internal fun strings_iw(): Map<String, String> =
         "remember_shuffle_repeat" to "זכור ערבול וחזרה",
         "remove_custom_color" to "הסר צבע מותאם אישית",
         "remove_from_library" to "הסר מהספרייה",
+        "remove_from_liked" to "הסר אהבה",
         "remove_from_queue" to "הסר מהתור",
         "rename" to "שנה שם",
         "repeat" to "חזרה",

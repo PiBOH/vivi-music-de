@@ -709,6 +709,7 @@ internal fun strings_zh_rTW(): Map<String, String> =
         "remember_shuffle_repeat" to "記住隨機播放和重複",
         "remove_custom_color" to "刪除自訂顏色",
         "remove_from_library" to "從音樂庫中移除",
+        "remove_from_liked" to "取消喜歡",
         "remove_from_queue" to "從佇列移除",
         "rename" to "重新命名",
         "repeat" to "重複",

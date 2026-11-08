@@ -709,6 +709,7 @@ internal fun strings_ar(): Map<String, String> =
         "remember_shuffle_repeat" to "تذكر الخلط والتكرار",
         "remove_custom_color" to "إزالة اللون المخصص",
         "remove_from_library" to "امسح من المكتبة",
+        "remove_from_liked" to "إزالة الإعجاب",
         "remove_from_queue" to "إزالة من قائمة الانتظار",
         "rename" to "إعادة تسمية",
         "repeat" to "تكرار",
