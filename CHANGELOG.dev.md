@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-08
+
+### Changed
+
+- [DE] **The v17 player's right column is the reference's own.** The caption reads *Playing from* the collection the queue was started from, the lyric row ends with its chevron, the scrubber stays slim with the elapsed time on the left and the remaining time on the right, the transport is exactly previous, play/pause and next, and the volume row is a small speaker, the bar and a larger speaker. The three text buttons that duplicated the row under the artwork are gone, so the column ends at the volume. **Verified:** the module compiles and `:desktop:applePlayerV17RenderCheck` paints the column and the queue at the four sizes.
+- [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.** Like and dislike (YouTube's own thumb-down endpoint), add to playlist, download / delete (the audio cache, with the delete label on the right), start radio (the song's `RDAMVM` mix), play next, add to queue, open album, open artist (both resolved by name through the search page), the sleep timer (15, 30, 60 minutes, then off, with the running length on the item) and share (the watch link on the clipboard). **Open sub-item:** the four new labels (`playing_from`, `dislike`, `start_radio`, `sleep_timer`) are English in `Localization_en.kt`; every other language still falls back to English until they are translated.
+- [DE] **The queue remembers where it started.** `PlayerState` carries the source label, set by `play` / `playAll`, so the caption says the playlist (or album, or radio) rather than guessing from the album name; the album stays the fallback for a queue with no source of its own. **Verified:** `:desktop:compileKotlin` passes.
+
 ## [6.0.8.11_DE-1.56.0-beta4] - 2026-11-07
 
 ### 🔧 Changed

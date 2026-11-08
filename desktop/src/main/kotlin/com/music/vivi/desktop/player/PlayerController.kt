@@ -52,6 +52,8 @@ data class PlayerState(
     val loadPhase: LoadPhase = LoadPhase.NONE,
     /** True while the stream is being resolved/downloaded and audio hasn't started. */
     val isResolving: Boolean = false,
+    /** Where the queue was started from ("Playing from" in the v17 player). */
+    val sourceLabel: String? = null,
 ) {
     val current: NowPlaying? get() = queue.getOrNull(index)
     val isLoading: Boolean get() = loadPhase != LoadPhase.NONE
@@ -313,25 +315,27 @@ class PlayerController {
      */
     private var pendingStartFraction: Float? = null
 
-    fun play(track: NowPlaying) {
+    fun play(track: NowPlaying, sourceLabel: String? = null) {
         if (lockBlocks()) return
         AppLog.log("playback", "play: '${track.title}' [${track.videoId}]")
         resetShuffleForNewQueue()
         lastLocalPlayIntentAt = System.currentTimeMillis()
         playAt(listOf(track), 0)
+        _state.update { it.copy(sourceLabel = sourceLabel) }
         // Tapping a single song anywhere must build a real queue right away
         // (the mobile app shows an up-next/radio list): fetch it in background
         // while the first track is still playing.
         scheduleQueueExtensionIfSingle(listOf(track))
     }
 
-    fun playAll(tracks: List<NowPlaying>, startIndex: Int = 0) {
+    fun playAll(tracks: List<NowPlaying>, startIndex: Int = 0, sourceLabel: String? = null) {
         if (lockBlocks()) return
         if (tracks.isEmpty()) return
         AppLog.log("playback", "playAll: ${tracks.size} tracks, start at $startIndex ('${tracks[startIndex].title}') ")
         resetShuffleForNewQueue()
         lastLocalPlayIntentAt = System.currentTimeMillis()
         playAt(tracks, startIndex.coerceIn(0, tracks.lastIndex))
+        _state.update { it.copy(sourceLabel = sourceLabel) }
         // Same as [play]: a one-item list is a radio seed, not a queue.
         if (tracks.size == 1) scheduleQueueExtensionIfSingle(tracks)
     }
@@ -394,6 +398,71 @@ class PlayerController {
             } else {
                 AppLog.log("cache", "auto download on like: no stream for $videoId")
             }
+        }
+    }
+
+    /**
+     * A radio for [track]: YouTube's own mix for the song (the `RDAMVM` + id
+     * playlist the app uses for "start radio" everywhere), played as a queue so
+     * the source caption says where it came from.
+     */
+    fun startRadio(track: NowPlaying) {
+        if (lockBlocks()) return
+        AppLog.log("radio", "startRadio: '${track.title}' [${track.videoId}]")
+        scope.launch {
+            YouTube.queue(playlistId = "RDAMVM${track.videoId}")
+                .onSuccess { songs ->
+                    val tracks = songs.map {
+                        NowPlaying(
+                            videoId = it.id,
+                            title = it.title,
+                            artist = it.artists.joinToString(", ") { a -> a.name },
+                            thumbnail = it.thumbnail,
+                            durationMs = (it.duration ?: 0) * 1000L,
+                            album = it.album?.name,
+                        )
+                    }
+                    if (tracks.isEmpty()) {
+                        AppLog.log("radio", "startRadio: no tracks for ${track.videoId}")
+                    } else {
+                        playAll(tracks, 0, sourceLabel = "Radio \u00b7 ${track.title}")
+                    }
+                }
+                .onFailure { AppLog.log("radio", "startRadio failed: ${it.message}") }
+        }
+    }
+
+    /** Whether [videoId] already has a complete copy in the audio cache. */
+    fun isDownloaded(videoId: String): Boolean = player.isCached(videoId)
+
+    /** Deletes [videoId]'s cached copy, so the next play downloads it again. */
+    fun deleteDownload(videoId: String) {
+        AppLog.log("cache", "deleteDownload: $videoId")
+        player.evictCache(videoId)
+        _state.update { it.copy() }
+    }
+
+    // ------------------------------------------------------------------
+    // Sleep timer
+    // ------------------------------------------------------------------
+
+    private var sleepJob: Job? = null
+    private val _sleepTimerMinutes = MutableStateFlow<Int?>(null)
+
+    /** The running sleep timer, in minutes, or null when none is armed. */
+    val sleepTimerMinutes: StateFlow<Int?> = _sleepTimerMinutes.asStateFlow()
+
+    /** Arms the sleep timer for [minutes], or clears it with null. */
+    fun setSleepTimer(minutes: Int?) {
+        sleepJob?.cancel()
+        sleepJob = null
+        _sleepTimerMinutes.value = minutes
+        if (minutes == null) return
+        AppLog.log("playback", "sleep timer: $minutes min")
+        sleepJob = scope.launch {
+            delay(minutes * 60_000L)
+            if (_state.value.isPlaying) toggle()
+            _sleepTimerMinutes.value = null
         }
     }
 

@@ -596,10 +596,20 @@ object ApplePlayerV17RenderCheck {
                             V17PlayerMenuContent(
                                 language = "en",
                                 liked = true,
+                                downloaded = false,
+                                sleepTimerMinutes = null,
                                 onLike = {},
+                                onDislike = {},
                                 onAddToPlaylist = {},
-                                onOpenLyrics = {},
-                                onOpenQueue = {},
+                                onDownload = {},
+                                onDeleteDownload = {},
+                                onStartRadio = {},
+                                onPlayNext = {},
+                                onAddToQueue = {},
+                                onOpenAlbum = {},
+                                onOpenArtist = {},
+                                onSleepTimer = {},
+                                onShare = {},
                             )
                         }
                     }

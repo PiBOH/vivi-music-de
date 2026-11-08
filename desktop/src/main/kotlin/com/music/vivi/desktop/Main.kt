@@ -2852,6 +2852,17 @@ fun WindowScope.App(
                             player.autoPlayNext = checked
                             DesktopSettings.update { it.copy(autoPlayNext = checked) }
                         },
+                        queueSource = playerState.sourceLabel,
+                        onPlayNext = { np -> player.insertNext(np) },
+                        onAddToQueue = { np -> player.addToQueue(np) },
+                        onStartRadio = { np -> player.startRadio(np) },
+                        isDownloaded = { id -> player.isDownloaded(id) },
+                        onDownload = { np -> player.downloadToCache(np.videoId) },
+                        onDeleteDownload = { np -> player.deleteDownload(np.videoId) },
+                        onOpenAlbum = { id -> navigate(Screen.Album(id)) },
+                        onOpenArtist = { id -> navigate(Screen.Artist(id)) },
+                        sleepTimerMinutes = player.sleepTimerMinutes.collectAsState().value,
+                        onSetSleepTimer = { minutes -> player.setSleepTimer(minutes) },
                     )
                     is Screen.LyricsFocus -> LyricsFocusScreen(
                         nowPlaying = nowPlaying,

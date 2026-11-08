@@ -28,7 +28,17 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.Subject
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Radio
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbDown
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.Favorite
@@ -82,6 +92,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
+import com.music.innertube.YouTube.SearchFilter
+import com.music.innertube.models.AlbumItem
+import com.music.innertube.models.ArtistItem
 import com.music.lyrics.LyricsParser
 import com.music.vivi.desktop.player.AudioOutput
 import com.music.vivi.desktop.player.PlaybackTech
@@ -143,6 +156,21 @@ internal fun ApplePlayerV17Screen(
     onAddToPlaylistSong: ((NowPlaying) -> Unit)? = null,
     /** Replaces the queue, used by the rows' Play next and Add to queue. */
     onReorderQueue: (List<NowPlaying>) -> Unit = {},
+    /** Where the queue was started from, the reference's "Playing from". */
+    queueSource: String? = null,
+    /** The song menu's queue actions (the same calls the rest of the app uses). */
+    onPlayNext: (() -> Unit)? = null,
+    onAddToQueue: (() -> Unit)? = null,
+    onStartRadio: (() -> Unit)? = null,
+    /** True when this track already has a complete copy in the audio cache. */
+    isDownloadedNow: Boolean = false,
+    onDownload: (() -> Unit)? = null,
+    onDeleteDownload: (() -> Unit)? = null,
+    /** Opens the album / artist page; the id is resolved from the names. */
+    onOpenAlbum: ((String) -> Unit)? = null,
+    onOpenArtist: ((String) -> Unit)? = null,
+    sleepTimerMinutes: Int? = null,
+    onSleepTimer: (Int?) -> Unit = {},
     /** Opens on the queue instead of the controls, for the render harness. */
     initialQueueOpen: Boolean = false,
     /** Opens on the lyrics page instead of the controls (render harness). */
@@ -312,22 +340,21 @@ internal fun ApplePlayerV17Screen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.Center,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                // The reference's caption: where the queue was started from.
+                // The album is the fallback for a queue with no source of its
+                // own (a single song from a search), and the artist when the
+                // track carries no album at all.
+                val playingFrom = queueSource?.takeIf { it.isNotBlank() }
+                    ?: np.album?.takeIf { it.isNotBlank() }
+                Tooltip(playingFrom ?: Localization.get(language, "now_playing")) {
                     Text(
-                        Localization.get(language, "now_playing"),
+                        if (playingFrom != null) "${Localization.get(language, "playing_from")} $playingFrom"
+                        else Localization.get(language, "now_playing"),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = mutedColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                    np.album?.takeIf { it.isNotBlank() }?.let { album ->
-                        Text(
-                            " - $album",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = mutedColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                    }
                 }
 
                 Spacer(Modifier.height(6.dp))
@@ -405,6 +432,8 @@ internal fun ApplePlayerV17Screen(
                             V17PlayerMenuContent(
                                 language = language,
                                 liked = liked,
+                                downloaded = isDownloadedNow,
+                                sleepTimerMinutes = sleepTimerMinutes,
                                 onLike = {
                                     menuOpen = false
                                     val next = !liked
@@ -418,17 +447,85 @@ internal fun ApplePlayerV17Screen(
                                     )
                                     scope.launch { YouTube.likeVideo(np.videoId, next) }
                                 },
+                                onDislike = {
+                                    menuOpen = false
+                                    // A dislike is the account's thumb-down and
+                                    // clears the heart: YouTube keeps the two
+                                    // ratings exclusive.
+                                    if (liked) {
+                                        liked = false
+                                        SongActions.setLiked(
+                                            np.videoId,
+                                            false,
+                                            title = np.title,
+                                            artist = np.artist,
+                                            thumbnail = np.thumbnail,
+                                        )
+                                    }
+                                    scope.launch { YouTube.dislikeVideo(np.videoId) }
+                                },
                                 onAddToPlaylist = {
                                     menuOpen = false
                                     onAddToPlaylist()
                                 },
-                                onOpenLyrics = {
+                                onDownload = {
                                     menuOpen = false
-                                    onOpenLyrics()
+                                    onDownload?.invoke()
                                 },
-                                onOpenQueue = {
+                                onDeleteDownload = {
                                     menuOpen = false
-                                    onOpenQueue()
+                                    onDeleteDownload?.invoke()
+                                },
+                                onStartRadio = {
+                                    menuOpen = false
+                                    onStartRadio?.invoke()
+                                },
+                                onPlayNext = {
+                                    menuOpen = false
+                                    onPlayNext?.invoke()
+                                },
+                                onAddToQueue = {
+                                    menuOpen = false
+                                    onAddToQueue?.invoke()
+                                },
+                                onOpenAlbum = onOpenAlbum?.let { open ->
+                                    {
+                                        menuOpen = false
+                                        // The player carries names, not ids, so
+                                        // the album is resolved by its own name
+                                        // and the first card the search returns.
+                                        scope.launch {
+                                            val query = listOfNotNull(np.album, np.artist)
+                                                .joinToString(" ").trim()
+                                            YouTube.search(query, SearchFilter.FILTER_ALBUM)
+                                                .onSuccess { result ->
+                                                    result.items.filterIsInstance<AlbumItem>()
+                                                        .firstOrNull()
+                                                        ?.let { open(it.id) }
+                                                }
+                                        }
+                                    }
+                                } ?: {},
+                                onOpenArtist = onOpenArtist?.let { open ->
+                                    {
+                                        menuOpen = false
+                                        scope.launch {
+                                            YouTube.search(np.artist, SearchFilter.FILTER_ARTIST)
+                                                .onSuccess { result ->
+                                                    result.items.filterIsInstance<ArtistItem>()
+                                                        .firstOrNull()
+                                                        ?.let { open(it.id) }
+                                                }
+                                        }
+                                    }
+                                } ?: {},
+                                onSleepTimer = { minutes ->
+                                    menuOpen = false
+                                    onSleepTimer(minutes)
+                                },
+                                onShare = {
+                                    menuOpen = false
+                                    copyToClipboard("https://music.youtube.com/watch?v=${np.videoId}")
                                 },
                             )
                         }
@@ -474,6 +571,13 @@ internal fun ApplePlayerV17Screen(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f, fill = false),
                             )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                Icons.Filled.ChevronRight,
+                                contentDescription = null,
+                                tint = mutedColor,
+                                modifier = Modifier.size(18.dp),
+                            )
                         }
                     }
                 }
@@ -505,23 +609,13 @@ internal fun ApplePlayerV17Screen(
                     horizontalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Tooltip(Localization.get(language, "shuffle")) {
-                        M3IconButton(onClick = onToggleShuffle) {
-                            Icon(
-                                Icons.Filled.Shuffle,
-                                contentDescription = Localization.get(language, "shuffle"),
-                                tint = if (isShuffle) primaryColor else mutedColor,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
                     Tooltip(Localization.get(language, "previous")) {
                         M3IconButton(onClick = onPrevious) {
                             Icon(
                                 Icons.Filled.FastRewind,
                                 contentDescription = Localization.get(language, "previous"),
                                 tint = contentColor,
-                                modifier = Modifier.size(32.dp),
+                                modifier = Modifier.size(34.dp),
                             )
                         }
                     }
@@ -531,7 +625,7 @@ internal fun ApplePlayerV17Screen(
                                 if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                                 contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
                                 tint = contentColor,
-                                modifier = Modifier.size(46.dp),
+                                modifier = Modifier.size(52.dp),
                             )
                         }
                     }
@@ -541,17 +635,7 @@ internal fun ApplePlayerV17Screen(
                                 Icons.Filled.FastForward,
                                 contentDescription = Localization.get(language, "next"),
                                 tint = contentColor,
-                                modifier = Modifier.size(32.dp),
-                            )
-                        }
-                    }
-                    Tooltip(Localization.get(language, "repeat")) {
-                        M3IconButton(onClick = onCycleRepeat) {
-                            Icon(
-                                if (repeatMode == RepeatMode.ONE) Icons.Filled.RepeatOne else Icons.Filled.Repeat,
-                                contentDescription = Localization.get(language, "repeat"),
-                                tint = if (repeatMode == RepeatMode.OFF) mutedColor else primaryColor,
-                                modifier = Modifier.size(20.dp),
+                                modifier = Modifier.size(34.dp),
                             )
                         }
                     }
@@ -567,7 +651,7 @@ internal fun ApplePlayerV17Screen(
                         Icons.Filled.VolumeDown,
                         contentDescription = Localization.get(language, "volume"),
                         tint = mutedColor,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(16.dp),
                     )
                     Spacer(Modifier.width(8.dp))
                     ViviSlider(
@@ -583,31 +667,8 @@ internal fun ApplePlayerV17Screen(
                         Icons.Filled.VolumeUp,
                         contentDescription = Localization.get(language, "volume"),
                         tint = mutedColor,
-                        modifier = Modifier.size(18.dp),
+                        modifier = Modifier.size(22.dp),
                     )
-                }
-
-                Spacer(Modifier.height(4.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    TextButton(onClick = onOpenLyrics) {
-                        Icon(Icons.AutoMirrored.Filled.Subject, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(Localization.get(language, "lyrics"))
-                    }
-                    TextButton(onClick = {
-                        showLyricsPanel = false
-                        if (wide) showQueuePanel = true else onOpenQueue()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(Localization.get(language, "queue"))
-                    }
-                    TextButton(onClick = onAddToPlaylist) {
-                        Icon(Icons.Filled.PlaylistAdd, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(Localization.get(language, "add_to_playlist"))
-                    }
                 }
 
                 if (errorKey != null || errorDetail != null) {
@@ -1455,14 +1516,31 @@ private fun V17ColumnSwap(
     ) { face -> content(face) }
 }
 
+/**
+ * The v17 song menu: the reference's eleven entries, in its own order.
+ *
+ * Every entry runs the same call the rest of the app uses for that action
+ * (like/dislike, the playlist picker, the queue calls, the cache, the sleep
+ * timer, the share link), so the player cannot drift from the song menus.
+ */
 @Composable
 internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent(
     language: String,
     liked: Boolean,
+    downloaded: Boolean,
+    sleepTimerMinutes: Int?,
     onLike: () -> Unit,
+    onDislike: () -> Unit,
     onAddToPlaylist: () -> Unit,
-    onOpenLyrics: () -> Unit,
-    onOpenQueue: () -> Unit,
+    onDownload: () -> Unit,
+    onDeleteDownload: () -> Unit,
+    onStartRadio: () -> Unit,
+    onPlayNext: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onOpenAlbum: () -> Unit,
+    onOpenArtist: () -> Unit,
+    onSleepTimer: (Int?) -> Unit,
+    onShare: () -> Unit,
 ) {
     DropdownMenuItem(
         text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
@@ -1476,25 +1554,112 @@ internal fun androidx.compose.foundation.layout.ColumnScope.V17PlayerMenuContent
         onClick = onLike,
     )
     DropdownMenuItem(
+        text = { Text(Localization.get(language, "dislike")) },
+        leadingIcon = {
+            Icon(Icons.Filled.ThumbDown, contentDescription = null)
+        },
+        onClick = onDislike,
+    )
+    DropdownMenuItem(
         text = { Text(Localization.get(language, "add_to_playlist")) },
         leadingIcon = {
             Icon(Icons.Filled.PlaylistAdd, contentDescription = null)
         },
         onClick = onAddToPlaylist,
     )
+    if (downloaded) {
+        DropdownMenuItem(
+            text = { Text(Localization.get(language, "downloaded")) },
+            leadingIcon = {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null)
+            },
+            onClick = onDeleteDownload,
+            trailingIcon = {
+                Text(
+                    Localization.get(language, "delete"),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            },
+        )
+    } else {
+        DropdownMenuItem(
+            text = { Text(Localization.get(language, "download")) },
+            leadingIcon = {
+                Icon(Icons.Filled.Download, contentDescription = null)
+            },
+            onClick = onDownload,
+        )
+    }
     DropdownMenuItem(
-        text = { Text(Localization.get(language, "lyrics")) },
+        text = { Text(Localization.get(language, "start_radio")) },
         leadingIcon = {
-            Icon(AppleSymbols.Lyrics, contentDescription = null)
+            Icon(Icons.Filled.Radio, contentDescription = null)
         },
-        onClick = onOpenLyrics,
+        onClick = onStartRadio,
     )
     DropdownMenuItem(
-        text = { Text(Localization.get(language, "queue")) },
+        text = { Text(Localization.get(language, "play_next")) },
         leadingIcon = {
-            Icon(AppleSymbols.Queue, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.PlaylistPlay, contentDescription = null)
         },
-        onClick = onOpenQueue,
+        onClick = onPlayNext,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "add_to_queue")) },
+        leadingIcon = {
+            Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+        },
+        onClick = onAddToQueue,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "album")) },
+        leadingIcon = {
+            Icon(Icons.Filled.Album, contentDescription = null)
+        },
+        onClick = onOpenAlbum,
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "artist")) },
+        leadingIcon = {
+            Icon(Icons.Filled.Person, contentDescription = null)
+        },
+        onClick = onOpenArtist,
+    )
+    // One entry, cycling: 15, 30, 60 minutes, then off again. The running timer
+    // says its own length, so the menu is also where it is read.
+    DropdownMenuItem(
+        text = {
+            val current = sleepTimerMinutes
+            Text(
+                if (current == null) Localization.get(language, "sleep_timer")
+                else "${Localization.get(language, "sleep_timer")} - $current min"
+            )
+        },
+        leadingIcon = {
+            Icon(
+                Icons.Filled.Bedtime,
+                contentDescription = null,
+                tint = if (sleepTimerMinutes != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+            )
+        },
+        onClick = {
+            onSleepTimer(
+                when (sleepTimerMinutes) {
+                    null -> 15
+                    15 -> 30
+                    30 -> 60
+                    else -> null
+                }
+            )
+        },
+    )
+    DropdownMenuItem(
+        text = { Text(Localization.get(language, "share")) },
+        leadingIcon = {
+            Icon(Icons.Filled.Share, contentDescription = null)
+        },
+        onClick = onShare,
     )
 }
 

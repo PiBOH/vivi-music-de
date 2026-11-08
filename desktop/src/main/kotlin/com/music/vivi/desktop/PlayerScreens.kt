@@ -231,6 +231,18 @@ fun PlayerScreen(
     /** The window-level "Autoplay next track" setting, for the expressive player. */
     autoPlayNext: Boolean = true,
     onToggleAutoPlayNext: (Boolean) -> Unit = {},
+    /** "Playing from" in the v17 player (null falls back to the album). */
+    queueSource: String? = null,
+    onPlayNext: ((NowPlaying) -> Unit)? = null,
+    onAddToQueue: ((NowPlaying) -> Unit)? = null,
+    onStartRadio: ((NowPlaying) -> Unit)? = null,
+    isDownloaded: (String) -> Boolean = { false },
+    onDownload: ((NowPlaying) -> Unit)? = null,
+    onDeleteDownload: ((NowPlaying) -> Unit)? = null,
+    onOpenAlbum: ((String) -> Unit)? = null,
+    onOpenArtist: ((String) -> Unit)? = null,
+    sleepTimerMinutes: Int? = null,
+    onSetSleepTimer: (Int?) -> Unit = {},
 ) {
     val np = queue.getOrNull(index)
     var canvasArt by remember { mutableStateOf<CanvasArtwork?>(null) }
@@ -345,6 +357,17 @@ fun PlayerScreen(
                     accent = accent,
                     onAddToPlaylistSong = onAddToPlaylist,
                     onReorderQueue = onReorderQueue,
+                    queueSource = queueSource,
+                    onPlayNext = onPlayNext?.let { next -> { next(track) } },
+                    onAddToQueue = onAddToQueue?.let { add -> { add(track) } },
+                    onStartRadio = onStartRadio?.let { radio -> { radio(track) } },
+                    isDownloadedNow = isDownloaded(track.videoId),
+                    onDownload = onDownload?.let { dl -> { dl(track) } },
+                    onDeleteDownload = onDeleteDownload?.let { del -> { del(track) } },
+                    onOpenAlbum = onOpenAlbum,
+                    onOpenArtist = onOpenArtist,
+                    sleepTimerMinutes = sleepTimerMinutes,
+                    onSleepTimer = onSetSleepTimer,
                 )
             } else if (design.isExpressive) {
                 M3EPlayerContent(

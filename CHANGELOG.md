@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-08
+
+### Changed
+
+- [DE] **The v17 player's right column is the reference's own.**
+- [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
+- [DE] **The queue remembers where it started.**
+
 ## [6.0.8.11_DE-1.56.0-beta4] - 2026-11-07
 
 ### 🔧 Changed

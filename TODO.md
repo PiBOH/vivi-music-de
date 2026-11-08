@@ -9,6 +9,9 @@ orientation.
 ## Open
 
 ### 1.56.0 - Apple Player v17, the BitChord mini player and the developer toggles (5 Nov)
+- [x] **[DE] The v17 right column follows the reference (done 8 Nov, code 438, beta5).** Playing from caption, lyric row with chevron, slim scrubber with both times, three transport controls, small and large speakers, no duplicate button row. **Measured:** `:desktop:applePlayerV17RenderCheck` paints it at the four sizes.
+- [x] **[DE] The v17 song menu carries the reference's eleven entries (done 8 Nov, code 438, beta5).** Dislike posts `like/dislike`, start radio plays the RDAMVM mix, download/delete is the audio cache, the sleep timer cycles 15/30/60/off, album and artist resolve by name, share copies the watch link.
+- [~] **[DE] Translate the four new v17 labels in every language (opened 8 Nov).** `playing_from`, `dislike`, `start_radio` and `sleep_timer` are English today; the other languages fall back to English until the entries land in the extra-translation tables.
 - [x] **[DE] Slim sliders, no thumb, and the wavy tracks gone (done 7 Nov, code 437).** The v17 seek and volume bars draw no circle (`showThumb = false`); the squiggly, wavy and Expressive tracks and their picker are removed, the stored `sliderStyle` key stays inert. **Measured:** `:desktop:playerDesignRenderCheck` reads three cards and seven rows, and `sliderStyle` changes 0 px.
 - [x] **[DE] Inline lyrics off hides the row above the scrubber (done 7 Nov, code 437).** No row, no link, no fetch; the scrubber sits under the artist. **Measured:** `:desktop:compileKotlin` passes.
 - [x] **[DE] Queue and lyrics swap the column one at a time (done 7 Nov, code 437).** Queue from lyrics shows the queue, Lyrics from the queue shows the lyrics, the active glyph returns to the controls. **Measured:** `:desktop:applePlayerV17RenderCheck` paints the queue frame.

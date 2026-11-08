@@ -1372,6 +1372,11 @@ object YouTube {
         )
     }
 
+    /** Sends a dislike for [videoId] (the account's own thumb-down). */
+    suspend fun dislikeVideo(videoId: String) = runCatching {
+        innerTube.dislikeVideo(WEB_REMIX, videoId)
+    }
+
     suspend fun likeVideo(videoId: String, like: Boolean) = runCatching {
         if (like)
             innerTube.likeVideo(WEB_REMIX, videoId)
