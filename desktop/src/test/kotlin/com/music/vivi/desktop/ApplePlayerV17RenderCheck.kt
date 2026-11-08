@@ -74,6 +74,20 @@ object ApplePlayerV17RenderCheck {
     private val EN = java.util.Locale.ROOT
 
     /**
+     * The language the frames are painted in, `en` unless the run asks for
+     * another one: `./gradlew :desktop:applePlayerV17RenderCheck
+     * -PrenderLanguage=it`. A translated panel is a layout case of its own
+     * ("In riproduzione da", "Timer per il sonno"), so the check has to be able
+     * to paint it instead of trusting the tables.
+     */
+    private val LANG: String =
+        System.getProperty("vivi.render.language")?.takeIf { it.isNotBlank() } ?: "en"
+
+    /** A frame's file name, suffixed with the language when it is not English. */
+    private fun frameName(name: String): String =
+        if (LANG == "en") name else name.removeSuffix(".png") + "-" + LANG + ".png"
+
+    /**
      * Where the fixture's cover comes from: a real album sleeve at the 1200 px
      * the provider serves for it (the record the fixture's own track belongs
      * to). It is downloaded once and kept beside the renders so the check stays
@@ -338,7 +352,7 @@ object ApplePlayerV17RenderCheck {
             onVolume = {},
             onToggleShuffle = {},
             onCycleRepeat = {},
-            language = "en",
+            language = LANG,
             onOpenLyrics = {},
             onOpenQueue = {},
             onAddToPlaylist = {},
@@ -435,7 +449,7 @@ object ApplePlayerV17RenderCheck {
 
         // And the card really paints it: one frame of the tile itself.
         val scene = ImageComposeScene(320, 200) {
-            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = LANG) {
                 Box(Modifier.fillMaxSize()) {
                     MoodTile(item = item, ink = Color.White, onClick = {})
                 }
@@ -579,7 +593,7 @@ object ApplePlayerV17RenderCheck {
 
     private fun renderMenu(rows: List<NowPlaying>): BufferedImage {
         val scene = ImageComposeScene(1280, 800) {
-            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = LANG) {
                 Box(Modifier.fillMaxSize()) {
                     playerComposable(rows, queueOpen = false)()
                     Surface(
@@ -594,7 +608,7 @@ object ApplePlayerV17RenderCheck {
                     ) {
                         Column(Modifier.padding(vertical = 4.dp)) {
                             V17PlayerMenuContent(
-                                language = "en",
+                                language = LANG,
                                 liked = true,
                                 downloaded = false,
                                 sleepTimerMinutes = null,
@@ -625,7 +639,7 @@ object ApplePlayerV17RenderCheck {
         } finally {
             scene.close()
         }
-        File(outDir, "wide-menu.png").writeBytes(png)
+        File(outDir, frameName("wide-menu.png")).writeBytes(png)
         return javax.imageio.ImageIO.read(png.inputStream())
     }
 
@@ -639,7 +653,7 @@ object ApplePlayerV17RenderCheck {
         controlsRow: Boolean = false,
     ): BufferedImage {
         val scene = ImageComposeScene(width, height) {
-            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = LANG) {
                 Box(Modifier.fillMaxSize()) {
                     playerComposable(rows, queueOpen, lyricsOpen, controlsRow)()
                 }
@@ -654,7 +668,7 @@ object ApplePlayerV17RenderCheck {
         } finally {
             scene.close()
         }
-        File(outDir, name).writeBytes(png)
+        File(outDir, frameName(name)).writeBytes(png)
         // The cover this frame drew, its decoded pixels and the pixels of the
         // slot it went into: the ratio is what "sharp" means here.
         val drawn = if (width >= 820) {
@@ -681,7 +695,7 @@ object ApplePlayerV17RenderCheck {
 
     private fun mini(width: Int, height: Int, name: String, song: NowPlaying): BufferedImage {
         val scene = ImageComposeScene(width, height) {
-            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = LANG) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     Box(Modifier.fillMaxWidth().padding(8.dp)) {
                         AppleMusicV17MiniPlayer(
@@ -694,7 +708,7 @@ object ApplePlayerV17RenderCheck {
                             onNext = {},
                             onPrevious = {},
                             onOpenPlayer = {},
-                            language = "en",
+                            language = LANG,
                             volume = 0.72f,
                             isShuffle = false,
                             repeatMode = RepeatMode.OFF,
@@ -719,7 +733,7 @@ object ApplePlayerV17RenderCheck {
         } finally {
             scene.close()
         }
-        File(outDir, name).writeBytes(png)
+        File(outDir, frameName(name)).writeBytes(png)
         return javax.imageio.ImageIO.read(png.inputStream())
     }
 
@@ -734,7 +748,7 @@ object ApplePlayerV17RenderCheck {
         var x = 0f
         var y = 0f
         val scene = ImageComposeScene(900, 120) {
-            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
+            AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = LANG) {
                 Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
                     Box(Modifier.fillMaxWidth().padding(8.dp)) {
                         AppleMusicV17MiniPlayer(
@@ -747,7 +761,7 @@ object ApplePlayerV17RenderCheck {
                             onNext = {},
                             onPrevious = {},
                             onOpenPlayer = { opened++ },
-                            language = "en",
+                            language = LANG,
                             volume = 0.72f,
                             isShuffle = false,
                             repeatMode = RepeatMode.OFF,

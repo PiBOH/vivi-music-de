@@ -780,6 +780,11 @@ tasks.register<JavaExec>("applePlayerV17RenderCheck") {
     dependsOn(tasks.named("testClasses"))
     mainClass.set("com.music.vivi.desktop.ApplePlayerV17RenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
+    // The frames are English unless the run names another language, which is
+    // what makes the translated panel a case this check can paint:
+    // ./gradlew :desktop:applePlayerV17RenderCheck -PrenderLanguage=it writes
+    // wide-it.png, wide-menu-it.png and the rest beside the English ones.
+    systemProperty("vivi.render.language", (project.findProperty("renderLanguage") as String?) ?: "en")
 }
 
 tasks.register<JavaExec>("cookieShapesCheck") {
