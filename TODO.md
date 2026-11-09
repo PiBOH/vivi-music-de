@@ -9,6 +9,11 @@ orientation.
 ## Open
 
 ### 1.56.0 - Apple Player v17, the BitChord mini player and the developer toggles (5 Nov)
+- [x] **[DE] The theme follows the playing cover (done 9 Nov, code 439, beta6).** `ArtworkAccent` reads the dominant colour of the track's artwork and `AppTheme` seeds TonalSpot from it; the coral is the fallback until a track has played. **Measured:** `:desktop:compileKotlin` passes.
+- [x] **[DE] The accent colour options are removed (done 9 Nov, beta6).** The palette, the wheel, the hex field, *Add to palette*, the saved colours and the intensity strip left Theme & Colors, which is now the mode circles and the preview card. The stored accent keys stay readable and inert.
+- [x] **[DE] The v17 transport is three large round controls (done 9 Nov, beta6).** 56, 68 and 56 dp translucent circles with the glyph at full strength. **Measured:** `:desktop:compileKotlin` passes.
+- [x] **[DE] The inline lyric row opens the player's own lyrics panel (done 9 Nov, beta6).** It swaps the column like the glyph under the artwork, instead of pushing the separate lyrics screen.
+- [x] **[DE] Nothing sits under the volume bar in the stacked v17 player (done 9 Nov, beta6).** The action row moved under the artwork in that layout too.
 - [x] **[DE] The v17 right column follows the reference (done 8 Nov, code 438, beta5).** Playing from caption, lyric row with chevron, slim scrubber with both times, three transport controls, small and large speakers, no duplicate button row. **Measured:** `:desktop:applePlayerV17RenderCheck` paints it at the four sizes.
 - [x] **[DE] The v17 song menu carries the reference's eleven entries (done 8 Nov, code 438, beta5).** Dislike posts `like/dislike`, start radio plays the RDAMVM mix, download/delete is the audio cache, the sleep timer cycles 15/30/60/off, album and artist resolve by name, share copies the watch link.
 - [x] **[DE] The v17 menu distinguishes removing the like from disliking (done 8 Nov, beta5).** The heart row has its own key `remove_from_liked` ("Rimuovi il mi piace" in Italian) instead of the shared `unlike`, translated in all 50 languages by `desktop_extra_translations_123`; the queue's context menu keeps `unlike`, so no other screen changed.

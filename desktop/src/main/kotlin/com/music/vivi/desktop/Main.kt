@@ -254,6 +254,12 @@ fun WindowScope.App(
     val recentSeedTracks by player.recentTracks.collectAsState()
     val nowPlaying = playerState.current
     val isPlaying = playerState.isPlaying
+    // The accent the whole theme is built from is the cover's own colour: the
+    // theme follows the track that is playing instead of a colour picked once
+    // in Settings.
+    LaunchedEffect(nowPlaying?.thumbnail) {
+        ArtworkAccent.update(nowPlaying?.thumbnail)
+    }
     // NOTE: the live audio level is deliberately NOT collected here. Reading it
     // at the app root recomposed this whole composable (and every screen below
     // it) on every audio tick (~14/s while a track plays), which is exactly the

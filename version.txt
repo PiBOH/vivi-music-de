@@ -2,8 +2,8 @@
 149
 beta
 1.56.0
-438
-beta5
+439
+beta6
 # version.txt - the release metadata, read by the workflows and by
 # desktop/build.gradle.kts. Six value lines, then these notes:
 #   line 1 = mobile version          line 2 = mobile version code   line 3 = mobile channel

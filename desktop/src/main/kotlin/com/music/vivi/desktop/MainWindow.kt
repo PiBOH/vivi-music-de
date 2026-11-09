@@ -287,6 +287,9 @@ fun main(args: Array<String>) {
     var language by remember(settingsFileRevision()) { mutableStateOf(initialSettings.language) }
     var themeMode by remember(settingsFileRevision()) { mutableStateOf(ThemeMode.from(initialSettings.darkMode)) }
     var accent by remember(settingsFileRevision()) { mutableStateOf(argbIntToColor(initialSettings.accentColor)) }
+    // The colour the theme is actually built from: the cover of the track that
+    // is playing, read by `ArtworkAccent` and updated by the player.
+    val artworkAccent by ArtworkAccent.current
     var accentIntensity by remember(settingsFileRevision()) { mutableStateOf(initialSettings.accentIntensity) }
     var customAccents by remember(settingsFileRevision()) { mutableStateOf(initialSettings.customAccents) }
     var pureBlack by remember(settingsFileRevision()) { mutableStateOf(initialSettings.pureBlack) }
@@ -587,11 +590,13 @@ fun main(args: Array<String>) {
 
         AppTheme(
             mode = themeMode,
-            accent = accent,
+            // The accent is the playing cover's own colour now (ArtworkAccent),
+            // and the stored one is only the fallback until a track has played.
+            accent = artworkAccent ?: accent,
             pureBlack = pureBlack,
             font = selectedFont,
             spotify = spotifyLayout,
-            accentIntensity = accentIntensity,
+            accentIntensity = 1f,
             customFontPath = customFontPath,
             language = language,
         ) {
@@ -667,7 +672,7 @@ fun main(args: Array<String>) {
                             DesktopSettings.update { it.copy(selectedFont = f.value) }
                         },
                         themeMode = themeMode,
-                        accent = accent,
+                        accent = artworkAccent ?: accent,
                         onThemeModeChange = {
                             themeMode = it
                             saveTheme()

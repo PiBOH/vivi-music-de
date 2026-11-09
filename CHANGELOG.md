@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta6] - 2026-11-09
+
+### Changed
+
+- [DE] **The whole interface takes its colour from the cover that is playing.**
+- [DE] **The accent options are gone from Theme & Colors.**
+- [DE] **The v17 transport is three large round controls.**
+- [DE] **The inline lyric row opens the player's own lyrics panel.**
+- [DE] **The stacked v17 player ends at the volume bar.**
+- [DE] **The slider style options stay removed.**
+
 ## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-08
 
 ### Changed

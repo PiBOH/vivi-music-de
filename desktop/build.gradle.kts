@@ -934,31 +934,6 @@ tasks.register<JavaExec>("streamResolveProbe") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
-/**
- * Headless check of the custom colour wheel:
- *
- *     ./gradlew :desktop:colorWheelRenderCheck
- *
- * See `desktop/src/test/kotlin/com/music/vivi/desktop/ColorWheelRenderCheck.kt`.
- * The picker is one round wheel on the right of the Theme & Colors screen (hue
- * around the rim, saturation from the centre out) with the brightness strip
- * beside it, in place of the three HSV bars it used to be. This renders the real
- * `ThemeSection` into an off-screen `ImageComposeScene` with the picker open and
- * reads the pixels back, because a wheel is a picture and nothing else can tell a
- * wheel from a rectangle: the disc must be round and the wheel's own size, its
- * four cardinal samples must be red, yellow-green, cyan and blue the way the
- * sweep gradient and the pointer's clockwise angle put them, its centre white and
- * its rim saturated, the marker must sit where the accent the screen opened on
- * is (right for red, lower-left for green), the strip beside it must run from the
- * full colour to black, and no wide thin colour bar may be left on the screen.
- */
-tasks.register<JavaExec>("colorWheelRenderCheck") {
-    group = "verification"
-    description = "Renders the custom colour wheel headlessly and checks the disc, its hues and its marker"
-    dependsOn(tasks.named("testClasses"))
-    mainClass.set("com.music.vivi.desktop.ColorWheelRenderCheck")
-    classpath = sourceSets.getByName("test").runtimeClasspath
-}
 
 /**
  * Headless check of the Google sign-in screen:
@@ -1577,16 +1552,12 @@ tasks.register<JavaExec>("appearanceOrderCheck") {
  *
  *     ./gradlew :desktop:themeOrderCheck
  *
- * The preview's `theme` list is one column - the title, the 140 dp live preview
- * card, "Theme mode" with the four 64 dp circles, "Accent color" with the
- * palette, then the picker whose head is "Custom color", whose body is the
- * 220 dp wheel with its 20 dp brightness strip level and 32 dp away, and whose
- * foot is the hex field with *Add to palette*. This composes the real
- * `SettingsThemeScreen`, reads its semantics tree in document order and renders
- * it headlessly to measure what the page's CSS sizes: the circles, the 40 dp
- * palette discs on the page's own `minmax(44px, 1fr)` pitch, the wheel and its
- * strip, and the 16/12/8 dp between the blocks; the arrival frame must not paint
- * the picker, which is a group on the page and fades up.
+ * The accent is the playing cover's own colour now, so the page is the title,
+ * the 140 dp live preview card and "Theme mode" with its four 64 dp circles.
+ * This composes the real `SettingsThemeScreen`, reads its semantics tree in
+ * document order (failing if a removed accent control is drawn again) and
+ * renders it headlessly to measure the 16 dp under the back row, the preview
+ * card and the circles with their labels.
  * See `desktop/src/test/kotlin/com/music/vivi/desktop/ThemeOrderCheck.kt`.
  * A manual check, not part of `check`.
  */

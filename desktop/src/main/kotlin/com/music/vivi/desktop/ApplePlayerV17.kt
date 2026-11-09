@@ -550,7 +550,14 @@ internal fun ApplePlayerV17Screen(
                             Modifier
                                 .fillMaxWidth()
                                 .clip(MaterialTheme.shapes.small)
-                                .clickable(onClick = onOpenLyrics)
+                                .clickable {
+                                    // The row opens the same lyrics panel the glyph
+                                    // under the artwork opens, in this column: it
+                                    // used to push the separate lyrics screen,
+                                    // with its own header, for the same words.
+                                    showLyricsPanel = true
+                                    showQueuePanel = false
+                                }
                                 .padding(vertical = 4.dp, horizontal = 2.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -606,37 +613,61 @@ internal fun ApplePlayerV17Screen(
 
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(26.dp, Alignment.CenterHorizontally),
+                    horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // The reference's transport: the three controls are round,
+                    // large and translucent, and the play/pause is the biggest
+                    // of them, instead of bare glyphs on the backdrop.
                     Tooltip(Localization.get(language, "previous")) {
-                        M3IconButton(onClick = onPrevious) {
-                            Icon(
-                                Icons.Filled.FastRewind,
-                                contentDescription = Localization.get(language, "previous"),
-                                tint = contentColor,
-                                modifier = Modifier.size(34.dp),
-                            )
+                        Surface(
+                            onClick = onPrevious,
+                            shape = CircleShape,
+                            color = contentColor.copy(alpha = 0.10f),
+                            modifier = Modifier.size(56.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Filled.FastRewind,
+                                    contentDescription = Localization.get(language, "previous"),
+                                    tint = contentColor,
+                                    modifier = Modifier.size(26.dp),
+                                )
+                            }
                         }
                     }
                     Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
-                        M3IconButton(onClick = onTogglePlay) {
-                            Icon(
-                                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                                tint = contentColor,
-                                modifier = Modifier.size(52.dp),
-                            )
+                        Surface(
+                            onClick = onTogglePlay,
+                            shape = CircleShape,
+                            color = contentColor.copy(alpha = 0.16f),
+                            modifier = Modifier.size(68.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                                    contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
+                                    tint = contentColor,
+                                    modifier = Modifier.size(36.dp),
+                                )
+                            }
                         }
                     }
                     Tooltip(Localization.get(language, "next")) {
-                        M3IconButton(onClick = onNext) {
-                            Icon(
-                                Icons.Filled.FastForward,
-                                contentDescription = Localization.get(language, "next"),
-                                tint = contentColor,
-                                modifier = Modifier.size(34.dp),
-                            )
+                        Surface(
+                            onClick = onNext,
+                            shape = CircleShape,
+                            color = contentColor.copy(alpha = 0.10f),
+                            modifier = Modifier.size(56.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Filled.FastForward,
+                                    contentDescription = Localization.get(language, "next"),
+                                    tint = contentColor,
+                                    modifier = Modifier.size(26.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -827,6 +858,11 @@ internal fun ApplePlayerV17Screen(
                 ) {
                     artwork()
                     Spacer(Modifier.height(18.dp))
+                    // The action row sits under the artwork in both layouts, so
+                    // the stacked form ends at the volume bar like the wide one
+                    // does instead of carrying buttons under it.
+                    bottomRow(Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(10.dp))
                     V17ColumnSwap(
                         target = if (showLyricsPanel) 1 else 0,
                         modifier = Modifier.fillMaxWidth(),
@@ -837,8 +873,6 @@ internal fun ApplePlayerV17Screen(
                             info()
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
-                    bottomRow(Modifier.fillMaxWidth())
                 }
             }
         }

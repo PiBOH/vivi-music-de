@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta6] - 2026-11-09
+
+### Changed
+
+- [DE] **The whole interface takes its colour from the cover that is playing.** The accent is no longer a setting: `ArtworkAccent` reads the dominant colour of the track's artwork once per URL and `AppTheme` seeds its tonal scheme from it, so a red sleeve gives a red interface and the next track re-colours the app. A cover that cannot be read leaves the last colour in place, and the app's coral is the fallback before the first track has played. **Verified:** `:desktop:compileKotlin` passes.
+- [DE] **The accent options are gone from Theme & Colors.** The palette, the colour wheel, the hex field, *Add to palette*, the saved custom colours and the intensity strip were removed: the page is the mode circles (system, light, dark, pure black) and its live preview card, because the colour now comes from the music. The stored `accentColor`, `accentIntensity` and `customAccents` keys stay readable and inert, so an existing settings file opens unchanged.
+- [DE] **The v17 transport is three large round controls.** Previous, play/pause and next are 56, 68 and 56 dp translucent circles with the glyph at full strength, the reference's shape, instead of bare glyphs on the backdrop.
+- [DE] **The inline lyric row opens the player's own lyrics panel.** Pressing the sung line swaps the right column to the same lyrics view the glyph under the artwork opens, with the reader's style, instead of pushing the separate lyrics screen with its header.
+- [DE] **The stacked v17 player ends at the volume bar.** Under 820 dp the action row (lyrics, output/session, queue) moved above the controls, directly under the artwork, so no button sits under the volume slider in either layout.
+- [DE] **The slider style options stay removed.** Nothing in the settings reaches `ViviSliderStyle`: the seek and volume bars draw the thin track only, so the old wavy and squiggly picks cannot come back through a stored key.
+
 ## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-08
 
 ### Changed
