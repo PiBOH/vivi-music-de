@@ -33,6 +33,8 @@ internal fun strings_ca(): Map<String, String> =
         "accent_deep_orange" to "Taronja fosc",
         "accent_deep_purple" to "Violeta fosc",
         "accent_dynamic" to "Automàtic",
+        "accent_from_artwork" to "Accent de la portada",
+        "accent_from_artwork_desc" to "Teny la interfície amb el color de la portada que sona.",
         "accent_gold" to "Daurat",
         "accent_green" to "Verd",
         "accent_grey" to "Gris",

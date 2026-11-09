@@ -33,6 +33,8 @@ internal fun strings_ja(): Map<String, String> =
         "accent_deep_orange" to "濃オレンジ",
         "accent_deep_purple" to "濃紫",
         "accent_dynamic" to "自動",
+        "accent_from_artwork" to "カバーからアクセント",
+        "accent_from_artwork_desc" to "再生中のカバーの色でインターフェースを彩ります。",
         "accent_gold" to "ゴールド",
         "accent_green" to "緑",
         "accent_grey" to "グレー",

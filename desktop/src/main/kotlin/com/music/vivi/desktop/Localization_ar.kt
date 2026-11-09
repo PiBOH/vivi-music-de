@@ -33,6 +33,8 @@ internal fun strings_ar(): Map<String, String> =
         "accent_deep_orange" to "برتقالي داكن",
         "accent_deep_purple" to "بنفسجي داكن",
         "accent_dynamic" to "تلقائي",
+        "accent_from_artwork" to "لون التمييز من الغلاف",
+        "accent_from_artwork_desc" to "تلوين الواجهة بلون الغلاف قيد التشغيل.",
         "accent_gold" to "ذهبي",
         "accent_green" to "أخضر",
         "accent_grey" to "رمادي",

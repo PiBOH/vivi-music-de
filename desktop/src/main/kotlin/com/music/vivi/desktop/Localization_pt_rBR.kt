@@ -33,6 +33,8 @@ internal fun strings_pt_rBR(): Map<String, String> =
         "accent_deep_orange" to "Laranja escuro",
         "accent_deep_purple" to "Roxo escuro",
         "accent_dynamic" to "Automático",
+        "accent_from_artwork" to "Destaque da capa",
+        "accent_from_artwork_desc" to "Colorir a interface com a cor da capa em reprodução.",
         "accent_gold" to "Dourado",
         "accent_green" to "Verde",
         "accent_grey" to "Cinza",

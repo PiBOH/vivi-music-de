@@ -33,6 +33,8 @@ internal fun strings_hu(): Map<String, String> =
         "accent_deep_orange" to "Sötétnarancs",
         "accent_deep_purple" to "Sötétlila",
         "accent_dynamic" to "Automatikus",
+        "accent_from_artwork" to "Kiemelőszín a borítóról",
+        "accent_from_artwork_desc" to "A felület színezése a lejátszott borító színével.",
         "accent_gold" to "Arany",
         "accent_green" to "Zöld",
         "accent_grey" to "Szürke",

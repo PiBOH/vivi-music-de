@@ -33,6 +33,8 @@ internal fun strings_uk(): Map<String, String> =
         "accent_deep_orange" to "Темно-помаранчевий",
         "accent_deep_purple" to "Темно-фіолетовий",
         "accent_dynamic" to "Автоматичний",
+        "accent_from_artwork" to "Акцент з обкладинки",
+        "accent_from_artwork_desc" to "Забарвлювати інтерфейс кольором обкладинки, що грає.",
         "accent_gold" to "Золотий",
         "accent_green" to "Зелений",
         "accent_grey" to "Сірий",

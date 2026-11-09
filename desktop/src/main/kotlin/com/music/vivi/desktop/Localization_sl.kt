@@ -33,6 +33,8 @@ internal fun strings_sl(): Map<String, String> =
         "accent_deep_orange" to "Temno oranžna",
         "accent_deep_purple" to "Temno vijolična",
         "accent_dynamic" to "Samodejno",
+        "accent_from_artwork" to "Poudarek z ovitka",
+        "accent_from_artwork_desc" to "Obarvaj vmesnik z barvo predvajanega ovitka.",
         "accent_gold" to "Zlata",
         "accent_green" to "Zelena",
         "accent_grey" to "Siva",

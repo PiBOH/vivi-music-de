@@ -33,6 +33,8 @@ internal fun strings_fil(): Map<String, String> =
         "accent_deep_orange" to "Maitim na kahel",
         "accent_deep_purple" to "Maitim na lila",
         "accent_dynamic" to "Awtomatiko",
+        "accent_from_artwork" to "Accent mula sa cover",
+        "accent_from_artwork_desc" to "Kulayan ang interface ng kulay ng tumutugtog na cover.",
         "accent_gold" to "Ginto",
         "accent_green" to "Berde",
         "accent_grey" to "Gri",

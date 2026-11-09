@@ -33,6 +33,8 @@ internal fun strings_az(): Map<String, String> =
         "accent_deep_orange" to "Tünd narıncı",
         "accent_deep_purple" to "Tünd bənövşəyi",
         "accent_dynamic" to "Avtomatik",
+        "accent_from_artwork" to "Vurğu üzlükdən",
+        "accent_from_artwork_desc" to "İnterfeysi oxuyan albom üzlüyünün rəngi ilə boyayın.",
         "accent_gold" to "Qızılı",
         "accent_green" to "Yaşıl",
         "accent_grey" to "Boz",

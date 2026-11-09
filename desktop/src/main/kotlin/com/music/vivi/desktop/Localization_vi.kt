@@ -33,6 +33,8 @@ internal fun strings_vi(): Map<String, String> =
         "accent_deep_orange" to "Cam đậm",
         "accent_deep_purple" to "Tím đậm",
         "accent_dynamic" to "Tự động",
+        "accent_from_artwork" to "Màu nhấn từ bìa",
+        "accent_from_artwork_desc" to "Tô màu giao diện bằng màu của bìa đang phát.",
         "accent_gold" to "Vàng",
         "accent_green" to "Xanh lá",
         "accent_grey" to "Xám",

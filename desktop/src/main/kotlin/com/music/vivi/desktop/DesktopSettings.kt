@@ -41,6 +41,11 @@ data class DesktopSyncState(
     val accentColor: Int = 0xFFED5564.toInt(),
     /** Accent saturation/vividness (0..1 scale, 1 = full). */
     val accentIntensity: Float = 1f,
+    /**
+     * Seeds the theme from the dominant colour of the playing cover. Off by
+     * default: the accent is then [NeutralAccent]. Developer option.
+     */
+    val accentFromArtwork: Boolean = false,
     /** User-saved custom accent colors (ARGB ints), shown as extra palette swatches. */
     val customAccents: List<Int> = emptyList(),
     val selectedFont: String = "system",

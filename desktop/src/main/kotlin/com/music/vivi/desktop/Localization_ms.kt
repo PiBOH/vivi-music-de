@@ -33,6 +33,8 @@ internal fun strings_ms(): Map<String, String> =
         "accent_deep_orange" to "Oren gelap",
         "accent_deep_purple" to "Ungu gelap",
         "accent_dynamic" to "Automatik",
+        "accent_from_artwork" to "Aksen daripada muka depan",
+        "accent_from_artwork_desc" to "Warnakan antara muka dengan warna muka depan yang dimainkan.",
         "accent_gold" to "Emas",
         "accent_green" to "Hijau",
         "accent_grey" to "Kelabu",

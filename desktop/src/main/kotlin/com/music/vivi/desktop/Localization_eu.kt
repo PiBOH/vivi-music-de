@@ -33,6 +33,8 @@ internal fun strings_eu(): Map<String, String> =
         "accent_deep_orange" to "Laranja iluna",
         "accent_deep_purple" to "More iluna",
         "accent_dynamic" to "Automatikoa",
+        "accent_from_artwork" to "Azentua azaletik",
+        "accent_from_artwork_desc" to "Margotu interfazea jotzen ari den azalaren kolorearekin.",
         "accent_gold" to "Urrea",
         "accent_green" to "Berdea",
         "accent_grey" to "Grisa",

@@ -33,6 +33,8 @@ internal fun strings_ko(): Map<String, String> =
         "accent_deep_orange" to "진한 주황색",
         "accent_deep_purple" to "진한 보라색",
         "accent_dynamic" to "자동",
+        "accent_from_artwork" to "커버에서 가져온 강조 색",
+        "accent_from_artwork_desc" to "재생 중인 커버의 색으로 인터페이스를 물들입니다.",
         "accent_gold" to "골드",
         "accent_green" to "초록색",
         "accent_grey" to "회색",

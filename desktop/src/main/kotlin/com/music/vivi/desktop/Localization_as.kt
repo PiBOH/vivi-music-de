@@ -33,6 +33,8 @@ internal fun strings_as(): Map<String, String> =
         "accent_deep_orange" to "ডাঠ কমলা",
         "accent_deep_purple" to "ডাঠ বেঙুনীয়া",
         "accent_dynamic" to "স্বয়ংক্রিয়",
+        "accent_from_artwork" to "আৱৰণৰ পৰা এচেণ্ট",
+        "accent_from_artwork_desc" to "বজাই থকা আৱৰণৰ ৰঙেৰে ইণ্টাৰফেচ ৰঙাওক।",
         "accent_gold" to "সোণালী",
         "accent_green" to "সেউজীয়া",
         "accent_grey" to "মটিয়া",

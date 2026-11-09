@@ -33,6 +33,8 @@ internal fun strings_fi(): Map<String, String> =
         "accent_deep_orange" to "Tummanoranssi",
         "accent_deep_purple" to "Tummanvioletti",
         "accent_dynamic" to "Automaattinen",
+        "accent_from_artwork" to "Korostus kansikuvasta",
+        "accent_from_artwork_desc" to "Värjää käyttöliittymä soivan kansikuvan värillä.",
         "accent_gold" to "Kulta",
         "accent_green" to "Vihreä",
         "accent_grey" to "Harmaa",

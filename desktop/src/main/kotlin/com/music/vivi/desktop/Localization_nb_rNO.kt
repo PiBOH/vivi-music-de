@@ -33,6 +33,8 @@ internal fun strings_nb_rNO(): Map<String, String> =
         "accent_deep_orange" to "Mørk oransje",
         "accent_deep_purple" to "Mørk lilla",
         "accent_dynamic" to "Automatisk",
+        "accent_from_artwork" to "Aksent fra omslaget",
+        "accent_from_artwork_desc" to "Fargelegg grensesnittet med fargen til omslaget som spilles.",
         "accent_gold" to "Gull",
         "accent_green" to "Grønn",
         "accent_grey" to "Grå",

@@ -290,6 +290,10 @@ fun main(args: Array<String>) {
     // The colour the theme is actually built from: the cover of the track that
     // is playing, read by `ArtworkAccent` and updated by the player.
     val artworkAccent by ArtworkAccent.current
+    // The cover's colour is opt-in (Developer options). Left off, the app is
+    // built from the neutral white seed BitChord's own scheme uses.
+    val accentFromArtwork = remember(settingsFileRevision()) { initialSettings.accentFromArtwork }
+    val themeAccent = if (accentFromArtwork) artworkAccent ?: accent else NeutralAccent
     var accentIntensity by remember(settingsFileRevision()) { mutableStateOf(initialSettings.accentIntensity) }
     var customAccents by remember(settingsFileRevision()) { mutableStateOf(initialSettings.customAccents) }
     var pureBlack by remember(settingsFileRevision()) { mutableStateOf(initialSettings.pureBlack) }
@@ -590,9 +594,9 @@ fun main(args: Array<String>) {
 
         AppTheme(
             mode = themeMode,
-            // The accent is the playing cover's own colour now (ArtworkAccent),
-            // and the stored one is only the fallback until a track has played.
-            accent = artworkAccent ?: accent,
+            // Neutral by default; the playing cover's own colour when the
+            // Developer option seeds the theme from it.
+            accent = themeAccent,
             pureBlack = pureBlack,
             font = selectedFont,
             spotify = spotifyLayout,
@@ -672,7 +676,7 @@ fun main(args: Array<String>) {
                             DesktopSettings.update { it.copy(selectedFont = f.value) }
                         },
                         themeMode = themeMode,
-                        accent = artworkAccent ?: accent,
+                        accent = themeAccent,
                         onThemeModeChange = {
                             themeMode = it
                             saveTheme()

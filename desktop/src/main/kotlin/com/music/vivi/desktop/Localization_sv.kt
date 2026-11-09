@@ -33,6 +33,8 @@ internal fun strings_sv(): Map<String, String> =
         "accent_deep_orange" to "Mörkorange",
         "accent_deep_purple" to "Mörk lila",
         "accent_dynamic" to "Automatisk",
+        "accent_from_artwork" to "Accent från omslaget",
+        "accent_from_artwork_desc" to "Färga gränssnittet med färgen på omslaget som spelas.",
         "accent_gold" to "Guld",
         "accent_green" to "Grön",
         "accent_grey" to "Grå",

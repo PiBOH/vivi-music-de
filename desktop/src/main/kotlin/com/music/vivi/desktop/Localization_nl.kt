@@ -33,6 +33,8 @@ internal fun strings_nl(): Map<String, String> =
         "accent_deep_orange" to "Donkeroranje",
         "accent_deep_purple" to "Donkerpaars",
         "accent_dynamic" to "Automatisch",
+        "accent_from_artwork" to "Accent van de hoes",
+        "accent_from_artwork_desc" to "Kleur de interface met de kleur van de spelende hoes.",
         "accent_gold" to "Goud",
         "accent_green" to "Groen",
         "accent_grey" to "Grijs",

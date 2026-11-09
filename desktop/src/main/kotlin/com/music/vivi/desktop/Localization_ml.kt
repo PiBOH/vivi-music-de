@@ -33,6 +33,8 @@ internal fun strings_ml(): Map<String, String> =
         "accent_deep_orange" to "കടും ഓറഞ്ച്",
         "accent_deep_purple" to "കടും പർപ്പിൾ",
         "accent_dynamic" to "സ്വയം",
+        "accent_from_artwork" to "കവറിൽ നിന്നുള്ള ആക്സന്റ്",
+        "accent_from_artwork_desc" to "പ്ലേ ചെയ്യുന്ന കവറിന്റെ നിറത്തിൽ ഇന്റർഫേസ് നിറമാക്കുക.",
         "accent_gold" to "സ്വർണ്ണം",
         "accent_green" to "പച്ച",
         "accent_grey" to "ചാരനിറം",

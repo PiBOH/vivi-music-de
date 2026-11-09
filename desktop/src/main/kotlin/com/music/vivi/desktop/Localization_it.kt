@@ -33,6 +33,8 @@ internal fun strings_it(): Map<String, String> =
         "accent_deep_orange" to "Arancione scuro",
         "accent_deep_purple" to "Viola scuro",
         "accent_dynamic" to "Automatico",
+        "accent_from_artwork" to "Accento dalla copertina",
+        "accent_from_artwork_desc" to "Colora l'interfaccia con il colore della copertina in riproduzione.",
         "accent_gold" to "Oro",
         "accent_green" to "Verde",
         "accent_grey" to "Grigio",

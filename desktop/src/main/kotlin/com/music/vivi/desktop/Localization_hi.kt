@@ -33,6 +33,8 @@ internal fun strings_hi(): Map<String, String> =
         "accent_deep_orange" to "गहरा नारंगी",
         "accent_deep_purple" to "गहरा बैंगनी",
         "accent_dynamic" to "स्वचालित",
+        "accent_from_artwork" to "कवर से एक्सेंट",
+        "accent_from_artwork_desc" to "चल रहे कवर के रंग से इंटरफ़ेस को रंगें।",
         "accent_gold" to "सुनहरा",
         "accent_green" to "हरा",
         "accent_grey" to "ग्रे",

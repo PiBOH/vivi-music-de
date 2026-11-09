@@ -33,6 +33,8 @@ internal fun strings_te(): Map<String, String> =
         "accent_deep_orange" to "ముదురు నారింజ",
         "accent_deep_purple" to "ముదురు ఊదా",
         "accent_dynamic" to "స్వయంచాలకం",
+        "accent_from_artwork" to "కవర్ నుండి యాక్సెంట్",
+        "accent_from_artwork_desc" to "ప్లే అవుతున్న కవర్ రంగుతో ఇంటర్ఫేస్‌ను రంగు చేయండి.",
         "accent_gold" to "బంగారు",
         "accent_green" to "ఆకుపచ్చ",
         "accent_grey" to "బూడిద",

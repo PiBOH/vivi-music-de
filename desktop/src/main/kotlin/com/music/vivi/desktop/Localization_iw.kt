@@ -33,6 +33,8 @@ internal fun strings_iw(): Map<String, String> =
         "accent_deep_orange" to "כתום כהה",
         "accent_deep_purple" to "סגול כהה",
         "accent_dynamic" to "מערכת",
+        "accent_from_artwork" to "צבע הדגשה מהעטיפה",
+        "accent_from_artwork_desc" to "צביעת הממשק בצבע העטיפה שמתנגנת.",
         "accent_gold" to "זהב",
         "accent_green" to "ירוק",
         "accent_grey" to "אפור",

@@ -33,6 +33,8 @@ internal fun strings_sr(): Map<String, String> =
         "accent_deep_orange" to "Тамно наранџаста",
         "accent_deep_purple" to "Тамно љубичаста",
         "accent_dynamic" to "Аутоматски",
+        "accent_from_artwork" to "Акценат са омота",
+        "accent_from_artwork_desc" to "Обоји интерфејс бојом омота који се репродукује.",
         "accent_gold" to "Златна",
         "accent_green" to "Зелена",
         "accent_grey" to "Сива",

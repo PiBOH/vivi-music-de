@@ -33,6 +33,8 @@ internal fun strings_pa(): Map<String, String> =
         "accent_deep_orange" to "ਗੂੜ੍ਹਾ ਸੰਤਰੀ",
         "accent_deep_purple" to "ਗੂੜ੍ਹਾ ਜਾਮਣੀ",
         "accent_dynamic" to "ਆਟੋਮੈਟਿਕ",
+        "accent_from_artwork" to "ਕਵਰ ਤੋਂ ਐਕਸੈਂਟ",
+        "accent_from_artwork_desc" to "ਚੱਲ ਰਹੇ ਕਵਰ ਦੇ ਰੰਗ ਨਾਲ ਇੰਟਰਫ਼ੇਸ ਨੂੰ ਰੰਗੋ।",
         "accent_gold" to "ਸੁਨਹਿਰੀ",
         "accent_green" to "ਹਰਾ",
         "accent_grey" to "ਸਲੇਟੀ",

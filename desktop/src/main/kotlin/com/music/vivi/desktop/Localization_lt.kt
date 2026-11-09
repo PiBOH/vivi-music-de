@@ -33,6 +33,8 @@ internal fun strings_lt(): Map<String, String> =
         "accent_deep_orange" to "Tamsiai oranžinė",
         "accent_deep_purple" to "Tamsiai violetinė",
         "accent_dynamic" to "Automatinis",
+        "accent_from_artwork" to "Akcentas iš viršelio",
+        "accent_from_artwork_desc" to "Nuspalvinti sąsają grojamo viršelio spalva.",
         "accent_gold" to "Auksinė",
         "accent_green" to "Žalia",
         "accent_grey" to "Pilka",

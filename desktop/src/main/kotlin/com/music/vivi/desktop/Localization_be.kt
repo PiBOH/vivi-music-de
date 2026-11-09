@@ -33,6 +33,8 @@ internal fun strings_be(): Map<String, String> =
         "accent_deep_orange" to "Цёмна-аранжавы",
         "accent_deep_purple" to "Цёмна-фіялетавы",
         "accent_dynamic" to "Аўтаматычны",
+        "accent_from_artwork" to "Акцэнт з вокладкі",
+        "accent_from_artwork_desc" to "Афарбаваць інтэрфейс колерам вокладкі трэка.",
         "accent_gold" to "Залацісты",
         "accent_green" to "Зялёны",
         "accent_grey" to "Шэры",

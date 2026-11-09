@@ -33,6 +33,8 @@ internal fun strings_et(): Map<String, String> =
         "accent_deep_orange" to "Tumeoranž",
         "accent_deep_purple" to "Tumelilla",
         "accent_dynamic" to "Automaatne",
+        "accent_from_artwork" to "Aktsent kaanelt",
+        "accent_from_artwork_desc" to "Värvida liides esitatava kaanepildi värviga.",
         "accent_gold" to "Kuldne",
         "accent_green" to "Roheline",
         "accent_grey" to "Hall",

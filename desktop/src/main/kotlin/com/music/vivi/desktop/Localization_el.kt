@@ -33,6 +33,8 @@ internal fun strings_el(): Map<String, String> =
         "accent_deep_orange" to "Σκούρο πορτοκαλί",
         "accent_deep_purple" to "Σκούρο μοβ",
         "accent_dynamic" to "Αυτόματο",
+        "accent_from_artwork" to "Χρώμα έμφασης από το εξώφυλλο",
+        "accent_from_artwork_desc" to "Χρωματισμός της διεπαφής με το χρώμα του εξωφύλλου που παίζει.",
         "accent_gold" to "Χρυσό",
         "accent_green" to "Πράσινο",
         "accent_grey" to "Γκρι",

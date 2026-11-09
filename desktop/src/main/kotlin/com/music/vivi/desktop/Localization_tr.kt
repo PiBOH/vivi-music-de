@@ -33,6 +33,8 @@ internal fun strings_tr(): Map<String, String> =
         "accent_deep_orange" to "Koyu turuncu",
         "accent_deep_purple" to "Koyu mor",
         "accent_dynamic" to "Otomatik",
+        "accent_from_artwork" to "Kapaktan vurgu rengi",
+        "accent_from_artwork_desc" to "Arayüzü çalan kapağın rengiyle boya.",
         "accent_gold" to "Altın",
         "accent_green" to "Yeşil",
         "accent_grey" to "Gri",

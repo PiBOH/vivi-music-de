@@ -33,6 +33,8 @@ internal fun strings_ro(): Map<String, String> =
         "accent_deep_orange" to "Portocaliu închis",
         "accent_deep_purple" to "Violet închis",
         "accent_dynamic" to "Automat",
+        "accent_from_artwork" to "Accent din copertă",
+        "accent_from_artwork_desc" to "Colorează interfața cu culoarea copertei redate.",
         "accent_gold" to "Auriu",
         "accent_green" to "Verde",
         "accent_grey" to "Gri",

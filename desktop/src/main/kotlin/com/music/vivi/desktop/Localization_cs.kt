@@ -33,6 +33,8 @@ internal fun strings_cs(): Map<String, String> =
         "accent_deep_orange" to "Tmavě oranžová",
         "accent_deep_purple" to "Tmavě fialová",
         "accent_dynamic" to "Automatický",
+        "accent_from_artwork" to "Akcent z obalu",
+        "accent_from_artwork_desc" to "Obarvit rozhraní barvou přehrávaného obalu.",
         "accent_gold" to "Zlatá",
         "accent_green" to "Zelená",
         "accent_grey" to "Šedá",

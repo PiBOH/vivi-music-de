@@ -33,6 +33,8 @@ internal fun strings_zh_rCN(): Map<String, String> =
         "accent_deep_orange" to "深橙色",
         "accent_deep_purple" to "深紫色",
         "accent_dynamic" to "自动",
+        "accent_from_artwork" to "封面取色",
+        "accent_from_artwork_desc" to "用正在播放的封面颜色为界面着色。",
         "accent_gold" to "金色",
         "accent_green" to "绿色",
         "accent_grey" to "灰色",

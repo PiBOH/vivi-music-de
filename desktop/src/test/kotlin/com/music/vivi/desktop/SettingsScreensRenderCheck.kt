@@ -560,15 +560,15 @@ object SettingsScreensRenderCheck {
 
         // Debug & Developer Options: the switch that locks the screen again, then
         // the Advanced card of the heap, the three logging / APK switches, the
-        // frame rate with its counter, the legacy Apple player and Stats for
-        // nerds.
+        // frame rate with its counter, the accent seed from the cover, the
+        // legacy Apple player and Stats for nerds.
         // The sentence under the title is a note, not a row: `cards` drops it.
         val developerCards = cards(developerBands)
-        if (developerCards.size != 9) {
-            failures += "Debug & Developer Options should read nine rows (the lock row plus 8), read ${developerCards.size}"
+        if (developerCards.size != 10) {
+            failures += "Debug & Developer Options should read ten rows (the lock row plus 9), read ${developerCards.size}"
         }
-        if (seams(developerCards) != 7) {
-            failures += "Debug & Developer Options should join the eight Advanced rows (7 seams), read ${seams(developerCards)}"
+        if (seams(developerCards) != 8) {
+            failures += "Debug & Developer Options should join the nine Advanced rows (8 seams), read ${seams(developerCards)}"
         }
 
         // Desktop features: one card of the three switches.

@@ -33,6 +33,8 @@ internal fun strings_ta(): Map<String, String> =
         "accent_deep_orange" to "அடர் ஆரஞ்சு",
         "accent_deep_purple" to "அடர் ஊதா",
         "accent_dynamic" to "தானியங்கி",
+        "accent_from_artwork" to "அட்டையிலிருந்து மெருகு",
+        "accent_from_artwork_desc" to "இயங்கும் அட்டையின் நிறத்தால் இடைமுகத்தை வண்ணமிடு.",
         "accent_gold" to "தங்கம்",
         "accent_green" to "பச்சை",
         "accent_grey" to "சாம்பல்",

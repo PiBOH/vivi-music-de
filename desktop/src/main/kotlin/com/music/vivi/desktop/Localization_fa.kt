@@ -33,6 +33,8 @@ internal fun strings_fa(): Map<String, String> =
         "accent_deep_orange" to "نارنجی تیره",
         "accent_deep_purple" to "بنفش تیره",
         "accent_dynamic" to "سیستم",
+        "accent_from_artwork" to "رنگ تأکید از جلد",
+        "accent_from_artwork_desc" to "رابط را با رنگ جلد در حال پخش رنگ کنید.",
         "accent_gold" to "طلایی",
         "accent_green" to "سبز",
         "accent_grey" to "خاکستری",

@@ -33,6 +33,8 @@ internal fun strings_km(): Map<String, String> =
         "accent_deep_orange" to "ពណ៌ទឹកក្រូចចាស់",
         "accent_deep_purple" to "ពណ៌ស្វាយចាស់",
         "accent_dynamic" to "ដោយស្វ័យប្រវត្តិ",
+        "accent_from_artwork" to "ពណ៌សំខាន់ពីគម្រប",
+        "accent_from_artwork_desc" to "ដាក់ពណ៌ផ្ទៃមុខដោយពណ៌គម្របដែលកំពុងលេង។",
         "accent_gold" to "ពណ៌មាស",
         "accent_green" to "ពណ៌បៃតង",
         "accent_grey" to "ពណ៌ប្រផេះ",

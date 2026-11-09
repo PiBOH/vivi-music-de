@@ -2,6 +2,7 @@
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -76,12 +77,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -89,6 +97,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
@@ -609,30 +618,31 @@ internal fun ApplePlayerV17Screen(
                     )
                 }
 
-                Spacer(Modifier.height(10.dp))
+                // BitChord's gap: the scrubber and the transport are two blocks,
+                // and the row holds a breath between them instead of sitting on
+                // the time line.
+                Spacer(Modifier.height(28.dp))
 
                 Row(
                     Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+                    // SpaceAround, the way the reference lays the three targets
+                    // out: the outer margins take half a gap, so the buttons
+                    // spread with the column instead of keeping one fixed pitch.
+                    horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // The reference's transport: the three controls are round,
-                    // large and translucent, and the play/pause is the biggest
-                    // of them, instead of bare glyphs on the backdrop.
+                    // The reference's transport: three round, translucent
+                    // controls, the play/pause the largest of them, and the
+                    // glyphs drawn rather than borrowed (see V17Glyph).
                     Tooltip(Localization.get(language, "previous")) {
                         Surface(
                             onClick = onPrevious,
                             shape = CircleShape,
                             color = contentColor.copy(alpha = 0.10f),
-                            modifier = Modifier.size(56.dp),
+                            modifier = Modifier.size(V17SkipButton),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Filled.FastRewind,
-                                    contentDescription = Localization.get(language, "previous"),
-                                    tint = contentColor,
-                                    modifier = Modifier.size(26.dp),
-                                )
+                                V17Glyph(V17TransportGlyph.PREVIOUS, V17SkipGlyph, contentColor)
                             }
                         }
                     }
@@ -641,14 +651,13 @@ internal fun ApplePlayerV17Screen(
                             onClick = onTogglePlay,
                             shape = CircleShape,
                             color = contentColor.copy(alpha = 0.16f),
-                            modifier = Modifier.size(68.dp),
+                            modifier = Modifier.size(V17PlayButton),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                    contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                                    tint = contentColor,
-                                    modifier = Modifier.size(36.dp),
+                                V17Glyph(
+                                    if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
+                                    V17PlayGlyph,
+                                    contentColor,
                                 )
                             }
                         }
@@ -658,21 +667,18 @@ internal fun ApplePlayerV17Screen(
                             onClick = onNext,
                             shape = CircleShape,
                             color = contentColor.copy(alpha = 0.10f),
-                            modifier = Modifier.size(56.dp),
+                            modifier = Modifier.size(V17SkipButton),
                         ) {
                             Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    Icons.Filled.FastForward,
-                                    contentDescription = Localization.get(language, "next"),
-                                    tint = contentColor,
-                                    modifier = Modifier.size(26.dp),
-                                )
+                                V17Glyph(V17TransportGlyph.NEXT, V17SkipGlyph, contentColor)
                             }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(8.dp))
+                // The other half of the reference's spread: the volume bar keeps
+                // clear of the transport by as much as the scrubber does.
+                Spacer(Modifier.height(20.dp))
 
                 Row(
                     Modifier.fillMaxWidth(),
@@ -809,7 +815,9 @@ internal fun ApplePlayerV17Screen(
                     .fillMaxSize()
                     .padding(horizontal = 40.dp, vertical = 28.dp),
                 horizontalArrangement = Arrangement.spacedBy(44.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                // The controls sit at the bottom of the window, near the
+                // taskbar, instead of floating in the middle of the column.
+                verticalAlignment = Alignment.Bottom,
             ) {
                 Column(
                     Modifier.fillMaxHeight().width(artSize),
@@ -829,7 +837,10 @@ internal fun ApplePlayerV17Screen(
                     },
                     modifier = Modifier.weight(1f),
                 ) { face ->
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.fillMaxSize(),
+                        contentAlignment = if (face == 0) Alignment.BottomCenter else Alignment.Center,
+                    ) {
                         when (face) {
                             1 -> lyricsPanel()
                             2 -> queuePanel()
@@ -852,9 +863,11 @@ internal fun ApplePlayerV17Screen(
                     Modifier
                         .fillMaxWidth()
                         .heightIn(min = windowMaxHeight)
-                        .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 88.dp),
+                        .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+                    // Bottom, not centre: the transport is the thing the hand
+                    // reaches for, so the column ends near the taskbar.
+                    verticalArrangement = Arrangement.Bottom,
                 ) {
                     artwork()
                     Spacer(Modifier.height(18.dp))
@@ -899,6 +912,73 @@ internal fun ApplePlayerV17Screen(
                     }
                 }
             }
+        }
+    }
+}
+
+/** The transport's sizes, on BitChord's own scale. */
+private val V17PlayButton = 92.dp
+private val V17SkipButton = 72.dp
+private val V17PlayGlyph = 58.dp
+private val V17SkipGlyph = 42.dp
+
+/** The four glyphs the transport row draws. */
+private enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
+
+/**
+ * One transport glyph, drawn rather than taken from the icon set.
+ *
+ * BitChord draws its own controls, and the Material shapes are not the same
+ * ones: its arrows are two triangles whose tips are bevelled by a round stroke,
+ * and its pause is a pair of pill bars. Drawing them here keeps the tips soft
+ * at every size the row uses and keeps the reference's proportions: the pause
+ * bars are the reference's 164/960 wide and 480/960 tall, the arrows the same
+ * double triangle, and the bevel is a 5.5 % round stroke on the same path.
+ */
+@Composable
+private fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
+    Canvas(Modifier.size(glyphSize)) {
+        val w = size.width
+        val h = size.height
+        val bevel = w * 0.055f
+        val round = Stroke(width = bevel * 2f, join = StrokeJoin.Round, cap = StrokeCap.Round)
+        if (kind == V17TransportGlyph.PAUSE) {
+            val barWidth = w * 0.164f
+            val barHeight = h * 0.50f
+            val top = (h - barHeight) / 2f
+            val corner = CornerRadius(barWidth / 2f)
+            drawRoundRect(tint, Offset(w * 0.30f, top), Size(barWidth, barHeight), corner)
+            drawRoundRect(tint, Offset(w * 0.536f, top), Size(barWidth, barHeight), corner)
+        } else {
+            val path = Path()
+            when (kind) {
+                V17TransportGlyph.PLAY -> {
+                    path.moveTo(w * 0.30f, h * 0.22f)
+                    path.lineTo(w * 0.30f, h * 0.78f)
+                    path.lineTo(w * 0.78f, h * 0.50f)
+                }
+                V17TransportGlyph.PREVIOUS -> {
+                    path.moveTo(w * 0.72f, h * 0.24f)
+                    path.lineTo(w * 0.72f, h * 0.76f)
+                    path.lineTo(w * 0.42f, h * 0.50f)
+                    path.close()
+                    path.moveTo(w * 0.44f, h * 0.24f)
+                    path.lineTo(w * 0.44f, h * 0.76f)
+                    path.lineTo(w * 0.14f, h * 0.50f)
+                }
+                else -> {
+                    path.moveTo(w * 0.28f, h * 0.24f)
+                    path.lineTo(w * 0.28f, h * 0.76f)
+                    path.lineTo(w * 0.58f, h * 0.50f)
+                    path.close()
+                    path.moveTo(w * 0.56f, h * 0.24f)
+                    path.lineTo(w * 0.56f, h * 0.76f)
+                    path.lineTo(w * 0.86f, h * 0.50f)
+                }
+            }
+            path.close()
+            drawPath(path, tint)
+            drawPath(path, tint, style = round)
         }
     }
 }

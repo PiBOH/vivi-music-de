@@ -21,6 +21,8 @@ package com.music.vivi.desktop
  */
 internal fun strings_lv(): Map<String, String> =
     mapOf(
+        "accent_from_artwork" to "Akcents no vāka",
+        "accent_from_artwork_desc" to "Iekrāsot saskarni ar atskaņojamā vāka krāsu.",
         "album" to "Albums",
         "artist" to "Izpildītājs",
         "dislike" to "Nepatīk",

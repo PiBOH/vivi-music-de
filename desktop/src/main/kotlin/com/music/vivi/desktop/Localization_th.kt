@@ -33,6 +33,8 @@ internal fun strings_th(): Map<String, String> =
         "accent_deep_orange" to "ส้มเข้ม",
         "accent_deep_purple" to "ม่วงเข้ม",
         "accent_dynamic" to "อัตโนมัติ",
+        "accent_from_artwork" to "สีเน้นจากปก",
+        "accent_from_artwork_desc" to "ย้อมอินเทอร์เฟซด้วยสีของปกที่กำลังเล่น",
         "accent_gold" to "สีทอง",
         "accent_green" to "เขียว",
         "accent_grey" to "เทา",

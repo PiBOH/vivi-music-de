@@ -517,6 +517,14 @@ val ComponentDark = Color(0xFF1D1B20)
  */
 val ComponentModeInk = Color(0xFF7A7A7A)
 
+/**
+ * The neutral accent the desktop ships with: white, which is the accent of
+ * BitChord's own desktop scheme. The tonal engine turns it into the greys of a
+ * neutral interface; the cover's colour is the opt-in seed from Developer
+ * options (`accentFromArtwork`).
+ */
+val NeutralAccent = Color(0xFFFFFFFF)
+
 /** The splash backdrop, before any theme exists. */
 val SplashBackdrop = Color(0xFF151519)
 val SplashGlow = Color(0xFF100D14)
