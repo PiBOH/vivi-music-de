@@ -42,7 +42,6 @@
 - [DE] **The v17 player's right column is the reference's own.**
 - [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
 - [DE] **The queue remembers where it started.**
-
 - [DE] **The v17 render check can paint the panel in any language.**
 - [DE] **The v17 menu's heart row says what it does.**
 - [DE] **The string generator writes again, and the beta4 rows it had lost are back in its source.**
@@ -54,7 +53,6 @@
 - [DE] **The v17 player's controls are BitChord's row, under the artwork.**
 - [DE] **The inline-lyrics switch is a player setting, shown only for Apple Player v17.**
 - [DE] **Every cover is requested at BitChord's own sizes.**
-
 - [DE] **The v17 player's sliders are slim lines, and the wavy tracks are gone.**
 - [DE] **Turning Inline lyrics off removes the row, instead of leaving a link in its place.**
 - [DE] **The queue and the lyrics take the column one at a time, and each glyph returns to the controls.**
@@ -69,18 +67,14 @@
 - [DE] **Stats for nerds is an overlay of the real audio figures.**
 - [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
 - [DE] **The player's inline lyrics animate with the reader's own style.**
-
 - [DE] **The playlist is BitChord's screen and the search is its field.**
-
 - [DE] **Explore takes the place of "New", and the Library is BitChord's.**
-
 - [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
 
 ### 🔧 Changed
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
 - [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
 - [DE] **The artwork check fetches its own sleeve and measures every Explore card.**
-
 - [DE] **The Apple Player v17 gains the row of controls under the artwork, inline lyrics, the background styles and its queue menu.**
 
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23
@@ -98,7 +92,6 @@
 - [DE] **Every icon button lifts and turns its glyph under the pointer.**
 - [DE] **A bare icon button fails the build now.**
 - [DE] **The equalizer can make a profile of its own, not only import one.**
-
 - [DE] **App font keeps every imported face, and each of them can be renamed.**
 
 ### 🔧 Changed
