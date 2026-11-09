@@ -1,9 +1,23 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta7] - 2026-11-09
+
+### ✨ Added
+- [DE] **The Home is BitChord's shelf stack.**
+
+### 🔧 Changed
+- [DE] **The cover's colour is switched on Theme & Colors, and it follows every track.**
+- [DE] **The stacked Apple Player v17 is centred in the window.**
+- [DE] **The v17 mini bar uses the player's own transport glyphs.**
+- [DE] **New release albums are cards.**
+
+### 🐛 Fixed
+- [DE] **Explore keeps the New release albums when the page answers empty.**
+- [DE] **A failed stream is retried at 128 kbps, and a skipped track says so.**
+
 ## [6.0.8.11_DE-1.56.0-beta6] - 2026-11-09
 
-### Changed
-
+### 🔧 Changed
 - [DE] **The accent is neutral, and the cover's colour is a developer option.**
 - [DE] **The accent options are gone from Theme & Colors.**
 - [DE] **The v17 transport is BitChord's row: bigger, bare, and beside the sleeve.**
@@ -13,8 +27,7 @@
 
 ## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-08
 
-### Changed
-
+### 🔧 Changed
 - [DE] **The v17 player's right column is the reference's own.**
 - [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
 - [DE] **The queue remembers where it started.**
@@ -46,21 +59,17 @@
 - [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
 - [DE] **The player's inline lyrics animate with the reader's own style.**
 
+- [DE] **The playlist is BitChord's screen and the search is its field.**
+
+- [DE] **Explore takes the place of "New", and the Library is BitChord's.**
+
+- [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
+
 ### 🔧 Changed
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
 - [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
 - [DE] **The artwork check fetches its own sleeve and measures every Explore card.**
 
-### ✨ Added
-- [DE] **The playlist is BitChord's screen and the search is its field.**
-
-### ✨ Added
-- [DE] **Explore takes the place of "New", and the Library is BitChord's.**
-
-### ✨ Added
-- [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
-
-### 🔧 Changed
 - [DE] **The Apple Player v17 gains the row of controls under the artwork, inline lyrics, the background styles and its queue menu.**
 
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23

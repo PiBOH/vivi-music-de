@@ -56,6 +56,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.music.innertube.YouTube
+import com.music.innertube.models.Artist
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.models.YTItem
@@ -219,281 +220,85 @@ fun HomeScreen(
         else -> LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainer),
+            contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(26.dp),
         ) {
-            // `home` is a reloadable state: while a chip/reload request is in
-            // flight the loading effect nulls it *before* refetching. The
-            // LazyColumn content DSL can be re-executed by the snapshot
-            // observer at that exact moment, so dereferencing it here with `!!`
-            // crashed with an NPE as soon as any button on Home was clicked
-            // (see issue #54). Bail out to an empty list instead; the LoadingBox
-            // branch of the outer `when` takes over on the next recomposition.
+            // BitChord's Home is a stack of shelves, not a dashboard: Recents
+            // first, then the service's own shelves. The first shelf is the
+            // hero row (one large card and the next one peeking), every other
+            // shelf is the 150 dp card row, and each heading is the shelf's
+            // own title. No greeting, chips or mixes sit above them.
             val page = home ?: return@LazyColumn
 
-            // 1. Greeting Header Row
-            item(key = "greeting_header") {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Column {
-                        val displayName = userName.ifBlank { "Guest" }
-                        Tooltip(text = "$greetingText, $displayName") {
-                            Text(
-                                text = "$greetingText, $displayName",
-                                style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-
-                    Tooltip(Localization.get(language, "tooltip_notifications")) {
-                        M3IconButton(
-                            onClick = { AppLog.click("Home notifications") /* Home hub / notifications */ },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                contentColor = MaterialTheme.colorScheme.onSurface,
-                            ),
-                            modifier = Modifier.size(42.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Notifications,
-                                contentDescription = "Notifications",
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                }
-            }
-
-            // "VIVI Wrapped" session stats card (if active).
-            if (showWrapped && wrappedStats.trackStarts > 0) {
-                item(key = "wrapped") {
-                    WrappedCard(wrappedStats = wrappedStats, language = language)
-                }
-            }
-
-            // 2. Segmented Capsule Pill Control Row
-            item(key = "home_toggles") {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(3.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val quickPicksSelected = !useLastListen
-                            // The two halves are one control, so the selection
-                            // travels between them instead of jumping: the fill
-                            // and the ink are animated, and the master switch
-                            // still makes the change instant.
-                            val quickPicksBg by animateColorAsState(
-                                targetValue = if (quickPicksSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                animationSpec = if (Animations.instant) snap() else tween(Animations.ms(200)),
-                                label = "quickPicksSelected",
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(quickPicksBg)
-                                    .clickable {
-                                        AppLog.click("Home quick picks")
-                                        onUseLastListenChange(false)
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = Localization.get(language, "quick_picks"),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = if (quickPicksSelected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    color = if (quickPicksSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-
-                            val lastListenSelected = useLastListen
-                            val lastListenBg by animateColorAsState(
-                                targetValue = if (lastListenSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                animationSpec = if (Animations.instant) snap() else tween(Animations.ms(200)),
-                                label = "lastListenSelected",
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .background(lastListenBg)
-                                    .clickable {
-                                        AppLog.click("Home last listen")
-                                        onUseLastListenChange(true)
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 6.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(
-                                    text = Localization.get(language, "last_listen"),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        fontWeight = if (lastListenSelected) FontWeight.Bold else FontWeight.Medium
-                                    ),
-                                    color = if (lastListenSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                                    else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    // The preview draws this one as a FilterChip with the shuffle
-                    // glyph, selected on `secondaryContainer` (`js/app-screens.js`
-                    // `appHome`, `chip chip--shuffle`).
-                    FilterChip(
-                        selected = randomizeOrder,
-                        onClick = {
-                            AppLog.click("Home randomize order")
-                            onRandomizeOrderChange(!randomizeOrder)
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Filled.Shuffle,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = Localization.get(language, "randomize"),
-                                maxLines = 1,
-                            )
-                        },
-                    )
-                }
-            }
-
-            // Chips row (if available)
-            val chipsList = page.chips.orEmpty().filter { !it.title.equals("Podcasts", ignoreCase = true) }
-            if (chipsList.isNotEmpty()) {
-                item(key = "chips") {
+            val recents = recentSeedTracks.take(8)
+            if (recents.isNotEmpty()) {
+                item(key = "recents_header") { ShelfHeading("Recents") }
+                item(key = "recents_row") {
                     HorizontalCarousel(
                         language = language,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp),
                     ) {
-                        // Position is part of the key: two chips can carry the
-                        // same title ("New releases" twice in one row) and a
-                        // duplicated LazyColumn key crashes the whole screen.
-                        itemsIndexed(chipsList, key = { i, chip -> "chip-$i-${chip.title}" }) { _, chip ->
-                            val selected = selectedChip?.title == chip.title
-                            // The preview's chips are Material 3 FilterChips
-                            // (`appChip`): `secondaryContainer` when picked, the
-                            // outline while not, 8 dp apart.
-                            FilterChip(
-                                selected = selected,
-                                onClick = {
-                                    AppLog.click("Home chip '${chip.title}'")
-                                    selectedChip = if (selected) null else chip
-                                },
-                                label = {
-                                    Text(
-                                        text = chip.title,
-                                        maxLines = 1,
-                                    )
-                                },
-                            )
+                        items(recents, key = { "recent-${it.videoId}" }) { track ->
+                            Box(Modifier.width(340.dp)) {
+                                SongRow(
+                                    song = SongItem(
+                                        id = track.videoId,
+                                        title = track.title,
+                                        artists = listOf(Artist(name = track.artist, id = null)),
+                                        thumbnail = track.thumbnail.orEmpty(),
+                                    ),
+                                    language = language,
+                                    onClick = {
+                                        AppLog.click("Home recent '${track.title}'")
+                                        onPlaySong(
+                                            SongItem(
+                                                id = track.videoId,
+                                                title = track.title,
+                                                artists = listOf(Artist(name = track.artist, id = null)),
+                                                thumbnail = track.thumbnail.orEmpty(),
+                                            )
+                                        )
+                                    },
+                                    onAddToPlaylist = {
+                                        onAddToPlaylist(
+                                            SongItem(
+                                                id = track.videoId,
+                                                title = track.title,
+                                                artists = listOf(Artist(name = track.artist, id = null)),
+                                                thumbnail = track.thumbnail.orEmpty(),
+                                            )
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 }
             }
 
-            // 3. Recently Played Section
-            val wantedSections = page.sections
-                .filter { s ->
-                    val t = s.title.lowercase()
-                    when {
-                        t.contains("quick picks") -> !useLastListen
-                        t.contains("last listen") -> useLastListen
-                        else -> true
-                    }
+            page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
+                val hero = index == 0
+                item(key = "shelf-header-$index-${section.title}") {
+                    ShelfHeading(section.title)
                 }
-                .toMutableList()
-            if (randomizeOrder) wantedSections.shuffle()
-
-            wantedSections.forEachIndexed { index, section ->
-                val songs = section.items.filterIsInstance<SongItem>()
-                val isSongsOnly = section.items.isNotEmpty() && songs.size == section.items.size
-
-                item(key = "header-$index-${section.title}") {
-                    // A new feed (a chip, the quick-picks switch, a refresh) fades
-                    // its sections in and out instead of swapping them under the
-                    // pointer; `Animations` still turns the whole thing off.
-                    Row(
-                        modifier = if (Animations.instant) Modifier.fillMaxWidth() else Modifier.fillMaxWidth().animateItem(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = section.title,
-                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val endpoint = section.endpoint
-                            if (endpoint != null) {
-                                Tooltip(Localization.get(language, "see_all")) {
-                                    M3IconButton(
-                                        onClick = {
-                                            AppLog.click("Home see all '${section.title}'")
-                                            onOpenBrowse(endpoint.browseId, endpoint.params)
-                                        },
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                            contentColor = MaterialTheme.colorScheme.onSurface,
-                                        ),
-                                        modifier = Modifier.size(32.dp),
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                            contentDescription = Localization.get(language, "view_section"),
-                                            modifier = Modifier.size(18.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item(key = "content-$index-${section.title}") {
-                    if (isSongsOnly) {
+                item(key = "shelf-$index-${section.title}") {
+                    val songs = section.items.filterIsInstance<SongItem>()
+                    if (songs.size == section.items.size) {
                         HorizontalCarousel(
                             language = language,
-                            modifier = if (Animations.instant) Modifier else Modifier.animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp),
                         ) {
                             val sectionSongs = songs.distinctBy { it.id }
                             items(sectionSongs, key = { it.id }) { song ->
-                                Box(Modifier.width(300.dp)) {
+                                Box(Modifier.width(if (hero) 400.dp else 340.dp)) {
                                     SongRow(
                                         song = song,
                                         language = language,
-                                        // Like the Android app: tapping a song in a Home
-                                        // recommendation section plays the WHOLE section as a
-                                        // queue, starting from the tapped track (next/prev move
-                                        // through the rest of the section).
+                                        // Tapping a song plays the whole section
+                                        // from that track, as the mobile app does.
                                         onClick = {
                                             val start = sectionSongs.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
                                             val rotated = sectionSongs.slice(start until sectionSongs.size) +
@@ -508,167 +313,18 @@ fun HomeScreen(
                     } else {
                         HorizontalCarousel(
                             language = language,
-                            modifier = if (Animations.instant) Modifier else Modifier.animateItem(),
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            contentPadding = PaddingValues(horizontal = 24.dp),
                         ) {
                             items(section.items, key = { it.id }) { item ->
                                 YtItemCard(
                                     item = item,
-                                    onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) },
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 3b. Recommended Section (ported from the mobile app):
-            // personalized related songs seeded from the tracks you listened to.
-            recommendations?.takeIf { it.isNotEmpty() }?.let { recs ->
-                item(key = "recommended_header") {
-                    Text(
-                        text = Localization.get(language, "recommended"),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-                item(key = "recommended_content") {
-                    HorizontalCarousel(
-                        language = language,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        val recSongs = recs.distinctBy { it.id }
-                        items(recSongs, key = { "rec-${it.id}" }) { song ->
-                            Box(Modifier.width(300.dp)) {
-                                SongRow(
-                                    song = song,
-                                    language = language,
-                                    // Like the Android app: tapping a recommendation
-                                    // plays the whole recommendation list as a queue.
+                                    width = if (hero) 320.dp else 150.dp,
                                     onClick = {
-                                        val start = recSongs.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
-                                        val rotated = recSongs.slice(start until recSongs.size) +
-                                            recSongs.slice(0 until start)
-                                        onPlayAll(rotated)
+                                        onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
                                     },
-                                    onAddToPlaylist = { onAddToPlaylist(song) },
                                 )
                             }
-                        }
-                    }
-                }
-            }
-
-            // 4. Your Artists Feed Section
-            item(key = "artists_feed_header") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        // The tabbed library corpus root needs its selection
-                        // params: browsing `FEmusic_library_corpus` without any
-                        // is rejected by the server (400 INVALID_ARGUMENT /
-                        // E1032). The artists view is browsable on its own —
-                        // it is the page the Android app opens too.
-                        .clickable { onOpenBrowse("FEmusic_library_corpus_artists", null) },
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = Localization.get(language, "your_artists_feed"),
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            // 5. Made For You Section (Dynamic Gradient Cards)
-            item(key = "made_for_you_header") {
-                Text(
-                    text = Localization.get(language, "made_for_you"),
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
-
-            item(key = "made_for_you_list") {
-                HorizontalCarousel(
-                    language = language,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    // Same reason as the chips above: a mixed-for-you row can
-                    // legitimately repeat a playlist title.
-                    itemsIndexed(curatedMixes, key = { i, mix -> "mix-$i-${mix.title}" }) { _, mix ->
-                        Box(
-                            modifier = Modifier
-                                .width(220.dp)
-                                .height(260.dp)
-                                .clip(RoundedCornerShape(topStart = ShapeRadii.extraLarge, topEnd = ShapeRadii.small, bottomEnd = ShapeRadii.extraLarge, bottomStart = ShapeRadii.small))
-                                .background(Brush.linearGradient(mix.gradientColors))
-                                .clickable { onOpenBrowse("FEmusic_home", null) }
-                                .padding(20.dp),
-                            contentAlignment = Alignment.BottomStart,
-                        ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(
-                                    text = "VIVI MUSIC",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        letterSpacing = androidx.compose.ui.unit.TextUnit(1.5f, androidx.compose.ui.unit.TextUnitType.Sp)
-                                    ),
-                                    color = PaletteInk.copy(alpha = 0.85f),
-                                )
-                                Tooltip(text = mix.title) {
-                                    Text(
-                                        text = mix.title,
-                                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold),
-                                        color = PaletteInk,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                Tooltip(text = mix.subtitle) {
-                                    Text(
-                                        text = mix.subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = PaletteInk.copy(alpha = 0.75f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // The API can repeat the same mood/genre (identical browseId+title)
-            // across category sections; the carousel below is keyed by
-            // `browseId + title`, so duplicates must be removed or Compose
-            // crashes with "key ... was already used" as soon as the row
-            // scrolls into view.
-            val moodItems = moodAndGenres
-                ?.flatMap { it.items }
-                ?.distinctBy { it.endpoint.browseId + it.title }
-            if (!moodItems.isNullOrEmpty()) {
-                item(key = "mood_header") {
-                    SectionHeader(title = Localization.get(language, "mood_and_genres"), language = language)
-                }
-                item(key = "mood_list") {
-                    HorizontalCarousel(
-                        language = language,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items(moodItems, key = { it.endpoint.browseId + it.title }) { item ->
-                            MoodAndGenresButton(
-                                title = item.title,
-                                onClick = { onOpenBrowse(item.endpoint.browseId, item.endpoint.params) },
-                                modifier = Modifier.width(180.dp),
-                            )
                         }
                     }
                 }
@@ -679,6 +335,19 @@ fun HomeScreen(
             }
         }
     }
+}
+
+/** A shelf's heading, at BitChord's `headlineMedium` weight and gutter. */
+@Composable
+private fun ShelfHeading(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.headlineMedium,
+        color = MaterialTheme.colorScheme.onBackground,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+    )
 }
 
 /**

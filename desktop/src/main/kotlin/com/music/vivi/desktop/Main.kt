@@ -195,6 +195,11 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     "explore" -> Screen.NewReleases
     "library" -> Screen.Library
     "search" -> Screen.Search
+    // Settings and its pages can be opened from a launch as well: the window
+    // checks use it to render the real screen instead of driving the gear.
+    "settings" -> Screen.Settings
+    "appearance" -> Screen.SettingsAppearance
+    "theme" -> Screen.SettingsTheme
     else -> null
 }
 
@@ -254,11 +259,13 @@ fun WindowScope.App(
     val recentSeedTracks by player.recentTracks.collectAsState()
     val nowPlaying = playerState.current
     val isPlaying = playerState.isPlaying
-    // The cover's colour is a Developer option: only read it when that switch
-    // is on, so the shipped accent stays neutral and no cover is downloaded for
-    // a seed nothing uses.
+    // The cover's colour seeds the accent only when the switch on the Theme
+    // page is on, so the shipped accent stays neutral and no cover is downloaded
+    // for a seed nothing uses. The track id is part of the key as well as the
+    // artwork URL: two tracks can share a thumbnail, and the accent has to be
+    // recomputed on every change of track either way.
     val accentFromArtwork = remember(settingsFileRevision()) { DesktopSettings.load().accentFromArtwork }
-    LaunchedEffect(nowPlaying?.thumbnail, accentFromArtwork) {
+    LaunchedEffect(nowPlaying?.videoId, nowPlaying?.thumbnail, accentFromArtwork) {
         if (accentFromArtwork) ArtworkAccent.update(nowPlaying?.thumbnail)
     }
     // NOTE: the live audio level is deliberately NOT collected here. Reading it

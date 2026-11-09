@@ -124,12 +124,7 @@ internal fun AppleMusicV17MiniPlayer(
                 }
                 Tooltip(Localization.get(language, "previous")) {
                     M3IconButton(onClick = onPrevious) {
-                        Icon(
-                            Icons.Filled.SkipPrevious,
-                            contentDescription = Localization.get(language, "previous"),
-                            tint = contentColor,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        V17Glyph(V17TransportGlyph.PREVIOUS, 18.dp, contentColor)
                     }
                 }
                 Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
@@ -141,23 +136,17 @@ internal fun AppleMusicV17MiniPlayer(
                                 color = contentColor,
                             )
                         } else {
-                            Icon(
-                                if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = Localization.get(language, if (isPlaying) "pause" else "play"),
-                                tint = contentColor,
-                                modifier = Modifier.size(26.dp),
+                            V17Glyph(
+                                if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
+                                22.dp,
+                                contentColor,
                             )
                         }
                     }
                 }
                 Tooltip(Localization.get(language, "next")) {
                     M3IconButton(onClick = onNext) {
-                        Icon(
-                            Icons.Filled.SkipNext,
-                            contentDescription = Localization.get(language, "next"),
-                            tint = contentColor,
-                            modifier = Modifier.size(22.dp),
-                        )
+                        V17Glyph(V17TransportGlyph.NEXT, 18.dp, contentColor)
                     }
                 }
                 if (!compact) {

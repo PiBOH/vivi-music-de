@@ -1126,10 +1126,15 @@ class PlayerController {
             val streams = if (alreadyCached) {
                 emptyList()
             } else {
-                StreamResolver.resolveAacStream(
-                    track.videoId,
-                    StreamResolver.AudioQuality.from(DesktopSettings.load().audioQuality),
-                )
+                // First attempt: the configured quality. Retries ask for LOW
+                // (itag 140 first): a 256 kbps URL that resolved but answers
+                // 403 is a common failure, and 140 is the other AAC-LC encode.
+                val quality = if (attempt == 0) {
+                    StreamResolver.AudioQuality.from(DesktopSettings.load().audioQuality)
+                } else {
+                    StreamResolver.AudioQuality.LOW
+                }
+                StreamResolver.resolveAacStream(track.videoId, quality)
             }
             if (streams.isEmpty() && !alreadyCached) {
                 if (attempt + 1 < MAX_PLAY_ATTEMPTS) {
@@ -1691,9 +1696,16 @@ class PlayerController {
             else -> -1
         }
         if (nextIndex < 0) return false
-        AppLog.log("playback", "auto skip on error: skipping to index $nextIndex")
+        AppLog.log("playback", "auto skip on error: skipping to index $nextIndex (track '${track.title}')")
         lastLocalPlayIntentAt = System.currentTimeMillis()
         playAt(s.queue, nextIndex)
+        // A skip must not be silent. Leave the player's own stream error on the
+        // new state, naming the track that could not be resolved; the next
+        // successful resolution clears it (the stream-ready update sets
+        // errorKey = null), so the notice lasts while the next track loads.
+        _state.update {
+            it.copy(errorKey = "stream_error", errorDetail = track.title)
+        }
         return true
     }
 

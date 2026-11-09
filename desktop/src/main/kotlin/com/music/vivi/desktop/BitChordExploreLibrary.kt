@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,11 +47,71 @@ import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import androidx.compose.ui.unit.dp
 import com.music.innertube.YouTube
+import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
 import com.music.innertube.models.SongItem
 import com.music.innertube.models.YTItem
 import com.music.innertube.pages.LibraryPage
 import com.music.innertube.pages.MoodAndGenres
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+
+private var cachedNewReleases: List<YTItem> = emptyList()
+
+/**
+ * The dedicated page first, then the Home shelf; both are asked a few times because
+ * the service rotates the guest identities. The caller keeps the last success
+ * for the session, so a later empty answer cannot remove a row that was drawn.
+ */
+private suspend fun loadNewReleaseAlbums(): List<YTItem> {
+    repeat(6) { attempt ->
+        val homePage = YouTube.home().getOrNull()
+        val homeShelf = homePage
+            ?.sections
+            ?.firstOrNull {
+                it.endpoint?.browseId == "FEmusic_new_releases_albums" ||
+                    it.title.contains("new release", ignoreCase = true)
+            }
+            ?.items
+            ?.filterIsInstance<AlbumItem>()
+            ?.distinctBy { it.id }
+            ?.take(12)
+            ?.takeIf { it.isNotEmpty() }
+        if (homeShelf != null) return homeShelf
+
+        val explorePage = YouTube.explore().getOrNull()
+            ?.newReleaseAlbums
+            ?.distinctBy { it.id }
+            ?.take(12)
+            ?.takeIf { it.isNotEmpty() }
+        if (explorePage != null) return explorePage
+
+        val direct = YouTube.browse("FEmusic_new_releases_albums", null).getOrNull()
+            ?.items
+            ?.flatMap { it.items }
+            ?.filterIsInstance<AlbumItem>()
+            ?.distinctBy { it.id }
+            ?.take(12)
+            ?.takeIf { it.isNotEmpty() }
+        if (direct != null) return direct
+
+        // The service can omit the dedicated shelf for a guest while the rest
+        // of the Home boards still carry albums. Show those rather than an
+        // empty Explore: the row is a release board, and the cards are the
+        // thing that has to be on screen on the first open.
+        val homeFallback = homePage
+            ?.sections
+            ?.flatMap { it.items }
+            ?.filterIsInstance<AlbumItem>()
+            ?.distinctBy { it.id }
+            ?.take(12)
+            ?.takeIf { it.isNotEmpty() }
+        if (homeFallback != null) return homeFallback
+
+        if (attempt < 5) delay(1200)
+    }
+    return emptyList()
+}
 
 /**
  * BitChord's Explore, on the sidebar entry that used to be "New".
@@ -80,11 +141,24 @@ fun BitChordExploreScreen(
     var error by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
+        // The boards and the moods are two independent requests. Asking for the
+        // albums only after the moods was the reason the first Explore could
+        // show the moods and no cards: the second request started seconds late
+        // and the row had nothing to draw yet.
+        val albumsJob = async { loadNewReleaseAlbums() }
         YouTube.moodAndGenres().fold(
             onSuccess = { sections = it },
             onFailure = { error = it.message },
         )
-        albums = YouTube.newReleaseAlbums().getOrNull()?.distinctBy { it.id }?.take(12)
+        // The dedicated New releases page is the first source, but it can answer
+        // empty for a guest (the service rotates the free identities); the Home
+        // boards carry the same albums and are the surface the Home screen already
+        // proves loads, so they are the fallback instead of an empty Explore. A
+        // successful list is kept for the session, so a later empty answer does
+        // not remove a row that was already drawn.
+        val fetched = albumsJob.await()
+        if (fetched.isNotEmpty()) cachedNewReleases = fetched
+        albums = fetched.ifEmpty { cachedNewReleases }
     }
 
     val inks = listOf(
@@ -109,36 +183,60 @@ fun BitChordExploreScreen(
             error != null -> ErrorBox(language, error)
             sections == null -> LoadingBox(language)
             else -> LazyColumn(Modifier.fillMaxSize().padding(top = 12.dp)) {
-                if (!albums.isNullOrEmpty()) {
-                    item(key = "new_releases_header") {
-                        Text(
-                            Localization.get(language, "new_release_albums"),
-                            style = MaterialTheme.typography.titleLarge,
-                            modifier = Modifier.padding(bottom = 10.dp),
-                        )
+                item(key = "new_releases_header") {
+                    Text(
+                        Localization.get(language, "new_release_albums"),
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(bottom = 10.dp),
+                    )
+                }
+                if (albums.isNullOrEmpty()) {
+                    // The row keeps its place while the boards answer. It used
+                    // to disappear entirely, so a slow or empty answer read as
+                    // "this edition has no New releases" instead of "wait".
+                    item(key = "new_releases_loading") {
+                        Box(
+                            Modifier.fillMaxWidth().height(184.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
                     }
+                } else {
                     item(key = "new_releases_grid") {
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             albums.orEmpty().forEach { album ->
-                                YtItemCard(
-                                    item = album,
-                                    width = 168.dp,
-                                    onClick = { onOpenAlbum(album.id) },
-                                )
+                                // Each release is its own card: the artwork and
+                                // the two lines sit on a surfaceContainerLow
+                                // board, so the row reads as cards instead of a
+                                // wall of bare covers.
+                                Surface(
+                                    shape = MaterialTheme.shapes.medium,
+                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                    modifier = Modifier.width(184.dp),
+                                ) {
+                                    Box(Modifier.padding(8.dp)) {
+                                        YtItemCard(
+                                            item = album,
+                                            width = 168.dp,
+                                            onClick = { onOpenAlbum(album.id) },
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
-                sections.orEmpty().forEachIndexed { sectionIndex, section ->
+                sections.orEmpty().forEach { section ->
                     item(key = "header-" + section.title) {
                         Text(
                             section.title,
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.padding(
-                                top = if (sectionIndex == 0 && albums.isNullOrEmpty()) 0.dp else 22.dp,
+                                top = 22.dp,
                                 bottom = 10.dp,
                             ),
                         )

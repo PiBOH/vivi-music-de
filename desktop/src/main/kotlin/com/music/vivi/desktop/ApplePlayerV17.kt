@@ -863,9 +863,10 @@ internal fun ApplePlayerV17Screen(
                         .heightIn(min = windowMaxHeight)
                         .padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    // Bottom, not centre: the transport is the thing the hand
-                    // reaches for, so the column ends near the taskbar.
-                    verticalArrangement = Arrangement.Bottom,
+                    // Centred at any window height: in the stacked form the
+                    // artwork and the transport are one block, so the block sits
+                    // in the middle of the window instead of hanging from the top.
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     artwork()
                     Spacer(Modifier.height(18.dp))
@@ -925,7 +926,7 @@ private val V17PlayGlyph = 74.dp
 private val V17SkipGlyph = 53.dp
 
 /** The four glyphs the transport row draws. */
-private enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
+internal enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
 
 /**
  * One transport glyph, drawn rather than taken from the icon set.
@@ -938,7 +939,7 @@ private enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
  * double triangle, and the bevel is a 5.5 % round stroke on the same path.
  */
 @Composable
-private fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
+internal fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
     Canvas(Modifier.size(glyphSize)) {
         val w = size.width
         val h = size.height

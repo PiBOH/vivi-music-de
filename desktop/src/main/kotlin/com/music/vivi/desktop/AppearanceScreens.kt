@@ -247,6 +247,10 @@ fun ThemeSection(
     onAddCustomAccent: (Int) -> Unit = {},
     onRemoveCustomAccent: (Int) -> Unit = {},
 ) {
+    val revision = settingsFileRevision()
+    var accentFromArtwork by remember(revision) {
+        mutableStateOf(DesktopSettings.load().accentFromArtwork)
+    }
     Column(Modifier.fillMaxWidth()) {
         // The heading carries no top padding of its own: `SettingsSubScreen`
         // already puts the page's 16 dp under the Back row.
@@ -304,6 +308,34 @@ fun ThemeSection(
                 onClick = { onModeChange(ThemeMode.DARK); onPureBlackChange(true) },
             )
         }
+
+        // The accent-from-artwork switch belongs on this page: it is the seed
+        // of the accent, not a diagnostic, and it takes effect on every track
+        // change from here. Off by default, so the shipped accent stays the
+        // neutral white BitChord's scheme uses.
+        Spacer(Modifier.height(20.dp))
+        M3SettingsGroup(
+            items = listOf(
+                M3SettingsItem(
+                    icon = Icons.Filled.Palette,
+                    title = { Text(Localization.get(language, "accent_from_artwork")) },
+                    description = { Text(Localization.get(language, "accent_from_artwork_desc")) },
+                    trailing = {
+                        Switch(
+                            checked = accentFromArtwork,
+                            onCheckedChange = { v ->
+                                accentFromArtwork = v
+                                DesktopSettings.update { it.copy(accentFromArtwork = v) }
+                            },
+                        )
+                    },
+                    onClick = {
+                        accentFromArtwork = !accentFromArtwork
+                        DesktopSettings.update { it.copy(accentFromArtwork = accentFromArtwork) }
+                    },
+                ),
+            ),
+        )
 
     }
 }

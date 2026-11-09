@@ -448,6 +448,28 @@ Existing text that already contains a long dash and is not being edited is left
 as it is: do not go looking for em dashes to replace. The rule governs new text
 and the lines you actually touch.
 
+### Verification on this machine: agent-desktop - MANDATORY
+
+`agent-desktop` (Vercel Labs, <https://github.com/vercel-labs/agent-desktop>)
+is installed globally with `npm install -g agent-desktop` and is the agreed
+tool for driving the desktop app while checking a change. Use it for the parts
+a window exposes to the OS, and use the render checks for the Compose UI:
+
+- **agent-desktop: launch, window and screenshot.**
+  `agent-desktop status` proves the helper is up, `agent-desktop list-apps`
+  finds `VIVIMusic.exe`, and `agent-desktop snapshot --app VIVIMusic.exe -i
+  --compact` gives the window's accessibility tree. Compose Desktop exposes
+  only the title bar to Windows UI Automation, so the snapshot normally shows
+  the window controls and not the in-app controls; a menu the app draws is not
+  in that tree. Use the tool to start the app, focus or resize its window and
+  take a screenshot, then read the screenshot.
+- **Render checks: the Compose UI.**
+  `./gradlew :desktop:applePlayerV17RenderCheck` (and the other `*RenderCheck`
+  tasks) renders the screen headlessly and writes a PNG; that is how a layout,
+  a colour, an icon or a tooltip is verified. A check that only launched the
+  window does not prove the UI drew correctly.
+- Neither tool replaces compiling the affected module before a commit.
+
 ### Documentation voice - MANDATORY
 
 Documentation, changelog entries and `TODO.md` rows are never written in the

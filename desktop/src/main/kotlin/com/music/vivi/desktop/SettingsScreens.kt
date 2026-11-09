@@ -2287,7 +2287,6 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
     var showFps by remember(revision) { mutableStateOf(DesktopSettings.load().showFps) }
     var legacyPlayer by remember(revision) { mutableStateOf(DesktopSettings.load().legacyApplePlayer) }
     var statsForNerds by remember(revision) { mutableStateOf(DesktopSettings.load().statsForNerds) }
-    var accentFromArtwork by remember(revision) { mutableStateOf(DesktopSettings.load().accentFromArtwork) }
     var confirmDisable by remember { mutableStateOf(false) }
     // A heap size the user has just picked and that is waiting for the "restart
     // now or later" answer. The value is stored the moment it is picked either
@@ -2473,27 +2472,6 @@ fun DeveloperOptionsSection(language: String, onDisabled: () -> Unit = {}) {
                     onClick = {
                         showFps = !showFps
                         DesktopSettings.update { it.copy(showFps = showFps) }
-                    },
-                ),
-                // The cover's colour as the theme's seed. Off by default: the
-                // shipped accent is the neutral white BitChord's scheme uses, and
-                // this row is the experiment that takes the colour from the sleeve.
-                M3SettingsItem(
-                    icon = Icons.Filled.Palette,
-                    title = { Text(Localization.get(language, "accent_from_artwork")) },
-                    description = { Text(Localization.get(language, "accent_from_artwork_desc")) },
-                    trailing = {
-                        Switch(
-                            checked = accentFromArtwork,
-                            onCheckedChange = { v ->
-                                accentFromArtwork = v
-                                DesktopSettings.update { it.copy(accentFromArtwork = v) }
-                            },
-                        )
-                    },
-                    onClick = {
-                        accentFromArtwork = !accentFromArtwork
-                        DesktopSettings.update { it.copy(accentFromArtwork = accentFromArtwork) }
                     },
                 ),
                 // The Apple player this build replaced. The row is the only place

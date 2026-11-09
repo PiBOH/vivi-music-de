@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.player
 
+import com.music.vivi.desktop.AppLog
 import com.music.vivi.desktop.DesktopSettings
 import com.music.vivi.desktop.GuestSession
 import com.music.innertube.NewPipeExtractor
@@ -226,7 +227,18 @@ object StreamResolver {
 
             val response = YouTube.player(videoId, null, ytClient, ts, null).getOrNull()
                 ?: continue
-            if (response.playabilityStatus.status != "OK") continue
+            if (response.playabilityStatus.status != "OK") {
+                // Name the client and the reason: a log that only says
+                // "resolution failed" cannot tell a region block from a bot
+                // check, and the next track that behaves this way is then read
+                // from the log instead of guessed at.
+                AppLog.log(
+                    "playback",
+                    "client ${ytClient.clientName}: ${response.playabilityStatus.status}" +
+                        response.playabilityStatus.reason?.let { " ($it)" }.orEmpty(),
+                )
+                continue
+            }
 
             val url = resolveFromResponse(response, quality.preferredItags, ytClient) ?: continue
             val durationMs = response.videoDetails?.lengthSeconds?.toDoubleOrNull()?.times(1000)?.toLong()
