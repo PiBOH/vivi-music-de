@@ -53,10 +53,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
@@ -255,14 +257,24 @@ fun BitChordLocalPlaylistScreen(
     }
 }
 
-/** The 2x2 cover mosaic of the reference, from the playlist's own songs. */
+/**
+ * The 2x2 cover mosaic of the reference, from the playlist's own songs.
+ *
+ * [size] and [shape] are the caller's: the playlist screen draws it at 196 dp
+ * with the large corner, and Home's collection shelf draws the same object at
+ * the shelf's own 150 dp, so a playlist looks the same wherever it appears.
+ */
 @Composable
-private fun PlaylistMosaic(playlist: SyncedPlaylist) {
+internal fun PlaylistMosaic(
+    playlist: SyncedPlaylist,
+    size: Dp = 196.dp,
+    shape: Shape = MaterialTheme.shapes.large,
+) {
     val covers = remember(playlist.songs) {
         playlist.songs.mapNotNull { it.thumbnail?.takeIf { url -> url.isNotBlank() } }.distinct().take(4)
     }
     val tile = MaterialTheme.colorScheme.surfaceContainerHigh
-    Column(Modifier.size(196.dp).clip(MaterialTheme.shapes.large)) {
+    Column(Modifier.size(size).clip(shape)) {
         Row(Modifier.weight(1f).fillMaxWidth()) {
             MosaicCell(covers.getOrNull(0), tile)
             MosaicCell(covers.getOrNull(1), tile)

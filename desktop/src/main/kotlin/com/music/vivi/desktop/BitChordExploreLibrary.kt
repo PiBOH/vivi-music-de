@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -203,29 +204,24 @@ fun BitChordExploreScreen(
                         }
                     }
                 } else {
-                    item(key = "new_releases_grid") {
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                    item(key = "new_releases_row") {
+                        // New releases is the same carousel as every other row:
+                        // the 150 dp card, the shelf's own arrows and the
+                        // Expressive snapping, so it reads as Mood & genres and
+                        // the Home shelves do instead of a wall of bordered
+                        // boards.
+                        HorizontalCarousel(
+                            language = language,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            contentPadding = PaddingValues(horizontal = 0.dp),
                         ) {
-                            albums.orEmpty().forEach { album ->
-                                // Each release is its own card: the artwork and
-                                // the two lines sit on a surfaceContainerLow
-                                // board, so the row reads as cards instead of a
-                                // wall of bare covers.
-                                Surface(
-                                    shape = MaterialTheme.shapes.medium,
-                                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                                    modifier = Modifier.width(184.dp),
-                                ) {
-                                    Box(Modifier.padding(8.dp)) {
-                                        YtItemCard(
-                                            item = album,
-                                            width = 168.dp,
-                                            onClick = { onOpenAlbum(album.id) },
-                                        )
-                                    }
-                                }
+                            items(albums.orEmpty(), key = { it.id }) { album ->
+                                YtItemCard(
+                                    item = album,
+                                    width = 150.dp,
+                                    titleMaxLines = 1,
+                                    onClick = { onOpenAlbum(album.id) },
+                                )
                             }
                         }
                     }

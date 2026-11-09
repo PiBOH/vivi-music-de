@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -400,9 +401,21 @@ private fun subtitleOf(item: YTItem): String = when (item) {
     is PlaylistItem -> item.author?.name ?: item.songCountText.orEmpty()
 }
 
-/** Compact tile used in the Home/Search/Artist carousels and Browse grid. */
+/**
+ * Compact tile used in the Home/Search/Artist carousels and Browse grid.
+ *
+ * [titleMaxLines] is the title's clamp: Home's and Explore's shelves keep one
+ * line so the cards line up row after row, while a grid of fewer, wider cards
+ * keeps two. The full name is on the tooltip either way.
+ */
 @Composable
-fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier: Modifier = Modifier) {
+fun YtItemCard(
+    item: YTItem,
+    onClick: () -> Unit,
+    width: Dp? = 140.dp,
+    titleMaxLines: Int = 2,
+    modifier: Modifier = Modifier,
+) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
@@ -429,7 +442,7 @@ fun YtItemCard(item: YTItem, onClick: () -> Unit, width: Dp? = 140.dp, modifier:
             Text(
                 item.title,
                 style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2,
+                maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -1255,6 +1268,11 @@ fun HorizontalCarousel(
 ) {
     val state = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    // Material 3 Expressive's carousel snapping: the row settles with a card's
+    // edge on the gutter instead of stopping half way through one, which is what
+    // makes a row of covers read as a carousel and not as a strip cut mid-card.
+    // The arrows are unchanged and still move the row by a page.
+    val fling = rememberSnapFlingBehavior(lazyListState = state)
     // The arrows must not eat the row's own clicks: the Box only overlays them,
     // the LazyRow keeps the full width underneath.
     Box(modifier.fillMaxWidth()) {
@@ -1263,6 +1281,7 @@ fun HorizontalCarousel(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = horizontalArrangement,
             contentPadding = contentPadding,
+            flingBehavior = fling,
             content = content,
         )
 

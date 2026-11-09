@@ -1888,6 +1888,7 @@ fun WindowScope.App(
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
+                        onOpenLocalPlaylist = { navigate(Screen.LocalPlaylist(it)) },
                         onPlaySong = playSong,
                         onAddToPlaylist = addToPlaylist,
                         onPlayAll = playAll,
@@ -1910,7 +1911,6 @@ fun WindowScope.App(
                             topSongCount = sessionTopCount,
                         ),
                         showWrapped = showWrappedOnHome,
-                        recentSeedTracks = recentSeedTracks,
                     )
                     is Screen.Search -> BitChordSearchScreen(
                         language = language,

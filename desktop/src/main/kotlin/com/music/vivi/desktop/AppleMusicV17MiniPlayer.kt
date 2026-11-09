@@ -234,6 +234,9 @@ internal fun AppleMusicV17MiniPlayer(
                         onValueChange = onVolume,
                         valueRange = 0f..1f,
                         style = ViviSliderStyle.SLIM,
+                        // Apple Music v17's mini bar has a bare line for the
+                        // volume, with no knob at its head.
+                        showThumb = false,
                         modifier = Modifier.width(104.dp),
                     )
                 }

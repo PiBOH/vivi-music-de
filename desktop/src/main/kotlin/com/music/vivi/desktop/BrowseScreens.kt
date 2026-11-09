@@ -47,6 +47,7 @@ import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -67,6 +68,7 @@ import com.music.innertube.pages.SearchResult
 import kotlinx.coroutines.delay
 import com.music.innertube.pages.SearchSummary
 import com.music.innertube.pages.SearchSummaryPage
+import com.music.vivi.sync.SyncedPlaylist
 
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.graphics.Brush
@@ -87,6 +89,8 @@ fun HomeScreen(
     onOpenAlbum: (String) -> Unit,
     onOpenArtist: (String) -> Unit,
     onOpenPlaylist: (String) -> Unit,
+    /** Opens one of this machine's own playlists (Home's collection shelf). */
+    onOpenLocalPlaylist: (String) -> Unit,
     onPlaySong: (SongItem) -> Unit,
     onAddToPlaylist: (SongItem) -> Unit,
     onPlayAll: (List<SongItem>) -> Unit,
@@ -98,8 +102,6 @@ fun HomeScreen(
     onRandomizeOrderChange: (Boolean) -> Unit = {},
     wrappedStats: WrappedStats = WrappedStats(),
     showWrapped: Boolean = false,
-    /** Recently started tracks (newest first) used as recommendation seeds. */
-    recentSeedTracks: List<NowPlaying> = emptyList(),
 ) {
     var home by remember { mutableStateOf<HomePage?>(null) }
     var moodAndGenres by remember { mutableStateOf<List<MoodAndGenres>?>(null) }
@@ -111,37 +113,14 @@ fun HomeScreen(
     var loadRequest by remember { mutableStateOf(0) }
     var autoRetried by remember { mutableStateOf(false) }
 
-    // Recommended songs, ported from the mobile app's HomeViewModel:
-    // for each recent seed track ask `YouTube.next(videoId)` for its related
-    // endpoint, then `YouTube.related(endpoint)` and surface the songs.
-    var recommendations by remember { mutableStateOf<List<SongItem>?>(null) }
-    // Seeds come from the most recent in-session tracks. On a fresh profile
-    // there is no history yet, so the first songs that came back in the Home
-    // feed are used instead — the "Recommended" row must never silently
-    // disappear just because nothing was played in this session.
-    LaunchedEffect(
-        recentSeedTracks.map { it.videoId }.take(3).joinToString(","),
-        home,
-    ) {
-        var seeds = recentSeedTracks.take(3).map { it.videoId }
-        if (seeds.isEmpty() && home != null) {
-            val homeSongs: List<SongItem> =
-                home!!.sections.flatMap { it.items }.filterIsInstance<SongItem>()
-            seeds = homeSongs.map { it.id }.distinct().take(3)
-        }
-        if (seeds.isEmpty()) {
-            recommendations = null
-            return@LaunchedEffect
-        }
-        val collected = mutableListOf<SongItem>()
-        for (videoId in seeds) {
-            val endpoint = YouTube.next(WatchEndpoint(videoId = videoId))
-                .getOrNull()?.relatedEndpoint ?: continue
-            val page = YouTube.related(endpoint).getOrNull() ?: continue
-            collected += page.songs.filter { it.id != videoId }
-            if (collected.size >= 12) break
-        }
-        recommendations = collected.distinctBy { it.id }.take(12).ifEmpty { null }
+    // Home's own-collection shelf: the playlists this installation holds,
+    // newest first, so the first shelf is the one thing Home knows for sure.
+    val storedPlaylists by PlaylistStore.all.collectAsState()
+    val localCollections = remember(storedPlaylists) {
+        storedPlaylists
+            .filter { !it.deleted && it.songs.isNotEmpty() }
+            .sortedByDescending { it.updatedAt }
+            .take(12)
     }
 
     LaunchedEffect(loadRequest, selectedChip) {
@@ -224,107 +203,55 @@ fun HomeScreen(
             contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(26.dp),
         ) {
-            // BitChord's Home is a stack of shelves, not a dashboard: Recents
-            // first, then the service's own shelves. The first shelf is the
-            // hero row (one large card and the next one peeking), every other
-            // shelf is the 150 dp card row, and each heading is the shelf's
-            // own title. No greeting, chips or mixes sit above them.
+            // Home is the reference's stack of shelves, not a dashboard: every
+            // section is one row of the same 150 dp card, with the section's own
+            // title above it and the carousel arrows over the row. There is no
+            // greeting, no chips, no hero card and no song list above them.
             val page = home ?: return@LazyColumn
 
-            val recents = recentSeedTracks.take(8)
-            if (recents.isNotEmpty()) {
-                item(key = "recents_header") { ShelfHeading("Recents") }
-                item(key = "recents_row") {
+            // The collection shelf is the one row built from this machine's own
+            // data, so it comes first: the playlists this installation holds,
+            // drawn with the same mosaic the playlist screen uses.
+            if (localCollections.isNotEmpty()) {
+                item(key = "local_header") { ShelfHeading(Localization.get(language, "library")) }
+                item(key = "local_row") {
                     HorizontalCarousel(
                         language = language,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
                         contentPadding = PaddingValues(horizontal = 24.dp),
                     ) {
-                        items(recents, key = { "recent-${it.videoId}" }) { track ->
-                            Box(Modifier.width(340.dp)) {
-                                SongRow(
-                                    song = SongItem(
-                                        id = track.videoId,
-                                        title = track.title,
-                                        artists = listOf(Artist(name = track.artist, id = null)),
-                                        thumbnail = track.thumbnail.orEmpty(),
-                                    ),
-                                    language = language,
-                                    onClick = {
-                                        AppLog.click("Home recent '${track.title}'")
-                                        onPlaySong(
-                                            SongItem(
-                                                id = track.videoId,
-                                                title = track.title,
-                                                artists = listOf(Artist(name = track.artist, id = null)),
-                                                thumbnail = track.thumbnail.orEmpty(),
-                                            )
-                                        )
-                                    },
-                                    onAddToPlaylist = {
-                                        onAddToPlaylist(
-                                            SongItem(
-                                                id = track.videoId,
-                                                title = track.title,
-                                                artists = listOf(Artist(name = track.artist, id = null)),
-                                                thumbnail = track.thumbnail.orEmpty(),
-                                            )
-                                        )
-                                    },
-                                )
-                            }
+                        items(localCollections, key = { "local-${it.id}" }) { playlist ->
+                            LocalPlaylistCard(
+                                playlist = playlist,
+                                language = language,
+                                onClick = { onOpenLocalPlaylist(playlist.id) },
+                            )
                         }
                     }
                 }
             }
 
             page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
-                val hero = index == 0
                 item(key = "shelf-header-$index-${section.title}") {
                     ShelfHeading(section.title)
                 }
                 item(key = "shelf-$index-${section.title}") {
-                    val songs = section.items.filterIsInstance<SongItem>()
-                    if (songs.size == section.items.size) {
-                        HorizontalCarousel(
-                            language = language,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp),
-                        ) {
-                            val sectionSongs = songs.distinctBy { it.id }
-                            items(sectionSongs, key = { it.id }) { song ->
-                                Box(Modifier.width(if (hero) 400.dp else 340.dp)) {
-                                    SongRow(
-                                        song = song,
-                                        language = language,
-                                        // Tapping a song plays the whole section
-                                        // from that track, as the mobile app does.
-                                        onClick = {
-                                            val start = sectionSongs.indexOfFirst { it.id == song.id }.coerceAtLeast(0)
-                                            val rotated = sectionSongs.slice(start until sectionSongs.size) +
-                                                sectionSongs.slice(0 until start)
-                                            onPlayAll(rotated)
-                                        },
-                                        onAddToPlaylist = { onAddToPlaylist(song) },
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        HorizontalCarousel(
-                            language = language,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
-                            contentPadding = PaddingValues(horizontal = 24.dp),
-                        ) {
-                            items(section.items, key = { it.id }) { item ->
-                                YtItemCard(
-                                    item = item,
-                                    width = if (hero) 320.dp else 150.dp,
-                                    onClick = {
-                                        onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
-                                    },
-                                )
-                            }
+                    HorizontalCarousel(
+                        language = language,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        contentPadding = PaddingValues(horizontal = 24.dp),
+                    ) {
+                        items(section.items, key = { it.id }) { item ->
+                            YtItemCard(
+                                item = item,
+                                width = 150.dp,
+                                // One line, as the reference cuts every card's
+                                // name: the full text is on the tooltip.
+                                titleMaxLines = 1,
+                                onClick = {
+                                    onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
+                                },
+                            )
                         }
                     }
                 }
@@ -333,6 +260,45 @@ fun HomeScreen(
             item(key = "bottom_spacer") {
                 Box(Modifier.fillMaxWidth().padding(bottom = 24.dp))
             }
+        }
+    }
+}
+
+/**
+ * One card of Home's own-collection shelf: the playlist's 2x2 mosaic and its
+ * name, at the shelf's own 150 dp. The mosaic is the same [PlaylistMosaic] the
+ * playlist screen draws, only smaller, so a playlist looks the same wherever it
+ * appears. The track count is the subtitle, as the reference shows it.
+ */
+@Composable
+private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClick: () -> Unit) {
+    val name = playlist.name.ifBlank { Localization.get(language, "playlist") }
+    val count = "${playlist.songs.size} " + Localization.get(language, "songs").lowercase()
+    Column(
+        Modifier
+            .width(150.dp)
+            .clickable(onClick = {
+                AppLog.click("local playlist '${playlist.name}'")
+                onClick()
+            }),
+    ) {
+        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.medium)
+        Tooltip(name) {
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Tooltip(count) {
+            Text(
+                count,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

@@ -8,6 +8,11 @@ orientation.
 
 ## Open
 
+### 1.56.0-beta8 - Home cards, the New releases carousel and the smooth mini volume (9 Nov)
+- [x] **[DE] Home is the reference's shelf stack, every shelf a 150 dp card (done 9 Nov, code 441, beta8).** The Recents row, the hero shelf and the song rows left the page; each service section is the 150 dp card with a one-line title, and a new first shelf draws this machine's playlists from `PlaylistStore` with the playlist screen's 2x2 mosaic. The unused related-video effect went with the row it fed. **Measured:** `:desktop:compileKotlin` passes; the packaged app drew the collection mosaics and three card rows (`beta8-home.png`).
+- [x] **[DE] New releases in Explore is the same carousel, with arrows and Expressive snapping (done 9 Nov, code 441, beta8).** The albums left their `surfaceContainerLow` boards for the shared `HorizontalCarousel`, which now snaps with `rememberSnapFlingBehavior` everywhere. **Measured:** `:desktop:compileKotlin` passes; the packaged app drew the row and its forward arrow (`beta8-explore.png`).
+- [x] **[DE] The v17 mini bar's volume line has no thumb (done 9 Nov, code 441, beta8).** `showThumb = false` on the 104 dp track, as on the full player's bars. **Measured:** `:desktop:compileKotlin` passes; the bar was read at 4x at 12 % volume (`beta8-volume-zoom.png`).
+
 ### 1.56.0-beta7 - Home shelves, the accent switch and the playback retry (9 Nov)
 - [x] **[DE] Home is BitChord's shelf stack (done 9 Nov, code 440, beta7).** Recents from this session, then the service's shelves with the first as the hero row and the rest as 150 dp cards; the greeting, pills, chips, Wrapped card, Recommended row, artists row, mixes and mood grid left the page. **Measured:** `:desktop:compileKotlin` passes.
 - [x] **[DE] The accent switch is on Theme & Colors and follows every track (done 9 Nov, code 440, beta7).** The Developer options row moved under the mode circles; the effect is keyed by the track id as well as the artwork URL. **Measured:** `:desktop:compileKotlin` passes; the switch-on state was read in the running app and the theme took the cover's red (`theme-on-live.png`).

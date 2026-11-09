@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta8] - 2026-11-09
+
+### 🔧 Changed
+- [DE] **Home is the reference's shelf stack, and every shelf is the same 150 dp card.** The Recents row, the hero shelf and the shelf of track rows are gone: each service section draws the 150 dp cover card on the page's 24 dp gutter with a one-line title (the whole name on the tooltip), in the order the service returns it, and the row keeps its own arrows. A new first shelf, labelled with the shared `library` key, draws this installation's own playlists from `PlaylistStore` newest first (up to twelve, empty ones skipped) with the same 2x2 `PlaylistMosaic` the playlist screen draws, at 150 dp and the medium corner, each card opening `Screen.LocalPlaylist`. The related-video recommendation effect left with the row it fed, so opening Home no longer spends three `next` / `related` calls on a list nothing draws, and `YtItemCard` took a `titleMaxLines` argument for the one-line clamp. **Measured:** `:desktop:compileKotlin` passes; the packaged app drew Home as the collection mosaics followed by three card rows, every row cut at the window edge with its forward arrow (`beta8-home.png`).
+- [DE] **New releases in Explore is the same carousel as every other row.** The twelve albums no longer sit on their own `surfaceContainerLow` boards in a `FlowRow`: they are the 150 dp card inside `HorizontalCarousel`, with the same arrows as Home, and the shared carousel snaps like the Expressive one (`rememberSnapFlingBehavior`), so a row settles with a card's edge on the gutter instead of stopping half way through one. **Measured:** `:desktop:compileKotlin` passes; the packaged app drew the row of cards past the window edge with the forward arrow over the cut one (`beta8-explore.png`).
+- [DE] **The v17 mini bar's volume is a bare line.** `ViviSlider` drew its thumb at the head of the 104 dp volume track in the Apple Music v17 mini bar; the bar passes `showThumb = false` now, exactly as the full v17 player's seek and volume bars already did, so the line is smooth at any volume. **Measured:** `:desktop:compileKotlin` passes; the packaged app drew the bar with a bare line at 12 % volume (`beta8-volume-zoom.png`, a 4x crop of `beta8-home.png`).
+
 ## [6.0.8.11_DE-1.56.0-beta7] - 2026-11-09
 
 ### ✨ Added

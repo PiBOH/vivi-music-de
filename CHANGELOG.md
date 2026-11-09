@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta8] - 2026-11-09
+
+### 🔧 Changed
+- [DE] **Home is the reference's shelf stack, and every shelf is the same 150 dp card.**
+- [DE] **New releases in Explore is the same carousel as every other row.**
+- [DE] **The v17 mini bar's volume is a bare line.**
+
 ## [6.0.8.11_DE-1.56.0-beta7] - 2026-11-09
 
 ### ✨ Added
