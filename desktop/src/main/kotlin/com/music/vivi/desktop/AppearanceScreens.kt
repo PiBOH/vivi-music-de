@@ -3,22 +3,15 @@ package com.music.vivi.desktop
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,28 +20,15 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ViewSidebar
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Album
-import androidx.compose.material.icons.filled.Brightness1
 import androidx.compose.material.icons.filled.BrightnessAuto
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Gradient
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.ViewAgenda
-import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.DesktopWindows
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.Lyrics
-import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MotionPhotosOn
@@ -56,23 +36,18 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.SettingsBrightness
-import androidx.compose.material.icons.filled.Swipe
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -81,29 +56,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import androidx.compose.ui.text.style.TextAlign
-import com.materialkolor.PaletteStyle
-import com.materialkolor.dynamiccolor.ColorSpec
-import com.materialkolor.rememberDynamicColorScheme
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.hypot
 import kotlin.math.roundToInt
-import kotlin.math.sin
 
 /**
  * Appearance hub: rows mirroring the Android app's Appearance sub-menu.
@@ -347,253 +308,6 @@ fun ThemeSection(
     }
 }
 
-/** The colour wheel's diameter, and the height of the strip beside it. */
-private val WheelSize = 220.dp
-
-/** The width one of the strips beside the wheel takes. */
-private val StripSize = 20.dp
-
-/**
- * The width of the caption under the intensity strip: the widest text beside
- * the wheel, which is what that strip is centred in.
- */
-private val StripCaptionWidth = 92.dp
-
-/**
- * The colour wheel: hue around the rim, saturation from the centre out, both
- * picked with a single drag. It is drawn from two gradients - a sweep for the
- * hue and a radial white-to-transparent for the saturation - and darkened to the
- * current brightness, so the disc always shows the colour being selected. The
- * marker is the same colour's position: the hue is its angle and the saturation
- * its distance from the centre.
- */
-@Composable
-private fun HsvColorWheel(
-    hue: Float,
-    saturation: Float,
-    brightness: Float,
-    onPick: (Float, Float) -> Unit,
-) {
-    var radiusPx by remember { mutableStateOf(1f) }
-    Box(
-        Modifier
-            .size(WheelSize)
-            // The page's own 1 dp outline around the disc (`.md-picker__wheel`).
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            .onSizeChanged { radiusPx = it.width / 2f }
-            .pointerInput(Unit) {
-                fun pick(position: Offset) {
-                    val dx = position.x - radiusPx
-                    val dy = position.y - radiusPx
-                    // The sweep gradient starts at 3 o'clock and runs clockwise,
-                    // and the angle is read the same way (y grows downwards), so
-                    // the marker always sits under the pointer.
-                    val degrees = Math.toDegrees(atan2(dy.toDouble(), dx.toDouble())).toFloat()
-                    onPick((degrees + 360f) % 360f, (hypot(dx, dy) / radiusPx).coerceIn(0f, 1f))
-                }
-                // ISSUE #61: `detectTapGestures` never returns (it loops
-                // forever), so a `detectDragGestures` call after it was dead code
-                // and the surface only reacted on mouse release. A single gesture
-                // loop tracks the press AND every drag movement, so the marker
-                // follows the pointer in real time.
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    pick(down.position)
-                    down.consume()
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
-                        pick(change.position)
-                        change.consume()
-                    }
-                }
-            },
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            val r = size.minDimension / 2f
-            val middle = center
-            drawCircle(
-                brush = Brush.sweepGradient(
-                    colors = HueSpectrum,
-                    center = middle,
-                ),
-                radius = r,
-                center = middle,
-            )
-            // The page's saturation ramp reaches fully transparent at 70 % of
-            // the radius (`radial-gradient(..., #fff 0%, transparent 70%)`), so
-            // the last third of the disc is the hue itself.
-            drawCircle(
-                brush = Brush.radialGradient(
-                    0f to PaletteInk,
-                    0.7f to PaletteInk.copy(alpha = 0f),
-                    1f to PaletteInk.copy(alpha = 0f),
-                    center = middle,
-                    radius = r,
-                ),
-                radius = r,
-                center = middle,
-            )
-            if (brightness < 1f) {
-                drawCircle(PaletteBlack.copy(alpha = 1f - brightness), radius = r, center = middle)
-            }
-            val angle = Math.toRadians(hue.toDouble())
-            val marker = Offset(
-                x = middle.x + (r * saturation * cos(angle)).toFloat(),
-                y = middle.y + (r * saturation * sin(angle)).toFloat(),
-            )
-            // The page's marker: a 16 dp ring of white, 2 dp thick, with the
-            // colour being picked showing through it and a soft dark edge so a
-            // white ring still reads on a white part of the disc.
-            val markRadius = 8.dp.toPx() - 1.dp.toPx()
-            drawCircle(
-                color = PaletteInk,
-                radius = markRadius,
-                center = marker,
-                style = Stroke(width = 2.dp.toPx()),
-            )
-            drawCircle(
-                color = PaletteBlack.copy(alpha = 0.28f),
-                radius = markRadius + 1.dp.toPx(),
-                center = marker,
-                style = Stroke(width = 1.dp.toPx()),
-            )
-        }
-    }
-}
-
-/**
- * The wheel's value control: the picked colour at full brightness at the top,
- * black at the bottom. It stays a strip beside the wheel because a wheel carries
- * hue and saturation only, and it is dragged exactly like the wheel is.
- */
-@Composable
-private fun BrightnessStrip(
-    hue: Float,
-    saturation: Float,
-    brightness: Float,
-    onBrightnessChange: (Float) -> Unit,
-) {
-    var stripHeightPx by remember { mutableStateOf(1f) }
-    BoxWithConstraints(
-        modifier = Modifier
-            .width(StripSize)
-            .height(WheelSize)
-            // The page's pill, outlined by 1 dp of `outlineVariant`
-            // (`.md-picker__strip`).
-            .clip(CircleShape)
-            // The bottom of a brightness ramp is the theme's scrim, not a literal
-            // black: it is the same ink in every scheme, and it is the role M3
-            // provides for "the darkest thing on this surface".
-            .background(
-                Brush.verticalGradient(
-                    listOf(hsvToColor(hue, saturation, 1f), MaterialTheme.colorScheme.scrim),
-                ),
-            )
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            .onSizeChanged { stripHeightPx = it.height.toFloat() }
-            .pointerInput(stripHeightPx) {
-                fun pick(y: Float) = onBrightnessChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    pick(down.position.y)
-                    down.consume()
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
-                        pick(change.position.y)
-                        change.consume()
-                    }
-                }
-            },
-    ) {
-        val thumbY = ((1f - brightness) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
-        Box(
-            Modifier
-                .offset(y = thumbY - 5.dp)
-                .height(10.dp)
-                .fillMaxWidth()
-                // The page's thumb: a 10 dp pill with a 2 dp white border and a
-                // small shadow, drawn on the strip and clipped by its ends
-                // (`.md-picker__thumb`). White is `mode-light`, an ink the page
-                // fixes because the marker sits on an arbitrary colour.
-                .border(2.dp, PaletteInk, CircleShape)
-                .shadow(2.dp, CircleShape),
-        )
-    }
-}
-
-/**
- * The accent intensity, as the strip the owner moved beside the wheel: the
- * rightmost of the picker's three controls.
- *
- * It carries what the removed row of five preview circles used to: the gradient
- * is the accent itself at the top and the same accent at 0 % at the bottom, so
- * the strip shows what the drag is doing while the screen applies it live. The
- * pointer loop is [BrightnessStrip]'s, and the ticks are the slider's own
- * `steps = 18` (20 values), so a drag lands on the values it used to. The drag
- * only moves the in-memory state and the file is written once, on release
- * (issue #61: persisting per frame made the thumb stutter).
- */
-@Composable
-private fun IntensityStrip(
-    accent: Color,
-    intensity: Float,
-    onIntensityChange: (Float) -> Unit,
-    onIntensityChangeFinished: () -> Unit,
-) {
-    var stripHeightPx by remember { mutableStateOf(1f) }
-    BoxWithConstraints(
-        modifier = Modifier
-            .width(StripSize)
-            .height(WheelSize)
-            .clip(CircleShape)
-            .background(Brush.verticalGradient(listOf(accent, adjustAccentIntensity(accent, 0f))))
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            .onSizeChanged { stripHeightPx = it.height.toFloat() }
-            .pointerInput(stripHeightPx) {
-                fun pick(y: Float) = onIntensityChange((1f - y / stripHeightPx).coerceIn(0f, 1f))
-                awaitEachGesture {
-                    val down = awaitFirstDown(requireUnconsumed = false)
-                    pick(down.position.y)
-                    down.consume()
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
-                        if (!change.pressed) break
-                        pick(change.position.y)
-                        change.consume()
-                    }
-                    // One write per gesture, on the release.
-                    onIntensityChangeFinished()
-                }
-            },
-    ) {
-        repeat(20) { step ->
-            Box(
-                Modifier
-                    .offset(y = maxHeight * step / 19f)
-                    .fillMaxWidth()
-                    .height(1.dp)
-                    // The ticks sit on the accent itself, so they take the ink the
-                    // accent can carry (a white tick disappears on Yellow).
-                    .background(contrastInk(accent).copy(alpha = 0.5f)),
-            )
-        }
-        val thumbY = ((1f - intensity) * maxHeight.value).dp.coerceIn(0.dp, maxHeight)
-        Box(
-            Modifier
-                .offset(y = thumbY - 5.dp)
-                .height(10.dp)
-                .fillMaxWidth()
-                .border(2.dp, PaletteInk, CircleShape)
-                .shadow(2.dp, CircleShape),
-        )
-    }
-}
-
 /**
  * One of the four mode circles: the page's `.md-mode`.
  *
@@ -689,141 +403,6 @@ private fun ThemeModeCircle(
             color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp),
         )
-    }
-}
-
-/**
- * One accent circle: the page's `.md-swatch`.
- *
- * 40 dp, a 1 dp border of the surface's own ink at a fifth of its strength, and
- * the page's selection ring - 3 dp of surface and then 6 dp of primary, drawn
- * outside the 40 dp box so the row does not move when a colour is chosen. The
- * check sits on the fill's own ink, which the scheme supplies, so a pale accent
- * cannot hide its own mark.
- */
-@Composable
-private fun AccentSwatch(
-    fill: Color,
-    ink: Color,
-    selected: Boolean,
-    mark: (@Composable () -> Unit)? = null,
-    onClick: () -> Unit,
-) {
-    val ring = MaterialTheme.colorScheme.primary
-    val page = MaterialTheme.colorScheme.surface
-    Box(
-        Modifier
-            .size(40.dp)
-            .drawBehind {
-                if (selected) {
-                    val radius = size.minDimension / 2f
-                    drawCircle(ring, radius = radius + 6.dp.toPx())
-                    drawCircle(page, radius = radius + 3.dp.toPx())
-                }
-            }
-            .clip(CircleShape)
-            .background(fill)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f),
-                shape = CircleShape,
-            )
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        if (selected) {
-            Icon(
-                Icons.Filled.Check,
-                contentDescription = null,
-                tint = ink,
-                modifier = Modifier.size(18.dp),
-            )
-        } else {
-            mark?.invoke()
-        }
-    }
-}
-
-/**
- * The palette's grid: the page's `repeat(auto-fill, minmax(44px, 1fr))`
- * (`.md-palette`).
- *
- * A fixed 12 dp gap is not the same grid: the page fits as many 44 dp columns as
- * the width allows, stretches them to share it, and stands each 40 dp circle at
- * the left of its own cell, so the pitch follows the window instead of staying
- * at 40 + 12. A FlowRow would pack the circles at one fixed gap and would also
- * let one more fit than the page's own column count, which is why this places
- * them on the page's cells instead. The 12 dp between rows is the page's row gap.
- */
-@Composable
-private fun PaletteGrid(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Layout(content = content, modifier = modifier) { measurables, constraints ->
-        val gap = 12.dp.roundToPx()
-        val minCell = 44.dp.roundToPx()
-        val side = 40.dp.roundToPx()
-        val width = constraints.maxWidth
-        val columns = ((width + gap) / (minCell + gap)).coerceAtLeast(1)
-        // Each cell shares the row, exactly as `1fr` does.
-        val cell = (width - gap * (columns - 1)).toFloat() / columns
-        val placeables = measurables.map { it.measure(Constraints.fixed(side, side)) }
-        val rows = if (placeables.isEmpty()) 0 else (placeables.size + columns - 1) / columns
-        val height = (rows * side + (rows - 1).coerceAtLeast(0) * gap).coerceAtLeast(0)
-        layout(width, height) {
-            placeables.forEachIndexed { index, placeable ->
-                val column = index % columns
-                val row = index / columns
-                placeable.place((column * (cell + gap)).toInt(), row * (side + gap))
-            }
-        }
-    }
-}
-
-/**
- * The custom-colour circle: the page's `.md-swatch--custom`.
- *
- * A spectrum disc with a dark hub and a `+` on it, in every state - the way into
- * the wheel never changes shape once a colour is in use - and the same selection
- * ring as the other circles while the wheel is open.
- */
-@Composable
-private fun CustomColorSwatch(selected: Boolean, onClick: () -> Unit) {
-    val ring = MaterialTheme.colorScheme.primary
-    val page = MaterialTheme.colorScheme.surface
-    Box(
-        Modifier
-            .size(40.dp)
-            .drawBehind {
-                if (selected) {
-                    val radius = size.minDimension / 2f
-                    drawCircle(ring, radius = radius + 6.dp.toPx())
-                    drawCircle(page, radius = radius + 3.dp.toPx())
-                }
-            }
-            .clip(CircleShape)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(Modifier.fillMaxSize()) {
-            drawCircle(
-                brush = Brush.sweepGradient(colors = HueSpectrum, center = center),
-                radius = size.minDimension / 2f,
-                center = center,
-            )
-        }
-        Box(
-            Modifier
-                .size(22.dp)
-                .clip(CircleShape)
-                .background(ComponentDark),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                Icons.Filled.Add,
-                contentDescription = null,
-                tint = PaletteInk,
-                modifier = Modifier.size(16.dp),
-            )
-        }
     }
 }
 
