@@ -6,7 +6,7 @@
 
 - [DE] **The accent is neutral, and the cover's colour is a developer option.**
 - [DE] **The accent options are gone from Theme & Colors.**
-- [DE] **The v17 transport is BitChord's row: bigger, rounder, and at the bottom of the window.**
+- [DE] **The v17 transport is BitChord's row: bigger, bare, and beside the sleeve.**
 - [DE] **The inline lyric row opens the player's own lyrics panel.**
 - [DE] **The stacked v17 player ends at the volume bar.**
 - [DE] **The slider style options stay removed.**

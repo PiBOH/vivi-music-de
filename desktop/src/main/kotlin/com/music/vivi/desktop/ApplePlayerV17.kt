@@ -631,47 +631,38 @@ internal fun ApplePlayerV17Screen(
                     horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // The reference's transport: three round, translucent
-                    // controls, the play/pause the largest of them, and the
-                    // glyphs drawn rather than borrowed (see V17Glyph).
+                    // Bare glyphs, no circles. The reference draws its
+                    // TransportRow as three icons on the backdrop, the play
+                    // one larger, and the Apple player's tips are the glyph's
+                    // own rounded bevel (see V17Glyph). The touch box stays
+                    // large and invisible, so the target is still a thumb's
+                    // width even though nothing is painted around the glyph.
                     Tooltip(Localization.get(language, "previous")) {
-                        Surface(
-                            onClick = onPrevious,
-                            shape = CircleShape,
-                            color = contentColor.copy(alpha = 0.10f),
-                            modifier = Modifier.size(V17SkipButton),
+                        Box(
+                            Modifier.size(V17SkipButton).clickable(onClick = onPrevious),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                V17Glyph(V17TransportGlyph.PREVIOUS, V17SkipGlyph, contentColor)
-                            }
+                            V17Glyph(V17TransportGlyph.PREVIOUS, V17SkipGlyph, contentColor)
                         }
                     }
                     Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
-                        Surface(
-                            onClick = onTogglePlay,
-                            shape = CircleShape,
-                            color = contentColor.copy(alpha = 0.16f),
-                            modifier = Modifier.size(V17PlayButton),
+                        Box(
+                            Modifier.size(V17PlayButton).clickable(onClick = onTogglePlay),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                V17Glyph(
-                                    if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
-                                    V17PlayGlyph,
-                                    contentColor,
-                                )
-                            }
+                            V17Glyph(
+                                if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
+                                V17PlayGlyph,
+                                contentColor,
+                            )
                         }
                     }
                     Tooltip(Localization.get(language, "next")) {
-                        Surface(
-                            onClick = onNext,
-                            shape = CircleShape,
-                            color = contentColor.copy(alpha = 0.10f),
-                            modifier = Modifier.size(V17SkipButton),
+                        Box(
+                            Modifier.size(V17SkipButton).clickable(onClick = onNext),
+                            contentAlignment = Alignment.Center,
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                V17Glyph(V17TransportGlyph.NEXT, V17SkipGlyph, contentColor)
-                            }
+                            V17Glyph(V17TransportGlyph.NEXT, V17SkipGlyph, contentColor)
                         }
                     }
                 }
@@ -815,9 +806,11 @@ internal fun ApplePlayerV17Screen(
                     .fillMaxSize()
                     .padding(horizontal = 40.dp, vertical = 28.dp),
                 horizontalArrangement = Arrangement.spacedBy(44.dp),
-                // The controls sit at the bottom of the window, near the
-                // taskbar, instead of floating in the middle of the column.
-                verticalAlignment = Alignment.Bottom,
+                // The info column is centred against the sleeve, the way the
+                // reference lays it out: the transport then sits in the lower
+                // part of the sleeve instead of at the very bottom of the
+                // window, where it read as detached from the artwork.
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(
                     Modifier.fillMaxHeight().width(artSize),
@@ -835,11 +828,16 @@ internal fun ApplePlayerV17Screen(
                         showQueuePanel -> 2
                         else -> 0
                     },
-                    modifier = Modifier.weight(1f),
+                    // fillMaxHeight, not just weight: the swap has to take the
+                    // row's whole height for the Box inside to centre the info
+                    // column against the sleeve. Wrapping the column's own
+                    // height made the old Bottom alignment the only one that
+                    // could move it, which pinned the transport to the window.
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
                 ) { face ->
                     Box(
                         Modifier.fillMaxSize(),
-                        contentAlignment = if (face == 0) Alignment.BottomCenter else Alignment.Center,
+                        contentAlignment = Alignment.Center,
                     ) {
                         when (face) {
                             1 -> lyricsPanel()
@@ -916,11 +914,15 @@ internal fun ApplePlayerV17Screen(
     }
 }
 
-/** The transport's sizes, on BitChord's own scale. */
+/**
+ * The transport's sizes, on BitChord's own scale: a 74 dp play glyph in a
+ * 92 dp touch box, and 53 dp skip glyphs beside it (the reference's
+ * TransportRow, non-compact). The box is invisible: no circle is drawn.
+ */
 private val V17PlayButton = 92.dp
 private val V17SkipButton = 72.dp
-private val V17PlayGlyph = 58.dp
-private val V17SkipGlyph = 42.dp
+private val V17PlayGlyph = 74.dp
+private val V17SkipGlyph = 53.dp
 
 /** The four glyphs the transport row draws. */
 private enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
