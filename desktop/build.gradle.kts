@@ -787,6 +787,26 @@ tasks.register<JavaExec>("applePlayerV17RenderCheck") {
     systemProperty("vivi.render.language", (project.findProperty("renderLanguage") as String?) ?: "en")
 }
 
+/**
+ * Headless render of Home's shelves:
+ *
+ *     ./gradlew :desktop:homeRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/HomeRenderCheck.kt`. The
+ * live Home needs the network, so `HomeShelfStack` takes the page and this
+ * check hands it a fixed one: it paints the shelves at 1364x905 and 1024x700,
+ * writes the frames under `.ignore/render-home/` and reads them back to measure
+ * the gutter, the card width, the gap, the card that is cut at the edge and the
+ * 12 dp corner of the artwork.
+ */
+tasks.register<JavaExec>("homeRenderCheck") {
+    group = "verification"
+    description = "Paints Home's shelves headlessly and checks the card geometry"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.HomeRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
 tasks.register<JavaExec>("cookieShapesCheck") {
     group = "verification"
     description = "Paints the cookie and clover shapes headlessly and checks their outlines"

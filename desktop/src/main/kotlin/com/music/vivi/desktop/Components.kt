@@ -418,8 +418,6 @@ fun YtItemCard(
 ) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
     val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
-    val artistCookie = rememberArtistCookie(hovered, label = "artistCardCookie")
     // The card turns with the pointer (the 3D tilt of Orion-Store's `data-tilt`)
     // as well as the cookie rounding its corners: the shape and the card under it
     // answer the same movement.
@@ -427,16 +425,17 @@ fun YtItemCard(
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
-        // Every card's artwork is the cookie - an artist's, a song's, an album's
-        // and a playlist's alike - and it rounds its corners while the pointer is
-        // on the card. What a card holds is said by its glyph, its title and its
-        // subtitle, not by the shape: a corner on three of the four made the
-        // artist the only cookie in a row of cards, which read as a different
-        // kind of object instead of the same cover of a different thing.
+        // A card's artwork is a rounded square, which is what the reference
+        // draws and what these rows have to match. This is the one deliberate
+        // departure from the cookie map in AGENTS.md: the 4-sided cookie stays
+        // the shape of a song's row cover ([SongRow]) and of a playlist's 2x2
+        // mosaic header, where it marks one object; on a shelf of 150 dp covers
+        // its cut corners made every card look like a blob, and the reference
+        // shows a plain 12 dp corner there.
         Thumbnail(
             item.thumbnail,
             Modifier.fillMaxWidth().aspectRatio(1f),
-            shape = artistCookie,
+            shape = MaterialTheme.shapes.small,
         )
         Tooltip(item.title) {
             Text(
@@ -1273,9 +1272,16 @@ fun HorizontalCarousel(
     // makes a row of covers read as a carousel and not as a strip cut mid-card.
     // The arrows are unchanged and still move the row by a page.
     val fling = rememberSnapFlingBehavior(lazyListState = state)
+    // The arrows belong to the row and exist only while the pointer is on it: a
+    // permanent circle sitting on the half-visible card at the edge reads as a
+    // defect over a cut cover, which is also what the reference never draws.
+    // Hovering the row is what reveals them, and each one is still drawn only
+    // while ITS direction has somewhere to scroll.
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
     // The arrows must not eat the row's own clicks: the Box only overlays them,
     // the LazyRow keeps the full width underneath.
-    Box(modifier.fillMaxWidth()) {
+    Box(modifier.fillMaxWidth().hoverable(interaction)) {
         LazyRow(
             state = state,
             modifier = Modifier.fillMaxWidth(),
@@ -1296,7 +1302,7 @@ fun HorizontalCarousel(
         // the forward one is drawn last it covered the backward one. That is
         // why only one arrow ever showed, on the left. Wrapping each arrow in
         // its own aligned Box fixes the placement.
-        if (canGoBackward) {
+        if (hovered && canGoBackward) {
             Box(Modifier.align(Alignment.CenterStart)) {
                 CarouselArrow(
                     language = language,
@@ -1305,7 +1311,7 @@ fun HorizontalCarousel(
                 )
             }
         }
-        if (canGoForward) {
+        if (hovered && canGoForward) {
             Box(Modifier.align(Alignment.CenterEnd)) {
                 CarouselArrow(
                     language = language,

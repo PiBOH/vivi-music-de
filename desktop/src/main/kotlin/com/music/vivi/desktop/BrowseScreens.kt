@@ -196,70 +196,101 @@ fun HomeScreen(
                 Text(Localization.get(language, "retry"))
             }
         }
-        else -> LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceContainer),
-            contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(26.dp),
-        ) {
-            // Home is the reference's stack of shelves, not a dashboard: every
-            // section is one row of the same 150 dp card, with the section's own
-            // title above it and the carousel arrows over the row. There is no
-            // greeting, no chips, no hero card and no song list above them.
-            val page = home ?: return@LazyColumn
+        else -> HomeShelfStack(
+            home = home!!,
+            localCollections = localCollections,
+            language = language,
+            onOpenAlbum = onOpenAlbum,
+            onOpenArtist = onOpenArtist,
+            onOpenPlaylist = onOpenPlaylist,
+            onOpenLocalPlaylist = onOpenLocalPlaylist,
+            onPlaySong = onPlaySong,
+        )
+    }
+}
 
-            // The collection shelf is the one row built from this machine's own
-            // data, so it comes first: the playlists this installation holds,
-            // drawn with the same mosaic the playlist screen uses.
-            if (localCollections.isNotEmpty()) {
-                item(key = "local_header") { ShelfHeading(Localization.get(language, "library")) }
-                item(key = "local_row") {
-                    HorizontalCarousel(
-                        language = language,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        contentPadding = PaddingValues(horizontal = 24.dp),
-                    ) {
-                        items(localCollections, key = { "local-${it.id}" }) { playlist ->
-                            LocalPlaylistCard(
-                                playlist = playlist,
-                                language = language,
-                                onClick = { onOpenLocalPlaylist(playlist.id) },
-                            )
-                        }
+/**
+ * Home's shelves, as their own composable.
+ *
+ * It takes the page instead of loading it so the same drawing can be painted
+ * with a fixed page in `:desktop:homeRenderCheck`: the live screen needs the
+ * network, and a page that only exists behind a request cannot be a render
+ * case. [HomeScreen] is what loads the page and passes it here.
+ */
+@Composable
+internal fun HomeShelfStack(
+    home: HomePage,
+    localCollections: List<SyncedPlaylist>,
+    language: String,
+    onOpenAlbum: (String) -> Unit,
+    onOpenArtist: (String) -> Unit,
+    onOpenPlaylist: (String) -> Unit,
+    onOpenLocalPlaylist: (String) -> Unit,
+    onPlaySong: (SongItem) -> Unit,
+) {
+LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainer),
+        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(26.dp),
+    ) {
+        // Home is the reference's stack of shelves, not a dashboard: every
+        // section is one row of the same 150 dp card, with the section's own
+        // title above it and the carousel arrows over the row. There is no
+        // greeting, no chips, no hero card and no song list above them.
+        val page = home
+
+        // The collection shelf is the one row built from this machine's own
+        // data, so it comes first: the playlists this installation holds,
+        // drawn with the same mosaic the playlist screen uses.
+        if (localCollections.isNotEmpty()) {
+            item(key = "local_header") { ShelfHeading(Localization.get(language, "library")) }
+            item(key = "local_row") {
+                HorizontalCarousel(
+                    language = language,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                ) {
+                    items(localCollections, key = { "local-${it.id}" }) { playlist ->
+                        LocalPlaylistCard(
+                            playlist = playlist,
+                            language = language,
+                            onClick = { onOpenLocalPlaylist(playlist.id) },
+                        )
                     }
                 }
             }
+        }
 
-            page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
-                item(key = "shelf-header-$index-${section.title}") {
-                    ShelfHeading(section.title)
-                }
-                item(key = "shelf-$index-${section.title}") {
-                    HorizontalCarousel(
-                        language = language,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        contentPadding = PaddingValues(horizontal = 24.dp),
-                    ) {
-                        items(section.items, key = { it.id }) { item ->
-                            YtItemCard(
-                                item = item,
-                                width = 150.dp,
-                                // One line, as the reference cuts every card's
-                                // name: the full text is on the tooltip.
-                                titleMaxLines = 1,
-                                onClick = {
-                                    onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
-                                },
-                            )
-                        }
+        page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
+            item(key = "shelf-header-$index-${section.title}") {
+                ShelfHeading(section.title)
+            }
+            item(key = "shelf-$index-${section.title}") {
+                HorizontalCarousel(
+                    language = language,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp),
+                ) {
+                    items(section.items, key = { it.id }) { item ->
+                        YtItemCard(
+                            item = item,
+                            width = 150.dp,
+                            // One line, as the reference cuts every card's
+                            // name: the full text is on the tooltip.
+                            titleMaxLines = 1,
+                            onClick = {
+                                onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
+                            },
+                        )
                     }
                 }
             }
+        }
 
-            item(key = "bottom_spacer") {
-                Box(Modifier.fillMaxWidth().padding(bottom = 24.dp))
-            }
+        item(key = "bottom_spacer") {
+            Box(Modifier.fillMaxWidth().padding(bottom = 24.dp))
         }
     }
 }
@@ -282,7 +313,7 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
                 onClick()
             }),
     ) {
-        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.medium)
+        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.small)
         Tooltip(name) {
             Text(
                 name,
