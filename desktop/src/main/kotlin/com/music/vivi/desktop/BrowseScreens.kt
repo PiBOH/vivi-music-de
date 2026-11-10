@@ -29,6 +29,9 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
@@ -251,6 +254,7 @@ LazyColumn(
                     language = language,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp),
+                    showIndicator = true,
                 ) {
                     items(localCollections, key = { "local-${it.id}" }) { playlist ->
                         LocalPlaylistCard(
@@ -272,6 +276,7 @@ LazyColumn(
                     language = language,
                     horizontalArrangement = Arrangement.spacedBy(14.dp),
                     contentPadding = PaddingValues(horizontal = 24.dp),
+                    showIndicator = true,
                 ) {
                     items(section.items, key = { it.id }) { item ->
                         YtItemCard(
@@ -305,15 +310,22 @@ LazyColumn(
 private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClick: () -> Unit) {
     val name = playlist.name.ifBlank { Localization.get(language, "playlist") }
     val count = "${playlist.songs.size} " + Localization.get(language, "songs").lowercase()
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    // The mosaic is this card's artwork, so it wears the same cookie as the
+    // artwork of every other card: a playlist in Home's first shelf and an
+    // album in the next one differ by what they hold, never by their corner.
+    val mosaicCookie = rememberArtistCookie(hovered, label = "homeMosaicCookie")
     Column(
         Modifier
             .width(150.dp)
+            .hoverable(interaction)
             .clickable(onClick = {
                 AppLog.click("local playlist '${playlist.name}'")
                 onClick()
             }),
     ) {
-        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.small)
+        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = mosaicCookie)
         Tooltip(name) {
             Text(
                 name,

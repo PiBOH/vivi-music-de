@@ -33,11 +33,12 @@ import javax.imageio.ImageIO
  *
  * What is asserted is the shelf geometry the reference fixed: the 24 dp gutter,
  * the 150 dp card, the 14 dp gap, the last card cut by the window edge instead
- * of fitting, and the 12 dp corner on the artwork, which is the shape the
- * reference draws and the one departure from the cookie map. A shelf that
- * silently went back to the cookie, to a hero card or to full-width rows would
- * still compile and still draw something, so the numbers are read off the
- * painted pixels instead of trusted.
+ * of fitting, and the 4-sided cookie of the artwork, which is this project's
+ * shape for a cover - a square tilted 12 degrees, whose mask fills about 0.70
+ * of its box where a rounded square fills 0.99. A shelf that silently went back
+ * to a rounded square, to a hero card or to full-width rows would still compile
+ * and still draw something, so the numbers are read off the painted pixels
+ * instead of trusted.
  *
  * The arrows are part of it. They are drawn only while the pointer is on the
  * row, because a permanent circle sitting on the card the edge cuts in half
@@ -187,7 +188,12 @@ object HomeRenderCheck {
         var start = -1
         for (x in 0 until img.width) {
             val painted = band.count { y -> diff(img.getRGB(x, y), bg) > 14 }
-            val isCard = painted >= band.count() * 0.6
+            // Any real paint, not most of the band: a card's artwork is a cookie,
+            // so its outline tapers to a point near the box's edge and a column
+            // there carries only the middle rows. Read this way the measurement
+            // is the layout box - gutter, card and gap - and the shape is what
+            // the coverage below answers for.
+            val isCard = painted >= 2
             if (isCard && start < 0) start = x
             if (!isCard && start >= 0) {
                 if (x - start >= 40) out += start until x
@@ -226,25 +232,53 @@ object HomeRenderCheck {
                     name, row.first, row.last, left, width, gap, rowCards.size, lastCut,
                 ),
             )
-            check(kotlin.math.abs(left - 24) <= 1) {
-                "$name: the shelf gutter is $left px, expected the 24 dp 24"
+            // The cookie tapers to a point at the box's edge, so the painted
+            // outline is inset by a few px and its left edge is not the layout's
+            // gutter. The centres are: a symmetric inset moves the painted
+            // rectangle's ends and leaves its middle where the layout put it,
+            // so the first centre says the 24 dp gutter plus half a card, and
+            // the step between two centres says the 150 dp card plus the 14 dp
+            // gap. Those two numbers are the shelf, whatever shape the cover is
+            // cut to.
+            val center = left + width / 2
+            val pitch = if (rowCards.size > 1) {
+                (rowCards[1].first + rowCards[1].count() / 2) - center
+            } else {
+                -1
             }
-            check(kotlin.math.abs(width - 150) <= 1) {
-                "$name: a card is $width px wide, expected the 150 dp 150"
+            println(
+                "%-12s painted %d..%d, %d px wide, gap %d; centres %d apart %d".format(
+                    name, left, left + width, width, gap, center, pitch,
+                ),
+            )
+            check(kotlin.math.abs(center - 99) <= 3) {
+                "$name: the first card's centre is $center px, expected 24 + 150/2 = 99"
             }
-            check(kotlin.math.abs(gap - 14) <= 1) {
-                "$name: the card gap is $gap px, expected the 14 dp 14"
+            check(kotlin.math.abs(pitch - 164) <= 3) {
+                "$name: the cards are $pitch px apart centre to centre, expected 150 + 14 = 164"
             }
             check(lastCut) {
                 "$name: the last card fits inside the window; the reference cuts it at the edge"
             }
-            // The artwork is a rounded square, not a cookie: its top-left corner
-            // is page, its left edge 12 px lower is cover.
-            check(diff(img.getRGB(left + 1, row.first + 1), bg) <= 14) {
-                "$name: the card's corner is painted, so the 12 dp corner is gone"
+            // The artwork is the project's 4-sided cookie, so the cover fills
+            // about 0.70 of its box: tilted 12 degrees to fit 150 px, a square
+            // loses the four triangles outside its rotated outline, and its
+            // 30 % corners take the rest. A 12 dp rounded square fills 0.99, so
+            // this number is what tells the two shapes apart in a painted
+            // frame - the one thing a screenshot cannot be asked about.
+            var painted = 0
+            for (y in row.first..row.last) {
+                for (x in left until left + width) {
+                    if (diff(img.getRGB(x, y), bg) > 14) painted++
+                }
             }
-            check(diff(img.getRGB(left + 1, row.first + 12), bg) > 14) {
-                "$name: the card's left edge is empty 12 px down, so it is not the reference's square"
+            val coverage = painted.toDouble() / (width * (row.last - row.first + 1))
+            println("%-12s cookie: the cover fills %.2f of its box".format(name, coverage))
+            check(coverage in 0.58..0.88) {
+                "$name: the cover fills %.2f of its box, so the cookie is gone".format(coverage)
+            }
+            check(diff(img.getRGB(left + 1, row.first + 1), bg) <= 14) {
+                "$name: the card's corner is painted, so it lost its cookie"
             }
         }
         println("homeRenderCheck: OK")

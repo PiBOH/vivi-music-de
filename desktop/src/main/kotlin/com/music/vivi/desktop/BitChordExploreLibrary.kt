@@ -214,6 +214,7 @@ fun BitChordExploreScreen(
                             language = language,
                             horizontalArrangement = Arrangement.spacedBy(14.dp),
                             contentPadding = PaddingValues(horizontal = 0.dp),
+                            showIndicator = true,
                         ) {
                             items(albums.orEmpty(), key = { it.id }) { album ->
                                 YtItemCard(

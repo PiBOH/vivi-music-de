@@ -418,6 +418,8 @@ fun YtItemCard(
 ) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
     val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    val cardCookie = rememberArtistCookie(hovered, label = "artistCardCookie")
     // The card turns with the pointer (the 3D tilt of Orion-Store's `data-tilt`)
     // as well as the cookie rounding its corners: the shape and the card under it
     // answer the same movement.
@@ -425,17 +427,16 @@ fun YtItemCard(
         AppLog.click("card '${item.title}'")
         onClick()
     })) {
-        // A card's artwork is a rounded square, which is what the reference
-        // draws and what these rows have to match. This is the one deliberate
-        // departure from the cookie map in AGENTS.md: the 4-sided cookie stays
-        // the shape of a song's row cover ([SongRow]) and of a playlist's 2x2
-        // mosaic header, where it marks one object; on a shelf of 150 dp covers
-        // its cut corners made every card look like a blob, and the reference
-        // shows a plain 12 dp corner there.
+        // Every card's artwork is the cookie - an album's, a single's, an
+        // artist's and a playlist's alike - and it rounds its corners while the
+        // pointer is on the card. The shape marks a cover as a cover: what the
+        // card holds is said by its glyph, its title and its subtitle, never by
+        // a different corner, and the shelf rows of Home, Explore, Search and the
+        // artist page all draw this same card.
         Thumbnail(
             item.thumbnail,
             Modifier.fillMaxWidth().aspectRatio(1f),
-            shape = MaterialTheme.shapes.small,
+            shape = cardCookie,
         )
         Tooltip(item.title) {
             Text(
@@ -1263,6 +1264,7 @@ fun HorizontalCarousel(
     modifier: Modifier = Modifier,
     horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(12.dp),
     contentPadding: PaddingValues = PaddingValues(0.dp),
+    showIndicator: Boolean = false,
     content: LazyListScope.() -> Unit,
 ) {
     val state = rememberLazyListState()
@@ -1279,46 +1281,57 @@ fun HorizontalCarousel(
     // while ITS direction has somewhere to scroll.
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    // The arrows must not eat the row's own clicks: the Box only overlays them,
-    // the LazyRow keeps the full width underneath.
-    Box(modifier.fillMaxWidth().hoverable(interaction)) {
-        LazyRow(
-            state = state,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = horizontalArrangement,
-            contentPadding = contentPadding,
-            flingBehavior = fling,
-            content = content,
-        )
+    Column(modifier.fillMaxWidth()) {
+        // The arrows must not eat the row's own clicks: the Box only overlays
+        // them, the LazyRow keeps the full width underneath.
+        Box(Modifier.fillMaxWidth().hoverable(interaction)) {
+            LazyRow(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = horizontalArrangement,
+                contentPadding = contentPadding,
+                flingBehavior = fling,
+                content = content,
+            )
 
-        // Both flags come from the row's own layout, so they are recomputed when
-        // it scrolls or the window is resized, not on every recomposition.
-        val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
-        val canGoForward by remember { derivedStateOf { state.canScrollForward } }
-        // The `align` modifier has to sit on a direct child of THIS Box. It
-        // used to be handed to `CarouselArrow` and applied to the `Surface`
-        // inside `Tooltip`, whose own internal Box consumed it: both arrows
-        // then fell back to the Box's default top-start position, and since
-        // the forward one is drawn last it covered the backward one. That is
-        // why only one arrow ever showed, on the left. Wrapping each arrow in
-        // its own aligned Box fixes the placement.
-        if (hovered && canGoBackward) {
-            Box(Modifier.align(Alignment.CenterStart)) {
-                CarouselArrow(
-                    language = language,
-                    forward = false,
-                    onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
-                )
+            // Both flags come from the row's own layout, so they are recomputed
+            // when it scrolls or the window is resized, not on every
+            // recomposition.
+            val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
+            val canGoForward by remember { derivedStateOf { state.canScrollForward } }
+            // The `align` modifier has to sit on a direct child of THIS Box. It
+            // used to be handed to `CarouselArrow` and applied to the `Surface`
+            // inside `Tooltip`, whose own internal Box consumed it: both arrows
+            // then fell back to the Box's default top-start position, and since
+            // the forward one is drawn last it covered the backward one. That is
+            // why only one arrow ever showed, on the left. Wrapping each arrow in
+            // its own aligned Box fixes the placement.
+            if (hovered && canGoBackward) {
+                Box(Modifier.align(Alignment.CenterStart)) {
+                    CarouselArrow(
+                        language = language,
+                        forward = false,
+                        onClick = { scope.launch { state.animateScrollBy(-carouselPage(state)) } },
+                    )
+                }
+            }
+            if (hovered && canGoForward) {
+                Box(Modifier.align(Alignment.CenterEnd)) {
+                    CarouselArrow(
+                        language = language,
+                        forward = true,
+                        onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
+                    )
+                }
             }
         }
-        if (hovered && canGoForward) {
-            Box(Modifier.align(Alignment.CenterEnd)) {
-                CarouselArrow(
-                    language = language,
-                    forward = true,
-                    onClick = { scope.launch { state.animateScrollBy(carouselPage(state)) } },
-                )
-            }
+        // The Expressive carousel says where it is: the reference's own shelves
+        // carry the dot row under them, and that dot row is the part of the
+        // carousel a still screenshot cannot show. Off by default, because a
+        // short grid that already shows every card does not need it; Home and
+        // Explore turn it on for the rows that scroll.
+        if (showIndicator) {
+            CarouselIndicator(state)
         }
     }
 }
@@ -1330,6 +1343,53 @@ fun HorizontalCarousel(
  */
 private fun carouselPage(state: LazyListState): Float =
     (state.layoutInfo.viewportSize.width * 0.85f).coerceAtLeast(240f)
+
+/**
+ * The Material 3 Expressive carousel's indicator: one dot per page of the row,
+ * the page the row is on drawn as a longer pill.
+ *
+ * A page is what one press of an arrow reveals - the cards that fit the row -
+ * so the dots say how many presses are left, and they follow the row while it is
+ * dragged. A row that fits its window entirely is one page and draws nothing: an
+ * indicator that can never move is noise.
+ */
+@Composable
+private fun CarouselIndicator(state: LazyListState) {
+    val pages by remember {
+        derivedStateOf {
+            val perPage = state.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+            val total = state.layoutInfo.totalItemsCount
+            if (total <= perPage) 1 else (total + perPage - 1) / perPage
+        }
+    }
+    val current by remember {
+        derivedStateOf {
+            val perPage = state.layoutInfo.visibleItemsInfo.size.coerceAtLeast(1)
+            state.firstVisibleItemIndex / perPage
+        }
+    }
+    if (pages <= 1) return
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val activePage = current.coerceIn(0, pages - 1)
+        repeat(pages) { page ->
+            val active = page == activePage
+            Box(
+                Modifier
+                    .height(6.dp)
+                    .width(if (active) 18.dp else 6.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (active) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+                    ),
+            )
+        }
+    }
+}
 
 @Composable
 private fun CarouselArrow(
