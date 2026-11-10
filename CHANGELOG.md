@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.57.0-beta9] - 2026-11-10
+
+### ✨ Added
+- [DE] **Appearance has a Designs screen that shows both looks and chooses one per screen.**
+- [DE] **Home has a Material 3 Expressive style: 180 dp cards, the title on the cover, every category the feed returns.**
+
+### 🔧 Changed
+- [DE] **The shelf and the mosaic are shared with the new style instead of copied.**
+
 ## [6.0.8.11_DE-1.56.0-beta8] - 2026-11-09
 
 ### ✨ Added

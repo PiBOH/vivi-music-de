@@ -331,20 +331,10 @@ dependencies there, or you break the desktop build.
     (`Shapes.extraSmall` 8, `small` 12, `medium` 16, `large` 20, `extraLarge`
     28, plus `none` and `full`), or from the component's own token where the app
     fixes the corner itself (the 24 dp settings card). A bare `14.dp` corner is
-    a defect: it is a level nobody can find again. A shape that is not a corner
-    but a *family* comes from the same page, through `CookieShapes` (the
-    library's cookies and clover), and the map is: an artist's artwork and a
-    song's cover in a row → the 4-sided cookie; a person (the Contributors
-    list, developers and community alike, and the author of this edition) → the
-    9-sided cookie; a Listen Together avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
-    never hand-rolls one of these three. A shape that has to move takes the
-    animated constructors (`rememberPersonCookie`, `rememberArtistCookie`,
-    `rememberCloverShape`) instead of the fixed rest value: a hover rounds a
-    cookie's corners, a selection tightens and turns it, and the clover fills
-    its lobes. The numbers live in `CookieShapes.kt`, and the preview's
-    `.md-avatar` carries the same two polygons as CSS `path()` values
-    (`.ignore/cookie_paths.py` generates them), because a `url()` clipPath
-    cannot interpolate.
+    a defect: it is a level nobody can find again. A cover in a row is a card:
+    it takes `MaterialTheme.shapes.medium` (16 dp), the corner M3 gives a card.
+    A polygon is never hand-rolled, and no shape is mandatory for a screen: a
+    layout may use plain rounded cards wherever they fit it.
   - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
     role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
     `outlineVariant`, ...), never with a literal value. Raw colours live in the
@@ -362,7 +352,7 @@ dependencies there, or you break the desktop build.
     leaving accelerates (`emphasizedAccelerate`), a movement that begins and ends
     on screen uses `emphasized`. A state change - a hover, a press - is not a
     transition: it rides an effects spring through `Motion.hoverProgress`, which
-    is what `Modifier.hoverGrow` animates a cookie or a clover with. The springs'
+    is what `Modifier.hoverGrow` animates a hover with. The springs'
     damping and stiffness are the DE's own (Material publishes the spring tokens
     but not those numbers), the durations and the curves are the published ones.
     The UI preview mirrors the same table in `css/tokens.css`
@@ -629,7 +619,7 @@ behavior, state the risk before editing and, when in doubt, ask.
 **explicitly** asks)
 
 - **Embedded WebView sign-in (Google login)**: it works now (sign-in window,
-cookie extraction, auto-close and session save). Do not modify the WebView
+session extraction, auto-close and session save). Do not modify the WebView
 login flow in any way.
 
 ## 5. Versioning and CHANGELOG — MANDATORY

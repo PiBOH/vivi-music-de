@@ -1436,8 +1436,8 @@ private fun carouselStep(state: LazyListState): Int {
  * of a medium card, the card is 1.86 to 1.96 times its width tall, and the
  * trailing card is cut so 0.43 to 0.46 of it shows. A 245 dp lead against a
  * 162 dp card keeps those ratios (1.51, 0.05, 1.90), and the 8 dp gap is what
- * makes the trailing card a cut strip: at 1364 and at 1024 the strip shows 75 px
- * of a 162 dp card, 0.46 of it, where the video shows 0.43 to 0.46.
+ * makes the trailing card a cut strip: at 1364 and at 1024 the strip shows 60 px
+ * of a 162 dp card, 0.41 of it, against the video's own 0.43 to 0.46.
  */
 internal val ShelfLeadWidth = 245.dp
 internal val ShelfCardWidth = 162.dp
@@ -1468,6 +1468,38 @@ fun ExpressiveShelf(
     contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
     onItemClick: (YTItem) -> Unit,
 ) {
+    ExpressiveShelf(
+        items = items,
+        itemKey = { it.id },
+        contentPadding = contentPadding,
+        language = language,
+    ) { item, width ->
+        YtItemCard(
+            item = item,
+            width = width,
+            titleMaxLines = 1,
+            artworkHeight = ShelfCardHeight,
+            onClick = { onItemClick(item) },
+        )
+    }
+}
+
+/**
+ * The same carousel over any list: [card] draws one item at the width the shelf
+ * gives it, so Home's m3e rows (whose cards put the title on the artwork) reuse
+ * the widths, the snap, the arrows and the dot row instead of copying them.
+ */
+@Composable
+fun <T> ExpressiveShelf(
+    items: List<T>,
+    itemKey: (T) -> Any,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
+    language: String = "en",
+    gap: Dp = ShelfGap,
+    leadWidth: Dp = ShelfLeadWidth,
+    cardWidth: Dp = ShelfCardWidth,
+    card: @Composable (T, Dp) -> Unit,
+) {
     if (items.isEmpty()) return
     val state = rememberLazyListState()
     val scope = rememberCoroutineScope()
@@ -1490,18 +1522,12 @@ fun ExpressiveShelf(
             LazyRow(
                 state = state,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(ShelfGap),
+                horizontalArrangement = Arrangement.spacedBy(gap),
                 contentPadding = contentPadding,
                 flingBehavior = fling,
             ) {
-                itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
-                    YtItemCard(
-                        item = item,
-                        width = if (index == lead) ShelfLeadWidth else ShelfCardWidth,
-                        titleMaxLines = 1,
-                        artworkHeight = ShelfCardHeight,
-                        onClick = { onItemClick(item) },
-                    )
+                itemsIndexed(items, key = { _, item -> itemKey(item) }) { index, item ->
+                    card(item, if (index == lead) leadWidth else cardWidth)
                 }
             }
             if (hovered && canGoBackward) {

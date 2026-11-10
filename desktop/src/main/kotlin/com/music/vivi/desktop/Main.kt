@@ -199,6 +199,7 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     // checks use it to render the real screen instead of driving the gear.
     "settings" -> Screen.Settings
     "appearance" -> Screen.SettingsAppearance
+    "designs" -> Screen.SettingsDesigns
     "theme" -> Screen.SettingsTheme
     else -> null
 }
@@ -488,6 +489,12 @@ fun WindowScope.App(
     var pureBlackMiniPlayer by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().pureBlackMiniPlayer) }
     var showRightSidebar by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().showRightSidebar) }
     var homeUseLastListen by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().homeUseLastListen) }
+    // Appearance > Designs: one design language per screen, read once here and
+    // written straight back, so a choice shows on the next frame.
+    var homeDesign by remember(settingsFileRevision()) { mutableStateOf(DesignStyle.fromKey(DesktopSettings.load().homeDesign)) }
+    var exploreDesign by remember(settingsFileRevision()) { mutableStateOf(DesignStyle.fromKey(DesktopSettings.load().exploreDesign)) }
+    var libraryDesign by remember(settingsFileRevision()) { mutableStateOf(DesignStyle.fromKey(DesktopSettings.load().libraryDesign)) }
+    var historyDesign by remember(settingsFileRevision()) { mutableStateOf(DesignStyle.fromKey(DesktopSettings.load().historyDesign)) }
     var randomizeHomeOrder by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().randomizeHomeOrder) }
     var showWrappedOnHome by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().showWrappedOnHome) }
     var showIntroSplash by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().showIntroSplash) }
@@ -1885,6 +1892,7 @@ fun WindowScope.App(
                 when (screen) {
                     is Screen.Home -> HomeScreen(
                         language = language,
+                        designStyle = homeDesign,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
@@ -2013,6 +2021,7 @@ fun WindowScope.App(
                         onOpenDensity = { navigate(Screen.SettingsDensity) },
                         onOpenTransitions = { navigate(Screen.SettingsTransitions) },
                         onOpenPlayerDesign = { navigate(Screen.SettingsPlayerDesign) },
+                        onOpenDesigns = { navigate(Screen.SettingsDesigns) },
                         onOpenIntro = { navigate(Screen.SettingsIntro) },
                         nativeTitleBar = nativeTitleBar,
                         onNativeTitleBarChange = onNativeTitleBarChange,
@@ -2022,6 +2031,48 @@ fun WindowScope.App(
                             DesktopSettings.update { it.copy(showRightSidebar = v) }
                         },
                         onRestart = onRestart,
+                    )
+                    is Screen.SettingsDesigns -> SettingsDesignsScreen(
+                        language = language,
+                        onBack = goBack,
+                        home = homeDesign,
+                        explore = exploreDesign,
+                        library = libraryDesign,
+                        history = historyDesign,
+                        onStyleChange = { screen, style ->
+                            when (screen) {
+                                DesignScreen.HOME -> {
+                                    homeDesign = style
+                                    DesktopSettings.update { it.copy(homeDesign = style.key) }
+                                }
+                                DesignScreen.EXPLORE -> {
+                                    exploreDesign = style
+                                    DesktopSettings.update { it.copy(exploreDesign = style.key) }
+                                }
+                                DesignScreen.LIBRARY -> {
+                                    libraryDesign = style
+                                    DesktopSettings.update { it.copy(libraryDesign = style.key) }
+                                }
+                                DesignScreen.HISTORY -> {
+                                    historyDesign = style
+                                    DesktopSettings.update { it.copy(historyDesign = style.key) }
+                                }
+                            }
+                        },
+                        onApplyToAll = { style ->
+                            homeDesign = style
+                            exploreDesign = style
+                            libraryDesign = style
+                            historyDesign = style
+                            DesktopSettings.update {
+                                it.copy(
+                                    homeDesign = style.key,
+                                    exploreDesign = style.key,
+                                    libraryDesign = style.key,
+                                    historyDesign = style.key,
+                                )
+                            }
+                        },
                     )
                     is Screen.SettingsFont -> SettingsFontScreen(
                         language = language,

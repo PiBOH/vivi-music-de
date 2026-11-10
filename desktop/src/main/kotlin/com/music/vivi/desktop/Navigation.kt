@@ -42,6 +42,9 @@ sealed interface Screen {
     data object SettingsDensity : Screen
     data object SettingsTransitions : Screen
     data object SettingsPlayerDesign : Screen
+
+    /** Appearance → Designs: the Classic / m3e previews and the per-screen choices. */
+    data object SettingsDesigns : Screen
     data object SettingsPlayer : Screen
     data object SettingsAccount : Screen
     data object SettingsDevices : Screen

@@ -209,6 +209,12 @@ fun main(args: Array<String>) {
     // NEW thread on every recomposition.
     remember { SettingsFile.start() }
 
+    // One-time: the beta that introduced the design keys wrote `classic` as
+    // Home's value and never shipped, so the first start of this build moves the
+    // store to the m3e Home. It has to run after `SettingsFile.start()`, which
+    // adopts the mirror and would otherwise put the old value back.
+    remember { DesktopSettings.applyDesignDefaults() }
+
     // Bumped whenever settings.json is edited from outside the app. Every option
     // read from the store uses it as a remember key (`settingsFileRevision()`),
     // so a hand-edited file takes effect immediately instead of at the next

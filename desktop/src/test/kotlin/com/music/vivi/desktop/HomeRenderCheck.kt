@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
@@ -21,6 +22,8 @@ import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
+import com.music.innertube.models.PlaylistItem
+import com.music.innertube.models.SongItem
 import com.music.innertube.pages.HomePage
 import org.jetbrains.skia.EncodedImageFormat
 import java.awt.image.BufferedImage
@@ -315,7 +318,9 @@ object HomeRenderCheck {
      * [pad] is the row's own leading gutter and [right] its trailing one: Home
      * indents its shelves by 24 dp,
      * Explore's New releases row sits inside the page's 16 dp padding and passes
-     * none. [minShelves] is how many cover rows the frame must paint.
+     * none. [minShelves] is how many cover rows the frame must paint, and
+     * [coverFill] the share of a card's box its drawing fills: a cookie about
+     * 0.82, a rounded card 0.99.
      */
     private fun shelf(
         name: String,
@@ -323,6 +328,8 @@ object HomeRenderCheck {
         pad: Int,
         minShelves: Int = 2,
         right: Int = 0,
+        coverFill: ClosedFloatingPointRange<Double>? = 0.55..0.90,
+        roundedCards: Boolean = false,
     ) {
         val bg = img.getRGB(0, img.height - 1)
         val bands = coverBands(img, bg)
@@ -388,13 +395,29 @@ object HomeRenderCheck {
                     name, index, box.width, box.height, box.x0, box.coverage,
                 ),
             )
-            // A rounded square fills about 0.99 of its box, so the cover stops
-            // being a cookie well before this bound; the measured cookie reads
-            // 0.82 because the box is the painted outline and its tapered tips
-            // fall outside the band the rows are found in.
-            check(box.coverage in 0.55..0.90) {
-                "$name: card $index fills %.2f of its box; a cookie fills about 0.82 and a rounded square 0.99"
-                    .format(box.coverage)
+            // A cookie fills about 0.82 of its painted box, and the range is the
+            // shape the row is supposed to draw. An m3e card passes no range:
+            // its scrim fades into the page and the card is told apart by its
+            // corner below, not by a share of paint.
+            if (coverFill != null) {
+                check(box.coverage in coverFill) {
+                    "$name: card $index fills %.2f of its box, expected %.2f..%.2f"
+                        .format(box.coverage, coverFill.start, coverFill.endInclusive)
+                }
+            }
+            if (roundedCards) {
+                // The fill alone cannot tell a rounded card from a cookie: the
+                // scrim's bottom edge fades into the page. The corner can - a
+                // 16 dp radius leaves the box's top-left pixel unpainted, a
+                // square card paints it.
+                check(diff(img.getRGB(box.x0, box.y0), bg) <= 14) {
+                    "$name: card $index paints its top-left corner, so it is square instead of 16 dp rounded"
+                }
+                // Sampled past the arc, not on it: at 16 px in, the corner's
+                // own radius still leaves the sample on the edge.
+                check(diff(img.getRGB(box.x0 + 24, box.y0 + 24), bg) > 14) {
+                    "$name: card $index is not painted inside its rounded corner"
+                }
             }
         }
         val pill = indicatorRun(img, band, bg)
@@ -515,8 +538,178 @@ object HomeRenderCheck {
         }
     }
 
+    /**
+     * The m3e Home's page: the three kinds of content its rows split apart.
+     */
+    private fun m3ePage(): HomePage = HomePage(
+        chips = null,
+        sections = listOf(
+            section("Album per te", 8),
+            HomePage.Section(
+                title = "Brani per te",
+                label = null,
+                thumbnail = null,
+                endpoint = null,
+                items = (1..6).map { n ->
+                    SongItem(
+                        id = "song-$n",
+                        title = "Brano $n",
+                        artists = listOf(Artist(name = "Artist $n", id = null)),
+                        thumbnail = "",
+                    )
+                },
+            ),
+            HomePage.Section(
+                title = "Community",
+                label = null,
+                thumbnail = null,
+                endpoint = null,
+                items = (1..6).map { n ->
+                    PlaylistItem(
+                        id = "playlist-$n",
+                        title = "Playlist $n",
+                        author = Artist(name = "Artist $n", id = null),
+                        songCountText = "20 songs",
+                        thumbnail = "",
+                        playEndpoint = null,
+                        shuffleEndpoint = null,
+                        radioEndpoint = null,
+                    )
+                },
+            ),
+        ),
+    )
+
+    /** Eight played tracks, so the Library row has to be cut like the others. */
+    private fun m3eHistory(): List<HistoryEntry> = (1..8).map { n ->
+        HistoryEntry(
+            videoId = "history-$n",
+            title = "Ascoltato $n",
+            artist = "Artist $n",
+            thumbnail = "",
+            durationMs = 200_000L,
+            playedAt = n.toLong(),
+            plays = 1,
+        )
+    }
+
+    /**
+     * Home in the m3e style. [home] is null for the loading frame: the three
+     * rows then show the shape-morphing indicator instead of their cards.
+     */
+    private fun m3e(home: HomePage?): @Composable () -> Unit = {
+        M3EHomeContent(
+            home = home,
+            localCollections = emptyList(),
+            history = m3eHistory(),
+            language = "en",
+            onOpenAlbum = {},
+            onOpenArtist = {},
+            onOpenPlaylist = {},
+            onOpenLocalPlaylist = {},
+            onPlaySong = {},
+        )
+    }
+
+    /** The lead card's painted height: the card's own column through its centre. */
+    private fun leadPaintedHeight(img: BufferedImage): Int {
+        val bg = img.getRGB(0, img.height - 1)
+        val band = coverBands(img, bg).first()
+        val lead = cards(img, band, bg).first()
+        val box = card(img, lead, band, bg)
+        val x = box.x0 + box.width / 2
+        val middle = (band.first + band.last) / 2
+        var top = middle
+        while (top > 0 && img.getRGB(x, top - 1) != bg) top--
+        var bottom = middle
+        while (bottom < img.height - 1 && img.getRGB(x, bottom + 1) != bg) bottom++
+        return bottom - top + 1
+    }
+
+    /**
+     * The design switch at the level the window sees it: the same content draws
+     * the Classic shelves, then its state flips to m3e and the next frame is the
+     * Expressive Home, with no restart. The lead card says which style each frame
+     * is (the Classic 308 dp card paints about 272 px, the m3e 180 dp card 180),
+     * and the changed pixels say the switch really repainted instead of leaving
+     * the old Home on screen.
+     */
+    private fun styleSwitch() {
+        val style = mutableStateOf(DesignStyle.CLASSIC)
+        val scene = scene(1364, 1100) {
+            if (style.value == DesignStyle.M3E) m3e(m3ePage())() else home()()
+        }
+        try {
+            pump(scene)
+            File(outDir, "switch-classic-1364.png").writeBytes(encode(scene))
+            val classic = ImageIO.read(File(outDir, "switch-classic-1364.png").inputStream())
+            style.value = DesignStyle.M3E
+            pump(scene, 4)
+            File(outDir, "switch-m3e-1364.png").writeBytes(encode(scene))
+            val switched = ImageIO.read(File(outDir, "switch-m3e-1364.png").inputStream())
+            var changed = 0
+            for (y in 0 until classic.height step 2) {
+                for (x in 0 until classic.width step 2) {
+                    if (classic.getRGB(x, y) != switched.getRGB(x, y)) changed++
+                }
+            }
+            val classicHeight = leadPaintedHeight(classic)
+            val m3eHeight = leadPaintedHeight(switched)
+            println("switch: $changed sampled px changed, lead $classicHeight px -> $m3eHeight px")
+            check(changed > 5_000) {
+                "the design switch changed only $changed sampled px, so the Home did not redraw"
+            }
+            check(classicHeight in 260..280) {
+                "the Classic frame's lead paints $classicHeight px, expected the 308 dp card's ~272"
+            }
+            check(m3eHeight in 168..184) {
+                "the m3e frame's lead paints $m3eHeight px, expected the 180 dp card"
+            }
+        } finally {
+            scene.close()
+        }
+    }
+
+    /**
+     * The move on a real store: a `device-sync.json` from the previous beta
+     * carries `classic` and no generation, the first start moves it to m3e once,
+     * and a Classic chosen afterwards is read back instead of being moved again.
+     * It runs in a throwaway home directory, so the check never touches this
+     * machine's options.
+     */
+    private fun designDefaultsMigrateOnce() {
+        val home = File(".ignore/check-home").absoluteFile
+        home.deleteRecursively()
+        home.mkdirs()
+        System.setProperty("user.home", home.path)
+        val store = File(home, ".vivimusic/device-sync.json")
+        store.parentFile.mkdirs()
+        store.writeText("""{"homeDesign":"classic"}""")
+        DesktopSettings.applyDesignDefaults()
+        val moved = DesktopSettings.load()
+        check(moved.homeDesign == DesignStyle.M3E.key) {
+            "the previous beta's classic was not moved to m3e (read '${moved.homeDesign}')"
+        }
+        check(moved.designDefaultsVersion == 1) {
+            "the move was not recorded (generation ${moved.designDefaultsVersion})"
+        }
+        DesktopSettings.update { it.copy(homeDesign = DesignStyle.CLASSIC.key) }
+        DesktopSettings.applyDesignDefaults()
+        val kept = DesktopSettings.load()
+        check(kept.homeDesign == DesignStyle.CLASSIC.key) {
+            "a Classic chosen after the move was overwritten (read '${kept.homeDesign}')"
+        }
+        println("design defaults: the previous beta's classic moves to m3e once, a later Classic stays")
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
+        designDefaultsMigrateOnce()
+        // The window a new installation opens on: Home is the m3e style unless
+        // the store says otherwise (see [designDefaultsMigrateOnce]).
+        check(DesktopSyncState().homeDesign == DesignStyle.M3E.key) {
+            "the shipped default for Home is '${DesktopSyncState().homeDesign}', expected m3e"
+        }
         val wide = render(1364, 1560, "home-1364.png")
         val narrow = render(1024, 1560, "home-1024.png")
         shelf("home-1364", wide, pad = 24, minShelves = 3)
@@ -526,7 +719,46 @@ object HomeRenderCheck {
         // the app at 1364.
         val explore = render(1364, 900, "explore-1364.png", explore())
         shelf("explore-1364", explore, pad = 16, minShelves = 1, right = 16)
+        // Home in the m3e style: the same multi-browse carousel, on the sketch's
+        // 180 dp cards whose titles sit on the artwork.
+        val m3eHome = render(1364, 1100, "m3e-home-1364.png", m3e(m3ePage()))
+        shelf("m3e-home-1364", m3eHome, pad = 16, minShelves = 3, right = 16, coverFill = null, roundedCards = true)
+        // The m3e card is a 180 dp rounded rectangle, so the lead's own centre
+        // column spans the whole card: a card that went back to 308 would read
+        // ~308, a 150 dp one ~150.
+        val m3eBg = m3eHome.getRGB(0, m3eHome.height - 1)
+        val m3eBand = coverBands(m3eHome, m3eBg).first()
+        val m3eLead = cards(m3eHome, m3eBand, m3eBg).first()
+        val m3eBox = card(m3eHome, m3eLead, m3eBand, m3eBg)
+        val columnX = m3eBox.x0 + m3eBox.width / 2
+        val middle = (m3eBand.first + m3eBand.last) / 2
+        var top = middle
+        while (top > 0 && m3eHome.getRGB(columnX, top - 1) != m3eBg) top--
+        var bottom = middle
+        while (bottom < m3eHome.height - 1 && m3eHome.getRGB(columnX, bottom + 1) != m3eBg) bottom++
+        val paintedHeight = bottom - top + 1
+        // The scrim's bottom edge blends into the page, so the painted box reads
+        // about 175 of the card's 180 dp; a 308 dp card would read ~303.
+        println("m3e-home-1364 lead: $paintedHeight px painted (the sketch's 180 dp card)")
+        check(paintedHeight in 168..184) {
+            "m3e: the lead card paints $paintedHeight px, expected the sketch's 180 dp card"
+        }
+        // The loading Home: the page is still in flight, so each row draws its
+        // own shape-morphing indicator and the frame is not an empty window.
+        val m3eLoading = render(1364, 900, "m3e-home-loading-1364.png", m3e(null))
+        val loadingBg = m3eLoading.getRGB(0, m3eLoading.height - 1)
+        var painted = 0
+        for (y in 0 until m3eLoading.height step 2) {
+            for (x in 0 until m3eLoading.width step 2) {
+                if (m3eLoading.getRGB(x, y) != loadingBg) painted++
+            }
+        }
+        println("m3e-home-loading-1364: $painted painted px (frames under .ignore/render-home/)")
+        check(painted > 200) {
+            "m3e: the loading Home painted $painted px, so the row loaders are missing"
+        }
         paging()
+        styleSwitch()
         println("homeRenderCheck: OK")
     }
 }

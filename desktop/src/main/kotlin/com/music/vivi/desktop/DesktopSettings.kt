@@ -86,6 +86,25 @@ data class DesktopSyncState(
     val miniPlayerDesign: String = "classic",
     val miniPlayerBackgroundStyle: String = "follow_theme",
     val pureBlackMiniPlayer: Boolean = false,
+    /**
+     * The design language each screen is drawn in: "classic" is the layout the
+     * edition has had until now, "m3e" is the Material 3 Expressive one. One
+     * value per screen, so Home can be Expressive while Explore still draws the
+     * original; the Designs screen sets all four from one preview. Home starts
+     * on `m3e`, so a fresh window opens on the Expressive Home (see
+     * [designDefaults]); the other three start on `classic`.
+     */
+    val homeDesign: String = "m3e",
+    val exploreDesign: String = "classic",
+    val libraryDesign: String = "classic",
+    val historyDesign: String = "classic",
+    /**
+     * The design-defaults generation this store has already been moved to (see
+     * `DesktopSettings.applyDesignDefaults`): 0 is a store written before the
+     * designs existed, 1 is the m3e Home default. A later Classic choice keeps
+     * the recorded generation, so it is never moved again.
+     */
+    val designDefaultsVersion: Int = 0,
     val homeUseLastListen: Boolean = false,
     val randomizeHomeOrder: Boolean = false,
     /** Show the "VIVI Wrapped" card on the Home screen. */
@@ -490,6 +509,37 @@ object DesktopSettings {
     } catch (_: Exception) {
         DesktopSyncState()
     }
+
+    /**
+     * The one-time move of Home to the m3e design, at the generation this build
+     * ships ([DESIGN_DEFAULTS_VERSION]).
+     *
+     * `homeDesign` shipped as `classic` in the beta the designs were built in,
+     * and that beta never left this machine, so a store carrying that value has
+     * no choice to preserve: the move sets Home to m3e and records the
+     * generation. A Classic picked in `Appearance → Designs` afterwards is a
+     * normal stored option and is never moved again, because the generation is
+     * already the current one.
+     *
+     * It runs after `SettingsFile.start()`, not while reading the store: the
+     * mirror (settings.json) is adopted there and would otherwise write the old
+     * `classic` back over the move.
+     */
+    fun applyDesignDefaults() {
+        update { state ->
+            if (state.designDefaultsVersion >= DESIGN_DEFAULTS_VERSION) {
+                state
+            } else {
+                state.copy(
+                    homeDesign = DesignStyle.M3E.key,
+                    designDefaultsVersion = DESIGN_DEFAULTS_VERSION,
+                )
+            }
+        }
+    }
+
+    /** The design-defaults generation this build writes once (see [applyDesignDefaults]). */
+    private const val DESIGN_DEFAULTS_VERSION = 1
 
     /**
      * Brings a settings file written by an older build up to the current model.

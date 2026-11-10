@@ -269,12 +269,24 @@ internal fun PlaylistMosaic(
     playlist: SyncedPlaylist,
     size: Dp = 196.dp,
     shape: Shape = MaterialTheme.shapes.large,
+) = PlaylistMosaic(playlist, Modifier.size(size), shape)
+
+/**
+ * The same mosaic in whatever box the caller gives it: the m3e Home's cards are
+ * 180 dp tall and not square, and the four tiles stretch to the card instead of
+ * leaving the card's page showing around a fixed square.
+ */
+@Composable
+internal fun PlaylistMosaic(
+    playlist: SyncedPlaylist,
+    modifier: Modifier,
+    shape: Shape,
 ) {
     val covers = remember(playlist.songs) {
         playlist.songs.mapNotNull { it.thumbnail?.takeIf { url -> url.isNotBlank() } }.distinct().take(4)
     }
     val tile = MaterialTheme.colorScheme.surfaceContainerHigh
-    Column(Modifier.size(size).clip(shape)) {
+    Column(modifier.clip(shape)) {
         Row(Modifier.weight(1f).fillMaxWidth()) {
             MosaicCell(covers.getOrNull(0), tile)
             MosaicCell(covers.getOrNull(1), tile)

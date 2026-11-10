@@ -89,6 +89,11 @@ data class CuratedMix(
 @Composable
 fun HomeScreen(
     language: String,
+    /**
+     * Which design language Home is drawn in: `classic` is the stack of
+     * shelves, `m3e` the three-row Material 3 Expressive Home ([M3EHomeContent]).
+     */
+    designStyle: DesignStyle = DesignStyle.CLASSIC,
     onOpenAlbum: (String) -> Unit,
     onOpenArtist: (String) -> Unit,
     onOpenPlaylist: (String) -> Unit,
@@ -125,6 +130,10 @@ fun HomeScreen(
             .sortedByDescending { it.updatedAt }
             .take(12)
     }
+
+    // The m3e Library row carries this machine's playlists and, once they run
+    // out, the tracks of the local listening history.
+    val historyTracks by HistoryStore.tracks.collectAsState()
 
     LaunchedEffect(loadRequest, selectedChip) {
         val params = selectedChip?.endpoint?.params
@@ -175,9 +184,24 @@ fun HomeScreen(
         )
     }
 
+    val m3e = designStyle == DesignStyle.M3E
     when {
         error != null && home == null -> ErrorBox(language, error)
-        home == null -> LoadingBox(language)
+        home == null -> if (m3e) {
+            M3EHomeContent(
+                home = null,
+                localCollections = localCollections,
+                history = historyTracks,
+                language = language,
+                onOpenAlbum = onOpenAlbum,
+                onOpenArtist = onOpenArtist,
+                onOpenPlaylist = onOpenPlaylist,
+                onOpenLocalPlaylist = onOpenLocalPlaylist,
+                onPlaySong = onPlaySong,
+            )
+        } else {
+            LoadingBox(language)
+        }
         // Empty response (even after the automatic retry): show a clear state
         // with a manual Retry instead of a silently blank Home.
         home!!.sections.isEmpty() -> Column(
@@ -199,7 +223,17 @@ fun HomeScreen(
                 Text(Localization.get(language, "retry"))
             }
         }
-        else -> HomeShelfStack(
+        else -> if (m3e) M3EHomeContent(
+            home = home,
+            localCollections = localCollections,
+            history = historyTracks,
+            language = language,
+            onOpenAlbum = onOpenAlbum,
+            onOpenArtist = onOpenArtist,
+            onOpenPlaylist = onOpenPlaylist,
+            onOpenLocalPlaylist = onOpenLocalPlaylist,
+            onPlaySong = onPlaySong,
+        ) else HomeShelfStack(
             home = home!!,
             localCollections = localCollections,
             language = language,

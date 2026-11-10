@@ -78,7 +78,7 @@ object SettingsFile {
         "listenTogetherIsHost", "listenTogetherSessionTimestamp", "listenTogetherBlockedUsers",
         // Window / widget geometry and one-shot bookkeeping.
         "windowMaximized", "windowX", "windowY", "windowWidth", "windowHeight",
-        "widgetX", "widgetY", "firstLaunchDate",
+        "widgetX", "widgetY", "firstLaunchDate", "designDefaultsVersion",
         // Values parked while Data saver is on.
         "dataSaverBackupCanvas", "dataSaverBackupRotating",
     )

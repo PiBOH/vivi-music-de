@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.MotionPhotosOn
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.SettingsBrightness
 import androidx.compose.material3.AlertDialog
@@ -80,6 +81,7 @@ fun AppearanceSection(
     onOpenDensity: () -> Unit,
     onOpenTransitions: () -> Unit,
     onOpenPlayerDesign: () -> Unit,
+    onOpenDesigns: () -> Unit,
     onOpenIntro: () -> Unit,
     nativeTitleBar: Boolean = false,
     onNativeTitleBarChange: (Boolean) -> Unit = {},
@@ -100,6 +102,14 @@ fun AppearanceSection(
     // were wrongly removed in 1.44.0 and are restored here).
     M3SettingsGroup(
         items = listOf(
+            // The look of each screen comes first: it is the choice that changes
+            // the most, and the previews on its own screen show both answers.
+            M3SettingsItem(
+                icon = Icons.Filled.Style,
+                title = { Text(Localization.get(language, "designs")) },
+                trailing = { SettingsChevron() },
+                onClick = onOpenDesigns,
+            ),
             M3SettingsItem(
                 icon = Icons.Filled.Palette,
                 title = { Text(Localization.get(language, "theme_colors")) },
