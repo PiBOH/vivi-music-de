@@ -21,6 +21,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.layout.Arrangement
@@ -407,6 +408,10 @@ private fun subtitleOf(item: YTItem): String = when (item) {
  * [titleMaxLines] is the title's clamp: Home's and Explore's shelves keep one
  * line so the cards line up row after row, while a grid of fewer, wider cards
  * keeps two. The full name is on the tooltip either way.
+ *
+ * [artworkHeight] turns the card into a shelf card: the artwork keeps that
+ * height and takes whatever width the card was given, instead of being a
+ * square, which is what the multi-browse shelf needs ([ExpressiveShelf]).
  */
 @Composable
 fun YtItemCard(
@@ -414,12 +419,19 @@ fun YtItemCard(
     onClick: () -> Unit,
     width: Dp? = 140.dp,
     titleMaxLines: Int = 2,
+    artworkHeight: Dp? = null,
     modifier: Modifier = Modifier,
 ) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
-    val cardCookie = rememberArtistCookie(hovered, label = "artistCardCookie")
+    // A shelf card is a rectangle, so its cookie is stretched to it; a square
+    // card keeps the shape's own proportions.
+    val cardCookie = rememberArtistCookie(
+        hovered = hovered,
+        label = "artistCardCookie",
+        stretch = artworkHeight != null,
+    )
     // The card turns with the pointer (the 3D tilt of Orion-Store's `data-tilt`)
     // as well as the cookie rounding its corners: the shape and the card under it
     // answer the same movement.
@@ -435,7 +447,11 @@ fun YtItemCard(
         // artist page all draw this same card.
         Thumbnail(
             item.thumbnail,
-            Modifier.fillMaxWidth().aspectRatio(1f),
+            if (artworkHeight != null) {
+                Modifier.fillMaxWidth().height(artworkHeight)
+            } else {
+                Modifier.fillMaxWidth().aspectRatio(1f)
+            },
             shape = cardCookie,
         )
         Tooltip(item.title) {
@@ -1368,6 +1384,12 @@ private fun CarouselIndicator(state: LazyListState) {
             state.firstVisibleItemIndex / perPage
         }
     }
+    IndicatorDots(pages = pages, current = current)
+}
+
+/** The dot row itself: one pill on the page the row is on, one dot per other page. */
+@Composable
+private fun IndicatorDots(pages: Int, current: Int) {
     if (pages <= 1) return
     Row(
         Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -1388,6 +1410,115 @@ private fun CarouselIndicator(state: LazyListState) {
                     ),
             )
         }
+    }
+}
+
+/**
+ * How many cards of a row are fully on screen: what one press of an arrow
+ * moves, and what one page of the indicator holds.
+ */
+private fun carouselStep(state: LazyListState): Int {
+    val layout = state.layoutInfo
+    val start = layout.viewportStartOffset
+    val end = layout.viewportEndOffset
+    val visible = layout.visibleItemsInfo.count { item ->
+        item.offset >= start && item.offset + item.size <= end
+    }
+    return visible.coerceAtLeast(1)
+}
+
+/** The leading card of a shelf, the cards after it, and the card's height. */
+private val ShelfLeadWidth = 280.dp
+private val ShelfCardWidth = 170.dp
+private val ShelfCardHeight = 350.dp
+
+/**
+ * One shelf of the reference's multi-browse carousel.
+ *
+ * A shelf of this app is not a strip of equals: the card that leads it is the
+ * widest (280 dp), the cards after it are narrower (170 dp), and the last one is
+ * cut by the window edge, which is what tells the eye the row continues. That is
+ * the geometry the reference video shows, and where the earlier screenshots drew
+ * every shelf as equal squares the video wins.
+ *
+ * The wide card follows the row: it is the card the row currently leads with, so
+ * an arrow press lands on a new leading card and never on a row of equals. The
+ * widths are read when the row is at rest, because resizing a card under a drag
+ * would move the covers the pointer is on. The arrows still page the row, the
+ * Expressive snapping still settles a card on the gutter, and the dot row still
+ * says where the row is.
+ */
+@Composable
+fun ExpressiveShelf(
+    language: String,
+    items: List<YTItem>,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp),
+    onItemClick: (YTItem) -> Unit,
+) {
+    if (items.isEmpty()) return
+    val state = rememberLazyListState()
+    val scope = rememberCoroutineScope()
+    val fling = rememberSnapFlingBehavior(lazyListState = state)
+    val interaction = remember { MutableInteractionSource() }
+    val hovered by interaction.collectIsHoveredAsState()
+    // The card that leads the row is measured when the row is not moving.
+    var lead by remember { mutableStateOf(0) }
+    LaunchedEffect(state.isScrollInProgress) {
+        if (!state.isScrollInProgress) lead = state.firstVisibleItemIndex
+    }
+    val step by remember { derivedStateOf { carouselStep(state) } }
+    val pages = if (items.size <= step) 1 else (items.size + step - 1) / step
+    val canGoBackward by remember { derivedStateOf { state.canScrollBackward } }
+    val canGoForward by remember { derivedStateOf { state.canScrollForward } }
+    Column(Modifier.fillMaxWidth()) {
+        // The arrows must not eat the row's own clicks: the Box only overlays
+        // them, the LazyRow keeps the full width underneath.
+        Box(Modifier.fillMaxWidth().hoverable(interaction)) {
+            LazyRow(
+                state = state,
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                contentPadding = contentPadding,
+                flingBehavior = fling,
+            ) {
+                itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
+                    YtItemCard(
+                        item = item,
+                        width = if (index == lead) ShelfLeadWidth else ShelfCardWidth,
+                        titleMaxLines = 1,
+                        artworkHeight = ShelfCardHeight,
+                        onClick = { onItemClick(item) },
+                    )
+                }
+            }
+            if (hovered && canGoBackward) {
+                Box(Modifier.align(Alignment.CenterStart)) {
+                    CarouselArrow(
+                        language = language,
+                        forward = false,
+                        onClick = {
+                            scope.launch { state.animateScrollToItem((lead - step).coerceAtLeast(0)) }
+                        },
+                    )
+                }
+            }
+            if (hovered && canGoForward) {
+                Box(Modifier.align(Alignment.CenterEnd)) {
+                    CarouselArrow(
+                        language = language,
+                        forward = true,
+                        onClick = {
+                            scope.launch {
+                                state.animateScrollToItem(
+                                    (lead + step).coerceAtMost(items.lastIndex),
+                                )
+                            }
+                        },
+                    )
+                }
+            }
+        }
+        IndicatorDots(pages = pages, current = lead / step)
     }
 }
 

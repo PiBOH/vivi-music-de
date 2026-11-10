@@ -7,8 +7,9 @@
 - [DE] **Every shelf says where it is, with the Expressive carousel's indicator.**
 
 ### 🔧 Changed
-- [DE] **Home is the reference's shelf stack, on the project's 4-sided cookie.**
-- [DE] **New releases in Explore is the same carousel as every other row.**
+- [DE] **Home's album shelves are the reference video's multi-browse carousel.**
+- [DE] **Every card cover is the project's cookie, and the rounded-square experiment is undone.**
+- [DE] **New releases in Explore is the same multi-browse shelf as Home.**
 - [DE] **The carousel arrows appear only while the pointer is on the row.**
 - [DE] **The v17 mini bar's volume is a bare line.**
 

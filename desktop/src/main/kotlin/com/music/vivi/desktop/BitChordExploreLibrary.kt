@@ -210,21 +210,12 @@ fun BitChordExploreScreen(
                         // Expressive snapping, so it reads as Mood & genres and
                         // the Home shelves do instead of a wall of bordered
                         // boards.
-                        HorizontalCarousel(
+                        ExpressiveShelf(
                             language = language,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            items = albums.orEmpty(),
                             contentPadding = PaddingValues(horizontal = 0.dp),
-                            showIndicator = true,
-                        ) {
-                            items(albums.orEmpty(), key = { it.id }) { album ->
-                                YtItemCard(
-                                    item = album,
-                                    width = 150.dp,
-                                    titleMaxLines = 1,
-                                    onClick = { onOpenAlbum(album.id) },
-                                )
-                            }
-                        }
+                            onItemClick = { album -> onOpenAlbum(album.id) },
+                        )
                     }
                 }
                 sections.orEmpty().forEach { section ->

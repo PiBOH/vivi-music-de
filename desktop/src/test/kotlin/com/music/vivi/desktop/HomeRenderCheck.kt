@@ -11,7 +11,9 @@ import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerButtons
 import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
 import com.music.innertube.pages.HomePage
@@ -25,26 +27,26 @@ import javax.imageio.ImageIO
  *
  *     ./gradlew :desktop:homeRenderCheck
  *
- * It writes `home-1364.png`, `home-1024.png` and `home-1364-hover.png` under
- * `desktop/.ignore/render-home/` and reads them back. The live Home needs the
- * network, so the screen itself cannot be a render case; [HomeShelfStack] takes
- * the page, and this check hands it a fixed one with the same album cards the
- * service returns.
+ * The live Home needs the network, so [HomeShelfStack] takes the page and this
+ * check hands it a fixed one with the same album cards the service returns.
+ * What it asserts is read off the painted pixels instead of trusted from the
+ * code, because a shelf that silently went back to equal squares, to a rounded
+ * square cover or to a row without arrows would still compile and still draw
+ * something:
  *
- * What is asserted is the shelf geometry the reference fixed: the 24 dp gutter,
- * the 150 dp card, the 14 dp gap, the last card cut by the window edge instead
- * of fitting, and the 4-sided cookie of the artwork, which is this project's
- * shape for a cover - a square tilted 12 degrees, whose mask fills about 0.70
- * of its box where a rounded square fills 0.99. A shelf that silently went back
- * to a rounded square, to a hero card or to full-width rows would still compile
- * and still draw something, so the numbers are read off the painted pixels
- * instead of trusted.
+ *  - every cover is the project's 4-sided cookie: its mask fills about 0.82 of
+ *    the card's box, where a rounded square fills 0.99;
+ *  - a shelf is the reference video's multi-browse row: a 280 dp leading card,
+ *    170 dp cards after it and a trailing card the window cuts, so the widths
+ *    in one row differ by more than 40 px;
+ *  - a scrollable shelf carries the Expressive indicator under it;
+ *  - the hover arrow exists only while the pointer is on the row, at the row's
+ *    trailing edge, and pressing it pages the shelf onto a new leading card,
+ *    which the indicator's pill says by moving to the next page's dot.
  *
- * The arrows are part of it. They are drawn only while the pointer is on the
- * row, because a permanent circle sitting on the card the edge cuts in half
- * reads as a defect over the cover; this check moves a real pointer into the row
- * of a scene and proves the circles appear, which a screenshot of an unfocused
- * window cannot do.
+ * Frames land under `desktop/.ignore/render-home/`: `home-1364.png` and
+ * `home-1024.png` at rest, `home-1364-hover.png` with the arrows and
+ * `home-1364-paged.png` after the press.
  */
 object HomeRenderCheck {
 
@@ -54,9 +56,12 @@ object HomeRenderCheck {
     private fun page(): HomePage = HomePage(
         chips = null,
         sections = listOf(
-            section("Album per te", 12),
-            section("Voglia di ballare", 12),
-            section("Cover e remix", 12),
+            // Sixteen albums, not seven: a page of six cards has to be able to
+            // reach a new leading card, and a row whose content is barely wider
+            // than its window cannot scroll one page at all.
+            section("Album per te", 16),
+            section("Voglia di ballare", 16),
+            section("Cover e remix", 16),
         ),
     )
 
@@ -103,56 +108,43 @@ object HomeRenderCheck {
             }
         }
 
-    private fun settle(scene: ImageComposeScene): ByteArray {
-        repeat(4) {
-            scene.render()
-            Thread.sleep(100)
-        }
-        return scene.render().encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
+    /**
+     * The scene's clock, in ns, one frame at a time.
+     *
+     * `render()` with no time draws the frame but does not move the clock, and
+     * an animation that waits for `withFrameNanos` then never advances: the
+     * arrow's `animateScrollToItem` started and never finished. Every frame the
+     * check draws goes through here, and the time is shared with [encode] so
+     * the clock only ever moves forward.
+     */
+    private var clockNanos = 0L
+
+    private fun nextFrame(): Long {
+        clockNanos += 40_000_000L
+        return clockNanos
     }
+
+    /** Renders [frames] frames, which is what lets an animation reach its end. */
+    private fun pump(scene: ImageComposeScene, frames: Int = 6) {
+        repeat(frames) {
+            scene.render(nextFrame())
+        }
+    }
+
+    private fun encode(scene: ImageComposeScene): ByteArray =
+        scene.render(nextFrame()).encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
 
     private fun render(width: Int, height: Int, name: String): BufferedImage {
         val scene = scene(width, height)
         val png = try {
-            settle(scene)
+            pump(scene)
+            encode(scene)
         } finally {
             scene.close()
         }
         outDir.mkdirs()
         File(outDir, name).writeBytes(png)
         return ImageIO.read(png.inputStream())
-    }
-
-    /**
-     * The same shelf at rest and with the pointer inside the first row: the
-     * arrows must exist in the second frame and not in the first.
-     */
-    private fun hoverFrame(): BufferedImage {
-        val width = 1364
-        val height = 905
-        val scene = scene(width, height)
-        try {
-            val rest = settle(scene)
-            scene.sendPointerEvent(PointerEventType.Move, Offset(400f, 160f))
-            val hovered = settle(scene)
-            outDir.mkdirs()
-            File(outDir, "home-1364-hover.png").writeBytes(hovered)
-            val a = ImageIO.read(rest.inputStream())
-            val b = ImageIO.read(hovered.inputStream())
-            var differing = 0
-            for (y in 0 until height) {
-                for (x in 0 until width) {
-                    if (a.getRGB(x, y) != b.getRGB(x, y)) differing++
-                }
-            }
-            println("hover frame: $differing px differ from the resting one")
-            check(differing > 300) {
-                "the row's arrows did not appear while the pointer was on the row ($differing px changed)"
-            }
-            return b
-        } finally {
-            scene.close()
-        }
     }
 
     private fun diff(a: Int, b: Int): Int {
@@ -187,12 +179,10 @@ object HomeRenderCheck {
         val out = mutableListOf<IntRange>()
         var start = -1
         for (x in 0 until img.width) {
-            val painted = band.count { y -> diff(img.getRGB(x, y), bg) > 14 }
             // Any real paint, not most of the band: a card's artwork is a cookie,
             // so its outline tapers to a point near the box's edge and a column
-            // there carries only the middle rows. Read this way the measurement
-            // is the layout box - gutter, card and gap - and the shape is what
-            // the coverage below answers for.
+            // there carries only the middle rows.
+            val painted = band.count { y -> diff(img.getRGB(x, y), bg) > 14 }
             val isCard = painted >= 2
             if (isCard && start < 0) start = x
             if (!isCard && start >= 0) {
@@ -204,83 +194,252 @@ object HomeRenderCheck {
         return out
     }
 
+    /** One painted card: its bounding box and how much of that box the cover fills. */
+    private data class Card(val x0: Int, val x1: Int, val y0: Int, val y1: Int, val painted: Int) {
+        val width get() = x1 - x0 + 1
+        val height get() = y1 - y0 + 1
+        val coverage get() = painted.toDouble() / (width * height)
+    }
+
+    private fun card(img: BufferedImage, xs: IntRange, band: IntRange, bg: Int): Card {
+        var x0 = Int.MAX_VALUE
+        var x1 = -1
+        var y0 = Int.MAX_VALUE
+        var y1 = -1
+        var painted = 0
+        val from = (band.first - 24).coerceAtLeast(0)
+        // The title starts a few px under the cover: the window stops where the
+        // artwork does, or the text would widen the box and lower the coverage.
+        val to = (band.last + 4).coerceAtMost(img.height - 1)
+        for (y in from..to) {
+            for (x in xs) {
+                if (diff(img.getRGB(x, y), bg) > 14) {
+                    painted++
+                    if (x < x0) x0 = x
+                    if (x > x1) x1 = x
+                    if (y < y0) y0 = y
+                    if (y > y1) y1 = y
+                }
+            }
+        }
+        return Card(x0, x1, y0, y1, painted)
+    }
+
+    /**
+     * The indicator's pill: the longest run of painted px centred under a shelf.
+     *
+     * The dots sit under the card's title and subtitle, 8 dp under the row, and
+     * the pill is 18 dp wide where a glyph's stroke is a few px, so a run of at
+     * least 14 px within 40 px of the centre is the indicator and not text.
+     */
+    private fun indicatorPill(img: BufferedImage, band: IntRange, bg: Int): Pair<Int, Int> {
+        val center = img.width / 2
+        val from = (band.last + 8).coerceAtLeast(0)
+        val to = (band.last + 120).coerceAtMost(img.height - 1)
+        var longest = 0
+        var where = -1
+        for (y in from..to) {
+            var run = 0
+            var start = -1
+            for (x in center - 160..center + 160) {
+                if (diff(img.getRGB(x, y), bg) > 14) {
+                    if (run == 0) start = x
+                    run++
+                } else {
+                    if (run > longest && start >= center - 40 && start + run <= center + 40) {
+                        longest = run
+                        where = start
+                    }
+                    run = 0
+                }
+            }
+            if (run > longest && start >= center - 40 && start + run <= center + 40) {
+                longest = run
+                where = start
+            }
+        }
+        return longest to where
+    }
+
+    private fun indicatorRun(img: BufferedImage, band: IntRange, bg: Int): Int =
+        indicatorPill(img, band, bg).first
+
     private fun check(condition: Boolean, message: String) {
         if (!condition) throw IllegalStateException(message)
     }
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-        val wide = render(1364, 905, "home-1364.png")
-        val narrow = render(1024, 700, "home-1024.png")
-        hoverFrame()
-
-        for ((name, img) in listOf("home-1364" to wide, "home-1024" to narrow)) {
-            val bg = img.getRGB(0, img.height - 1)
-            val bands = coverBands(img, bg)
-            check(bands.size >= 3) {
-                "$name: expected three card rows, painted ${bands.size} cover band(s)"
-            }
-            val row = bands[0]
-            val rowCards = cards(img, row, bg)
-            check(rowCards.size >= 4) { "$name: first shelf painted ${rowCards.size} card(s)" }
-            val left = rowCards[0].first
-            val width = rowCards[0].count()
-            val gap = if (rowCards.size > 1) rowCards[1].first - rowCards[0].last - 1 else -1
-            val lastCut = rowCards.last().last >= img.width - 1
+    /** The multi-browse row, the cookie covers and the indicator, on one frame. */
+    private fun shelf(name: String, img: BufferedImage) {
+        val bg = img.getRGB(0, img.height - 1)
+        val bands = coverBands(img, bg)
+        check(bands.size >= 2) {
+            "$name: expected the shelves' cover rows, painted ${bands.size} cover band(s)"
+        }
+        val band = bands.first()
+        val ranges = cards(img, band, bg)
+        check(ranges.size >= 3) { "$name: the first shelf painted ${ranges.size} card(s)" }
+        val boxes = ranges.map { card(img, it, band, bg) }
+        val widths = boxes.map { it.width }
+        println("%-12s shelf: %d cards, widths %s".format(name, boxes.size, widths))
+        check(widths.max() - widths.min() >= 40) {
+            "$name: every card is the same width ($widths), so the shelf lost its multi-browse sizes"
+        }
+        // The painted outline of a cookie is inset a few px at its tapered
+        // ends, so a width alone cannot say the 280 dp lead. The centres can:
+        // the first sits at 24 + 280/2 and the step to the next is
+        // 280/2 + 14 + 170/2, and a different card size moves both.
+        val center0 = boxes.first().x0 + boxes.first().width / 2
+        val center1 = boxes[1].x0 + boxes[1].width / 2
+        println("%-12s centres: first %d, step %d".format(name, center0, center1 - center0))
+        check(kotlin.math.abs(center0 - 164) <= 3) {
+            "$name: the leading card's centre is $center0 px, expected 24 + 280/2 = 164"
+        }
+        check(kotlin.math.abs((center1 - center0) - 239) <= 3) {
+            "$name: the second card's centre is ${center1 - center0} px after the lead, " +
+                "expected 280/2 + 14 + 170/2 = 239"
+        }
+        check(boxes.last().x1 >= img.width - 1) {
+            "$name: the trailing card fits inside the window; the shelf must be cut at the edge"
+        }
+        boxes.forEachIndexed { index, box ->
             println(
-                "%-12s row %d..%d, first card at %d, %d px wide, gap %d, %d cards, last cut: %s".format(
-                    name, row.first, row.last, left, width, gap, rowCards.size, lastCut,
+                "%-12s card %d: %dx%d at %d, fill %.2f".format(
+                    name, index, box.width, box.height, box.x0, box.coverage,
                 ),
             )
-            // The cookie tapers to a point at the box's edge, so the painted
-            // outline is inset by a few px and its left edge is not the layout's
-            // gutter. The centres are: a symmetric inset moves the painted
-            // rectangle's ends and leaves its middle where the layout put it,
-            // so the first centre says the 24 dp gutter plus half a card, and
-            // the step between two centres says the 150 dp card plus the 14 dp
-            // gap. Those two numbers are the shelf, whatever shape the cover is
-            // cut to.
-            val center = left + width / 2
-            val pitch = if (rowCards.size > 1) {
-                (rowCards[1].first + rowCards[1].count() / 2) - center
-            } else {
-                -1
-            }
-            println(
-                "%-12s painted %d..%d, %d px wide, gap %d; centres %d apart %d".format(
-                    name, left, left + width, width, gap, center, pitch,
-                ),
-            )
-            check(kotlin.math.abs(center - 99) <= 3) {
-                "$name: the first card's centre is $center px, expected 24 + 150/2 = 99"
-            }
-            check(kotlin.math.abs(pitch - 164) <= 3) {
-                "$name: the cards are $pitch px apart centre to centre, expected 150 + 14 = 164"
-            }
-            check(lastCut) {
-                "$name: the last card fits inside the window; the reference cuts it at the edge"
-            }
-            // The artwork is the project's 4-sided cookie, so the cover fills
-            // about 0.70 of its box: tilted 12 degrees to fit 150 px, a square
-            // loses the four triangles outside its rotated outline, and its
-            // 30 % corners take the rest. A 12 dp rounded square fills 0.99, so
-            // this number is what tells the two shapes apart in a painted
-            // frame - the one thing a screenshot cannot be asked about.
-            var painted = 0
-            for (y in row.first..row.last) {
-                for (x in left until left + width) {
-                    if (diff(img.getRGB(x, y), bg) > 14) painted++
-                }
-            }
-            val coverage = painted.toDouble() / (width * (row.last - row.first + 1))
-            println("%-12s cookie: the cover fills %.2f of its box".format(name, coverage))
-            check(coverage in 0.58..0.88) {
-                "$name: the cover fills %.2f of its box, so the cookie is gone".format(coverage)
-            }
-            check(diff(img.getRGB(left + 1, row.first + 1), bg) <= 14) {
-                "$name: the card's corner is painted, so it lost its cookie"
+            // A rounded square fills about 0.99 of its box, so the cover stops
+            // being a cookie well before this bound; the measured cookie reads
+            // 0.82 because the box is the painted outline and its tapered tips
+            // fall outside the band the rows are found in.
+            check(box.coverage in 0.55..0.90) {
+                "$name: card $index fills %.2f of its box; a cookie fills about 0.82 and a rounded square 0.99"
+                    .format(box.coverage)
             }
         }
+        val pill = indicatorRun(img, band, bg)
+        println("%-12s indicator: %d px pill under the shelf".format(name, pill))
+        check(pill >= 14) {
+            "$name: no pill under the shelf ($pill px), so the carousel indicator is gone"
+        }
+    }
+
+    /** The arrows exist on hover only, and the forward one pages the row. */
+    private fun paging() {
+        val width = 1364
+        val height = 1560
+        val scene = scene(width, height)
+        try {
+            pump(scene)
+            val rest = ImageIO.read(File(outDir, "home-1364.png").inputStream())
+            val bg = rest.getRGB(0, rest.height - 1)
+            val band = coverBands(rest, bg).first()
+            val rowMiddle = (band.first + band.last) / 2f
+            val restPill = indicatorPill(rest, band, bg)
+
+            val resting = encode(scene)
+            scene.sendPointerEvent(PointerEventType.Move, Offset(400f, rowMiddle))
+            pump(scene, 4)
+            val hovered = encode(scene)
+            outDir.mkdirs()
+            File(outDir, "home-1364-hover.png").writeBytes(hovered)
+            val hoverImage = ImageIO.read(hovered.inputStream())
+            var arrowPixels = 0
+            for (y in band.first..band.last) {
+                for (x in 0 until width) {
+                    if (rest.getRGB(x, y) != hoverImage.getRGB(x, y)) arrowPixels++
+                }
+            }
+            // The forward arrow is a circle at the row's trailing edge, so the
+            // last 44 px of the row must change when it appears. Where it sits
+            // vertically is read off those changed px: the arrow centres on the
+            // row including the title under the cover, not on the cover band.
+            var edgePixels = 0
+            var edgeY = 0L
+            for (y in band.first..band.last) {
+                for (x in width - 44 until width) {
+                    if (rest.getRGB(x, y) != hoverImage.getRGB(x, y)) {
+                        edgePixels++
+                        edgeY += y
+                    }
+                }
+            }
+            val arrowY = if (edgePixels > 0) edgeY.toFloat() / edgePixels else rowMiddle
+            println(
+                "hover frame: $arrowPixels px differ in the first row, " +
+                    "$edgePixels at its trailing edge (arrow at %.0f,%.0f)".format(width - 17f, arrowY),
+            )
+            check(arrowPixels > 300) {
+                "the shelf's arrows did not appear while the pointer was on the row ($arrowPixels px changed)"
+            }
+            check(edgePixels > 80) {
+                "the row's trailing edge drew no arrow while the pointer was on it ($edgePixels px changed)"
+            }
+
+            // Hover the arrow before pressing it: the arrows exist only while
+            // the pointer is on the row, and a press that carries the pointer to
+            // them in the same event lands after they have gone.
+            val arrowX = width - 17f
+            scene.sendPointerEvent(PointerEventType.Move, Offset(arrowX, arrowY))
+            pump(scene, 4)
+            // A press and a release dispatched before one frame are one batch to
+            // the gesture detector and never become a click.
+            scene.sendPointerEvent(
+                PointerEventType.Press,
+                Offset(arrowX, arrowY),
+                type = PointerType.Mouse,
+                buttons = PointerButtons(isPrimaryPressed = true),
+            )
+            scene.render(nextFrame())
+            scene.sendPointerEvent(
+                PointerEventType.Release,
+                Offset(arrowX, arrowY),
+                type = PointerType.Mouse,
+                buttons = PointerButtons(),
+            )
+            pump(scene, 90)
+            val paged = encode(scene)
+            File(outDir, "home-1364-paged.png").writeBytes(paged)
+            val after = ImageIO.read(paged.inputStream())
+            var moved = 0
+            for (y in 0 until height) {
+                for (x in 0 until width) {
+                    if (rest.getRGB(x, y) != after.getRGB(x, y)) moved++
+                }
+            }
+            val afterBand = coverBands(after, bg).first()
+            val afterPill = indicatorPill(after, afterBand, bg)
+            println(
+                "paged frame: $moved px differ; pill %d px at %d, was %d px at %d"
+                    .format(afterPill.first, afterPill.second, restPill.first, restPill.second),
+            )
+            // A page here is six cards: the covers are the same placeholder on
+            // every card, so the row's geometry cannot move and what changes is
+            // the text under each cover. The pill below is the proof of the page.
+            check(moved > 1_500) { "the forward arrow did not page the shelf ($moved px changed)" }
+            check(restPill.first >= 14 && afterPill.first >= 14) {
+                "the indicator lost its pill while paging (rest ${restPill.first} px, after ${afterPill.first} px)"
+            }
+            check(afterPill.second >= restPill.second + 10) {
+                "the forward arrow did not page the row: the indicator's pill sits at ${afterPill.second} px, " +
+                    "was ${restPill.second}, so the row is still on its first page"
+            }
+            val afterCards = cards(after, afterBand, bg).map { card(after, it, afterBand, bg) }
+            check(afterCards.isNotEmpty()) { "after one page the shelf painted no card" }
+            check(afterCards.first().width >= 240) {
+                "after one page the leading card is ${afterCards.first().width} px wide, not the 280 dp lead"
+            }
+        } finally {
+            scene.close()
+        }
+    }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        val wide = render(1364, 1560, "home-1364.png")
+        val narrow = render(1024, 1560, "home-1024.png")
+        shelf("home-1364", wide)
+        shelf("home-1024", narrow)
+        paging()
         println("homeRenderCheck: OK")
     }
 }

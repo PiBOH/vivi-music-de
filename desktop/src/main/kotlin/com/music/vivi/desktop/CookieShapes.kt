@@ -117,7 +117,12 @@ fun rememberPersonCookie(hovered: Boolean, selected: Boolean = false, label: Str
 
 /** The 4-sided cookie of an artist, morphed by the pointer. */
 @Composable
-fun rememberArtistCookie(hovered: Boolean, selected: Boolean = false, label: String = "artistCookie"): Shape =
+fun rememberArtistCookie(
+    hovered: Boolean,
+    selected: Boolean = false,
+    label: String = "artistCookie",
+    stretch: Boolean = false,
+): Shape =
     rememberCookieShape(
         sides = 4,
         firstVertexDegrees = CookieShapes.FOUR_SIDED_FIRST_VERTEX,
@@ -125,6 +130,7 @@ fun rememberArtistCookie(hovered: Boolean, selected: Boolean = false, label: Str
         hovered = hovered,
         selected = selected,
         label = label,
+        stretch = stretch,
     )
 
 /** A regular polygon cookie at one point of its morph. */
@@ -136,6 +142,7 @@ fun rememberCookieShape(
     hovered: Boolean,
     selected: Boolean = false,
     label: String = "cookie",
+    stretch: Boolean = false,
 ): Shape {
     val hover = Motion.hoverProgress(hovered, label = "$label-hover")
     val picked by animateFloatAsState(
@@ -145,8 +152,8 @@ fun rememberCookieShape(
     )
     val morphed = corner * (1f + HOVER_ROUNDING * hover - SELECTED_TIGHTENING * picked)
     val turn = 360f / sides * SELECTED_TURN * picked
-    return remember(sides, firstVertexDegrees, morphed, turn) {
-        RoundedPolygon(sides, firstVertexDegrees + turn, morphed)
+    return remember(sides, firstVertexDegrees, morphed, turn, stretch) {
+        RoundedPolygon(sides, firstVertexDegrees + turn, morphed, stretch)
     }
 }
 
@@ -179,6 +186,11 @@ private class RoundedPolygon(
     private val sides: Int,
     private val firstVertexDegrees: Float,
     private val corner: Float,
+    // A shelf card is a rectangle whose width changes with its place in the
+    // row, and a cookie scaled to the smaller side would sit inside it with the
+    // page showing above and below. Stretched, the outline fills the card and
+    // stays the cookie; a square box needs no distinction.
+    private val stretch: Boolean = false,
 ) : Shape {
 
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
@@ -213,10 +225,14 @@ private class RoundedPolygon(
         val right = corners.maxOf { maxOf(it.first.x, it.second.x, it.third.x) }
         val top = corners.minOf { minOf(it.first.y, it.second.y, it.third.y) }
         val bottom = corners.maxOf { maxOf(it.first.y, it.second.y, it.third.y) }
-        val scale = min(size.width, size.height) / max(right - left, bottom - top)
-        val dx = size.width / 2f - (left + right) / 2f * scale
-        val dy = size.height / 2f - (top + bottom) / 2f * scale
-        fun fit(point: Offset) = Offset(point.x * scale + dx, point.y * scale + dy)
+        val shapeWidth = (right - left).takeIf { it > 0f } ?: 1f
+        val shapeHeight = (bottom - top).takeIf { it > 0f } ?: 1f
+        val uniform = min(size.width, size.height) / max(shapeWidth, shapeHeight)
+        val scaleX = if (stretch) size.width / shapeWidth else uniform
+        val scaleY = if (stretch) size.height / shapeHeight else uniform
+        val dx = size.width / 2f - (left + right) / 2f * scaleX
+        val dy = size.height / 2f - (top + bottom) / 2f * scaleY
+        fun fit(point: Offset) = Offset(point.x * scaleX + dx, point.y * scaleY + dy)
 
         val path = Path()
         corners.forEachIndexed { index, (begin, vertex, end) ->

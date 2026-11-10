@@ -272,25 +272,16 @@ LazyColumn(
                 ShelfHeading(section.title)
             }
             item(key = "shelf-$index-${section.title}") {
-                HorizontalCarousel(
+                // The album shelves are the reference's multi-browse carousel:
+                // one wide leading card, narrower cards after it, the last one
+                // cut by the window, the arrows paging and the dot row under it.
+                ExpressiveShelf(
                     language = language,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    showIndicator = true,
-                ) {
-                    items(section.items, key = { it.id }) { item ->
-                        YtItemCard(
-                            item = item,
-                            width = 150.dp,
-                            // One line, as the reference cuts every card's
-                            // name: the full text is on the tooltip.
-                            titleMaxLines = 1,
-                            onClick = {
-                                onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
-                            },
-                        )
-                    }
-                }
+                    items = section.items,
+                    onItemClick = { item ->
+                        onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
+                    },
+                )
             }
         }
 
