@@ -38,24 +38,24 @@ import javax.imageio.ImageIO
  * The live Home needs the network, so [HomeShelfStack] takes the page and this
  * check hands it a fixed one with the same album cards the service returns.
  * What it asserts is read off the painted pixels instead of trusted from the
- * code, because a shelf that silently went back to equal squares, to a rounded
- * square cover or to a row without arrows would still compile and still draw
- * something:
+ * code, because a shelf that silently lost its card size, its 12 dp corner or
+ * its arrows would still compile and still draw something:
  *
- *  - every cover is the project's 4-sided cookie: its mask fills about 0.82 of
- *    the card's box, where a rounded square fills 0.99;
- *  - a shelf is the reference video's multi-browse row: a 245 dp leading card,
- *    162 dp cards after it and a trailing card the window cuts to 0.43-0.46 of
- *    a card, which is what the video's own frames measure;
- *  - a scrollable shelf carries the Expressive indicator under it;
+ *  - Classic Home is BitChord's shelf: every card the same 150 dp rounded
+ *    square on a 12 dp corner, 14 dp apart on the page's 24 dp gutter, the
+ *    trailing one cut by the window, with no lead card, no arrow and no dot row;
+ *  - Explore's New releases row is the reference video's multi-browse row: a
+ *    245 dp leading card, 162 dp cards after it and a trailing card the window
+ *    cuts to 0.43-0.46 of a card, which is what the video's own frames measure;
+ *  - a scrollable row carries the Expressive indicator under it;
  *  - the hover arrow exists only while the pointer is on the row, at the row's
  *    trailing edge, and pressing it pages the shelf onto a new leading card,
  *    which the indicator's pill says by moving to the next page's dot.
  *
  * Frames land under `desktop/.ignore/render-home/`: `home-1364.png` and
- * `home-1024.png` at rest, `home-1364-hover.png` with the arrows,
- * `home-1364-paged.png` after the press and `explore-1364.png` for Explore's
- * New releases row, which is the screen's own row composable.
+ * `home-1024.png` at rest, `explore-1364.png` for Explore's New releases row
+ * (the screen's own row composable), `explore-1364-hover.png` with its arrows
+ * and `explore-1364-paged.png` after the press.
  */
 object HomeRenderCheck {
 
@@ -427,14 +427,111 @@ object HomeRenderCheck {
         }
     }
 
+    /**
+     * BitChord's shelf, read off the frame: one heading and one row of equal
+     * 150 dp rounded-square cards, 14 dp apart, starting on the 24 dp gutter
+     * and cut by the window's edge.
+     *
+     * A row that grew a lead card, an arrow or a dot row is not this shelf: the
+     * reference draws every card at one size and nothing under the row. The
+     * corner is read on the pixels too, because a square card would paint its
+     * top-left pixel and the 12 dp corner must not.
+     */
+    private fun bitChordShelf(name: String, img: BufferedImage, pad: Int, cardDp: Int, gapDp: Int) {
+        val bg = img.getRGB(0, img.height - 1)
+        val bands = coverBands(img, bg)
+        check(bands.size >= 3) {
+            "$name: expected at least 3 cover rows, painted ${bands.size}"
+        }
+        val band = bands.first()
+        val ranges = cards(img, band, bg)
+        check(ranges.size >= 4) { "$name: the first shelf painted ${ranges.size} card(s)" }
+        val boxes = ranges.map { box -> coverBox(img, box, band, bg) }
+        val widths = boxes.map { it.width }
+        println("%-12s shelf: %d cards, widths %s".format(name, boxes.size, widths))
+        // The last box is the card the window cuts: every card before it is the
+        // same square, and the cut one is narrower than a card. BitChord's own
+        // row ends the same way.
+        val full = boxes.filter { it.width >= cardDp / 2 }
+        val fullWidths = full.map { it.width }
+        check(full.size >= 4) { "$name: only ${full.size} full card(s) painted" }
+        check(fullWidths.max() - fullWidths.min() <= 2) {
+            "$name: the cards are not one size ($fullWidths), so the row lost BitChord's equal cards"
+        }
+        check(kotlin.math.abs(fullWidths.first() - cardDp) <= 2) {
+            "$name: the card paints ${fullWidths.first()} px, expected the $cardDp dp square"
+        }
+        val step = boxes[1].x0 - boxes[0].x0
+        println(
+            "%-12s step: %d px (card %d + gap %d), first at %d"
+                .format(name, step, cardDp, gapDp, boxes.first().x0),
+        )
+        check(kotlin.math.abs(step - (cardDp + gapDp)) <= 3) {
+            "$name: the second card starts $step px after the first, expected ${cardDp + gapDp}"
+        }
+        check(kotlin.math.abs(boxes.first().x0 - pad) <= 3) {
+            "$name: the row starts at ${boxes.first().x0} px, expected the $pad dp gutter"
+        }
+        check(band.count { y -> diff(img.getRGB(img.width - 2, y), bg) > 14 } > 40) {
+            "$name: the row does not reach the window's edge, so its trailing card is not cut"
+        }
+        boxes.forEachIndexed { index, box ->
+            println(
+                "%-12s card %d: %dx%d at %d, fill %.2f".format(
+                    name, index, box.width, box.height, box.x0, box.coverage,
+                ),
+            )
+            check(box.coverage in 0.93..1.0) {
+                "$name: card $index fills %.2f of its box, expected a rounded square's 0.97"
+                    .format(box.coverage)
+            }
+            check(diff(img.getRGB(box.x0, box.y0), bg) <= 14) {
+                "$name: card $index paints its top-left corner, so it is square instead of 12 dp rounded"
+            }
+            // The window cuts the trailing card, so it can be narrower than the
+            // arc's own 24 px sample; a full card is asked to paint inside it.
+            if (box.width >= 48) {
+                check(diff(img.getRGB(box.x0 + 24, box.y0 + 24), bg) > 14) {
+                    "$name: card $index is not painted inside its rounded corner"
+                }
+            }
+        }
+        val pill = indicatorRun(img, band, bg)
+        println("%-12s indicator: %d px pill under the shelf".format(name, pill))
+        check(pill < 14) {
+            "$name: a dot row is painted under the shelf ($pill px); BitChord's row has none"
+        }
+    }
+
+    /** One card's box inside the cover band alone, so the heading above cannot widen it. */
+    private fun coverBox(img: BufferedImage, xs: IntRange, band: IntRange, bg: Int): Card {
+        var x0 = Int.MAX_VALUE
+        var x1 = -1
+        var y0 = Int.MAX_VALUE
+        var y1 = -1
+        var painted = 0
+        for (y in band) {
+            for (x in xs) {
+                if (diff(img.getRGB(x, y), bg) > 14) {
+                    painted++
+                    if (x < x0) x0 = x
+                    if (x > x1) x1 = x
+                    if (y < y0) y0 = y
+                    if (y > y1) y1 = y
+                }
+            }
+        }
+        return Card(x0, x1, y0, y1, painted)
+    }
+
     /** The arrows exist on hover only, and the forward one pages the row. */
     private fun paging() {
         val width = 1364
-        val height = 1560
-        val scene = scene(width, height, home())
+        val height = 900
+        val scene = scene(width, height, explore())
         try {
             pump(scene)
-            val rest = ImageIO.read(File(outDir, "home-1364.png").inputStream())
+            val rest = ImageIO.read(File(outDir, "explore-1364.png").inputStream())
             val bg = rest.getRGB(0, rest.height - 1)
             val band = coverBands(rest, bg).first()
             val rowMiddle = (band.first + band.last) / 2f
@@ -445,7 +542,7 @@ object HomeRenderCheck {
             pump(scene, 4)
             val hovered = encode(scene)
             outDir.mkdirs()
-            File(outDir, "home-1364-hover.png").writeBytes(hovered)
+            File(outDir, "explore-1364-hover.png").writeBytes(hovered)
             val hoverImage = ImageIO.read(hovered.inputStream())
             var arrowPixels = 0
             for (y in band.first..band.last) {
@@ -502,7 +599,7 @@ object HomeRenderCheck {
             )
             pump(scene, 90)
             val paged = encode(scene)
-            File(outDir, "home-1364-paged.png").writeBytes(paged)
+            File(outDir, "explore-1364-paged.png").writeBytes(paged)
             val after = ImageIO.read(paged.inputStream())
             var moved = 0
             for (y in 0 until height) {
@@ -630,7 +727,7 @@ object HomeRenderCheck {
      * The design switch at the level the window sees it: the same content draws
      * the Classic shelves, then its state flips to m3e and the next frame is the
      * Expressive Home, with no restart. The lead card says which style each frame
-     * is (the Classic 308 dp card paints about 272 px, the m3e 180 dp card 180),
+     * is (BitChord's 150 dp card paints 150 px, the m3e 180 dp card 180),
      * and the changed pixels say the switch really repainted instead of leaving
      * the old Home on screen.
      */
@@ -659,8 +756,8 @@ object HomeRenderCheck {
             check(changed > 5_000) {
                 "the design switch changed only $changed sampled px, so the Home did not redraw"
             }
-            check(classicHeight in 260..280) {
-                "the Classic frame's lead paints $classicHeight px, expected the 308 dp card's ~272"
+            check(classicHeight in 144..156) {
+                "the Classic frame's lead paints $classicHeight px, expected BitChord's 150 dp card"
             }
             check(m3eHeight in 168..184) {
                 "the m3e frame's lead paints $m3eHeight px, expected the 180 dp card"
@@ -712,8 +809,8 @@ object HomeRenderCheck {
         }
         val wide = render(1364, 1560, "home-1364.png")
         val narrow = render(1024, 1560, "home-1024.png")
-        shelf("home-1364", wide, pad = 24, minShelves = 3)
-        shelf("home-1024", narrow, pad = 24, minShelves = 3)
+        bitChordShelf("home-1364", wide, pad = 24, cardDp = 150, gapDp = 14)
+        bitChordShelf("home-1024", narrow, pad = 24, cardDp = 150, gapDp = 14)
         // Explore's New releases row: the screen's own composable, painted inside
         // the page's 16 dp inset so the row sees the 1332 dp viewport it does in
         // the app at 1364.

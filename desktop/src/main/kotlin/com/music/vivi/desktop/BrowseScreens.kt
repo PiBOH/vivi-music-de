@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -265,31 +267,26 @@ internal fun HomeShelfStack(
     onOpenLocalPlaylist: (String) -> Unit,
     onPlaySong: (SongItem) -> Unit,
 ) {
-LazyColumn(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceContainer),
-        contentPadding = PaddingValues(top = 16.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(26.dp),
+        contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        // Home is the reference's stack of shelves, not a dashboard: every
-        // section is one row of the same 150 dp card, with the section's own
-        // title above it and the carousel arrows over the row. There is no
-        // greeting, no chips, no hero card and no song list above them.
+        // Home is BitChord's shelf stack and nothing else: each section is one
+        // heading over one row of the same 150 dp card, with its name and its
+        // subtitle under the artwork, on the page's 24 dp gutter, 14 dp apart,
+        // and the window cuts the trailing card. There is no greeting, no chip,
+        // no lead card, no arrow and no dot row: the cut card is what says the
+        // row goes on, exactly as the reference's Home draws it.
         val page = home
 
-        // The collection shelf is the one row built from this machine's own
-        // data, so it comes first: the playlists this installation holds,
-        // drawn with the same mosaic the playlist screen uses.
+        // This machine's own playlists come first, drawn with the same mosaic
+        // the playlist screen uses and the same card as every shelf below.
         if (localCollections.isNotEmpty()) {
-            item(key = "local_header") { ShelfHeading(Localization.get(language, "library")) }
-            item(key = "local_row") {
-                HorizontalCarousel(
-                    language = language,
-                    horizontalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(horizontal = 24.dp),
-                    showIndicator = true,
-                ) {
+            item(key = "local_shelf") {
+                ClassicShelf(Localization.get(language, "library")) {
                     items(localCollections, key = { "local-${it.id}" }) { playlist ->
                         LocalPlaylistCard(
                             playlist = playlist,
@@ -302,25 +299,79 @@ LazyColumn(
         }
 
         page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
-            item(key = "shelf-header-$index-${section.title}") {
-                ShelfHeading(section.title)
-            }
             item(key = "shelf-$index-${section.title}") {
-                // The album shelves are the reference's multi-browse carousel:
-                // one wide leading card, narrower cards after it, the last one
-                // cut by the window, the arrows paging and the dot row under it.
-                ExpressiveShelf(
-                    language = language,
-                    items = section.items,
-                    onItemClick = { item ->
-                        onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
-                    },
-                )
+                ClassicShelf(section.title) {
+                    items(section.items, key = { it.id }) { item ->
+                        ClassicShelfCard(
+                            item = item,
+                            onClick = {
+                                onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
+                            },
+                        )
+                    }
+                }
             }
         }
+    }
+}
 
-        item(key = "bottom_spacer") {
-            Box(Modifier.fillMaxWidth().padding(bottom = 24.dp))
+/**
+ * One BitChord shelf: the section's heading and one row of cards under it.
+ *
+ * The row is a plain sideways list: no arrow, no dot row, no lead card. Every
+ * card is the same 150 dp square ([ClassicShelfCard]), 14 dp apart, starting on
+ * the page's 24 dp gutter and cut by the window.
+ */
+@Composable
+private fun ClassicShelf(title: String, content: LazyListScope.() -> Unit) {
+    Column(Modifier.fillMaxWidth()) {
+        ShelfHeading(title)
+        Spacer(Modifier.height(12.dp))
+        LazyRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp),
+            content = content,
+        )
+    }
+}
+
+/**
+ * BitChord's card: a 150 dp cover on the square's 12 dp corner, the name under
+ * it and the subtitle under that, one line each. Both are cut with an ellipsis
+ * and both are read whole on hover.
+ */
+@Composable
+private fun ClassicShelfCard(item: YTItem, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .width(150.dp)
+            .clickable {
+                AppLog.click("card '${item.title}'")
+                onClick()
+            },
+    ) {
+        Thumbnail(item.thumbnail, Modifier.size(150.dp), shape = MaterialTheme.shapes.small)
+        Spacer(Modifier.height(8.dp))
+        Tooltip(item.title) {
+            Text(
+                item.title,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        val subtitle = subtitleOf(item)
+        if (subtitle.isNotBlank()) {
+            Tooltip(subtitle) {
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
@@ -335,22 +386,19 @@ LazyColumn(
 private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClick: () -> Unit) {
     val name = playlist.name.ifBlank { Localization.get(language, "playlist") }
     val count = "${playlist.songs.size} " + Localization.get(language, "songs").lowercase()
-    val interaction = remember { MutableInteractionSource() }
-    val hovered by interaction.collectIsHoveredAsState()
-    // The mosaic is this card's artwork, so it wears the same cookie as the
-    // artwork of every other card: a playlist in Home's first shelf and an
-    // album in the next one differ by what they hold, never by their corner.
-    val mosaicCookie = rememberArtistCookie(hovered, label = "homeMosaicCookie")
     Column(
         Modifier
             .width(150.dp)
-            .hoverable(interaction)
-            .clickable(onClick = {
+            .clickable {
                 AppLog.click("local playlist '${playlist.name}'")
                 onClick()
-            }),
+            },
     ) {
-        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = mosaicCookie)
+        // The mosaic is this card's artwork, so it wears the shelf's own corner:
+        // a playlist and an album differ by what they hold, never by their
+        // shape. BitChord draws Home's collection shelf the same way.
+        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.small)
+        Spacer(Modifier.height(8.dp))
         Tooltip(name) {
             Text(
                 name,
@@ -371,13 +419,14 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
     }
 }
 
-/** A shelf's heading, at BitChord's `headlineMedium` weight and gutter. */
+/** A shelf's heading: BitChord's 22 sp semibold line on the 24 dp gutter. */
 @Composable
 private fun ShelfHeading(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.headlineMedium,
-        color = MaterialTheme.colorScheme.onBackground,
+        style = MaterialTheme.typography.titleLarge,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),

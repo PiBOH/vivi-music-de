@@ -389,7 +389,7 @@ fun formatTime(millis: Long): String {
     return "%d:%02d".format(minutes, seconds)
 }
 
-private fun subtitleOf(item: YTItem): String = when (item) {
+internal fun subtitleOf(item: YTItem): String = when (item) {
     is SongItem -> item.artists.joinToString(", ") { it.name }
     is AlbumItem -> buildString {
         item.artists?.joinToString(", ") { it.name }?.takeIf { it.isNotBlank() }?.let { append(it) }

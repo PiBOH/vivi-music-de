@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.0-beta9] - 2026-11-10
+
+### 🔧 Changed
+- [DE] **Classic Home is BitChord's shelf stack, 1:1.**
+
 ## [6.0.8.11_DE-1.57.0-beta9] - 2026-11-10
 
 ### ✨ Added

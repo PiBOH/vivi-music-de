@@ -72,10 +72,10 @@ internal fun designStyleLabel(language: String, style: DesignStyle): String = wh
  * Two previews show what the same Home looks like in each language, and tapping
  * one applies it to every screen; under them the four screens each carry their
  * own dropdown, so a screen can stay on the original layout while another is
- * Expressive. The preview is drawn from the same shapes the screens use (the
- * 16 dp card corners, the multi-browse lead, the dot row, the m3e card titles
- * over the artwork), not from a picture: a preview that lies about the layout
- * is worse than no preview.
+ * Expressive. The preview is drawn from the same shapes the screens use
+ * (BitChord's equal cards with their names under them, the m3e 16 dp cards with
+ * the title over the artwork, Explore's multi-browse lead), not from a picture:
+ * a preview that lies about the layout is worse than no preview.
  */
 @Composable
 fun DesignsSection(
@@ -213,26 +213,22 @@ private fun DesignMock(style: DesignStyle) {
     val label = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
     when (style) {
         DesignStyle.CLASSIC -> Column(Modifier.fillMaxSize()) {
-            MockBar(56.dp, 7.dp, label)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                MockCover(64.dp, 46.dp, accent)
-                MockCover(38.dp, 46.dp, soft)
-                MockCover(38.dp, 46.dp, soft)
-            }
-            Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                MockBar(44.dp, 4.dp, label)
-                MockBar(30.dp, 4.dp, label)
-                MockBar(30.dp, 4.dp, label)
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Box(Modifier.width(16.dp).height(5.dp).clip(CircleShape).background(accent))
-                Spacer(Modifier.width(4.dp))
-                Box(Modifier.width(5.dp).height(5.dp).clip(CircleShape).background(label))
-                Spacer(Modifier.width(4.dp))
-                Box(Modifier.width(5.dp).height(5.dp).clip(CircleShape).background(label))
+            // BitChord's shelf: a heading, one row of equal rounded squares and
+            // their names under them, then the next shelf. No lead card and no
+            // dot row, exactly as Classic's Home draws them.
+            repeat(2) { index ->
+                MockBar(if (index == 0) 48.dp else 40.dp, 6.dp, label)
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    repeat(3) {
+                        MockCover(30.dp, 30.dp, if (index == 0) accent else soft)
+                    }
+                }
+                Spacer(Modifier.height(3.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    repeat(3) { MockBar(22.dp, 3.dp, label) }
+                }
+                if (index == 0) Spacer(Modifier.height(10.dp))
             }
         }
         DesignStyle.M3E -> Column(
