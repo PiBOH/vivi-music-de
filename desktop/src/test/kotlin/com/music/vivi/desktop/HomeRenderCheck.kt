@@ -4,14 +4,19 @@ package com.music.vivi.desktop
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerButtons
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import com.music.innertube.models.AlbumItem
@@ -36,17 +41,18 @@ import javax.imageio.ImageIO
  *
  *  - every cover is the project's 4-sided cookie: its mask fills about 0.82 of
  *    the card's box, where a rounded square fills 0.99;
- *  - a shelf is the reference video's multi-browse row: a 280 dp leading card,
- *    170 dp cards after it and a trailing card the window cuts, so the widths
- *    in one row differ by more than 40 px;
+ *  - a shelf is the reference video's multi-browse row: a 245 dp leading card,
+ *    162 dp cards after it and a trailing card the window cuts to 0.43-0.46 of
+ *    a card, which is what the video's own frames measure;
  *  - a scrollable shelf carries the Expressive indicator under it;
  *  - the hover arrow exists only while the pointer is on the row, at the row's
  *    trailing edge, and pressing it pages the shelf onto a new leading card,
  *    which the indicator's pill says by moving to the next page's dot.
  *
  * Frames land under `desktop/.ignore/render-home/`: `home-1364.png` and
- * `home-1024.png` at rest, `home-1364-hover.png` with the arrows and
- * `home-1364-paged.png` after the press.
+ * `home-1024.png` at rest, `home-1364-hover.png` with the arrows,
+ * `home-1364-paged.png` after the press and `explore-1364.png` for Explore's
+ * New releases row, which is the screen's own row composable.
  */
 object HomeRenderCheck {
 
@@ -101,10 +107,40 @@ object HomeRenderCheck {
         }
     }
 
-    private fun scene(width: Int, height: Int): ImageComposeScene =
+    /**
+     * Explore's New releases row.
+     *
+     * The screen loads its albums from the service, which a headless check cannot
+     * do, so what is painted here is the screen's own row composable
+     * ([NewReleaseShelf]) with the same albums and the same 16 dp page inset.
+     * The row's geometry is then read off the pixels exactly as the Home shelves
+     * are.
+     */
+    private fun explore(): @Composable () -> Unit = {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceContainer)) {
+            Column(Modifier.padding(16.dp)) {
+                Text(
+                    Localization.get("en", "new_release_albums"),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.padding(bottom = 10.dp),
+                )
+                NewReleaseShelf(
+                    language = "en",
+                    albums = page().sections.first().items,
+                    onOpenAlbum = {},
+                )
+            }
+        }
+    }
+
+    private fun scene(
+        width: Int,
+        height: Int,
+        content: @Composable () -> Unit,
+    ): ImageComposeScene =
         ImageComposeScene(width, height) {
             AppTheme(mode = ThemeMode.DARK, accent = Color(0xFFED5564), language = "en") {
-                home()()
+                content()
             }
         }
 
@@ -134,8 +170,13 @@ object HomeRenderCheck {
     private fun encode(scene: ImageComposeScene): ByteArray =
         scene.render(nextFrame()).encodeToData(EncodedImageFormat.PNG, 100)!!.bytes
 
-    private fun render(width: Int, height: Int, name: String): BufferedImage {
-        val scene = scene(width, height)
+    private fun render(
+        width: Int,
+        height: Int,
+        name: String,
+        content: @Composable () -> Unit = home(),
+    ): BufferedImage {
+        val scene = scene(width, height, content)
         val png = try {
             pump(scene)
             encode(scene)
@@ -268,12 +309,25 @@ object HomeRenderCheck {
         if (!condition) throw IllegalStateException(message)
     }
 
-    /** The multi-browse row, the cookie covers and the indicator, on one frame. */
-    private fun shelf(name: String, img: BufferedImage) {
+    /**
+     * The multi-browse row, the cookie covers and the indicator, on one frame.
+     *
+     * [pad] is the row's own leading gutter and [right] its trailing one: Home
+     * indents its shelves by 24 dp,
+     * Explore's New releases row sits inside the page's 16 dp padding and passes
+     * none. [minShelves] is how many cover rows the frame must paint.
+     */
+    private fun shelf(
+        name: String,
+        img: BufferedImage,
+        pad: Int,
+        minShelves: Int = 2,
+        right: Int = 0,
+    ) {
         val bg = img.getRGB(0, img.height - 1)
         val bands = coverBands(img, bg)
-        check(bands.size >= 2) {
-            "$name: expected the shelves' cover rows, painted ${bands.size} cover band(s)"
+        check(bands.size >= minShelves) {
+            "$name: expected at least $minShelves cover band(s), painted ${bands.size}"
         }
         val band = bands.first()
         val ranges = cards(img, band, bg)
@@ -284,22 +338,49 @@ object HomeRenderCheck {
         check(widths.max() - widths.min() >= 40) {
             "$name: every card is the same width ($widths), so the shelf lost its multi-browse sizes"
         }
+        // The video's own ratios: its lead is 1.49 to 1.53 medium cards wide. A
+        // cookie's painted outline is inset a few px at its tapered ends, which
+        // lifts the lead's ratio a little, so the band holds both.
+        val leadWidth = boxes.first().width
+        val mediumWidth = boxes[1].width
+        val leadRatio = leadWidth.toDouble() / mediumWidth
+        println("%-12s lead/medium: %.2f (%d px / %d px)".format(name, leadRatio, leadWidth, mediumWidth))
+        check(leadRatio in 1.40..1.80) {
+            "$name: the lead is %.2f medium cards wide; the reference video measures 1.49 to 1.53"
+                .format(leadRatio)
+        }
         // The painted outline of a cookie is inset a few px at its tapered
-        // ends, so a width alone cannot say the 280 dp lead. The centres can:
-        // the first sits at 24 + 280/2 and the step to the next is
-        // 280/2 + 14 + 170/2, and a different card size moves both.
+        // ends, so a width alone cannot say the lead's own size. The centres can:
+        // the first sits at pad + lead/2 and the step to the next is
+        // lead/2 + gap + card/2, and a different card size moves both.
+        val leadDp = ShelfLeadWidth.value
+        val cardDp = ShelfCardWidth.value
+        val gapDp = ShelfGap.value
         val center0 = boxes.first().x0 + boxes.first().width / 2
         val center1 = boxes[1].x0 + boxes[1].width / 2
-        println("%-12s centres: first %d, step %d".format(name, center0, center1 - center0))
-        check(kotlin.math.abs(center0 - 164) <= 3) {
-            "$name: the leading card's centre is $center0 px, expected 24 + 280/2 = 164"
+        val expectedCenter = pad + leadDp / 2
+        val expectedStep = leadDp / 2 + gapDp + cardDp / 2
+        println(
+            "%-12s centres: first %d, step %d (lead %.0f, card %.0f, gap %.0f)"
+                .format(name, center0, center1 - center0, leadDp, cardDp, gapDp),
+        )
+        check(kotlin.math.abs(center0 - expectedCenter) <= 3.0) {
+            "$name: the leading card's centre is $center0 px, expected $pad + ${leadDp / 2}"
         }
-        check(kotlin.math.abs((center1 - center0) - 239) <= 3) {
+        check(kotlin.math.abs((center1 - center0) - expectedStep) <= 4.0) {
             "$name: the second card's centre is ${center1 - center0} px after the lead, " +
-                "expected 280/2 + 14 + 170/2 = 239"
+                "expected ${leadDp / 2} + $gapDp + ${cardDp / 2}"
         }
-        check(boxes.last().x1 >= img.width - 1) {
+        check(boxes.last().x1 >= img.width - 1 - right) {
             "$name: the trailing card fits inside the window; the shelf must be cut at the edge"
+        }
+        // The video cuts its trailing card to 0.43-0.46 of a medium card. The
+        // strip is what says the row continues, so it is measured, not assumed.
+        val stripFraction = boxes.last().width.toDouble() / mediumWidth
+        println("%-12s trailing strip: %.2f of a card".format(name, stripFraction))
+        check(stripFraction in 0.33..0.60) {
+            "$name: the trailing card shows %.2f of a medium card; the reference video shows 0.43 to 0.46"
+                .format(stripFraction)
         }
         boxes.forEachIndexed { index, box ->
             println(
@@ -327,7 +408,7 @@ object HomeRenderCheck {
     private fun paging() {
         val width = 1364
         val height = 1560
-        val scene = scene(width, height)
+        val scene = scene(width, height, home())
         try {
             pump(scene)
             val rest = ImageIO.read(File(outDir, "home-1364.png").inputStream())
@@ -425,8 +506,9 @@ object HomeRenderCheck {
             }
             val afterCards = cards(after, afterBand, bg).map { card(after, it, afterBand, bg) }
             check(afterCards.isNotEmpty()) { "after one page the shelf painted no card" }
-            check(afterCards.first().width >= 240) {
-                "after one page the leading card is ${afterCards.first().width} px wide, not the 280 dp lead"
+            check(afterCards.first().width >= ShelfLeadWidth.value - 30) {
+                "after one page the leading card is ${afterCards.first().width} px wide, " +
+                    "not the ${ShelfLeadWidth.value} dp lead"
             }
         } finally {
             scene.close()
@@ -437,8 +519,13 @@ object HomeRenderCheck {
     fun main(args: Array<String>) {
         val wide = render(1364, 1560, "home-1364.png")
         val narrow = render(1024, 1560, "home-1024.png")
-        shelf("home-1364", wide)
-        shelf("home-1024", narrow)
+        shelf("home-1364", wide, pad = 24, minShelves = 3)
+        shelf("home-1024", narrow, pad = 24, minShelves = 3)
+        // Explore's New releases row: the screen's own composable, painted inside
+        // the page's 16 dp inset so the row sees the 1332 dp viewport it does in
+        // the app at 1364.
+        val explore = render(1364, 900, "explore-1364.png", explore())
+        shelf("explore-1364", explore, pad = 16, minShelves = 1, right = 16)
         paging()
         println("homeRenderCheck: OK")
     }

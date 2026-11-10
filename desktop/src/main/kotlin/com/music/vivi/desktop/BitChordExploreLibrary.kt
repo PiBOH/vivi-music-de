@@ -206,15 +206,15 @@ fun BitChordExploreScreen(
                 } else {
                     item(key = "new_releases_row") {
                         // New releases is the same carousel as every other row:
-                        // the 150 dp card, the shelf's own arrows and the
+                        // the multi-browse shelf with its own arrows and the
                         // Expressive snapping, so it reads as Mood & genres and
                         // the Home shelves do instead of a wall of bordered
-                        // boards.
-                        ExpressiveShelf(
+                        // boards. It is its own composable so the headless check
+                        // paints the same row the screen does.
+                        NewReleaseShelf(
                             language = language,
-                            items = albums.orEmpty(),
-                            contentPadding = PaddingValues(horizontal = 0.dp),
-                            onItemClick = { album -> onOpenAlbum(album.id) },
+                            albums = albums.orEmpty(),
+                            onOpenAlbum = onOpenAlbum,
                         )
                     }
                 }
@@ -248,6 +248,29 @@ fun BitChordExploreScreen(
             }
         }
     }
+}
+
+/**
+ * Explore's New releases row, as the screen composes it.
+ *
+ * The screen's albums come from the service, so a headless render cannot run the
+ * whole screen: it paints this row instead, with the same arguments and the
+ * page's own 16 dp inset, which is the surface the check reads its geometry
+ * from. Explore passes no leading gutter of its own because the page already
+ * indents it.
+ */
+@Composable
+internal fun NewReleaseShelf(
+    language: String,
+    albums: List<YTItem>,
+    onOpenAlbum: (String) -> Unit,
+) {
+    ExpressiveShelf(
+        language = language,
+        items = albums,
+        contentPadding = PaddingValues(horizontal = 0.dp),
+        onItemClick = { album -> onOpenAlbum(album.id) },
+    )
 }
 
 /**

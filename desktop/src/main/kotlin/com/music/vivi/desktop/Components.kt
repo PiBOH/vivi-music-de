@@ -1427,19 +1427,32 @@ private fun carouselStep(state: LazyListState): Int {
     return visible.coerceAtLeast(1)
 }
 
-/** The leading card of a shelf, the cards after it, and the card's height. */
-private val ShelfLeadWidth = 280.dp
-private val ShelfCardWidth = 170.dp
-private val ShelfCardHeight = 350.dp
+/**
+ * The leading card of a shelf, the cards after it, the gap between them and the
+ * card's height.
+ *
+ * The numbers are the reference video's, measured off its own frames instead of
+ * guessed: its leading card is 1.49 to 1.53 times a medium one, the gap is 0.05
+ * of a medium card, the card is 1.86 to 1.96 times its width tall, and the
+ * trailing card is cut so 0.43 to 0.46 of it shows. A 245 dp lead against a
+ * 162 dp card keeps those ratios (1.51, 0.05, 1.90), and the 8 dp gap is what
+ * makes the trailing card a cut strip: at 1364 and at 1024 the strip shows 75 px
+ * of a 162 dp card, 0.46 of it, where the video shows 0.43 to 0.46.
+ */
+internal val ShelfLeadWidth = 245.dp
+internal val ShelfCardWidth = 162.dp
+internal val ShelfGap = 8.dp
+internal val ShelfCardHeight = 308.dp
 
 /**
  * One shelf of the reference's multi-browse carousel.
  *
  * A shelf of this app is not a strip of equals: the card that leads it is the
- * widest (280 dp), the cards after it are narrower (170 dp), and the last one is
- * cut by the window edge, which is what tells the eye the row continues. That is
- * the geometry the reference video shows, and where the earlier screenshots drew
- * every shelf as equal squares the video wins.
+ * widest (245 dp), the cards after it are narrower (162 dp), and the last one is
+ * cut by the window edge to 0.43-0.46 of a card, which is what tells the eye
+ * the row continues. Those are the numbers measured off the reference video's
+ * frames, and where the earlier screenshots drew every shelf as equal squares
+ * the video wins.
  *
  * The wide card follows the row: it is the card the row currently leads with, so
  * an arrow press lands on a new leading card and never on a row of equals. The
@@ -1477,7 +1490,7 @@ fun ExpressiveShelf(
             LazyRow(
                 state = state,
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(ShelfGap),
                 contentPadding = contentPadding,
                 flingBehavior = fling,
             ) {

@@ -7,7 +7,7 @@
 - [DE] **Every shelf says where it is, with the Expressive carousel's indicator.**
 
 ### 🔧 Changed
-- [DE] **Home's album shelves are the reference video's multi-browse carousel.**
+- [DE] **Home's album shelves are the reference video's multi-browse carousel, to the numbers its frames measure.**
 - [DE] **Every card cover is the project's cookie, and the rounded-square experiment is undone.**
 - [DE] **New releases in Explore is the same multi-browse shelf as Home.**
 - [DE] **The carousel arrows appear only while the pointer is on the row.**
