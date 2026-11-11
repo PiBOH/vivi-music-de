@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.3-beta9] - 2026-11-11
+
+### ✨ Added
+- [DE] **The Home render check paints real cards, and it fails when the Home slips.**
+
 ## [6.0.8.11_DE-1.58.2-beta9] - 2026-11-11
 
 ### ✨ Added

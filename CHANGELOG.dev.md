@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.3-beta9] - 2026-11-11
+
+### ✨ Added
+- [DE] **The Home render check paints real cards, and it fails when the Home slips.** The fixture handed every card an empty cover, so its frames could not show whether the m3e Home looked like BitChord's. The check now paints 16 local covers (two of them pale, so the scrim has to keep a white title readable), the card titles and subtitles, and one title longer than its card, which truncates on the cover with the full string behind its tooltip. The frame reads nine rows (Library plus the eight BitChord categories) with a 16 dp start margin, 180 dp cards, 16 dp corners, 8 dp gaps and 28 sp headings, and the row builder is asserted against the same nine titles. **Measured:** `:desktop:homeRenderCheck` exits 0, `m3e-home-full-1364.png` holds all nine rows, `m3e-home-1364.png` the 1100 px viewport, and the covers live under `.ignore/render-home/covers/`. The safety net was proven by inducing the three defects it exists for: one category dropped from the rows (8 painted for 9, `painted 8 row(s) for 9 categories`), 160 dp cards (row 0 painted 160 px for 180), and an 8 dp margin (the leading card's centre at 130 px for the expected 138); each run failed with its own message, and the source was restored afterwards. The same check re-verifies the migration of a `classic` store: it writes a `device-sync.json` with no generation, applies the defaults, and asserts m3e at generation 2, repeats it from a generation-1 store, and confirms a Classic chosen afterwards stays.
+
 ## [6.0.8.11_DE-1.58.2-beta9] - 2026-11-11
 
 ### ✨ Added

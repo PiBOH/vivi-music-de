@@ -64,6 +64,69 @@ object HomeRenderCheck {
 
     private val outDir = File(".ignore/render-home")
 
+    private val coversDir = File(outDir, "covers")
+    private const val COVERS = 16
+    private const val COVERS_TAG = "v2"
+
+    /**
+     * The fixture's artwork: 16 covers painted here.
+     *
+     * A card with no cover is an empty rectangle, so the frame cannot say
+     * anything about the scrim, the title on it or how dense a row of real
+     * albums looks. Each cover is a two-colour gradient with a large numeral,
+     * written once under the render directory and loaded by the same loader the
+     * app uses through its `file://` URL: no network, and no screenshot of the
+     * app posing as a cover.
+     */
+    private fun ensureCovers() {
+        coversDir.mkdirs()
+        // Two pale sleeves are deliberate: a Home card draws a white title on
+        // the cover's bottom edge, and a check whose covers are all dark never
+        // proves the scrim keeps that title readable.
+        val colors = listOf(
+            0xFF33507F, 0xFF7F3350, 0xFF2F7F6A, 0xFFF3E3C3,
+            0xFF55337F, 0xFF337F3F, 0xFF7F4033, 0xFF2F6F7F,
+            0xFF6A337F, 0xFFE8B4B8, 0xFF7F2F5F, 0xFF2F4F33,
+            0xFF7F5533, 0xFFB8D8E8, 0xFF337F7A, 0xFF66337F,
+        )
+        colors.forEachIndexed { index, rgb ->
+            val file = File(coversDir, "cover-$COVERS_TAG-%02d.png".format(index + 1))
+            if (file.isFile) return@forEachIndexed
+            val image = BufferedImage(512, 512, BufferedImage.TYPE_INT_RGB)
+            val g = image.createGraphics()
+            try {
+                g.setRenderingHint(
+                    java.awt.RenderingHints.KEY_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_ANTIALIAS_ON,
+                )
+                val base = java.awt.Color(rgb.toInt())
+                val dark = java.awt.Color(
+                    (((rgb shr 16) and 0xFF) * 45 / 100).toInt(),
+                    (((rgb shr 8) and 0xFF) * 45 / 100).toInt(),
+                    ((rgb and 0xFF) * 45 / 100).toInt(),
+                )
+                g.paint = java.awt.GradientPaint(0f, 0f, base, 512f, 512f, dark)
+                g.fillRect(0, 0, 512, 512)
+                g.composite = java.awt.AlphaComposite.SrcOver.derive(0.20f)
+                g.color = java.awt.Color.WHITE
+                g.fillOval(-140 + index * 6, 40 + index * 9, 430, 430)
+                g.fillOval(250, 120 + index * 5, 390, 390)
+                g.fillOval(140, 330 + index * 3, 280, 280)
+                g.composite = java.awt.AlphaComposite.SrcOver.derive(0.12f)
+                g.fillRect(-80 + index * 7, 210, 700, 46)
+            } finally {
+                g.dispose()
+            }
+            ImageIO.write(image, "png", file)
+        }
+    }
+
+    /** The cover of a card: the fixture's 16 are reused across the rows. */
+    private fun coverUrl(index: Int): String {
+        val file = File(coversDir, "cover-$COVERS_TAG-%02d.png".format((index - 1) % COVERS + 1))
+        return "file:///" + file.absolutePath.replace('\\', '/').replace(" ", "%20")
+    }
+
     /** Home's shelf headings and the card rows the geometry is read from. */
     private fun page(): HomePage = HomePage(
         chips = null,
@@ -77,25 +140,31 @@ object HomeRenderCheck {
         ),
     )
 
-    private fun section(title: String, count: Int): HomePage.Section = HomePage.Section(
-        title = title,
-        label = null,
-        thumbnail = null,
-        endpoint = null,
-        items = (1..count).map { n ->
-            AlbumItem(
-                browseId = "MPREb-$n",
-                playlistId = "OLAK5uy-$n",
-                title = "$title $n",
-                artists = listOf(Artist(name = "Artist $n", id = null)),
-                year = 2026,
-                // No URL: the card's own surface paints the cover slot, which is
-                // the rectangle the geometry is measured on and keeps the check
-                // offline.
-                thumbnail = "",
-            )
-        },
-    )
+    private fun section(title: String, count: Int, longFirst: Boolean = false): HomePage.Section =
+        HomePage.Section(
+            title = title,
+            label = null,
+            thumbnail = null,
+            endpoint = null,
+            items = (1..count).map { n ->
+                AlbumItem(
+                    browseId = "MPREb-$n",
+                    playlistId = "OLAK5uy-$n",
+                    // One card per page carries a title longer than its card, so
+                    // the frame proves the one-line clamp and its tooltip.
+                    title = if (longFirst && n == 1) {
+                        "Un titolo lunghissimo che non entra nella card e deve essere troncato"
+                    } else {
+                        "$title $n"
+                    },
+                    artists = listOf(Artist(name = "Artist $n", id = null)),
+                    year = 2026,
+                    // The fixture's own cover: the card paints artwork, and the
+                    // file URL keeps the check offline.
+                    thumbnail = coverUrl(n),
+                )
+            },
+        )
 
     /** The shelves, in the theme, filling a frame of the given size. */
     private fun home(): @androidx.compose.runtime.Composable () -> Unit = {
@@ -170,6 +239,9 @@ object HomeRenderCheck {
     private fun pump(scene: ImageComposeScene, frames: Int = 6) {
         repeat(frames) {
             scene.render(nextFrame())
+            // The cover files are decoded off the composition's thread: a
+            // little real time between frames is what lets them arrive.
+            Thread.sleep(24)
         }
     }
 
@@ -720,7 +792,9 @@ object HomeRenderCheck {
     /** The m3e Home's page: the Library plus every category, each with its cards. */
     private fun m3ePage(): HomePage = HomePage(
         chips = null,
-        sections = M3E_CATEGORIES.map { title -> section(title, 8) },
+        sections = M3E_CATEGORIES.mapIndexed { index, title ->
+            section(title, 8, longFirst = index == 0)
+        },
     )
 
     /** Eight played tracks, so the Library row has to be cut like the others. */
@@ -729,7 +803,7 @@ object HomeRenderCheck {
             videoId = "history-$n",
             title = "Ascoltato $n",
             artist = "Artist $n",
-            thumbnail = "",
+            thumbnail = coverUrl(n + 3),
             durationMs = 200_000L,
             playedAt = n.toLong(),
             plays = 1,
@@ -876,6 +950,7 @@ object HomeRenderCheck {
         check(DesktopSyncState().homeDesign == DesignStyle.M3E.key) {
             "the shipped default for Home is '${DesktopSyncState().homeDesign}', expected m3e"
         }
+        ensureCovers()
         val wide = render(1364, 1560, "home-1364.png")
         val narrow = render(1024, 1560, "home-1024.png")
         bitChordShelf("home-1364", wide, pad = 24, cardDp = 150, gapDp = 14)
