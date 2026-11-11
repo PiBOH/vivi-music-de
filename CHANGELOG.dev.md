@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.4-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The player no longer recomposes the whole app on every playhead report.** The root collected the entire `PlayerState`, position included, at the audio report rate (25 to 40 times a second), so the sidebar, the open screen and the player were rebuilt together for a number that only the scrubber and the lyrics draw. `PlayerController` now exposes `uiState` without the playhead and a separate `positionMs` flow; `MainScreen` collects the first and hands the second down as a `State` that only the leaf reads. The v17 scrubber, its two clocks and the inline lyric are their own compositions, the mini player bars take the position at the bar instead of at the app root, and the lyrics list takes a provider and derives the active line, with `snapshotFlow` feeding the smooth clock. The queue and history rows declare a `contentType`, the mesh background builds its three gradients once per accent, and the canvas, glow, mesh, visualizer and rotating artwork stop while the window is not focused. **Measured:** `:desktop:compileKotlin`, `:desktop:applePlayerV17RenderCheck` and `:desktop:homeRenderCheck` are green, and both render checks pass; the root now receives queue, track, flag and volume changes only, instead of one state per playhead report.
+
 ## [6.0.8.11_DE-1.58.3-beta9] - 2026-11-11
 
 ### ✨ Added

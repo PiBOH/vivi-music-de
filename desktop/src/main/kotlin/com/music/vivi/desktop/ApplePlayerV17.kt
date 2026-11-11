@@ -70,8 +70,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -130,7 +133,8 @@ internal fun ApplePlayerV17Screen(
     np: NowPlaying,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    /** The playhead: read in the seek row and the inline lyric, never here. */
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -553,7 +557,7 @@ internal fun ApplePlayerV17Screen(
                     // the option off there is no row at all: nothing is fetched and
                     // the space it occupied is gone, so the scrubber sits right
                     // under the artist.
-                    val inlineLine = rememberInlineLyricLine(np, positionMs)
+                    val inlineLine by rememberInlineLyricLine(np, positionMs)
                     Tooltip(Localization.get(language, "tooltip_lyrics")) {
                         Row(
                             Modifier
@@ -600,23 +604,7 @@ internal fun ApplePlayerV17Screen(
 
                 Spacer(Modifier.height(8.dp))
 
-                ViviSlider(
-                    value = positionMs.toFloat().coerceIn(0f, duration.toFloat()),
-                    onValueChange = { onSeek(it.toLong()) },
-                    valueRange = 0f..duration.toFloat(),
-                    style = sliderStyle,
-                    // Slim from edge to edge, the way the reference draws it.
-                    showThumb = false,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(formatTime(positionMs), style = MaterialTheme.typography.labelSmall, color = mutedColor)
-                    Text(
-                        "-${formatTime((durationMs - positionMs).coerceAtLeast(0L))}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = mutedColor,
-                    )
-                }
+                V17SeekRow(positionMs, durationMs, sliderStyle, onSeek, mutedColor)
 
                 // BitChord's gap: the scrubber and the transport are two blocks,
                 // and the row holds a breath between them instead of sitting on
@@ -1335,9 +1323,9 @@ private fun StatsLine(
  * link instead of an invented line.
  */
 @Composable
-private fun rememberInlineLyricLine(np: NowPlaying, positionMs: Long): String? {
+private fun rememberInlineLyricLine(np: NowPlaying, positionMs: () -> Long): State<String?> {
     val enabled = remember(settingsFileRevision()) { DesktopSettings.load().inlineLyrics }
-    if (!enabled) return null
+    if (!enabled) return remember { mutableStateOf<String?>(null) }
     var text by remember(np.videoId) {
         mutableStateOf(LyricsCache.get(np.videoId, preferSynced = true))
     }
@@ -1365,14 +1353,53 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: Long): String? {
             LyricsParser.parse(raw)
         }
     }
-    return remember(lines, positionMs) {
-        if (lines.isEmpty() || positionMs < lines.first().timeMs) {
-            null
-        } else {
-            lines.getOrNull(LyricsParser.currentLineIndex(lines, positionMs))
-                ?.text
-                ?.takeIf { it.isNotBlank() }
+    val provider = rememberUpdatedState(positionMs)
+    return remember(lines) {
+        derivedStateOf {
+            val live = provider.value()
+            if (lines.isEmpty() || live < lines.first().timeMs) {
+                null
+            } else {
+                lines.getOrNull(LyricsParser.currentLineIndex(lines, live))
+                    ?.text
+                    ?.takeIf { it.isNotBlank() }
+            }
         }
+    }
+}
+
+/**
+ * The scrubber and its two clocks, as their own composition.
+ *
+ * Reading the playhead here instead of in the player's body is what keeps the
+ * 25 playhead reports a second from recomposing the artwork, the title and the
+ * transport: only this row follows the clock.
+ */
+@Composable
+private fun V17SeekRow(
+    positionMs: () -> Long,
+    durationMs: Long,
+    sliderStyle: ViviSliderStyle,
+    onSeek: (Long) -> Unit,
+    mutedColor: Color,
+) {
+    val live = positionMs()
+    val duration = durationMs.coerceAtLeast(1L)
+    ViviSlider(
+        value = live.toFloat().coerceIn(0f, duration.toFloat()),
+        onValueChange = { onSeek(it.toLong()) },
+        valueRange = 0f..duration.toFloat(),
+        style = sliderStyle,
+        showThumb = false,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    val seconds = live / 1000L
+    val elapsed = remember(seconds) { formatTime(seconds * 1000L) }
+    val remainingSeconds = (durationMs.coerceAtLeast(0L) - live).coerceAtLeast(0L) / 1000L
+    val remaining = remember(remainingSeconds) { formatTime(remainingSeconds * 1000L) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(elapsed, style = MaterialTheme.typography.labelSmall, color = mutedColor)
+        Text("-" + remaining, style = MaterialTheme.typography.labelSmall, color = mutedColor)
     }
 }
 

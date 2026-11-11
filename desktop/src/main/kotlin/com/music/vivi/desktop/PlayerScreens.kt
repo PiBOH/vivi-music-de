@@ -191,7 +191,8 @@ fun PlayerScreen(
     queue: List<NowPlaying>,
     index: Int,
     isPlaying: Boolean,
-    positionMs: Long,
+    /** The playhead: the v17 player and the lyrics hand it to their leaves. */
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -375,7 +376,7 @@ fun PlayerScreen(
                     queue = queue,
                     index = index,
                     isPlaying = isPlaying,
-                    positionMs = positionMs,
+                    positionMs = positionMs(),
                     durationMs = durationMs,
                     volume = volume,
                     isShuffle = isShuffle,
@@ -417,7 +418,7 @@ fun PlayerScreen(
                     onSkipTo = onSkipTo,
                     onBack = onBack,
                     isPlaying = isPlaying,
-                    positionMs = positionMs,
+                    positionMs = positionMs(),
                     durationMs = durationMs,
                     volume = volume,
                     isShuffle = isShuffle,
@@ -901,7 +902,7 @@ private fun M3EPlayerContent(
                         Box(Modifier.fillMaxSize()) {
                             LyricsScreen(
                                 nowPlaying = np,
-                                positionMs = positionMs,
+                                positionMs = { positionMs },
                                 isPlaying = isPlaying,
                                 language = language,
                                 // The expressive player used to pass only `display`,
@@ -2030,7 +2031,11 @@ fun AppleUpNextQueueScreen(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
-                itemsIndexed(queueSnapshot, key = { i, _ -> queueKeys[i] }) { i, item ->
+                itemsIndexed(
+                    queueSnapshot,
+                    key = { i, _ -> queueKeys[i] },
+                    contentType = { _, _ -> "queue" },
+                ) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
                     ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         Column(
@@ -2153,7 +2158,11 @@ fun QueueHistoryScreen(
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                itemsIndexed(historyItems, key = { i, item -> "${item.videoId}_$i" }) { i, item ->
+                itemsIndexed(
+                    historyItems,
+                    key = { i, item -> "${item.videoId}_$i" },
+                    contentType = { _, _ -> "history" },
+                ) { i, item ->
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -2284,7 +2293,11 @@ fun QueueScreen(
             val queueSnapshot = remember(localQueue.toList()) { localQueue.toList() }
             val queueKeys = remember(queueSnapshot) { queueSnapshot.map { it.videoId }.withOccurrences() }
             LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                itemsIndexed(queueSnapshot, key = { i, _ -> queueKeys[i] }) { i, item ->
+                itemsIndexed(
+                    queueSnapshot,
+                    key = { i, _ -> queueKeys[i] },
+                    contentType = { _, _ -> "queue" },
+                ) { i, item ->
                     val isCurrent = item.videoId == currentVideoId
                     ReorderableItem(state = reorderableState, key = queueKeys[i]) {
                         // Swipe gestures: swipe right to play, swipe left to remove.
@@ -2423,7 +2436,7 @@ private fun cleanLyrics(text: String): List<String> =
 @Composable
 fun LyricsScreen(
     nowPlaying: NowPlaying?,
-    positionMs: Long,
+    positionMs: () -> Long,
     isPlaying: Boolean,
     language: String,
     synced: Boolean = true,
@@ -2618,7 +2631,7 @@ private fun getArtistGradient(name: String, accent: Color): List<Color> {
 fun SpotifyRightNowPlayingPanel(
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
-    positionMs: Long,
+    @Suppress("UNUSED_PARAMETER") positionMs: () -> Long,
     language: String,
     onClose: () -> Unit,
     onOpenLyrics: () -> Unit,
@@ -3020,7 +3033,7 @@ fun ClassicDesktopMiniPlayer(
     rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -3068,7 +3081,7 @@ fun ClassicDesktopMiniPlayer(
             Column {
                 if (durationMs > 0) {
                     LinearProgressIndicator(
-                        progress = { (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) },
+                        progress = { (positionMs().toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(2.dp),
                         color = MaterialTheme.colorScheme.primary,
                         trackColor = mutedColor.copy(alpha = 0.2f),
@@ -3214,7 +3227,7 @@ fun ClassicDesktopMiniPlayer(
                         val displayPosition = when {
                             isSeeking -> seekValue
                             unknownDuration -> (playbackPendingSeekFraction() ?: 0f) * sliderMax
-                            else -> positionMs.toFloat().coerceIn(0f, sliderMax.toFloat())
+                            else -> positionMs().toFloat().coerceIn(0f, sliderMax.toFloat())
                         }
 
                         Row(
@@ -3342,7 +3355,7 @@ fun NewDesktopMiniPlayer(
     rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -3367,7 +3380,9 @@ fun NewDesktopMiniPlayer(
     val contentColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk else MaterialTheme.colorScheme.onSurface
     val mutedColor = if (isDynamicBg || (pureBlack && isAppInDarkTheme())) PaletteInk.copy(alpha = 0.7f) else MaterialTheme.colorScheme.onSurfaceVariant
     val primaryColor = MaterialTheme.colorScheme.primary
-    val progress = (positionMs.toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
+    val progress: () -> Float = {
+        (positionMs().toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
+    }
     val scope = rememberCoroutineScope()
     var showOutputPicker by remember { mutableStateOf(false) }
 
@@ -3411,7 +3426,7 @@ fun NewDesktopMiniPlayer(
                         useCenter = false,
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
-                    if (bufferedFraction < 0.999f && bufferedFraction > progress + 0.002f) {
+                    if (bufferedFraction < 0.999f && bufferedFraction > progress() + 0.002f) {
                         drawArc(
                             color = primaryColor.copy(alpha = 0.4f),
                             startAngle = -90f,
@@ -3423,7 +3438,7 @@ fun NewDesktopMiniPlayer(
                     drawArc(
                         color = primaryColor,
                         startAngle = -90f,
-                        sweepAngle = 360f * progress,
+                        sweepAngle = 360f * progress(),
                         useCenter = false,
                         style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round)
                     )
@@ -3596,7 +3611,7 @@ fun AppleDesktopMiniPlayer(
     rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     isShuffle: Boolean,
     repeatMode: RepeatMode,
@@ -3643,7 +3658,7 @@ fun AppleDesktopMiniPlayer(
                 .height(3.dp)
                 .align(Alignment.BottomCenter)
                 .drawBehind {
-                    val progress = (positionMs.toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
+                    val progress = (positionMs().toFloat() / durationMs.coerceAtLeast(1L).toFloat()).coerceIn(0f, 1f)
                     drawRect(mutedColor.copy(alpha = 0.2f))
                     if (bufferedFraction < 0.999f && bufferedFraction > progress + 0.002f) {
                         drawRect(primaryColor.copy(alpha = 0.35f), size = Size(size.width * bufferedFraction, size.height))
@@ -3868,7 +3883,7 @@ fun DesktopMiniPlayer(
     rotatingThumbnail: Boolean = false,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -4023,7 +4038,7 @@ fun SpotifyPlayerBar(
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -4098,7 +4113,7 @@ fun SpotifyPlayerBar(
 @Composable
 fun LyricsFocusScreen(
     nowPlaying: NowPlaying?,
-    positionMs: Long,
+    positionMs: () -> Long,
     isPlaying: Boolean,
     language: String,
     synced: Boolean,

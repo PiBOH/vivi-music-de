@@ -72,7 +72,7 @@ internal fun AppleMusicV17MiniPlayer(
     volume: Float = 0f,
     isShuffle: Boolean = false,
     repeatMode: RepeatMode = RepeatMode.OFF,
-    positionMs: Long = 0L,
+    positionMs: () -> Long = { 0L },
     durationMs: Long = 0L,
     onVolume: (Float) -> Unit = {},
     onToggleShuffle: () -> Unit = {},
@@ -277,7 +277,7 @@ internal fun AppleMusicV17MiniPlayer(
                     .background(MaterialTheme.colorScheme.surfaceVariant),
             ) {
                 val fraction = if (durationMs > 0L) {
-                    (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                    (positionMs().toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
                 } else {
                     0f
                 }

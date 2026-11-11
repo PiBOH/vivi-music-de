@@ -21,9 +21,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -192,6 +196,32 @@ class PlayerController {
 
     private val _state = MutableStateFlow(PlayerState())
     val state: StateFlow<PlayerState> = _state.asStateFlow()
+
+    /**
+     * The playhead on its own.
+     *
+     * [state] used to be the only source of the position, so collecting it at
+     * the app root rebuilt every screen on every audio report (25 to 40 times a
+     * second). The position is the one field that changes that often; this flow
+     * lets the root hand it down as a `State` without reading it, and the leaf
+     * that draws the slider, the clock or the karaoke line is the only one that
+     * follows it.
+     */
+    val positionMs: StateFlow<Long> = _state
+        .map { it.positionMs }
+        .distinctUntilChanged()
+        .stateIn(scope, SharingStarted.Eagerly, _state.value.positionMs)
+
+    /**
+     * [state] without the playhead: the queue, the flags, the volume and the
+     * track change on a user action, not on every audio report. The root
+     * composes from this, so a playing track no longer recomposes the sidebar,
+     * the open screen and the player together 25 times a second.
+     */
+    val uiState: StateFlow<PlayerState> = _state
+        .map { it.copy(positionMs = 0L) }
+        .distinctUntilChanged()
+        .stateIn(scope, SharingStarted.Eagerly, _state.value.copy(positionMs = 0L))
 
     /** Most recently started tracks (newest first), used as seeds for the Home
      *  "Recommended" section (port of the mobile Daily-Discover mechanism).

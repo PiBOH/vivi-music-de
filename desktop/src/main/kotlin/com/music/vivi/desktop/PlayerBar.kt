@@ -29,6 +29,8 @@ fun NowPlayingBar(
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
     playerState: PlayerState,
+    /** The playhead, read only by the bar's own progress and clock leaves. */
+    positionMs: () -> Long,
     player: PlayerController,
     setLocalVolume: (Float) -> Unit,
     navigate: (Screen) -> Unit,
@@ -65,7 +67,7 @@ fun NowPlayingBar(
         nowPlaying = nowPlaying,
         isPlaying = isPlaying,
         isLoading = playerState.isLoading,
-        positionMs = playerState.positionMs,
+        positionMs = positionMs,
         durationMs = playerState.durationMs,
         volume = playerState.volume,
         isShuffle = playerState.isShuffle,

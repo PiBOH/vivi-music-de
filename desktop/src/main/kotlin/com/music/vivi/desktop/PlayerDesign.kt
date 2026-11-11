@@ -256,6 +256,8 @@ fun PlayerBackground(
     /** True while audio is actually playing (drives the visualizer decay). */
     isPlaying: Boolean = true,
 ) {
+    val windowActive = WindowActivity.active
+    val animationsActive = isPlaying && windowActive
     Box(modifier.fillMaxSize().clipToBounds()) {
         when (style) {
             // Every animated background below stops moving while the track is
@@ -263,7 +265,7 @@ fun PlayerBackground(
             // the whole time the player is open, which is exactly the kind of
             // idle load the app should not have (and nothing moves on screen
             // anyway, since the music is not moving either).
-            PlayerBackgroundStyle.CANVAS -> CanvasBackground(bgUrl, Modifier.fillMaxSize(), animate = isPlaying)
+            PlayerBackgroundStyle.CANVAS -> CanvasBackground(bgUrl, Modifier.fillMaxSize(), animate = animationsActive)
             PlayerBackgroundStyle.GRADIENT -> {
                 Box(
                     Modifier
@@ -291,7 +293,7 @@ fun PlayerBackground(
                 )
             }
             PlayerBackgroundStyle.GLOW -> {
-                val pulse = if (isPlaying) {
+                val pulse = if (animationsActive) {
                     val transition = rememberInfiniteTransition(label = "glow")
                     val animated by transition.animateFloat(
                         initialValue = 0.25f,
@@ -339,13 +341,13 @@ fun PlayerBackground(
                     )
                 }
             }
-            PlayerBackgroundStyle.LIVE_MESH -> LiveMeshBackground(accent, animate = isPlaying)
+            PlayerBackgroundStyle.LIVE_MESH -> LiveMeshBackground(accent, animate = animationsActive)
             PlayerBackgroundStyle.VISUALIZER -> {
                 val level by (audioLevel ?: remember { MutableStateFlow(0f) }).collectAsState()
                 VisualizerBackground(
-                    level = if (isPlaying) level else 0f,
+                    level = if (animationsActive) level else 0f,
                     accent = accent,
-                    animate = isPlaying,
+                    animate = animationsActive,
                 )
             }
         }
@@ -437,45 +439,45 @@ private fun BoxScope.LiveMeshBackground(accent: Color, animate: Boolean = true) 
 
 @Composable
 private fun BoxScope.MeshBlobs(accent: Color, dx: Float, dy: Float, dz: Float) {
+    // The three loops recompose this composable every frame. Creating the
+    // gradients in the draw path allocated three brushes per frame; they only
+    // depend on the accent, so they are built once and reused.
+    val firstBrush = remember(accent) {
+        Brush.radialGradient(
+            colors = listOf(accent.copy(alpha = 0.5f), Color.Transparent),
+            radius = 1200f,
+        )
+    }
+    val secondBrush = remember(accent) {
+        Brush.radialGradient(
+            colors = listOf(rotateHue(accent, 120f).copy(alpha = 0.4f), Color.Transparent),
+            radius = 1000f,
+        )
+    }
+    val thirdBrush = remember(accent) {
+        Brush.radialGradient(
+            colors = listOf(rotateHue(accent, 240f).copy(alpha = 0.35f), Color.Transparent),
+            radius = 900f,
+        )
+    }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
                 .fillMaxSize()
                 .graphicsLayer { translationX = size.width * dx; translationY = size.height * dy }
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(accent.copy(alpha = 0.5f), Color.Transparent),
-                        radius = 1200f,
-                    )
-                )
+                .background(firstBrush)
         )
         Box(
             Modifier
                 .fillMaxSize()
                 .graphicsLayer { translationX = size.width * -dx * 0.8f; translationY = size.height * dz }
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            rotateHue(accent, 120f).copy(alpha = 0.4f),
-                            Color.Transparent,
-                        ),
-                        radius = 1000f,
-                    )
-                )
+                .background(secondBrush)
         )
         Box(
             Modifier
                 .fillMaxSize()
                 .graphicsLayer { translationX = size.width * dy; translationY = size.height * -dx * 0.7f }
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            rotateHue(accent, 240f).copy(alpha = 0.35f),
-                            Color.Transparent,
-                        ),
-                        radius = 900f,
-                    )
-                )
+                .background(thirdBrush)
         )
     }
 }
@@ -542,7 +544,7 @@ fun PlayerThumbnail(
     val requestedPx = with(LocalDensity.current) { size.toPx().toInt() }.coerceAtLeast(544)
     // A plain square, rotating or not: see [trackArtworkShape].
     val shape = trackArtworkShape(rotating)
-    if (!rotating) {
+    if (!rotating || !WindowActivity.active) {
         Box(
             modifier
                 .size(size)

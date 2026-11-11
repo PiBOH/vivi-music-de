@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.4-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The player no longer recomposes the whole app on every playhead report.**
+
 ## [6.0.8.11_DE-1.58.3-beta9] - 2026-11-11
 
 ### ✨ Added

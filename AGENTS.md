@@ -438,6 +438,35 @@ Existing text that already contains a long dash and is not being edited is left
 as it is: do not go looking for em dashes to replace. The rule governs new text
 and the lines you actually touch.
 
+### Performance is part of every change - MANDATORY
+
+A change to the DE is not finished until its UI cost has been checked, and the
+check is part of the change, not a follow-up.
+
+- The playhead, the audio level and any other value that changes many times a
+  second are never passed to a container as a primitive. They travel as a
+  lambda or a `State` and are read in the leaf that draws them: the slider, the
+  clock text, the karaoke line, `drawBehind`, `graphicsLayer` or the progress
+  lambda. A container that reads them recomposes its whole subtree at tick rate.
+- A value that only changes every few seconds (the active lyric line) is a
+  `derivedStateOf`; it must not recompose the list on every clock tick.
+- The root collects a state without the playhead. `PlayerController.uiState`
+  exists for that reason; collecting the whole `PlayerState` at the app root
+  rebuilds the sidebar, the open screen and the player on every audio report.
+- Every `LazyColumn` / `LazyRow` / `LazyVerticalGrid` declares a stable `key`
+  and a `contentType`. A cover in a small row asks the image loader for the
+  size it is drawn at, not for the full-resolution original.
+- Infinite animations pause when playback stops and when the window is not
+  focused or is minimized (`WindowActivity`). Brushes, gradients and paths are
+  cached with `remember` or `drawWithCache`, never allocated per frame; a
+  blurred backdrop is a fixed-size layer that is scaled, not a full-window blur
+  re-rasterized on every frame. No new `Modifier.blur` on content that changes
+  per frame.
+- Verify with `:desktop:compileKotlin` and the render checks of the affected
+  screens. `CHANGELOG.dev.md` states what used to recompose or draw on every
+  tick and what does now; a speed claim needs a measurement, and "it compiles"
+  is not one.
+
 ### Verification on this machine: agent-desktop - MANDATORY
 
 `agent-desktop` (Vercel Labs, <https://github.com/vercel-labs/agent-desktop>)

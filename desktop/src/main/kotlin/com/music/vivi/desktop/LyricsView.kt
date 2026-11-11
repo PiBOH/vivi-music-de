@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -470,10 +471,13 @@ private fun estimateMetroWords(text: String, lineStartMs: Long): List<WordTimest
  * between.
  */
 @Composable
-private fun rememberSmoothPosition(positionMs: Long, isPlaying: Boolean): State<Long> {
+private fun rememberSmoothPosition(positionMs: () -> Long, isPlaying: Boolean): State<Long> {
+    val currentPosition = rememberUpdatedState(positionMs)
     val playing = rememberUpdatedState(isPlaying)
-    val output = remember { mutableStateOf(positionMs) }
-    var sample by remember { mutableStateOf(positionMs.toFloat()) }
+    // The first frame shows 0 until the first report arrives; the collector
+    // below sets it on the same frame the previous version did.
+    val output = remember { mutableStateOf(0L) }
+    var sample by remember { mutableStateOf(0f) }
     var sampleAtNanos by remember { mutableStateOf(0L) }
     var drift by remember { mutableStateOf(0f) }
     var started by remember { mutableStateOf(false) }
@@ -482,24 +486,26 @@ private fun rememberSmoothPosition(positionMs: Long, isPlaying: Boolean): State<
     // A play/pause toggle is re-keyed too: on resume the extrapolation must
     // start from the sample the player just handed over, not from a timestamp
     // that was frozen for the whole pause.
-    LaunchedEffect(positionMs, isPlaying) {
-        val now = System.nanoTime()
-        val toggled = wasPlaying != isPlaying
-        wasPlaying = isPlaying
-        if (!started || toggled || abs(positionMs - output.value) > SNAP_THRESHOLD_MS) {
-            started = true
-            drift = 0f
-            sample = positionMs.toFloat()
-        } else {
-            // What we were showing when this sample was taken, against what the
-            // player now reports: usually a few milliseconds, hidden by the
-            // decay below rather than shown as a step back.
-            val predicted = sample + (now - sampleAtNanos) / 1_000_000f
-            drift = (positionMs - predicted).coerceIn(-200f, 200f)
-            sample = positionMs.toFloat()
+    LaunchedEffect(Unit) {
+        snapshotFlow { currentPosition.value() to playing.value }.collect { (positionMs, isPlaying) ->
+            val now = System.nanoTime()
+            val toggled = wasPlaying != isPlaying
+            wasPlaying = isPlaying
+            if (!started || toggled || abs(positionMs - output.value) > SNAP_THRESHOLD_MS) {
+                started = true
+                drift = 0f
+                sample = positionMs.toFloat()
+            } else {
+                // What we were showing when this sample was taken, against what the
+                // player now reports: usually a few milliseconds, hidden by the
+                // decay below rather than shown as a step back.
+                val predicted = sample + (now - sampleAtNanos) / 1_000_000f
+                drift = (positionMs - predicted).coerceIn(-200f, 200f)
+                sample = positionMs.toFloat()
+            }
+            sampleAtNanos = now
+            output.value = positionMs
         }
-        sampleAtNanos = now
-        output.value = positionMs
     }
 
     LaunchedEffect(Unit) {
@@ -537,7 +543,7 @@ private const val MAX_EXTRAPOLATION_MS = 500f
 @Composable
 fun LyricsList(
     lines: List<LyricLine>,
-    positionMs: Long,
+    positionMs: () -> Long,
     options: LyricsDisplayOptions,
     isPlaying: Boolean = true,
     onSeek: (Long) -> Unit = {},
@@ -595,7 +601,13 @@ fun LyricsList(
     val index = currentIndex
 
     LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
-        itemsIndexed(rows) { rowIndex, row ->
+        itemsIndexed(
+            items = rows,
+            // The rows of one lyrics set never reorder, but the index keeps the
+            // key unique when two lines share a timestamp (duet lines do).
+            key = { index, _ -> index },
+            contentType = { _, row -> if (row.line == null) "gap" else "line" },
+        ) { rowIndex, row ->
             val rowLine = row.line
             if (rowLine == null) {
                 // The hole in the lyrics (an instrumental break): the animated

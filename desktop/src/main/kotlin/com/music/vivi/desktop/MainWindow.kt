@@ -528,7 +528,17 @@ fun main(args: Array<String>) {
                     recordWindowState("restored")
                 }
 
-                override fun windowStateChanged(e: java.awt.event.WindowEvent) = recordWindowState("state-changed")
+                override fun windowGainedFocus(e: java.awt.event.WindowEvent) {
+                    WindowActivity.active = true
+                }
+
+                override fun windowLostFocus(e: java.awt.event.WindowEvent) {
+                    WindowActivity.active = false
+                }
+
+                override fun windowStateChanged(e: java.awt.event.WindowEvent) {
+                    recordWindowState("state-changed")
+                }
             }
             frameWindow.addWindowListener(listener)
             AppLog.log(

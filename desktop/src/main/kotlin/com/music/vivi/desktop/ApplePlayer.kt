@@ -439,7 +439,7 @@ fun AppleMusicPlayer(
                     } else {
                         LyricsScreen(
                             nowPlaying = np,
-                            positionMs = positionMs,
+                            positionMs = { positionMs },
                             isPlaying = isPlaying,
                             language = language,
                             display = LyricsDisplayOptions(

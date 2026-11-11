@@ -255,7 +255,13 @@ fun WindowScope.App(
 
     var backStack by remember { mutableStateOf(listOf<Screen>(Screen.Home)) }
     val player = remember { PlayerController() }
-    val playerState by player.state.collectAsState()
+    // The UI state leaves the playhead out: collecting the whole PlayerState
+    // rebuilt this root (and with it the sidebar, the open screen and the
+    // player) on every audio report. The playhead is collected separately and
+    // handed down as a State the leaves read, never read here.
+    val playerState by player.uiState.collectAsState()
+    val playhead = player.positionMs.collectAsState()
+    val playheadProvider: () -> Long = remember(playhead) { { playhead.value } }
     // Recently started tracks, used as seeds for the Home "Recommended" section.
     val recentSeedTracks by player.recentTracks.collectAsState()
     val nowPlaying = playerState.current
@@ -2874,7 +2880,7 @@ fun WindowScope.App(
                         queue = playerState.queue,
                         index = playerState.index,
                         isPlaying = isPlaying,
-                        positionMs = playerState.positionMs,
+                        positionMs = playheadProvider,
                         durationMs = playerState.durationMs,
                         volume = playerState.volume,
                         isShuffle = playerState.isShuffle,
@@ -2931,7 +2937,7 @@ fun WindowScope.App(
                     )
                     is Screen.LyricsFocus -> LyricsFocusScreen(
                         nowPlaying = nowPlaying,
-                        positionMs = playerState.positionMs,
+                        positionMs = playheadProvider,
                         isPlaying = isPlaying,
                         language = language,
                         synced = syncedLyrics,
@@ -2947,7 +2953,7 @@ fun WindowScope.App(
                     )
                     is Screen.Lyrics -> LyricsScreen(
                         nowPlaying = nowPlaying,
-                        positionMs = playerState.positionMs,
+                        positionMs = playheadProvider,
                         isPlaying = isPlaying,
                         language = language,
                         synced = syncedLyrics,
@@ -3090,7 +3096,7 @@ fun WindowScope.App(
             SpotifyRightNowPlayingPanel(
                 nowPlaying = nowPlaying,
                 isPlaying = isPlaying,
-                positionMs = playerState.positionMs,
+                positionMs = playheadProvider,
                 language = language,
                 onClose = {
                     showRightSidebar = false
@@ -3113,6 +3119,7 @@ fun WindowScope.App(
         nowPlaying = nowPlaying,
         isPlaying = isPlaying,
         playerState = playerState,
+        positionMs = playheadProvider,
         player = player,
         setLocalVolume = setLocalVolume,
         navigate = navigate,
