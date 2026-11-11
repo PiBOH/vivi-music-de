@@ -541,7 +541,9 @@ fun PlayerThumbnail(
     // Ask for the artwork at (roughly) the size it is drawn: the player's big
     // covers then get a high-resolution variant while the 46 dp queue rows keep
     // a small one.
-    val requestedPx = with(LocalDensity.current) { size.toPx().toInt() }.coerceAtLeast(544)
+    // The cover is decoded at the size it is drawn. A 46 dp queue row or a
+    // 42 dp mini-player thumbnail must not pull the 544 px player variant.
+    val requestedPx = with(LocalDensity.current) { size.toPx().toInt() }.coerceAtLeast(1)
     // A plain square, rotating or not: see [trackArtworkShape].
     val shape = trackArtworkShape(rotating)
     if (!rotating || !WindowActivity.active) {

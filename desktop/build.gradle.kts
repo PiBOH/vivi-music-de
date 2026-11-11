@@ -1804,3 +1804,30 @@ tasks.register<JavaExec>("brandIconCheck") {
 }
 
 tasks.named("compileKotlin") { dependsOn(iconButtonCheck) }
+
+/**
+ * Headless recomposition count of the playhead:
+ *
+ *     ./gradlew :desktop:playheadRecompositionCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/PlayheadRecompositionCheck.kt`.
+ * The real Expressive player is advanced 20 playhead ticks and the screen, the
+ * container and the seek leaf are counted; the old primitive-at-container shape
+ * is counted in the same run as the control.
+ */
+tasks.register<JavaExec>("playheadRecompositionCheck") {
+    group = "verification"
+    description = "Counts playhead recompositions in the real player screen and its seek leaf"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.PlayheadRecompositionCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
+
+
+tasks.register<JavaExec>("m3ePlayerRenderCheck") {
+    group = "verification"
+    description = "Paints the Expressive M3E player headlessly and checks its column, panel and seek row"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.M3EPlayerRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}

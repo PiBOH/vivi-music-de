@@ -226,7 +226,7 @@ internal fun CommitsContent(language: String, commits: List<CommitData>?) {
                 item(key = "day-$day") {
                     CommitDayHeader(day, commitsCountLabel(language, dayCommits.size))
                 }
-                items(dayCommits, key = { it.sha }) { commit ->
+                items(dayCommits, key = { it.sha }, contentType = { "commit" }) { commit ->
                     CommitItem(commit, onClick = { openUrl(commit.htmlUrl) })
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 68.dp),

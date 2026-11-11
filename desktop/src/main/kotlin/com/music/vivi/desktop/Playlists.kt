@@ -728,7 +728,7 @@ fun LocalPlaylistsScreen(
             )
         } else {
             LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                items(active, key = { it.id }) { p ->
+                items(active, key = { it.id }, contentType = { "item" }) { p ->
                     Row(
                         Modifier.fillMaxWidth().clickable { onOpenPlaylist(p.id) }.padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -887,7 +887,7 @@ fun LocalPlaylistScreen(
                 val songSnapshot = remember(localSongs.toList()) { localSongs.toList() }
                 val songKeys = remember(songSnapshot) { songSnapshot.map { it.id }.withOccurrences() }
                 LazyColumn(state = lazyListState, modifier = Modifier.fillMaxSize().padding(top = 8.dp)) {
-                    itemsIndexed(songSnapshot, key = { i, _ -> songKeys[i] }) { i, song ->
+                    itemsIndexed(songSnapshot, key = { i, _ -> songKeys[i] }, contentType = { _, _ -> "song" }) { i, song ->
                         ReorderableItem(state = reorderableState, key = songKeys[i]) {
                             Row(
                                 Modifier.fillMaxWidth().clickable { onPlay(song) }.padding(vertical = 6.dp),
@@ -986,7 +986,7 @@ fun AddToPlaylistDialog(
                     Text(Localization.get(language, "new_playlist"))
                 }
                 LazyColumn {
-                    items(active, key = { it.id }) { p ->
+                    items(active, key = { it.id }, contentType = { "item" }) { p ->
                         val contains = p.songs.any { it.id == song.id }
                         Row(
                             Modifier.fillMaxWidth().clickable {

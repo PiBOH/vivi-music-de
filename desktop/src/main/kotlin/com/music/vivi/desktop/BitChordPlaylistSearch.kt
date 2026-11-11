@@ -199,7 +199,7 @@ fun BitChordLocalPlaylistScreen(
             )
         } else {
             LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                itemsIndexed(playlist.songs, key = { i, s -> s.id + "#" + i }) { index, song ->
+                itemsIndexed(playlist.songs, key = { i, s -> s.id + "#" + i }, contentType = { _, _ -> "playlist" }) { index, song ->
                     PlaylistTrackRow(
                         position = index + 1,
                         song = song,
@@ -555,7 +555,7 @@ fun BitChordSearchScreen(
                 }
             }
             filterItems != null -> LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                items(filterItems.orEmpty(), key = { it.id }) { item ->
+                items(filterItems.orEmpty(), key = { it.id }, contentType = { "item" }) { item ->
                     SearchResultRow(item, language) {
                         openSearchResult(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
                     }
@@ -573,7 +573,7 @@ fun BitChordSearchScreen(
                     )
                 } else {
                     LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(rows, key = { it.id }) { item ->
+                        items(rows, key = { it.id }, contentType = { "item" }) { item ->
                             SearchResultRow(item, language) {
                                 openSearchResult(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong)
                             }

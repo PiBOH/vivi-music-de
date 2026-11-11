@@ -315,7 +315,7 @@ internal fun HomeShelfStack(
         if (localCollections.isNotEmpty()) {
             item(key = "local_shelf") {
                 ClassicShelf(Localization.get(language, "library")) {
-                    items(localCollections, key = { "local-${it.id}" }) { playlist ->
+                    items(localCollections, key = { "local-${it.id}" }, contentType = { "playlist" }) { playlist ->
                         LocalPlaylistCard(
                             playlist = playlist,
                             language = language,
@@ -329,7 +329,7 @@ internal fun HomeShelfStack(
         page.sections.filter { it.items.isNotEmpty() }.forEachIndexed { index, section ->
             item(key = "shelf-$index-${section.title}") {
                 ClassicShelf(section.title) {
-                    items(section.items, key = { it.id }) { item ->
+                    items(section.items, key = { it.id }, contentType = { "item" }) { item ->
                         ClassicShelfCard(
                             item = item,
                             onClick = {
@@ -767,7 +767,7 @@ fun SearchScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                items(filters.size) { i ->
+                items(filters.size, key = { i -> i }, contentType = { "filter" }) { i ->
                     val (filter, label) = filters[i]
                     val selected = selectedFilter == filter
                     FilterChip(
@@ -882,7 +882,7 @@ fun SearchScreen(
                 val record = { query.trim().takeIf { it.isNotEmpty() }?.let(onRecordSearch) }
                 if (results.all { it is SongItem }) {
                     LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(results.filterIsInstance<SongItem>(), key = { it.id }) { song ->
+                        items(results.filterIsInstance<SongItem>(), key = { it.id }, contentType = { "song" }) { song ->
                             SongRow(
                                 song,
                                 language,
@@ -949,7 +949,7 @@ private fun SummaryBody(
         }
         if (others.isNotEmpty()) {
             HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                items(others, key = { it.id }) { item ->
+                items(others, key = { it.id }, contentType = { "item" }) { item ->
                     YtItemCard(
                         item = item,
                         onClick = { onActed(); onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) },

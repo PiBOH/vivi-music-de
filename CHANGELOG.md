@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.5-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The players read the playhead only in their leaves.**
+- [DE] **Every desktop list declares its content type, and small covers load at their drawn size.**
+- [DE] **The mini player's moving background stops with playback and window focus.**
+
 ## [6.0.8.11_DE-1.58.4-beta9] - 2026-11-11
 
 ### 🔧 Changed

@@ -141,6 +141,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
@@ -245,6 +246,8 @@ fun PlayerScreen(
     sleepTimerMinutes: Int? = null,
     onSetSleepTimer: (Int?) -> Unit = {},
 ) {
+    val probe = LocalRecompositionProbe.current
+    if (probe != null) SideEffect { probe("player-screen") }
     val np = queue.getOrNull(index)
     var canvasArt by remember { mutableStateOf<CanvasArtwork?>(null) }
 
@@ -376,7 +379,7 @@ fun PlayerScreen(
                     queue = queue,
                     index = index,
                     isPlaying = isPlaying,
-                    positionMs = positionMs(),
+                    positionMs = positionMs,
                     durationMs = durationMs,
                     volume = volume,
                     isShuffle = isShuffle,
@@ -418,7 +421,7 @@ fun PlayerScreen(
                     onSkipTo = onSkipTo,
                     onBack = onBack,
                     isPlaying = isPlaying,
-                    positionMs = positionMs(),
+                    positionMs = positionMs,
                     durationMs = durationMs,
                     volume = volume,
                     isShuffle = isShuffle,
@@ -457,7 +460,7 @@ private fun M3EPlayerContent(
     queue: List<NowPlaying>,
     index: Int,
     isPlaying: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -491,6 +494,8 @@ private fun M3EPlayerContent(
     autoPlayNext: Boolean = true,
     onToggleAutoPlayNext: (Boolean) -> Unit = {},
 ) {
+    val probe = LocalRecompositionProbe.current
+    if (probe != null) SideEffect { probe("m3e-content") }
     var activeTab by remember { mutableStateOf(M3ETab.fromKey(DesktopSettings.load().expressivePlayerTab)) }
     // Every tab change is stored, so reopening the player — or restarting VIVI —
     // lands on the same section (queue, lyrics or history). The tab is never
@@ -609,81 +614,15 @@ private fun M3EPlayerContent(
                     Spacer(Modifier.height(14.dp))
 
                     // 4. Play Bar (Seekbar & Timestamps)
-                    var isSeeking by remember(np.videoId) { mutableStateOf(false) }
-                    var seekValue by remember(np.videoId) { mutableStateOf(0f) }
-                    // The seek stays on screen until the engine reports the new
-                    // position (a seek on a stream is a round trip): dropping
-                    // straight back to the live position made the thumb snap back
-                    // to where it was, as if the seek had not moved. 4 s is the
-                    // safety net.
-                    LaunchedEffect(positionMs, isSeeking) {
-                        if (isSeeking && kotlin.math.abs(positionMs - seekValue) < 1500f) isSeeking = false
-                    }
-                    LaunchedEffect(isSeeking) {
-                        if (isSeeking) {
-                            kotlinx.coroutines.delay(4000)
-                            isSeeking = false
-                        }
-                    }
-                    val sliderMax = durationMs.coerceAtLeast(1L)
-                    val unknownDuration = durationMs <= 0L
-                    // Duration unknown (loaded but never played): keep the thumb
-                    // at the scrubbed fraction so the seek stays visible and
-                    // playback starts from it once the length is known.
-                    val displayPosition = when {
-                        isSeeking -> seekValue
-                        unknownDuration -> (playbackPendingSeekFraction() ?: 0f) * sliderMax
-                        else -> positionMs.toFloat().coerceIn(0f, sliderMax.toFloat())
-                    }
-                    
-                    Column(
-                        Modifier
+                    M3ESeekBar(
+                        positionMs = positionMs,
+                        durationMs = durationMs,
+                        sliderStyle = sliderStyle,
+                        onSeek = onSeek,
+                        modifier = Modifier
                             .width(playBarWidth)
-                            .offset(x = playBarOffsetX, y = playBarOffsetY)
-                    ) {
-                        ViviSlider(
-                            value = displayPosition.coerceIn(0f, sliderMax.toFloat()),
-                            onValueChange = {
-                                seekValue = it.coerceIn(0f, sliderMax.toFloat())
-                                isSeeking = true
-                            },
-                            onValueChangeFinished = {
-                                // Duration unknown (loaded but never played): the
-                                // value encodes the start fraction (0..1000) and
-                                // playback starts from it once the length is known.
-                                if (durationMs > 0) onSeek(seekValue.toLong())
-                                else onSeek((seekValue * 1000).toLong())
-                            },
-                            // Listen Together guest: the host owns the transport,
-                            // so the seek bar is inert and drawn as disabled (the
-                            // mobile app disables the same slider).
-                            enabled = !ListenTogetherGate.locked.value,
-                            valueRange = 0f..sliderMax.toFloat(),
-                            style = sliderStyle,
-                            bufferedFraction = playbackBufferedFraction(),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Row(Modifier.fillMaxWidth()) {
-                            Text(
-                                if (unknownDuration) "${(displayPosition * 100).roundToInt()}%"
-                                else formatTime(displayPosition.toLong()),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            Spacer(Modifier.weight(1f))
-                            if (!unknownDuration) {
-                                // The countdown only when something is really left:
-                                // at/after the end it read "-0:00" for as long as the
-                                // track stayed there, which looks like a broken timer.
-                                val left = durationMs - displayPosition.toLong()
-                                Text(
-                                    if (left > 0) "-" + formatTime(left) else formatTime(durationMs),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
+                            .offset(x = playBarOffsetX, y = playBarOffsetY),
+                    )
 
                     Spacer(Modifier.height(14.dp))
 
@@ -902,7 +841,7 @@ private fun M3EPlayerContent(
                         Box(Modifier.fillMaxSize()) {
                             LyricsScreen(
                                 nowPlaying = np,
-                                positionMs = { positionMs },
+                                positionMs = positionMs,
                                 isPlaying = isPlaying,
                                 language = language,
                                 // The expressive player used to pass only `display`,
@@ -1071,7 +1010,7 @@ private fun PlayerContent(
     onSkipTo: (Int) -> Unit = {},
     onBack: (() -> Unit)? = null,
     isPlaying: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -1327,7 +1266,7 @@ private fun PlayerArtworkBlock(
     language: String,
     onAddToPlaylist: (() -> Unit)?,
     onOpenQueue: () -> Unit,
-    positionMs: Long = 0L,
+    positionMs: () -> Long = { 0L },
     durationMs: Long = 0L,
     onSeek: ((Long) -> Unit)? = null,
     progressiveSeek: Boolean = false,
@@ -1361,7 +1300,7 @@ private fun PlayerArtworkBlock(
             // on, each rapid repeat (< 1 s) adds 5 extra seconds (5 → 10 → 15…).
             // A single click toggles playback when the mobile "show play/pause
             // on thumbnail" option is on.
-            val currentPos by rememberUpdatedState(positionMs)
+            val currentPosProvider = rememberUpdatedState(positionMs)
             val canSeek = onSeek != null && durationMs > 0L
             val canToggle = gestureSettings.lyricsThumbnailPlayPause && onTogglePlay != null &&
                 !transportLocked()
@@ -1400,9 +1339,9 @@ private fun PlayerArtworkBlock(
                                 lastTapAt = now
                                 val amount = 5_000L * skipMultiplier
                                 val target = if (offset.x < size.width / 2f) {
-                                    (currentPos - amount).coerceAtLeast(0L)
+                                    (currentPosProvider.value() - amount).coerceAtLeast(0L)
                                 } else {
-                                    (currentPos + amount).coerceAtMost(durationMs)
+                                    (currentPosProvider.value() + amount).coerceAtMost(durationMs)
                                 }
                                 onSeek?.invoke(target)
                             }
@@ -1545,7 +1484,7 @@ private fun PlayerArtworkBlock(
 private fun PlayerControlPanel(
     np: NowPlaying,
     isPlaying: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     volume: Float,
     isShuffle: Boolean,
@@ -1571,66 +1510,13 @@ private fun PlayerControlPanel(
     // (which made the thumb snap to the start or the end). While the
     // user drags, the live position is ignored so it can't fight the
     // drag and yank the thumb back.
-    var isSeeking by remember(np.videoId) { mutableStateOf(false) }
-    var seekValue by remember(np.videoId) { mutableStateOf(0f) }
-    // The seek stays on screen until the engine reports the new position: a seek
-    // on a stream is a round trip, and dropping straight back to the live
-    // position made the thumb snap back to where it was (looked like the seek
-    // had not moved at all). 4 s is the safety net, so it can never get stuck.
-    LaunchedEffect(positionMs, isSeeking) {
-        if (isSeeking && kotlin.math.abs(positionMs - seekValue) < 1500f) isSeeking = false
-    }
-    LaunchedEffect(isSeeking) {
-        if (isSeeking) {
-            kotlinx.coroutines.delay(4000)
-            isSeeking = false
-        }
-    }
-    val sliderMax = durationMs.coerceAtLeast(1L)
-    val unknownDuration = durationMs <= 0L
-    // Duration unknown (loaded but never played): keep the thumb at the
-    // scrubbed fraction so the seek stays visible and playback starts from
-    // it once the length is known.
-    val displayPosition = when {
-        isSeeking -> seekValue
-        unknownDuration -> (playbackPendingSeekFraction() ?: 0f) * sliderMax
-        else -> positionMs.toFloat().coerceIn(0f, sliderMax.toFloat())
-    }
-    ViviSlider(
-        value = displayPosition.coerceIn(0f, sliderMax.toFloat()),
-        onValueChange = {
-            seekValue = it.coerceIn(0f, sliderMax.toFloat())
-            isSeeking = true
-        },
-        onValueChangeFinished = {
-            // Duration unknown (loaded but never played): the value encodes the
-            // start fraction (0..1000) and playback starts from it once the
-            // length is known.
-            if (durationMs > 0) onSeek(seekValue.toLong())
-            else onSeek((seekValue * 1000).toLong())
-        },
-        enabled = !ListenTogetherGate.locked.value,
-        valueRange = 0f..sliderMax.toFloat(),
-        style = sliderStyle,
-        bufferedFraction = playbackBufferedFraction(),
-        modifier = Modifier.fillMaxWidth(),
+    PlayerSeekControls(
+        positionMs = positionMs,
+        durationMs = durationMs,
+        sliderStyle = sliderStyle,
+        onSeek = onSeek,
     )
-    Row(Modifier.fillMaxWidth()) {
-        Text(
-            if (unknownDuration) "${(displayPosition * 100).roundToInt()}%"
-            else formatTime(displayPosition.toLong()),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.weight(1f))
-        if (!unknownDuration) {
-            Text(
-                formatTime(durationMs),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+
 
     if (loadPhase != LoadPhase.NONE) {
         Spacer(Modifier.height(12.dp))
@@ -2953,7 +2839,7 @@ fun BoxScope.DesktopMiniPlayerBackgroundLayer(
 
     // Only the two styles that actually move get an animation, and only while
     // the music is playing (the other styles draw static gradients).
-    val moves = isPlaying &&
+    val moves = isPlaying && WindowActivity.active &&
         (style == MiniPlayerBackgroundStyle.GLOW_MOTION || style == MiniPlayerBackgroundStyle.LIVE_MESH)
     val glowShift = rememberLoopedFloat(moves, "glowMotion", -0.25f, 0.25f, 4000)
     val meshDx = rememberLoopedFloat(moves, "liveMesh", -0.2f, 0.2f, 5500)
@@ -3216,61 +3102,14 @@ fun ClassicDesktopMiniPlayer(
                         // player): seeking on every drag tick restarted the
                         // whole decode thread per tick, which made the slider
                         // fight the live position reports and feel dead.
-                        var isSeeking by remember(nowPlaying.videoId) { mutableStateOf(false) }
-                        var seekValue by remember(nowPlaying.videoId) { mutableStateOf(0f) }
-                        val sliderMax = durationMs.coerceAtLeast(1L)
-                        val unknownDuration = durationMs <= 0L
-                        // Duration unknown (loaded but never played): keep the
-                        // thumb at the scrubbed fraction so the seek stays
-                        // visible and playback starts from it once the length is
-                        // known.
-                        val displayPosition = when {
-                            isSeeking -> seekValue
-                            unknownDuration -> (playbackPendingSeekFraction() ?: 0f) * sliderMax
-                            else -> positionMs().toFloat().coerceIn(0f, sliderMax.toFloat())
-                        }
-
-                        Row(
-                            Modifier.fillMaxWidth(0.9f),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                if (unknownDuration) "${(displayPosition * 100).roundToInt()}%"
-                                else formatTime(displayPosition.toLong()),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = mutedColor,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            ViviSlider(
-                                value = displayPosition.coerceIn(0f, sliderMax.toFloat()),
-                                onValueChange = {
-                                    seekValue = it.coerceIn(0f, sliderMax.toFloat())
-                                    isSeeking = true
-                                },
-                                onValueChangeFinished = {
-                                    // Duration unknown (loaded but never played):
-                                    // the value encodes the start fraction
-                                    // (0..1000) and playback starts from it once
-                                    // the length is known.
-                                    if (durationMs > 0) onSeek(seekValue.toLong())
-                                    else onSeek((seekValue * 1000).toLong())
-                                    isSeeking = false
-                                },
-                                enabled = !ListenTogetherGate.locked.value,
-                                valueRange = 0f..sliderMax.toFloat(),
-                                style = sliderStyle,
-                                bufferedFraction = playbackBufferedFraction(),
-                                modifier = Modifier.weight(1f),
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            if (!unknownDuration) {
-                                Text(
-                                    formatTime(durationMs),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = mutedColor,
-                                )
-                            }
-                        }
+                        MiniSeekBar(
+                            videoId = nowPlaying.videoId,
+                            positionMs = positionMs,
+                            durationMs = durationMs,
+                            sliderStyle = sliderStyle,
+                            mutedColor = mutedColor,
+                            onSeek = onSeek,
+                        )
                     }
 
                     // Right: Volume & layout controls

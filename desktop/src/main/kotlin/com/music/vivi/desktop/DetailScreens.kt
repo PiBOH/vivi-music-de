@@ -155,7 +155,7 @@ fun AlbumScreen(
                 Spacer(Modifier.height(16.dp))
                 Text(Localization.get(language, "songs"), style = MaterialTheme.typography.titleLarge)
                 LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                    items(page!!.songs, key = { it.id }) { song ->
+                    items(page!!.songs, key = { it.id }, contentType = { "song" }) { song ->
                         SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                     }
                 }
@@ -324,13 +324,13 @@ fun ArtistScreen(
                         LoadingBox(language)
                     } else if (items.all { it is SongItem }) {
                         LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                            items(items.filterIsInstance<SongItem>(), key = { it.id }) { song ->
+                            items(items.filterIsInstance<SongItem>(), key = { it.id }, contentType = { "song" }) { song ->
                                 SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                             }
                         }
                     } else {
                         LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                            items(items, key = { it.id }) { item ->
+                            items(items, key = { it.id }, contentType = { "item" }) { item ->
                                 YtItemCard(item = item, width = null, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                             }
                         }
@@ -365,13 +365,13 @@ fun ArtistScreen(
                                     Text(section.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
                                 }
                                 if (tab == 0) {
-                                    items(visible.filterIsInstance<SongItem>().distinctBy { it.id }, key = { "song-${it.id}" }) { song ->
+                                    items(visible.filterIsInstance<SongItem>().distinctBy { it.id }, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
                                         SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                                     }
                                 } else {
                                     item(key = "grid-${tab}-${section.title}") {
                                         HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            items((albums + others).distinctBy { it.id }, key = { it.id }) { item ->
+                                            items((albums + others).distinctBy { it.id }, key = { it.id }, contentType = { "item" }) { item ->
                                                 YtItemCard(item = item, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                                             }
                                         }
@@ -383,7 +383,7 @@ fun ArtistScreen(
                                 }
                                 item(key = "grid-${tab}-${section.title}") {
                                     HorizontalCarousel(language = language, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                        items((albums + others).distinctBy { it.id }, key = { it.id }) { item ->
+                                        items((albums + others).distinctBy { it.id }, key = { it.id }, contentType = { "item" }) { item ->
                                             YtItemCard(item = item, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                                         }
                                     }
@@ -503,7 +503,7 @@ fun PlaylistScreen(
                     )
                 } else {
                     LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                        items(page!!.songs, key = { it.id }) { song ->
+                        items(page!!.songs, key = { it.id }, contentType = { "song" }) { song ->
                             SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                         }
                     }
@@ -584,7 +584,7 @@ fun HistoryScreen(
                         onClear = { HistoryStore.clearTracks() },
                     )
                 }
-                items(localTracks.take(50), key = { "local-${it.videoId}" }) { entry ->
+                items(localTracks.take(50), key = { "local-${it.videoId}" }, contentType = { "song" }) { entry ->
                     val song = entry.toSongItem()
                     SongRow(
                         song,
@@ -623,7 +623,7 @@ fun HistoryScreen(
                             modifier = Modifier.padding(top = 12.dp, bottom = 8.dp),
                         )
                     }
-                    items(section.songs, key = { "song-${it.id}" }) { song ->
+                    items(section.songs, key = { "song-${it.id}" }, contentType = { "song" }) { song ->
                         SongRow(
                             song,
                             language,

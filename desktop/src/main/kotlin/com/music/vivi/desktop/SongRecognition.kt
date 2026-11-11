@@ -515,7 +515,7 @@ fun SongRecognitionScreen(
             Text(Localization.get(language, "recognition_history"), style = MaterialTheme.typography.titleLarge)
             Spacer(Modifier.height(8.dp))
             LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
-                items(history, key = { "${it.timestamp}-${it.title}" }) { item ->
+                items(history, key = { "${it.timestamp}-${it.title}" }, contentType = { "history" }) { item ->
                     Row(
                         Modifier.fillMaxWidth().padding(vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,

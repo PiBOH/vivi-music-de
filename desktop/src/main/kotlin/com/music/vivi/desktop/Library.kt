@@ -483,7 +483,7 @@ fun LibraryScreen(
                     }
                 } else if (selectedTab == 0) {
                     LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(items.filterIsInstance<SongItem>(), key = { it.id }) { song ->
+                        items(items.filterIsInstance<SongItem>(), key = { it.id }, contentType = { "song" }) { song ->
                             SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                         }
                     }
@@ -494,7 +494,7 @@ fun LibraryScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        items(items, key = { it.id }) { item ->
+                        items(items, key = { it.id }, contentType = { "item" }) { item ->
                             Box(Modifier.fillMaxWidth()) {
                                 YtItemCard(
                                     item = item,

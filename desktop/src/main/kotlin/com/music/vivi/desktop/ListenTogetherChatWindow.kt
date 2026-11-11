@@ -386,7 +386,7 @@ fun ListenTogetherChatList(
                 is ChatRow.Message ->
                     "${row.message.timestamp}-${row.message.userId}-${row.message.message}"
             }
-        }) { row ->
+        }, contentType = { "row" }) { row ->
             when (row) {
                 is ChatRow.Day -> DaySeparator(row.startOfDay, language)
                 is ChatRow.Message -> MessageBubble(

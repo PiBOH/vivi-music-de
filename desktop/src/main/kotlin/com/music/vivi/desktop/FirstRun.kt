@@ -306,7 +306,7 @@ private fun LanguagePicker(
                         )
                     }
                     LazyColumn(Modifier.fillMaxWidth().height(320.dp)) {
-                        items(matches, key = { it.code }) { lang ->
+                        items(matches, key = { it.code }, contentType = { "language" }) { lang ->
                             val isSelected = lang.code == selected
                             Row(
                                 Modifier

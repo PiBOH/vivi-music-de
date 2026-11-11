@@ -158,7 +158,7 @@ fun ChartsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                             ) {
-                                items(songs.distinctBy { it.id }, key = { it.id }) { song ->
+                                items(songs.distinctBy { it.id }, key = { it.id }, contentType = { "song" }) { song ->
                                     Box(Modifier.width(320.dp)) {
                                         SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                                     }
@@ -170,7 +170,7 @@ fun ChartsScreen(
                                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                             ) {
-                                items(section.items.distinctBy { it.id }, key = { it.id }) { item ->
+                                items(section.items.distinctBy { it.id }, key = { it.id }, contentType = { "item" }) { item ->
                                     YtItemCard(item = item, onClick = { onItemClick(item, onOpenAlbum, onOpenArtist, onOpenPlaylist, onPlaySong) })
                                 }
                             }
@@ -188,7 +188,7 @@ fun ChartsScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(horizontal = 16.dp),
                         ) {
-                            items(topVideos.items.filterIsInstance<SongItem>().distinctBy { it.id }, key = { it.id }) { video ->
+                            items(topVideos.items.filterIsInstance<SongItem>().distinctBy { it.id }, key = { it.id }, contentType = { "song" }) { video ->
                                 YtItemCard(item = video, onClick = { onPlaySong(video) })
                             }
                         }
@@ -296,7 +296,7 @@ fun AutoPlaylistScreen(
                 val songs = items.filterIsInstance<SongItem>()
                 if (songs.size == items.size && songs.isNotEmpty()) {
                     LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(songs, key = { it.id }) { song ->
+                        items(songs, key = { it.id }, contentType = { "song" }) { song ->
                             SongRow(song, language, { onPlaySong(song) }, onAddToQueue = { onAddToQueue(song) }, onAddToPlaylist = { onAddToPlaylist(song) })
                         }
                     }

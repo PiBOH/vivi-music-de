@@ -3993,7 +3993,7 @@ fun MiniPlayer(
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
     isLoading: Boolean,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     onTogglePlay: () -> Unit,
     onNext: () -> Unit,
@@ -4059,7 +4059,7 @@ fun MiniPlayer(
                 }
                 if (durationMs > 0) {
                     LinearProgressIndicator(
-                        progress = { (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) },
+                        progress = { (positionMs().toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth().height(if (style == MiniPlayerStyle.APPLE) 3.dp else 2.dp),
                         color = if (pureBlack) PaletteInk else MaterialTheme.colorScheme.primary,
                     )

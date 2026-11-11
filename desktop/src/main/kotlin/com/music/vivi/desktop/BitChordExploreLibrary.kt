@@ -569,7 +569,7 @@ fun BitChordLibraryScreen(
                 modifier = Modifier.padding(top = 20.dp, bottom = 6.dp),
             )
             LazyColumn(Modifier.fillMaxWidth().height(290.dp)) {
-                items(history.take(5), key = { it.videoId }) { entry ->
+                items(history.take(5), key = { it.videoId }, contentType = { "history" }) { entry ->
                     val song = entry.toLibrarySong()
                     SongRow(song, language, { onPlaySong(song) })
                 }
@@ -661,7 +661,7 @@ fun BitChordLibraryScreen(
                     }
                 } else if (selectedTab == 0) {
                     LazyColumn(Modifier.fillMaxSize().padding(top = 8.dp)) {
-                        items(items.filterIsInstance<SongItem>(), key = { it.id }) { song ->
+                        items(items.filterIsInstance<SongItem>(), key = { it.id }, contentType = { "song" }) { song ->
                             SongRow(
                                 song,
                                 language,

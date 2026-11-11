@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.5-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The players read the playhead only in their leaves.** `M3EPlayerContent` and `PlayerContent` now take `() -> Long`. The Expressive seek row, the shared control panel, the artwork double-tap, the Apple clocks and seek line, the classic mini player and the v17 hairline read the position in separate leaves, so the containers stay skippable. `LyricsScreen` already took a provider. **Measured:** `:desktop:playheadRecompositionCheck` advanced 20 playhead ticks. The old primitive shape recomposed 16 to 19 times at the container and 16 to 19 at the clock; the first frames fold into the initial one. The real screen stayed at 0, the Expressive container at 0, and the seek leaf followed all 20. These are recomposition counts, not FPS. `:desktop:m3ePlayerRenderCheck` painted the touched Expressive screen (6821 left ink, 1023 panel ink, 2572 seek ink). `:desktop:compileKotlin`, `:desktop:applePlayerRenderCheck`, `:desktop:applePlayerV17RenderCheck` and `:desktop:homeRenderCheck` are green.
+- [DE] **Every desktop list declares its content type, and small covers load at their drawn size.** Every `items` and `itemsIndexed` list declares a `contentType`. The Home filter chips and the Listen Together log now declare a key as well. Covers in small rows are decoded at the size they are drawn instead of the 544 px player variant.
+- [DE] **The mini player's moving background stops with playback and window focus.** The background runs only while playback is active and the window is focused. The full player's animations already stopped with the window.
+
 ## [6.0.8.11_DE-1.58.4-beta9] - 2026-11-11
 
 ### 🔧 Changed

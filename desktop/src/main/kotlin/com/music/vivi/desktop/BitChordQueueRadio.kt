@@ -176,7 +176,7 @@ fun BitChordQueueScreen(
                     color = mutedColor,
                 )
                 else -> LazyColumn(Modifier.fillMaxSize()) {
-                    items(discovery!!, key = { it.id }) { song ->
+                    items(discovery!!, key = { it.id }, contentType = { "song" }) { song ->
                         SongRow(
                             song,
                             language,
@@ -297,7 +297,7 @@ fun BitChordQueueScreen(
                         }
                     }
                 }
-                itemsIndexed(local, key = { i, song -> song.videoId + "#" + i }) { i, song ->
+                itemsIndexed(local, key = { i, song -> song.videoId + "#" + i }, contentType = { _, _ -> "song" }) { i, song ->
                     ReorderableItem(state = reorderState, key = song.videoId) {
                         BitChordQueueRow(
                             song = song,

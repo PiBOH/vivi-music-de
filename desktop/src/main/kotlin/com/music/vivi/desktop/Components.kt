@@ -1527,7 +1527,7 @@ fun <T> ExpressiveShelf(
                 contentPadding = contentPadding,
                 flingBehavior = fling,
             ) {
-                itemsIndexed(items, key = { _, item -> itemKey(item) }) { index, item ->
+                itemsIndexed(items, key = { _, item -> itemKey(item) }, contentType = { _, _ -> "item" }) { index, item ->
                     card(item, if (index == lead) leadWidth else cardWidth)
                 }
             }

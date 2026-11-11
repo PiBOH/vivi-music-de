@@ -88,7 +88,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppleMusicPlayer(
     np: NowPlaying,
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     isPlaying: Boolean,
     volume: Float,
@@ -323,21 +323,7 @@ fun AppleMusicPlayer(
                     durationMs = durationMs,
                     onSeek = onSeek,
                 )
-                Row(Modifier.fillMaxWidth()) {
-                    Text(
-                        formatTime(positionMs.coerceAtLeast(0)),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = PaletteInk.copy(alpha = 0.6f),
-                    )
-                    Spacer(Modifier.weight(1f))
-                    if (durationMs > 0) {
-                        Text(
-                            "-" + formatTime((durationMs - positionMs).coerceAtLeast(0)),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = PaletteInk.copy(alpha = 0.6f),
-                        )
-                    }
-                }
+                AppleTimeRow(positionMs, durationMs)
 
                 Spacer(Modifier.height(8.dp))
                 AppleTransport(
@@ -439,7 +425,7 @@ fun AppleMusicPlayer(
                     } else {
                         LyricsScreen(
                             nowPlaying = np,
-                            positionMs = { positionMs },
+                            positionMs = positionMs,
                             isPlaying = isPlaying,
                             language = language,
                             display = LyricsDisplayOptions(
@@ -490,16 +476,17 @@ fun AppleMusicPlayer(
  */
 @Composable
 private fun AppleProgress(
-    positionMs: Long,
+    positionMs: () -> Long,
     durationMs: Long,
     onSeek: (Long) -> Unit,
 ) {
     var seeking by remember { mutableStateOf(false) }
     var seekTo by remember { mutableStateOf(0f) }
     val max = durationMs.coerceAtLeast(1L)
-    val shown = if (seeking) seekTo else positionMs.toFloat().coerceIn(0f, max.toFloat())
-    androidx.compose.runtime.LaunchedEffect(positionMs, seeking) {
-        if (seeking && kotlin.math.abs(positionMs - seekTo) < 1500f) seeking = false
+    val live = positionMs()
+    val shown = if (seeking) seekTo else live.toFloat().coerceIn(0f, max.toFloat())
+    androidx.compose.runtime.LaunchedEffect(live, seeking) {
+        if (seeking && kotlin.math.abs(live - seekTo) < 1500f) seeking = false
     }
     ViviSlider(
         value = shown,
@@ -675,7 +662,7 @@ private fun AppleQueuePanel(
         ) {
             // A queue may hold the same track twice, so the position is part of
             // the key (a duplicated key crashes the list).
-            itemsIndexed(queue, key = { i, item -> "apple-queue-$i-${item.videoId}" }) { i, item ->
+            itemsIndexed(queue, key = { i, item -> "apple-queue-$i-${item.videoId}" }, contentType = { _, _ -> "queue" }) { i, item ->
                 val current = i == index
                 Row(
                     Modifier

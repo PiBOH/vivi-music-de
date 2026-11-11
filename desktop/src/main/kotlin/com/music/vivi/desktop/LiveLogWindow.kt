@@ -153,7 +153,7 @@ fun LiveLogWindowContent(language: String, onClose: () -> Unit) {
                             // logged twice in the same millisecond) and a
                             // duplicated key crashed the window with
                             // `Key "…" was already used`.
-                            items(entries, key = { it.seq }) { entry ->
+                            items(entries, key = { it.seq }, contentType = { "entry" }) { entry ->
                                 Text(
                                     entry.text,
                                     style = MaterialTheme.typography.bodySmall.copy(

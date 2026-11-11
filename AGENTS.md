@@ -466,6 +466,14 @@ check is part of the change, not a follow-up.
   screens. `CHANGELOG.dev.md` states what used to recompose or draw on every
   tick and what does now; a speed claim needs a measurement, and "it compiles"
   is not one.
+- `:desktop:playheadRecompositionCheck` advances 20 ticks and fails if the
+  player screen or the Expressive container recomposes more than twice, or if
+  the seek leaf does not follow all 20. In the 1.58.5 run, the old primitive shape recomposed
+  16 to 19 times at the container and 16 to 19 at the clock, since the first
+  frames fold into the initial one. The isolated shape stayed at 0 screen and
+  0 container, and the seek leaf followed all 20 ticks. The check reports
+  recomposition counts, not FPS. `:desktop:m3ePlayerRenderCheck` paints the
+  touched Expressive screen.
 
 ### Verification on this machine: agent-desktop - MANDATORY
 

@@ -178,7 +178,7 @@ object ApplePlayerRenderCheck {
                     )
                     AppleMusicPlayer(
                         np = track,
-                        positionMs = 70_000,
+                        positionMs = { 70_000 },
                         durationMs = 213_000,
                         isPlaying = true,
                         volume = 0.7f,

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -930,7 +931,7 @@ private fun LtBlockedUsersDialog(
                     Modifier.height(260.dp).fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    items(blockedUsers.toList(), key = { it }) { name ->
+                    items(blockedUsers.toList(), key = { it }, contentType = { "user" }) { name ->
                         Row(
                             Modifier
                                 .fillMaxWidth()
@@ -974,7 +975,7 @@ private fun LtLogsDialog(
                 val listState = androidx.compose.foundation.lazy.rememberLazyListState()
                 LaunchedEffect(logs.size) { listState.animateScrollToItem((logs.size - 1).coerceAtLeast(0)) }
                 LazyColumn(state = listState, modifier = Modifier.height(320.dp).fillMaxWidth()) {
-                    items(logs) { entry ->
+                    itemsIndexed(logs, key = { i, entry -> "$i-${entry.message}" }, contentType = { _, _ -> "log" }) { _, entry ->
                         Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
                             Text(
                                 "[${entry.level}] ${entry.message}",
