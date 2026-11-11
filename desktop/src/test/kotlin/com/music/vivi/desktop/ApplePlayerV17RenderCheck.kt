@@ -63,6 +63,9 @@ import java.io.File
  *    is what says the overlay is really on the artwork;
  *  * the mini player paints its transport at 1100 px and at 640 px, where it
  *    drops the shuffle, repeat and volume;
+ *  * the transport of both surfaces is measured as glyphs: the player's
+ *    previous/next are 46x25 and its pause two 12x36 bars 6 apart, and the
+ *    bar's five controls sit on the reference's even step;
  *  * a press on the mini player's title reaches the bar and opens the player,
  *    which is what the hover tooltip wrapping each text used to swallow.
  */
@@ -256,6 +259,8 @@ object ApplePlayerV17RenderCheck {
 
         val miniWide = mini(1100, 96, "mini-wide.png", rows[0])
         val miniCompact = mini(640, 96, "mini-compact.png", rows[0])
+
+        transportReport(wide, miniWide, failures)
 
         data class Case(val name: String, val image: BufferedImage, val artInk: Int, val controlsInk: Int)
         val cases = listOf(
@@ -798,6 +803,135 @@ object ApplePlayerV17RenderCheck {
             scene.close()
         }
         return opened
+    }
+
+    /**
+     * The transport's glyphs, measured in the frames themselves against
+     * BitChord's own numbers.
+     *
+     * The reference (1220x780) draws previous and next as two filled triangles
+     * whose bases meet at the middle, 46 x 25 px, and the pause as two 12 x 36
+     * bars 6 px apart; the three glyphs are centred at 716, 884.5 and 1054 on a
+     * 496 px column, an even 168.5 px step. Its 59 px bar puts the same five
+     * controls on a 32 px step, which is 35 dp at this bar's 64 dp. A glyph
+     * that is narrower or taller than that is the defect this report exists
+     * for: the first drawing had 30 x 28 arrows with a 5.8 px bevel, which is
+     * why they read as a small chevron instead of BitChord's control.
+     */
+    private fun transportReport(player: BufferedImage, mini: BufferedImage, failures: MutableList<String>) {
+        val glyphs = glyphRuns(player, 600, 430, 1275, 520, 0.70)
+        println("player transport: " + glyphs.joinToString { "%dx%d at %.0f".format(it.w, it.h, it.cx) })
+        if (glyphs.size != 4) {
+            failures += "the player's transport drew ${glyphs.size} glyph run(s) instead of 4 (previous, two pause bars, next)"
+        } else {
+            val (prev, bar1, bar2, next) = glyphs
+            if (prev.w !in 43..49 || prev.h !in 22..28) {
+                failures += "the player's previous glyph is ${prev.w}x${prev.h}, not the reference's 46x25"
+            }
+            if (next.w !in 43..49 || next.h !in 22..28) {
+                failures += "the player's next glyph is ${next.w}x${next.h}, not the reference's 46x25"
+            }
+            if (bar1.h !in 34..39 || bar2.h !in 34..39 || kotlin.math.abs(bar1.h - bar2.h) > 1) {
+                failures += "the pause bars are ${bar1.h} and ${bar2.h} px tall, not the reference's 36"
+            }
+            if (bar1.w !in 10..14 || bar2.w !in 10..14) {
+                failures += "the pause bars are ${bar1.w} and ${bar2.w} px wide, not the reference's 12"
+            }
+            val gap = bar2.x - (bar1.x + bar1.w)
+            if (gap !in 4..8) failures += "the pause bars are $gap px apart, not the reference's 6"
+            val mid = (bar1.cx + bar2.cx) / 2.0
+            val left = mid - prev.cx
+            val right = next.cx - mid
+            if (kotlin.math.abs(left - right) > 3.0) {
+                failures += "the player's transport is not evenly spaced (%.0f px left, %.0f px right of the pause)"
+                    .format(EN, left, right)
+            }
+            println("player transport: pause centre %.0f, step %.0f / %.0f px (reference 168.5)".format(EN, mid, left, right))
+        }
+
+        val bar = glyphRuns(mini, 0, 12, 200, 70, 0.50)
+        println("mini transport:   " + bar.joinToString { "%dx%d at %.0f".format(it.w, it.h, it.cx) })
+        if (bar.size != 6) {
+            failures += "the mini player's transport drew ${bar.size} glyph run(s) instead of 6 " +
+                "(shuffle, previous, two pause bars, next, repeat)"
+        } else {
+            val bars = bar.subList(2, 4)
+            if (bars.any { it.h !in 12..16 || it.w !in 3..6 }) {
+                failures += "the mini pause bars are " + bars.joinToString { "${it.w}x${it.h}" } +
+                    ", not the reference's 4x14 at this bar's 64 dp"
+            }
+            val arrows = listOf(bar[1], bar[4])
+            if (arrows.any { it.w !in 15..19 || it.h !in 8..12 }) {
+                failures += "the mini previous/next glyphs are " + arrows.joinToString { "${it.w}x${it.h}" } +
+                    ", not the reference's 15x9 arrow scaled to a 64 dp bar"
+            }
+            val centres = listOf(bar[0].cx, bar[1].cx, (bars[0].cx + bars[1].cx) / 2.0, bar[4].cx, bar[5].cx)
+            val steps = centres.zipWithNext { a, b -> b - a }
+            println(
+                "mini transport:   centres " + centres.joinToString { "%.0f".format(it) } +
+                    ", step " + steps.joinToString { "%.1f".format(EN, it) } + " dp (reference 32 px at 59 px)",
+            )
+            if (steps.any { it < 32.0 || it > 38.0 } || steps.maxOrNull()!! - steps.minOrNull()!! > 2.0) {
+                failures += "the mini transport is not on the reference's even step: " +
+                    steps.joinToString { "%.1f".format(EN, it) }
+            }
+        }
+    }
+
+    /** One run of bright columns: a whole glyph, or one bar of the pause. */
+    private data class GlyphRun(val x: Int, val y: Int, val w: Int, val h: Int) {
+        val cx: Double get() = x + w / 2.0
+    }
+
+    /**
+     * The glyphs of one band, read from the frame: the bright columns are
+     * grouped into runs, so the two pause bars and the single glyphs come back
+     * as separate boxes. A run narrower than two columns is a stray pixel.
+     */
+    private fun glyphRuns(
+        image: BufferedImage,
+        x0: Int,
+        y0: Int,
+        x1: Int,
+        y1: Int,
+        threshold: Double,
+    ): List<GlyphRun> {
+        val right = x1.coerceAtMost(image.width)
+        val bottomEdge = y1.coerceAtMost(image.height)
+        val w = right - x0
+        val columns = IntArray(w)
+        val top = IntArray(w) { Int.MAX_VALUE }
+        val bottom = IntArray(w) { -1 }
+        for (y in y0 until bottomEdge) {
+            for (x in x0 until right) {
+                val rgb = image.getRGB(x, y)
+                val v = (((rgb shr 16) and 255) + ((rgb shr 8) and 255) + (rgb and 255)) / (3.0 * 255)
+                if (v < threshold) continue
+                val i = x - x0
+                columns[i]++
+                if (y < top[i]) top[i] = y
+                if (y > bottom[i]) bottom[i] = y
+            }
+        }
+        val runs = mutableListOf<GlyphRun>()
+        var start = -1
+        for (i in 0..w) {
+            val on = i < w && columns[i] > 0
+            if (on && start < 0) start = i
+            if (!on && start >= 0) {
+                if (i - start >= 2) {
+                    var yTop = Int.MAX_VALUE
+                    var yBottom = -1
+                    for (j in start until i) {
+                        if (top[j] < yTop) yTop = top[j]
+                        if (bottom[j] > yBottom) yBottom = bottom[j]
+                    }
+                    runs += GlyphRun(x0 + start, yTop, i - start, yBottom - yTop + 1)
+                }
+                start = -1
+            }
+        }
+        return runs
     }
 
     private fun meanLuminance(image: BufferedImage): Double {

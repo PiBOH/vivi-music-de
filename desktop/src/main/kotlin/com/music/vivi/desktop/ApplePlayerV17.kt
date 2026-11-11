@@ -931,57 +931,79 @@ internal enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
 /**
  * One transport glyph, drawn rather than taken from the icon set.
  *
- * BitChord draws its own controls, and the Material shapes are not the same
- * ones: its arrows are two triangles whose tips are bevelled by a round stroke,
- * and its pause is a pair of pill bars. Drawing them here keeps the tips soft
- * at every size the row uses and keeps the reference's proportions: the pause
- * bars are the reference's 164/960 wide and 480/960 tall, the arrows the same
- * double triangle, and the bevel is a 5.5 % round stroke on the same path.
+ * The shapes are BitChord's, measured on its player frame (1220x780): the
+ * previous and next are two filled triangles whose bases meet at the middle,
+ * 46 x 25 px, and the pause is a pair of 12 x 36 bars 6 px apart, each corner
+ * taken a third of the bar's width so the ends read as soft squares rather
+ * than pills. The bevelled edge is a 2.6 px round stroke on the same path, not
+ * the 5.8 px one the first drawing used: that is what kept the arrow short and
+ * made the notch between its triangles disappear. Every proportion is a
+ * fraction of the glyph box, so the mini bar's smaller glyphs are the same
+ * drawing and not a second set of shapes.
  */
 @Composable
 internal fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
     Canvas(Modifier.size(glyphSize)) {
-        val w = size.width
-        val h = size.height
-        val bevel = w * 0.055f
-        val round = Stroke(width = bevel * 2f, join = StrokeJoin.Round, cap = StrokeCap.Round)
+        val box = size.minDimension
         if (kind == V17TransportGlyph.PAUSE) {
-            val barWidth = w * 0.164f
-            val barHeight = h * 0.50f
-            val top = (h - barHeight) / 2f
-            val corner = CornerRadius(barWidth / 2f)
-            drawRoundRect(tint, Offset(w * 0.30f, top), Size(barWidth, barHeight), corner)
-            drawRoundRect(tint, Offset(w * 0.536f, top), Size(barWidth, barHeight), corner)
-        } else {
+            // Reference: 12 x 36 bars, 6 apart, at the 74 dp box the player
+            // uses, where the bar is half the box tall and a third as wide.
+            val barHeight = box * 0.5f
+            val barWidth = barHeight / 3f
+            val gap = barHeight / 6f
+            val top = (size.height - barHeight) / 2f
+            val left = (size.width - (barWidth * 2f + gap)) / 2f
+            val corner = CornerRadius(barWidth / 3f)
+            drawRoundRect(tint, Offset(left, top), Size(barWidth, barHeight), corner)
+            drawRoundRect(tint, Offset(left + barWidth + gap, top), Size(barWidth, barHeight), corner)
+        } else if (kind == V17TransportGlyph.PLAY) {
+            // The play keeps the largest box of the row and the rounded bevel
+            // the reference gives it: a 5.5 % round stroke on the triangle.
+            val bevel = box * 0.055f
             val path = Path()
-            when (kind) {
-                V17TransportGlyph.PLAY -> {
-                    path.moveTo(w * 0.30f, h * 0.22f)
-                    path.lineTo(w * 0.30f, h * 0.78f)
-                    path.lineTo(w * 0.78f, h * 0.50f)
-                }
-                V17TransportGlyph.PREVIOUS -> {
-                    path.moveTo(w * 0.72f, h * 0.24f)
-                    path.lineTo(w * 0.72f, h * 0.76f)
-                    path.lineTo(w * 0.42f, h * 0.50f)
-                    path.close()
-                    path.moveTo(w * 0.44f, h * 0.24f)
-                    path.lineTo(w * 0.44f, h * 0.76f)
-                    path.lineTo(w * 0.14f, h * 0.50f)
-                }
-                else -> {
-                    path.moveTo(w * 0.28f, h * 0.24f)
-                    path.lineTo(w * 0.28f, h * 0.76f)
-                    path.lineTo(w * 0.58f, h * 0.50f)
-                    path.close()
-                    path.moveTo(w * 0.56f, h * 0.24f)
-                    path.lineTo(w * 0.56f, h * 0.76f)
-                    path.lineTo(w * 0.86f, h * 0.50f)
-                }
-            }
+            path.moveTo(box * 0.30f, box * 0.22f)
+            path.lineTo(box * 0.30f, box * 0.78f)
+            path.lineTo(box * 0.78f, box * 0.50f)
             path.close()
             drawPath(path, tint)
-            drawPath(path, tint, style = round)
+            drawPath(path, tint, style = Stroke(width = bevel * 2f, join = StrokeJoin.Round, cap = StrokeCap.Round))
+        } else {
+            // Reference: 46 x 25 at the 53 dp skip box, each triangle half the
+            // width, the two bases meeting at the middle. The path is inset by
+            // half the stroke so the bevelled silhouette keeps that 46 x 25.
+            val w = box * 0.868f
+            val h = box * 0.472f
+            val left = (size.width - w) / 2f
+            val top = (size.height - h) / 2f
+            val bevel = w * 0.028f
+            val x0 = left + bevel
+            val x1 = left + w - bevel
+            val y0 = top + bevel
+            val y1 = top + h - bevel
+            val midX = (x0 + x1) / 2f
+            val midY = (y0 + y1) / 2f
+            val path = Path()
+            if (kind == V17TransportGlyph.PREVIOUS) {
+                path.moveTo(midX, y0)
+                path.lineTo(midX, y1)
+                path.lineTo(x0, midY)
+                path.close()
+                path.moveTo(x1, y0)
+                path.lineTo(x1, y1)
+                path.lineTo(midX, midY)
+                path.close()
+            } else {
+                path.moveTo(x0, y0)
+                path.lineTo(x0, y1)
+                path.lineTo(midX, midY)
+                path.close()
+                path.moveTo(midX, y0)
+                path.lineTo(midX, y1)
+                path.lineTo(x1, midY)
+                path.close()
+            }
+            drawPath(path, tint)
+            drawPath(path, tint, style = Stroke(width = bevel * 2f, join = StrokeJoin.Round, cap = StrokeCap.Round))
         }
     }
 }

@@ -22,13 +22,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.automirrored.filled.Subject
 import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material.icons.filled.RepeatOne
 import androidx.compose.material.icons.filled.Shuffle
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.VolumeDown
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -40,6 +36,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -108,61 +107,58 @@ internal fun AppleMusicV17MiniPlayer(
                     .height(64.dp)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                // One dp between 34 dp slots: BitChord's 32 px pitch at its
+                // 59 px bar is 35 dp at this 64 dp one.
+                horizontalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 if (!compact) {
-                    Tooltip(Localization.get(language, "shuffle")) {
-                        M3IconButton(onClick = onToggleShuffle) {
-                            Icon(
-                                BitChordIcons.Shuffle,
-                                contentDescription = Localization.get(language, "shuffle"),
-                                tint = if (isShuffle) primaryColor else mutedColor,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
+                    MiniTransportButton(Localization.get(language, "shuffle"), onToggleShuffle) {
+                        Icon(
+                            BitChordIcons.Shuffle,
+                            contentDescription = null,
+                            tint = if (isShuffle) primaryColor else mutedColor,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
-                Tooltip(Localization.get(language, "previous")) {
-                    M3IconButton(onClick = onPrevious) {
-                        V17Glyph(V17TransportGlyph.PREVIOUS, 18.dp, contentColor)
+                MiniTransportButton(Localization.get(language, "previous"), onPrevious) {
+                    V17Glyph(V17TransportGlyph.PREVIOUS, V17MiniSkipGlyph, contentColor)
+                }
+                MiniTransportButton(
+                    Localization.get(language, if (isPlaying) "pause" else "play"),
+                    onTogglePlay,
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = contentColor,
+                        )
+                    } else {
+                        V17Glyph(
+                            if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
+                            V17MiniPlayGlyph,
+                            contentColor,
+                        )
                     }
                 }
-                Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
-                    M3IconButton(onClick = onTogglePlay) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(18.dp),
-                                strokeWidth = 2.dp,
-                                color = contentColor,
-                            )
-                        } else {
-                            V17Glyph(
-                                if (isPlaying) V17TransportGlyph.PAUSE else V17TransportGlyph.PLAY,
-                                22.dp,
-                                contentColor,
-                            )
-                        }
-                    }
-                }
-                Tooltip(Localization.get(language, "next")) {
-                    M3IconButton(onClick = onNext) {
-                        V17Glyph(V17TransportGlyph.NEXT, 18.dp, contentColor)
-                    }
+                MiniTransportButton(Localization.get(language, "next"), onNext) {
+                    V17Glyph(V17TransportGlyph.NEXT, V17MiniSkipGlyph, contentColor)
                 }
                 if (!compact) {
-                    Tooltip(Localization.get(language, "repeat")) {
-                        M3IconButton(onClick = onCycleRepeat) {
-                            Icon(
-                                BitChordIcons.Repeat,
-                                contentDescription = Localization.get(language, "repeat"),
-                                tint = if (repeatMode == RepeatMode.OFF) mutedColor else primaryColor,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }
+                    MiniTransportButton(Localization.get(language, "repeat"), onCycleRepeat) {
+                        Icon(
+                            BitChordIcons.Repeat,
+                            contentDescription = null,
+                            tint = if (repeatMode == RepeatMode.OFF) mutedColor else primaryColor,
+                            modifier = Modifier.size(18.dp),
+                        )
                     }
                 }
 
-                Spacer(Modifier.width(8.dp))
+                // BitChord leaves a wider breath between the last control and
+                // the cover than between the controls themselves.
+                Spacer(Modifier.width(22.dp))
 
                 Box(
                     Modifier
@@ -308,3 +304,41 @@ internal fun AppleMusicV17MiniPlayer(
         )
     }
 }
+
+/**
+ * One control of the bar's transport, on BitChord's own pitch.
+ *
+ * The reference lays shuffle, previous, play/pause, next and repeat out on a
+ * 32 px step at its 59 px bar, which is 35 dp at this 64 dp one. An
+ * `IconButton` reserves 48 dp, so the five controls of the bar were spreading
+ * 1.5 times wider than the reference; this 34 dp slot with 1 dp between the
+ * slots is that pitch. The tooltip stays the button's name, and the semantics
+ * keep it announced as one.
+ */
+@Composable
+private fun MiniTransportButton(
+    label: String,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Tooltip(label) {
+        Box(
+            Modifier
+                .size(V17MiniButton)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics { contentDescription = label },
+            contentAlignment = Alignment.Center,
+        ) {
+            content()
+        }
+    }
+}
+
+/** The bar's control slot: a 35 dp pitch with the 1 dp the row adds. */
+private val V17MiniButton = 34.dp
+
+/** The bar's skip glyph: the reference's 15 x 9 px arrow at a 64 dp bar. */
+private val V17MiniSkipGlyph = 20.dp
+
+/** The bar's play/pause glyph, at the ratio the player's row uses. */
+private val V17MiniPlayGlyph = 28.dp

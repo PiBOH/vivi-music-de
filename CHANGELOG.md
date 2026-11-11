@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.1-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The v17 player and its mini bar draw BitChord's transport controls at their measured size.**
+
 ## [6.0.8.11_DE-1.58.0-beta9] - 2026-11-10
 
 ### 🔧 Changed

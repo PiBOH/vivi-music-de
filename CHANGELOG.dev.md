@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.1-beta9] - 2026-11-11
+
+### 🔧 Changed
+- [DE] **The v17 player and its mini bar draw BitChord's transport controls at their measured size.** The front and back arrows were invented proportions: 30 x 28 px triangles inside the 53 dp skip box with a 5.8 px bevel, which read as a narrow chevron, and the pause was a pair of full pills. Both are the reference's own shapes now, measured on its 1220 x 780 frame: previous and next are two filled triangles whose bases meet at the middle, 46 x 25 px, bevelled by a 2.6 px round stroke, and the pause is two 12 x 36 bars 6 px apart whose corners take a third of the bar's width instead of a half. The play keeps the row's larger 74 dp box and its rounded bevel. The bar repeats the same drawing at its own scale, a 20 dp box for previous and next (18 x 10) and 28 dp for play and pause (5 x 14 bars, 14 tall), and its five controls sit on a 35 dp step, the reference's 32 px at its 59 px bar scaled to this 64 dp one, instead of the 48 dp an `IconButton` reserves; the breath between the last control and the cover is 22 dp, as in the reference. **Measured:** `:desktop:applePlayerV17RenderCheck` now reads the glyphs off the frames and checks them against the reference: the player's arrows 46 x 25, its pause two 12 x 36 bars with a 6 px gap and the pause centred between the arrows (218 and 219 px steps; the reference's 168.5 px on its 496 px column is 220 px on this 649 px one), the bar's arrows 18 x 10, its pause bars 5 x 14 and its five centres on a 35.0 / 35.0 / 35.0 / 35.0 step; `:desktop:compileKotlin` passes and the frames `wide.png` and `mini-wide.png` were read.
+
 ## [6.0.8.11_DE-1.58.0-beta9] - 2026-11-10
 
 ### 🔧 Changed
