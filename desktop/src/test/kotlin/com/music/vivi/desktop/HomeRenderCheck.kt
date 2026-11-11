@@ -44,6 +44,9 @@ import javax.imageio.ImageIO
  *  - Classic Home is BitChord's shelf: every card the same 150 dp rounded
  *    square on a 12 dp corner, 14 dp apart on the page's 24 dp gutter, the
  *    trailing one cut by the window, with no lead card, no arrow and no dot row;
+ *  - the m3e Home paints one row for every category of the page (the Library
+ *    and BitChord's eight), in feed order, each on the 16 dp inset with its 180
+ *    dp card and no dot row, and its row builder returns those same titles;
  *  - Explore's New releases row is the reference video's multi-browse row: a
  *    245 dp leading card, 162 dp cards after it and a trailing card the window
  *    cuts to 0.43-0.46 of a card, which is what the video's own frames measure;
@@ -330,6 +333,7 @@ object HomeRenderCheck {
         right: Int = 0,
         coverFill: ClosedFloatingPointRange<Double>? = 0.55..0.90,
         roundedCards: Boolean = false,
+        expectIndicator: Boolean = true,
     ) {
         val bg = img.getRGB(0, img.height - 1)
         val bands = coverBands(img, bg)
@@ -422,8 +426,69 @@ object HomeRenderCheck {
         }
         val pill = indicatorRun(img, band, bg)
         println("%-12s indicator: %d px pill under the shelf".format(name, pill))
-        check(pill >= 14) {
-            "$name: no pill under the shelf ($pill px), so the carousel indicator is gone"
+        if (expectIndicator) {
+            check(pill >= 14) {
+                "$name: no pill under the shelf ($pill px), so the carousel indicator is gone"
+            }
+        } else {
+            check(pill < 14) {
+                "$name: a dot row is painted under the shelf ($pill px); the Home draws none"
+            }
+        }
+    }
+
+    /**
+     * The whole category set, painted: one cover band per row, the Library and
+     * every category of the page, in the page's order.
+     *
+     * A row the Home dropped leaves the frame one band short, which is the
+     * failure this report exists for. Each band is then read on its own: the
+     * first card on the 16 dp page inset, the 180 dp card height, and no dot row
+     * under it. The rows the builder produces are compared with the page too, so
+     * the set is proven in the model and in the pixels instead of only one of
+     * the two.
+     */
+    private fun m3eAllCategories(img: BufferedImage) {
+        val expected = listOf(Localization.get("en", "library")) + M3E_CATEGORIES
+        val bg = img.getRGB(0, img.height - 1)
+        // A row's scrim fades into the page ~28 px before the card's edge, and
+        // the rounded bottom edge paints its own 2 px line: both are the same
+        // row, so bands closer than 32 px are one band before they are counted.
+        val bands = mutableListOf<IntRange>()
+        coverBands(img, bg).forEach { band ->
+            val last = bands.lastOrNull()
+            if (last != null && band.first - last.last <= 32 && band.last - band.first <= 4) {
+                bands[bands.size - 1] = last.first..band.last
+            } else {
+                bands += band
+            }
+        }
+        println("m3e-full    rows: ${bands.size} painted for ${expected.size} categories")
+        check(bands.size == expected.size) {
+            "m3e-full: painted ${bands.size} row(s) for ${expected.size} categories " +
+                "(${expected.joinToString()}), so the Home lost one"
+        }
+        bands.forEachIndexed { index, band ->
+            val ranges = cards(img, band, bg)
+            check(ranges.isNotEmpty()) { "m3e-full: row $index painted no card" }
+            // The band is the whole 180 dp card here, so it is measured on
+            // its own band instead of the 24 px the Classic shelf reserves.
+            val box = coverBox(img, ranges.first(), band, bg)
+            check(kotlin.math.abs(box.x0 - 16) <= 3) {
+                "m3e-full: row $index starts at ${box.x0} px, expected the 16 dp page inset"
+            }
+            check(box.height in 168..184) {
+                "m3e-full: row $index's first card paints ${box.height} px, expected the 180 dp card"
+            }
+            val pill = indicatorRun(img, band, bg)
+            check(pill < 14) {
+                "m3e-full: row $index draws a $pill px dot row under the shelf; the Home has none"
+            }
+        }
+        val titles = m3eRows(m3ePage(), emptyList(), m3eHistory(), "en").map { it.title }
+        println("m3e-full    rows: ${titles.joinToString()}")
+        check(titles == expected) {
+            "m3e-full: the Home builds ${titles.joinToString()} instead of ${expected.joinToString()}"
         }
     }
 
@@ -636,45 +701,26 @@ object HomeRenderCheck {
     }
 
     /**
-     * The m3e Home's page: the three kinds of content its rows split apart.
+     * BitChord's Home categories as its own screenshots carry them. Their names
+     * are the listener's, so the app reads them from the feed instead of
+     * hard-coding them; the check paints this set to prove that every section
+     * the page holds becomes a row.
      */
+    private val M3E_CATEGORIES = listOf(
+        "Playlist Pop",
+        "Successi pop senza tempo",
+        "Nuove scoperte",
+        "Vecchi successi",
+        "Discoteca",
+        "Party del passato",
+        "Playlist in primo piano per te",
+        "Album per te",
+    )
+
+    /** The m3e Home's page: the Library plus every category, each with its cards. */
     private fun m3ePage(): HomePage = HomePage(
         chips = null,
-        sections = listOf(
-            section("Album per te", 8),
-            HomePage.Section(
-                title = "Brani per te",
-                label = null,
-                thumbnail = null,
-                endpoint = null,
-                items = (1..6).map { n ->
-                    SongItem(
-                        id = "song-$n",
-                        title = "Brano $n",
-                        artists = listOf(Artist(name = "Artist $n", id = null)),
-                        thumbnail = "",
-                    )
-                },
-            ),
-            HomePage.Section(
-                title = "Community",
-                label = null,
-                thumbnail = null,
-                endpoint = null,
-                items = (1..6).map { n ->
-                    PlaylistItem(
-                        id = "playlist-$n",
-                        title = "Playlist $n",
-                        author = Artist(name = "Artist $n", id = null),
-                        songCountText = "20 songs",
-                        thumbnail = "",
-                        playEndpoint = null,
-                        shuffleEndpoint = null,
-                        radioEndpoint = null,
-                    )
-                },
-            ),
-        ),
+        sections = M3E_CATEGORIES.map { title -> section(title, 8) },
     )
 
     /** Eight played tracks, so the Library row has to be cut like the others. */
@@ -708,19 +754,27 @@ object HomeRenderCheck {
         )
     }
 
-    /** The lead card's painted height: the card's own column through its centre. */
+    /**
+     * The lead card's painted height, read across the card's own width from the
+     * top of its cover band: a cover row is painted edge to edge, the title
+     * under a Classic card covers only part of the width, and the m3e card's
+     * scrim fades but is still painted. That tells the 150 dp Classic card from
+     * the 180 dp m3e one without trusting either design's constants.
+     */
     private fun leadPaintedHeight(img: BufferedImage): Int {
         val bg = img.getRGB(0, img.height - 1)
         val band = coverBands(img, bg).first()
         val lead = cards(img, band, bg).first()
-        val box = card(img, lead, band, bg)
-        val x = box.x0 + box.width / 2
-        val middle = (band.first + band.last) / 2
-        var top = middle
-        while (top > 0 && img.getRGB(x, top - 1) != bg) top--
-        var bottom = middle
-        while (bottom < img.height - 1 && img.getRGB(x, bottom + 1) != bg) bottom++
-        return bottom - top + 1
+        val width = lead.last - lead.first + 1
+        var bottom = band.first
+        for (y in band.first until img.height) {
+            // The card's last rows fade to within a point of the page colour,
+            // and the empty page is exactly the background: any difference is
+            // the card, and the 8 px break below stops at the next shelf.
+            val painted = lead.count { x -> img.getRGB(x, y) != bg }
+            if (painted >= width * 3 / 4) bottom = y else if (y - bottom > 8) break
+        }
+        return bottom - band.first + 1
     }
 
     /**
@@ -787,7 +841,7 @@ object HomeRenderCheck {
         check(moved.homeDesign == DesignStyle.M3E.key) {
             "the previous beta's classic was not moved to m3e (read '${moved.homeDesign}')"
         }
-        check(moved.designDefaultsVersion == 1) {
+        check(moved.designDefaultsVersion == 2) {
             "the move was not recorded (generation ${moved.designDefaultsVersion})"
         }
         DesktopSettings.update { it.copy(homeDesign = DesignStyle.CLASSIC.key) }
@@ -796,7 +850,22 @@ object HomeRenderCheck {
         check(kept.homeDesign == DesignStyle.CLASSIC.key) {
             "a Classic chosen after the move was overwritten (read '${kept.homeDesign}')"
         }
-        println("design defaults: the previous beta's classic moves to m3e once, a later Classic stays")
+        // The store this machine carried before this build: generation 1 and the
+        // previous Home. It moves once, so the rebuilt Home is the one shown.
+        DesktopSettings.update {
+            it.copy(homeDesign = DesignStyle.CLASSIC.key, designDefaultsVersion = 1)
+        }
+        DesktopSettings.applyDesignDefaults()
+        val fromFirstGeneration = DesktopSettings.load()
+        check(fromFirstGeneration.homeDesign == DesignStyle.M3E.key) {
+            "a store still on the previous Home was not moved to m3e (read '${fromFirstGeneration.homeDesign}')"
+        }
+        check(fromFirstGeneration.designDefaultsVersion == 2) {
+            "the second move was not recorded (generation ${fromFirstGeneration.designDefaultsVersion})"
+        }
+        println(
+            "design defaults: the previous Home moves to m3e once (generations 1 and 0), a later Classic stays",
+        )
     }
 
     @JvmStatic
@@ -819,7 +888,14 @@ object HomeRenderCheck {
         // Home in the m3e style: the same multi-browse carousel, on the sketch's
         // 180 dp cards whose titles sit on the artwork.
         val m3eHome = render(1364, 1100, "m3e-home-1364.png", m3e(m3ePage()))
-        shelf("m3e-home-1364", m3eHome, pad = 16, minShelves = 3, right = 16, coverFill = null, roundedCards = true)
+        shelf(
+            "m3e-home-1364", m3eHome, pad = 16, minShelves = 3, right = 16,
+            coverFill = null, roundedCards = true, expectIndicator = false,
+        )
+        // The whole category set: nine rows (the Library and BitChord's eight)
+        // in one frame, so a row that went missing cannot hide below the fold.
+        val m3eFull = render(1364, 2400, "m3e-home-full-1364.png", m3e(m3ePage()))
+        m3eAllCategories(m3eFull)
         // The m3e card is a 180 dp rounded rectangle, so the lead's own centre
         // column spans the whole card: a card that went back to 308 would read
         // ~308, a 150 dp one ~150.

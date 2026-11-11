@@ -62,7 +62,8 @@ internal val M3ECardHeight = 180.dp
  *
  * The sketch is a stack of rows, each one a 28 sp heading over a sideways
  * carousel of 180 dp cards whose titles sit on the cover, spread over the screen
- * height with equal gaps. Its first row is the machine's own **Library** (this
+ * height with equal gaps while there are three rows to spread, and 36 dp apart
+ * once the feed's whole category set makes the page scroll. Its first row is the machine's own **Library** (this
  * installation's playlists, then the local listening history once they run
  * out); after it comes **every category the account's Home returns**, with the
  * feed's own title - `Playlist Pop`, `Successi pop senza tempo`, `Nuove
@@ -112,7 +113,7 @@ internal fun M3EHomeContent(
                     .fillMaxWidth()
                     .heightIn(min = viewport)
                     .padding(horizontal = 16.dp, vertical = 24.dp),
-                verticalArrangement = if (spread) Arrangement.SpaceEvenly else Arrangement.spacedBy(28.dp),
+                verticalArrangement = if (spread) Arrangement.SpaceEvenly else Arrangement.spacedBy(36.dp),
             ) {
                 rows.forEach { row -> M3ERow(row, language, click) }
             }
@@ -121,7 +122,7 @@ internal fun M3EHomeContent(
 }
 
 /** One row: its heading, then the carousel or its loader. */
-private data class M3ERow(
+internal data class M3ERow(
     /** The heading as it is drawn: the feed's own category name, or a key. */
     val title: String,
     val loading: Boolean,
@@ -167,7 +168,7 @@ private class M3EClick(
  * empty one is dropped. While the page is in flight the three reference rows
  * are drawn with their loaders, so the first paint already has the layout.
  */
-private fun m3eRows(
+internal fun m3eRows(
     home: HomePage?,
     localCollections: List<SyncedPlaylist>,
     history: List<HistoryEntry>,
@@ -187,7 +188,7 @@ private fun m3eRows(
             M3ERow(Localization.get(language, "community"), true, emptyList()),
         )
     }
-    val categories = home.sections.mapNotNull { section ->
+    val categories = home.sections.distinctBy { it.title }.mapNotNull { section ->
         val items = section.items.distinctBy { it.id }.map { M3EHomeItem.Yt(it) }
         if (items.isEmpty()) {
             null
@@ -227,6 +228,7 @@ private fun M3ERow(row: M3ERow, language: String, click: M3EClick) {
                 itemKey = { it.id },
                 contentPadding = PaddingValues(horizontal = 0.dp),
                 language = language,
+                showIndicator = false,
             ) { item, width ->
                 M3EHomeCard(item, width, language, click)
             }
@@ -314,7 +316,7 @@ private fun M3EHomeCard(item: M3EHomeItem, width: Dp, language: String, click: M
                 Tooltip(title) {
                     Text(
                         title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         color = PaletteInk,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

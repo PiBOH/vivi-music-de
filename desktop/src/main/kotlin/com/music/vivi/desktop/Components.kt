@@ -1498,6 +1498,7 @@ fun <T> ExpressiveShelf(
     gap: Dp = ShelfGap,
     leadWidth: Dp = ShelfLeadWidth,
     cardWidth: Dp = ShelfCardWidth,
+    showIndicator: Boolean = true,
     card: @Composable (T, Dp) -> Unit,
 ) {
     if (items.isEmpty()) return
@@ -1557,7 +1558,10 @@ fun <T> ExpressiveShelf(
                 }
             }
         }
-        IndicatorDots(pages = pages, current = lead / step)
+        // The m3e Home's rows carry no dot row: BitChord's Home draws
+        // nothing under its shelves, and the card the window cuts already says
+        // the row goes on.
+        if (showIndicator) IndicatorDots(pages = pages, current = lead / step)
     }
 }
 

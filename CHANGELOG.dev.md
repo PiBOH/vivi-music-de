@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.2-beta9] - 2026-11-11
+
+### ✨ Added
+- [DE] **Home carries the feed's whole category set, not only its first page.** The desktop loaded one `FEmusic_home` response, whose three shelves were all Home ever showed; the categories BitChord's Home is made of (Playlist Pop, Successi pop senza tempo, Nuove scoperte, Vecchi successi, Discoteca, Party del passato, Playlist in primo piano per te, Album per te) arrive on the feed's continuation, the pages the phone's Home already follows. `HomeScreen` paints the first page at once and appends every continuation, up to six pages, dropping a shelf whose heading already exists, and the m3e rows are built from the merged page, so a category can no longer be missing because it was on a later page. **Measured:** `:desktop:homeRenderCheck` hands the m3e Home the Library and those eight categories and reads nine cover rows off `m3e-home-full-1364.png`, each on the 16 dp inset, 180 dp tall and with no dot row, and the row builder is asserted against the same nine titles; the task exits 0.
+
+### 🔧 Changed
+- [DE] **The m3e Home opens on this build once, and its rows are the sketch's rows.** The one-time design move goes to generation 2, so the store carrying Classic and the generation-1 store are put on the rebuilt Home once; a Classic picked in Appearance → Designs afterwards stays. On the page itself the dot row under every carousel is gone, because BitChord draws nothing there and the cut card already says the row goes on, the card titles are `titleMedium` instead of `titleSmall`, and rows that no longer fit the viewport sit 36 dp apart instead of 28, while three rows still spread over the height with equal gaps. **Measured:** the switch frame reads the Classic lead at 150 px and the m3e one at 180; the check asserts no dot row under any of the nine rows.
+
 ## [6.0.8.11_DE-1.58.1-beta9] - 2026-11-11
 
 ### 🔧 Changed

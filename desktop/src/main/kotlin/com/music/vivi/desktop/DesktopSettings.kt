@@ -517,9 +517,11 @@ object DesktopSettings {
      * `homeDesign` shipped as `classic` in the beta the designs were built in,
      * and that beta never left this machine, so a store carrying that value has
      * no choice to preserve: the move sets Home to m3e and records the
-     * generation. A Classic picked in `Appearance → Designs` afterwards is a
-     * normal stored option and is never moved again, because the generation is
-     * already the current one.
+     * generation. Generation 2 re-runs it once for a store still on the previous
+     * Home: the m3e Home was rebuilt on the reference sketch and the feed's whole
+     * category set, and a build that carries it has to show it. A Classic picked
+     * in `Appearance → Designs` afterwards is a normal stored option and is never
+     * moved again, because the generation is already the current one.
      *
      * It runs after `SettingsFile.start()`, not while reading the store: the
      * mirror (settings.json) is adopted there and would otherwise write the old
@@ -539,7 +541,7 @@ object DesktopSettings {
     }
 
     /** The design-defaults generation this build writes once (see [applyDesignDefaults]). */
-    private const val DESIGN_DEFAULTS_VERSION = 1
+    private const val DESIGN_DEFAULTS_VERSION = 2
 
     /**
      * Brings a settings file written by an older build up to the current model.

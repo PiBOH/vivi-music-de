@@ -88,12 +88,16 @@ data class CuratedMix(
     val gradientColors: List<Color>,
 )
 
+/** How many continuation pages the Home follows to reach its whole category set. */
+private const val HOME_CONTINUATION_PAGES = 6
+
 @Composable
 fun HomeScreen(
     language: String,
     /**
      * Which design language Home is drawn in: `classic` is the stack of
-     * shelves, `m3e` the three-row Material 3 Expressive Home ([M3EHomeContent]).
+     * shelves, `m3e` the Material 3 Expressive Home ([M3EHomeContent]) over the
+     * whole category set the feed's continuation brings.
      */
     designStyle: DesignStyle = DesignStyle.CLASSIC,
     onOpenAlbum: (String) -> Unit,
@@ -142,7 +146,31 @@ fun HomeScreen(
         error = null
         home = null
         YouTube.home(params = params).fold(
-            onSuccess = { home = it.filteredContent(); error = null },
+            onSuccess = { first ->
+                // The first page carries only a handful of shelves: Home's own
+                // category set (Playlist Pop, Nuove scoperte, Discoteca, Party
+                // del passato, ...) arrives on the feed's continuation. The
+                // first page is drawn at once and every further page is
+                // appended as it comes, the way the phone's Home already does.
+                val page = first.filteredContent()
+                val sections = page.sections.toMutableList()
+                val seen = sections.map { it.title }.toMutableSet()
+                home = page
+                error = null
+                var token = page.continuation
+                var fetched = 0
+                while (token != null && fetched < HOME_CONTINUATION_PAGES) {
+                    val more = YouTube.home(continuation = token).getOrNull() ?: break
+                    fetched++
+                    more.filteredContent().sections.forEach { section ->
+                        // A continuation can repeat a shelf the page already has;
+                        // a repeated heading is not a new category.
+                        if (seen.add(section.title)) sections += section
+                    }
+                    token = more.continuation
+                    home = page.copy(sections = sections.toList(), continuation = token)
+                }
+            },
             onFailure = { error = it.message },
         )
     }

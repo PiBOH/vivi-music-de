@@ -1,5 +1,13 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.2-beta9] - 2026-11-11
+
+### ✨ Added
+- [DE] **Home carries the feed's whole category set, not only its first page.**
+
+### 🔧 Changed
+- [DE] **The m3e Home opens on this build once, and its rows are the sketch's rows.**
+
 ## [6.0.8.11_DE-1.58.1-beta9] - 2026-11-11
 
 ### 🔧 Changed
