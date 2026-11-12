@@ -333,7 +333,9 @@ private fun NowPlaying.toSongItem(): SongItem = SongItem(
     id = videoId,
     title = title,
     artists = listOf(com.music.innertube.models.Artist(name = artist, id = null)),
-    album = album?.let { com.music.innertube.models.Album(name = it, id = "") },
+    // A queue entry only carries the album's name. Without its browse id the
+    // shared menu must not offer "Open album" and send an empty id.
+    album = null,
     duration = if (durationMs > 0L) (durationMs / 1000L).toInt() else null,
     thumbnail = thumbnail.orEmpty(),
 )
