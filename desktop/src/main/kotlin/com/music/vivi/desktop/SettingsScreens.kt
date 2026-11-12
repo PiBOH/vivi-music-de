@@ -562,20 +562,16 @@ fun SettingsTransitionsScreen(
     onBack: () -> Unit,
     screenTransition: String,
     onScreenTransitionChange: (String) -> Unit,
-    animationsEnabled: Boolean = true,
-    onAnimationsEnabledChange: (Boolean) -> Unit = {},
-    animationSpeed: String = "normal",
-    onAnimationSpeedChange: (String) -> Unit = {},
+    animationLevel: Int = 4,
+    onAnimationLevelChange: (Int) -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
         TransitionsScreen(
             language = language,
             screenTransition = screenTransition,
             onScreenTransitionChange = onScreenTransitionChange,
-            animationsEnabled = animationsEnabled,
-            onAnimationsEnabledChange = onAnimationsEnabledChange,
-            animationSpeed = animationSpeed,
-            onAnimationSpeedChange = onAnimationSpeedChange,
+            animationLevel = animationLevel,
+            onAnimationLevelChange = onAnimationLevelChange,
         )
     }
 }

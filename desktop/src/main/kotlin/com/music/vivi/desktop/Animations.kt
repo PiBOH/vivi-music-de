@@ -45,20 +45,43 @@ object Animations {
     @Volatile
     var enabled: Boolean = true
 
+    /** Animation level, 0..5. 0 turns transitions off. */
+    @Volatile
+    var level: Int = 4
+        private set
+
     /** Reloads the persisted values (startup + on change). */
     fun load() {
         val settings = DesktopSettings.load()
         speed = settings.animationSpeed
-        enabled = settings.animationsEnabled
+        level = if (settings.animationsEnabled) settings.animationLevel.coerceIn(0, 5) else 0
+        enabled = level > 0
     }
+
+    /** Applies an animation level immediately, without waiting for a file reload. */
+    fun setLevel(value: Int) {
+        level = value.coerceIn(0, 5)
+        enabled = level > 0
+    }
+
+    /** How much the level lengthens or shortens a base duration. */
+    private val levelMultiplier: Float
+        get() = when (level) {
+            0 -> 0f
+            1 -> 0.55f
+            2 -> 0.75f
+            3 -> 0.9f
+            4 -> 1f
+            else -> 1.15f
+        }
 
     /** Multiplier applied to every base duration. */
     private val multiplier: Float
-        get() = when (speed) {
+        get() = (when (speed) {
             "fast" -> 0.6f
             "slow" -> 1.6f
             else -> 1f
-        }
+        }) * levelMultiplier
 
     /** Scales a base duration in milliseconds (never below 1 ms). */
     fun ms(base: Int): Int = (base * multiplier).roundToInt().coerceAtLeast(1)

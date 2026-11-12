@@ -21,7 +21,9 @@ import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import androidx.compose.ui.unit.dp
@@ -404,6 +407,8 @@ fun BitChordLibraryScreen(
     onOpenArtist: (String) -> Unit,
     onOpenPlaylist: (String) -> Unit,
     onOpenLocalPlaylist: (String) -> Unit,
+    onOpenDownloads: () -> Unit,
+    onOpenLocalMusic: () -> Unit,
     onPlaySong: (SongItem) -> Unit,
     onAddToQueue: (SongItem) -> Unit,
     onAddToPlaylist: (SongItem) -> Unit,
@@ -506,6 +511,26 @@ fun BitChordLibraryScreen(
                     )
                 }
             }
+        }
+
+        // BitChord's two device links. They open real screens: the audio cache
+        // and the files found under Music and Downloads.
+        Row(
+            Modifier.fillMaxWidth().padding(top = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            LibraryDeviceLink(
+                label = Localization.get(language, "downloads"),
+                icon = Icons.Filled.Download,
+                onClick = onOpenDownloads,
+                modifier = Modifier.weight(1f),
+            )
+            LibraryDeviceLink(
+                label = Localization.get(language, "local_music"),
+                icon = Icons.Filled.Folder,
+                onClick = onOpenLocalMusic,
+                modifier = Modifier.weight(1f),
+            )
         }
 
         // The playlists that live on this machine, with the create tile.
@@ -692,6 +717,37 @@ fun BitChordLibraryScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/** A device destination on the Library: icon, label, one click. */
+@Composable
+private fun LibraryDeviceLink(
+    label: String,
+    icon: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = modifier,
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(
+                label,
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

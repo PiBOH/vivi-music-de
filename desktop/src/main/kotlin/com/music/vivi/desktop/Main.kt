@@ -78,6 +78,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.outlined.Leaderboard
@@ -153,6 +157,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowScope
 import com.music.lastfm.LastFM
@@ -471,8 +476,9 @@ fun WindowScope.App(
     var densityScale by remember(settingsFileRevision()) { mutableStateOf(startupSettings.densityScale) }
     var gridItemSize by remember(settingsFileRevision()) { mutableStateOf(startupSettings.gridItemSize) }
     var screenTransition by remember(settingsFileRevision()) { mutableStateOf(startupSettings.screenTransition) }
-    var animationsEnabled by remember(settingsFileRevision()) { mutableStateOf(startupSettings.animationsEnabled) }
-    var animationSpeed by remember(settingsFileRevision()) { mutableStateOf(startupSettings.animationSpeed) }
+    var animationLevel by remember(settingsFileRevision()) {
+        mutableStateOf(if (startupSettings.animationsEnabled) startupSettings.animationLevel.coerceIn(0, 5) else 0)
+    }
     var sliderStyle by remember(settingsFileRevision()) { mutableStateOf(startupSettings.sliderStyle) }
     var playerDesign by remember(settingsFileRevision()) {
         mutableStateOf(
@@ -1870,7 +1876,7 @@ fun WindowScope.App(
                         AnimatedContent(
                             targetState = current,
                             transitionSpec = {
-                                if (!animationsEnabled) {
+                                if (animationLevel <= 0) {
                                     fadeIn(animationSpec = tween(0)) togetherWith fadeOut(animationSpec = tween(0))
                                 } else if (targetState == Screen.Player || initialState == Screen.Player) {
                                     // Opening and closing the full player reads as
@@ -1955,6 +1961,8 @@ fun WindowScope.App(
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
                         onOpenLocalPlaylist = { navigate(Screen.LocalPlaylist(it)) },
+                        onOpenDownloads = { navigate(Screen.Downloads) },
+                        onOpenLocalMusic = { navigate(Screen.LocalMusic) },
                         onPlaySong = playSong,
                         onAddToQueue = addToQueue,
                         onAddToPlaylist = addToPlaylist,
@@ -1973,6 +1981,19 @@ fun WindowScope.App(
                             navigate(Screen.Search)
                         },
                     )
+                    is Screen.Downloads -> DownloadsScreen(
+                        language = language,
+                        initialFiles = remember { player.cachedFiles() },
+                        onPlaySong = playSong,
+                        onDelete = { id -> player.deleteDownload(id) },
+                        onOpenFolder = {
+                            runCatching { Desktop.getDesktop().open(player.cacheDirectory()) }
+                        },
+                        onClearAll = {
+                            player.cachedFiles().forEach { file -> player.deleteDownload(file.nameWithoutExtension) }
+                        },
+                    )
+                    is Screen.LocalMusic -> LocalMusicScreen(language = language)
                     // BitChord's Explore: the moods and genres as one grid of
                     // big cards, the screen that replaced "New".
                     is Screen.NewReleases -> BitChordExploreScreen(
@@ -2135,20 +2156,19 @@ fun WindowScope.App(
                             screenTransition = t
                             DesktopSettings.update { it.copy(screenTransition = t) }
                         },
-                        animationsEnabled = animationsEnabled,
-                        onAnimationsEnabledChange = { v ->
-                            animationsEnabled = v
+                        animationLevel = animationLevel,
+                        onAnimationLevelChange = { v ->
+                            animationLevel = v.coerceIn(0, 5)
                             // The transition helpers read this directly, so the
                             // change is visible on the next frame instead of
                             // waiting for the settings file reload.
-                            Animations.enabled = v
-                            DesktopSettings.update { it.copy(animationsEnabled = v) }
-                        },
-                        animationSpeed = animationSpeed,
-                        onAnimationSpeedChange = { v ->
-                            animationSpeed = v
-                            Animations.speed = v
-                            DesktopSettings.update { it.copy(animationSpeed = v) }
+                            Animations.setLevel(animationLevel)
+                            DesktopSettings.update {
+                                it.copy(
+                                    animationLevel = animationLevel,
+                                    animationsEnabled = animationLevel > 0,
+                                )
+                            }
                         },
                     )
                     is Screen.SettingsPlayerDesign -> SettingsPlayerDesignScreen(
@@ -3308,10 +3328,16 @@ fun Sidebar(
     // The preview's rail, in both layouts: the selected entry is
     // `primaryContainer` and an entry wears one 12 dp corner
     // (`css/shell.css`, `.rail-row` on `--md-sys-shape-corner-small`).
-    val selectedBg = MaterialTheme.colorScheme.primaryContainer
-    val selectedFg = MaterialTheme.colorScheme.onPrimaryContainer
-    val mainRadius = 12.dp
-    val subRadius = 12.dp
+    // BitChord's measured rail: white 12 percent selection, #242424 hover,
+    // #8E8E93 secondary labels and 7 dp row corners. Light mode keeps the
+    // tonal scheme instead of forcing a dark rail.
+    val bitChord = isAppInDarkTheme()
+    val selectedBg = if (bitChord) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primaryContainer
+    val selectedFg = if (bitChord) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
+    val hoverBg = if (bitChord) BitChordColors.Hover else MaterialTheme.colorScheme.surfaceContainerHigh
+    val secondaryFg = if (bitChord) BitChordColors.Secondary else MaterialTheme.colorScheme.onSurfaceVariant
+    val mainRadius = if (bitChord) 7.dp else 12.dp
+    val subRadius = if (bitChord) 7.dp else 12.dp
     var libraryExpanded by remember { mutableStateOf(true) }
     var playlistsExpanded by remember { mutableStateOf(true) }
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -3365,6 +3391,8 @@ fun Sidebar(
             SidebarEntry(Screen.Library, "library", Icons.Outlined.LibraryMusic, Icons.Filled.LibraryMusic),
             SidebarEntry(Screen.Search, "search", Icons.Outlined.Search, Icons.Filled.Search),
             SidebarEntry(Screen.History, "history", Icons.Outlined.History, Icons.Filled.History),
+            SidebarEntry(Screen.Downloads, "downloads", Icons.Outlined.Download, Icons.Filled.Download),
+            SidebarEntry(Screen.LocalMusic, "local_music", Icons.Outlined.Folder, Icons.Filled.Folder),
         )
     }
 
@@ -3385,7 +3413,7 @@ fun Sidebar(
     //
     // `Animations` off keeps the change in one step, like every other
     // transition.
-    val targetWidth = if (collapsed) 72.dp else 230.dp
+    val targetWidth = if (collapsed) 72.dp else 220.dp
     val animatedWidth by animateDpAsState(
         targetValue = targetWidth,
         animationSpec = if (Animations.instant) snap() else tween(Animations.ms(Motion.SHORT4), easing = Motion.emphasized),
@@ -3394,7 +3422,7 @@ fun Sidebar(
     val width = targetWidth
 
     Surface(
-        color = chromeSurfaceColor()
+        color = if (bitChord) BitChordColors.Chrome else chromeSurfaceColor()
     ) {
         Box(Modifier.width(animatedWidth).fillMaxHeight().clipToBounds()) {
         Column(
@@ -3483,7 +3511,7 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> hoverBg
                                         else -> Color.Transparent
                                     }
                                 )
@@ -3491,26 +3519,26 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
-                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 10.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 if (selected) entry.selectedIcon else entry.icon,
                                 contentDescription = Localization.get(language, entry.key),
-                                tint = if (selected) selectedFg
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                                tint = if (selected) selectedFg else secondaryFg,
+                                modifier = Modifier.size(18.dp),
                             )
                             if (!collapsed) {
-                                Spacer(Modifier.width(14.dp))
+                                Spacer(Modifier.width(10.dp))
                                 Tooltip(Localization.get(language, entry.key)) {
                                     Text(
                                         Localization.get(language, entry.key),
-                                        style = MaterialTheme.typography.titleMedium.copy(
-                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontSize = 14.sp,
+                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                                         ),
-                                        color = if (selected) selectedFg
-                                        else MaterialTheme.colorScheme.onSurface,
+                                        color = if (selected) selectedFg else secondaryFg,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -3570,7 +3598,7 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> hoverBg
                                         else -> Color.Transparent
                                     }
                                 )
@@ -3578,16 +3606,15 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(entry.screen) }
-                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
                             Icon(
                                 if (selected) entry.selectedIcon else entry.icon,
                                 contentDescription = Localization.get(language, entry.key),
-                                tint = if (selected) selectedFg
-                                else MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp),
+                                tint = if (selected) selectedFg else secondaryFg,
+                                modifier = Modifier.size(18.dp),
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
@@ -3597,8 +3624,7 @@ fun Sidebar(
                                         style = MaterialTheme.typography.bodyMedium.copy(
                                             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                                         ),
-                                        color = if (selected) selectedFg
-                                        else MaterialTheme.colorScheme.onSurface,
+                                        color = if (selected) selectedFg else secondaryFg,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -3665,7 +3691,7 @@ fun Sidebar(
                             .fillMaxWidth()
                             .clip(MaterialTheme.shapes.small)
                             .clickable { showCreateDialog = true }
-                            .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
+                            .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                     ) {
@@ -3701,7 +3727,7 @@ fun Sidebar(
                                 .background(
                                     when {
                                         selected -> selectedBg
-                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> hoverBg
                                         else -> Color.Transparent
                                     }
                                 )
@@ -3709,7 +3735,7 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylist(p.id)) }
-                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
@@ -3717,8 +3743,8 @@ fun Sidebar(
                                 imageVector = Icons.Filled.PlaylistPlay,
                                 contentDescription = p.name,
                                 tint = if (selected) selectedFg
-                                else MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp),
+                                else secondaryFg,
+                                modifier = Modifier.size(18.dp),
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
@@ -3802,7 +3828,7 @@ fun Sidebar(
                                     .background(
                                         when {
                                             selected -> selectedBg
-                                            hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                            hovered -> hoverBg
                                             else -> Color.Transparent
                                         }
                                     )
@@ -3810,7 +3836,7 @@ fun Sidebar(
                                         interactionSource = interaction,
                                         indication = LocalIndication.current,
                                     ) { onSelect(Screen.Playlist(op.id)) }
-                                    .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
+                                    .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                             ) {
@@ -3853,7 +3879,7 @@ fun Sidebar(
                                 .background(
                                     when {
                                         favSelected -> selectedBg
-                                        hovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+                                        hovered -> hoverBg
                                         else -> Color.Transparent
                                     }
                                 )
@@ -3861,7 +3887,7 @@ fun Sidebar(
                                     interactionSource = interaction,
                                     indication = LocalIndication.current,
                                 ) { onSelect(Screen.LocalPlaylists) }
-                                .padding(horizontal = if (collapsed) 0.dp else 14.dp, vertical = 8.dp),
+                                .padding(horizontal = if (collapsed) 0.dp else 12.dp, vertical = 7.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = if (collapsed) Arrangement.Center else Arrangement.Start,
                         ) {
@@ -3870,8 +3896,8 @@ fun Sidebar(
                                 contentDescription = "Favourite Songs",
                                 tint = if (favSelected) selectedFg
                                 else if (spotify) MaterialTheme.colorScheme.onSurfaceVariant
-                                else MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp),
+                                else secondaryFg,
+                                modifier = Modifier.size(18.dp),
                             )
                             if (!collapsed) {
                                 Spacer(Modifier.width(12.dp))
@@ -3919,67 +3945,19 @@ fun Sidebar(
 
             Spacer(Modifier.height(8.dp))
 
-            // User Account Row (Pinned Bottom Active-Pill). It opens the
-            // Account screen directly: the row IS the account (name, avatar),
-            // so landing on the General list made the user click twice for the
-            // thing they had just clicked. The gear in the rail is the way to
-            // the General list.
+            // BitChord's bottom control, split into VIVI's two destinations.
+            // The account half opens Account; the settings half opens VIVI's
+            // Settings, whose own style and structure are not cloned.
             val settingsSelected = current == Screen.Settings || current == Screen.SettingsAccount
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable { onSelect(Screen.SettingsAccount) },
-                color = if (settingsSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer,
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(if (settingsSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = userName.take(1).uppercase(),
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                            color = if (settingsSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onPrimary,
-                        )
-                    }
-
-                    if (!collapsed) {
-                        Spacer(Modifier.width(10.dp))
-                        // No `weight` here: the column's parent is the label's
-                        // own AnimatedVisibility, not the card's row, so a weight
-                        // would be dropped. It is measured against the space the
-                        // row has left, which is what the two ellipsized lines
-                        // need anyway.
-                        Column {
-                            Tooltip(text = userName) {
-                                Text(
-                                    text = userName,
-                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                    color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            Tooltip(text = userHandle) {
-                                Text(
-                                    text = userHandle,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = if (settingsSelected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            AccountSettingsPill(
+                language = language,
+                collapsed = collapsed,
+                userName = userName,
+                userHandle = userHandle,
+                settingsSelected = settingsSelected,
+                onAccount = { onSelect(Screen.SettingsAccount) },
+                onSettings = { onSelect(Screen.Settings) },
+            )
         }
     }
     }

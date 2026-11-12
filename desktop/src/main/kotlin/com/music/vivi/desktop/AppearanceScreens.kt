@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -540,14 +541,13 @@ fun TransitionsScreen(
     language: String,
     screenTransition: String,
     onScreenTransitionChange: (String) -> Unit,
-    animationsEnabled: Boolean = true,
-    onAnimationsEnabledChange: (Boolean) -> Unit = {},
-    animationSpeed: String = "normal",
-    onAnimationSpeedChange: (String) -> Unit = {},
+    animationLevel: Int = 4,
+    onAnimationLevelChange: (Int) -> Unit = {},
 ) {
     // The style's own *Off* is the transitions switch, so the setting is set in
     // one place: off stores "off", and on restores the fade it falls back to.
     val transitionsOn = screenTransition != "off"
+    val level = animationLevel.coerceIn(0, 5)
 
     Column(Modifier.fillMaxWidth()) {
         // No top padding of its own: the screen host already puts the page's 16 dp
@@ -558,24 +558,18 @@ fun TransitionsScreen(
         )
         Spacer(Modifier.height(16.dp))
 
-        // The master switch and the transitions it governs, in one card: the
-        // second row folds away with the first instead of sitting further down
-        // the hub among rows about other subjects.
         M3SettingsGroup(
             items = listOf(
                 M3SettingsItem(
                     icon = Icons.Filled.MotionPhotosOn,
-                    title = { Text(Localization.get(language, "animations")) },
-                    description = { Text(Localization.get(language, "animations_desc")) },
-                    trailing = { Switch(checked = animationsEnabled, onCheckedChange = onAnimationsEnabledChange) },
-                    onClick = { onAnimationsEnabledChange(!animationsEnabled) },
+                    title = { Text(Localization.get(language, "animation_level")) },
+                    description = { Text(Localization.get(language, "animation_level_desc")) },
+                    trailing = { Text("$level / 5") },
+                    onClick = { onAnimationLevelChange(if (level >= 5) 0 else level + 1) },
                 ),
                 M3SettingsItem(
                     icon = Icons.Filled.PlayArrow,
                     title = { Text(Localization.get(language, "screen_transitions")) },
-                    // The switch's own sentence, which the page draws and the row
-                    // did not: without it the two switches of the card read as two
-                    // names and nothing says what the second one turns on.
                     description = { Text(Localization.get(language, "screen_transitions_desc")) },
                     trailing = {
                         Switch(
@@ -584,22 +578,46 @@ fun TransitionsScreen(
                         )
                     },
                     onClick = { onScreenTransitionChange(if (transitionsOn) "off" else "fade") },
-                    visible = animationsEnabled,
+                    visible = level > 0,
                 ),
             ),
         )
 
-        // Both choices belong to the switches above and fold with them, each with
-        // the page's 16 dp above it *inside* the fold: a spacer outside would be
-        // left behind by a card that folded away, which is the gap the page does
-        // not have.
-        M3SettingsFold(visible = animationsEnabled && transitionsOn) {
+        // 0 is off, so the slider and the old master switch are one control.
+        // The levels change duration and travel together; essential progress and
+        // focus feedback stays visible at every level.
+        Card(
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        ) {
+            Column(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 14.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        Localization.get(language, if (level == 0) "animation_level_off" else "animation_level"),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        if (level == 0) "0" else "$level / 5",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Slider(
+                    value = level.toFloat(),
+                    onValueChange = { onAnimationLevelChange(it.roundToInt()) },
+                    valueRange = 0f..5f,
+                    steps = 4,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+
+        M3SettingsFold(visible = level > 0 && transitionsOn) {
             Spacer(Modifier.height(16.dp))
             M3SettingsDropdownItem(
                 icon = Icons.Filled.Movie,
-                // A standalone dropdown card is not a group of this screen's own, and
-                // the page fades every card in, so it asks for the same entrance the
-                // group above gets.
                 modifier = Modifier.groupEnter(),
                 title = Localization.get(language, "transition_style"),
                 value = Localization.get(language, if (screenTransition == "slide") "transition_slide" else "transition_fade"),
@@ -608,25 +626,6 @@ fun TransitionsScreen(
                     "slide" to Localization.get(language, "transition_slide"),
                 ),
                 onSelect = onScreenTransitionChange,
-            )
-        }
-        M3SettingsFold(visible = animationsEnabled) {
-            Spacer(Modifier.height(16.dp))
-            M3SettingsDropdownItem(
-                icon = Icons.Filled.Speed,
-                modifier = Modifier.groupEnter(),
-                title = Localization.get(language, "animation_speed"),
-                value = Localization.get(language, when (animationSpeed) {
-                    "fast" -> "animation_speed_fast"
-                    "slow" -> "animation_speed_slow"
-                    else -> "animation_speed_normal"
-                }),
-                options = listOf(
-                    "fast" to Localization.get(language, "animation_speed_fast"),
-                    "normal" to Localization.get(language, "animation_speed_normal"),
-                    "slow" to Localization.get(language, "animation_speed_slow"),
-                ),
-                onSelect = onAnimationSpeedChange,
             )
         }
     }

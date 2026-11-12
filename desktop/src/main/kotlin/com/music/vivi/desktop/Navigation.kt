@@ -19,6 +19,8 @@ sealed interface Screen {
     data class LocalPlaylist(val playlistId: String) : Screen
     data class Browse(val browseId: String, val params: String?) : Screen
     data object History : Screen
+    data object Downloads : Screen
+    data object LocalMusic : Screen
     data object Player : Screen
     data object Lyrics : Screen
     data object LyricsFocus : Screen

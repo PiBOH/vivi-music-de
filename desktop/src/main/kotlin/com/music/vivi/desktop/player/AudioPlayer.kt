@@ -608,6 +608,15 @@ class AudioPlayer {
      *  only move the UI position and are applied when playback starts. */
     fun hasLoadedStream(): Boolean = currentStreams != null
 
+    /** The folder that holds completed and partial cache files. */
+    fun cacheDirectory(): File = cacheDir
+
+    /** Completed, valid cache files, newest first. */
+    fun cachedFiles(): List<File> = cacheDir
+        .listFiles { file -> file.isFile && file.extension.equals("m4a", ignoreCase = true) && file.length() > 0 && isValidMp4(file) }
+        ?.sortedByDescending { it.lastModified() }
+        .orEmpty()
+
     /** True when [cacheKey] already has a valid, non-truncated local cache file. */
     fun isCached(cacheKey: String): Boolean {
         val safe = cacheKey.replace(Regex("[^A-Za-z0-9._-]"), "_")

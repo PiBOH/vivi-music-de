@@ -465,6 +465,12 @@ class PlayerController {
     /** Whether [videoId] already has a complete copy in the audio cache. */
     fun isDownloaded(videoId: String): Boolean = player.isCached(videoId)
 
+    /** Completed cache files, for the Downloads screen. */
+    fun cachedFiles(): List<java.io.File> = player.cachedFiles()
+
+    /** The folder that holds the cache, for "Open folder". */
+    fun cacheDirectory(): java.io.File = player.cacheDirectory()
+
     /** Deletes [videoId]'s cached copy, so the next play downloads it again. */
     fun deleteDownload(videoId: String) {
         AppLog.log("cache", "deleteDownload: $videoId")
