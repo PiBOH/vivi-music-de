@@ -564,6 +564,8 @@ fun SettingsTransitionsScreen(
     onScreenTransitionChange: (String) -> Unit,
     animationLevel: Int = 4,
     onAnimationLevelChange: (Int) -> Unit = {},
+    lyricsAnimation: String = "standard",
+    onLyricsAnimationChange: (String) -> Unit = {},
 ) {
     SettingsSubScreen(language, onBack) {
         TransitionsScreen(
@@ -572,6 +574,8 @@ fun SettingsTransitionsScreen(
             onScreenTransitionChange = onScreenTransitionChange,
             animationLevel = animationLevel,
             onAnimationLevelChange = onAnimationLevelChange,
+            lyricsAnimation = lyricsAnimation,
+            onLyricsAnimationChange = onLyricsAnimationChange,
         )
     }
 }

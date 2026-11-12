@@ -1,7 +1,13 @@
 ﻿package com.music.vivi.desktop
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -581,14 +587,11 @@ internal fun ApplePlayerV17Screen(
                                 modifier = Modifier.size(16.dp),
                             )
                             Spacer(Modifier.width(6.dp))
-                            Text(
-                                inlineLine ?: Localization.get(language, "lyrics"),
-                                style = MaterialTheme.typography.bodyMedium.copy(
-                                    fontWeight = if (inlineLine != null) FontWeight.SemiBold else FontWeight.Normal,
-                                ),
-                                color = if (inlineLine != null) contentColor.copy(alpha = 0.9f) else mutedColor,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                            V17InlineLyricLine(
+                                line = inlineLine,
+                                language = language,
+                                contentColor = contentColor,
+                                mutedColor = mutedColor,
                                 modifier = Modifier.weight(1f, fill = false),
                             )
                             Spacer(Modifier.width(8.dp))
@@ -1365,6 +1368,62 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: () -> Long): Sta
                     ?.takeIf { it.isNotBlank() }
             }
         }
+    }
+}
+
+/**
+ * The inline line, with the motion chosen in Settings > Animations.
+ *
+ * "Apple Music" is the BitChord right-panel motion: the old line leaves upward
+ * while the new one arrives from below, both fading, never the whole row. The
+ * standard choice keeps the line in place and replaces the text.
+ */
+@Composable
+private fun V17InlineLyricLine(
+    line: String?,
+    language: String,
+    contentColor: Color,
+    mutedColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    val appleMotion = remember(settingsFileRevision()) {
+        DesktopSettings.load().lyricsAnimation == "apple_music"
+    }
+    val textStyle = MaterialTheme.typography.bodyMedium.copy(
+        fontWeight = if (line != null) FontWeight.SemiBold else FontWeight.Normal,
+    )
+    val textColor = if (line != null) contentColor.copy(alpha = 0.9f) else mutedColor
+    val label = line ?: Localization.get(language, "lyrics")
+    if (!appleMotion || Animations.instant) {
+        Text(
+            label,
+            style = textStyle,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = modifier,
+        )
+        return
+    }
+    AnimatedContent(
+        targetState = line,
+        modifier = modifier,
+        transitionSpec = {
+            val duration = Animations.ms(Motion.MEDIUM2)
+            (slideInVertically(animationSpec = tween(duration, easing = Motion.emphasized)) { it / 3 } +
+                fadeIn(animationSpec = tween(Animations.ms(Motion.SHORT4)))) togetherWith
+                (slideOutVertically(animationSpec = tween(duration, easing = Motion.emphasized)) { -it / 3 } +
+                    fadeOut(animationSpec = tween(Animations.ms(Motion.SHORT4))))
+        },
+        label = "v17InlineLyric",
+    ) { target ->
+        Text(
+            target ?: Localization.get(language, "lyrics"),
+            style = textStyle,
+            color = if (target != null) contentColor.copy(alpha = 0.9f) else mutedColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 

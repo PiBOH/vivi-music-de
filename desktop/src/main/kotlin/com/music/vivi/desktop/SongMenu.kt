@@ -1,15 +1,25 @@
 package com.music.vivi.desktop
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Album
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.LibraryAddCheck
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ThumbDown
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -17,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -24,6 +35,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.music.innertube.YouTube
 import com.music.innertube.models.SongItem
 import com.music.vivi.sync.SyncedSong
@@ -201,6 +213,36 @@ fun copyToClipboard(text: String): Boolean {
     return false
 }
 
+/**
+ * The row actions every screen shares. The menu used to reach the player only
+ * through the per-row callbacks, so most screens offered a shorter menu than
+ * BitChord's. The app provides these once at the root, and any row on any
+ * screen gets the same actions the player itself has.
+ */
+data class SongMenuActions(
+    val playNext: (SongItem) -> Unit = {},
+    val addToQueue: (SongItem) -> Unit = {},
+    val startRadio: (SongItem) -> Unit = {},
+    val download: (SongItem) -> Unit = {},
+    val deleteDownload: (SongItem) -> Unit = {},
+    val isDownloaded: (SongItem) -> Boolean = { false },
+    val openAlbum: (String) -> Unit = {},
+    val openArtist: (String) -> Unit = {},
+    val setSleepTimer: (Int?) -> Unit = {},
+)
+
+val LocalSongMenuActions = staticCompositionLocalOf { SongMenuActions() }
+
+/** The player's own track type, built from a search or library row. */
+internal fun SongItem.toNowPlaying(): NowPlaying = NowPlaying(
+    videoId = id,
+    title = title,
+    artist = artists.joinToString(", ") { it.name },
+    thumbnail = thumbnail,
+    durationMs = (duration ?: 0) * 1000L,
+    album = album?.name,
+)
+
 /** "⋮" context menu for a song: like, library, add-to-playlist, queue and share. */
 @Composable
 fun SongMenu(
@@ -217,6 +259,10 @@ fun SongMenu(
     val scope = rememberCoroutineScope()
     val liked = SongActions.isLiked(song.id)
     val inLibrary = SongActions.isInLibrary(song)
+    val actions = LocalSongMenuActions.current
+    val downloaded = actions.isDownloaded(song)
+    var disliked by remember(song.id) { mutableStateOf(false) }
+    var sleepDialog by remember { mutableStateOf(false) }
 
     Box {
         Tooltip(Localization.get(language, "tooltip_more")) {
@@ -239,7 +285,8 @@ fun SongMenu(
                     )
                 },
                 onClick = {
-                    expanded = false
+                    // A rating row stays open: BitChord lets a listener change
+                    // their mind without reopening the menu.
                     val next = !liked
                     // The metadata travels with the like: it is what lets the
                     // paired phone store a song it has never seen (see
@@ -254,6 +301,15 @@ fun SongMenu(
                     scope.launch { YouTube.likeVideo(song.id, next) }
                 },
             )
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, if (disliked) "undo_dislike" else "dislike")) },
+                leadingIcon = { Icon(Icons.Filled.ThumbDown, contentDescription = null) },
+                onClick = {
+                    disliked = !disliked
+                    if (disliked) scope.launch { YouTube.dislikeVideo(song.id) }
+                },
+            )
+            HorizontalDivider()
             DropdownMenuItem(
                 text = { Text(Localization.get(language, if (inLibrary) "remove_from_library" else "add_to_library")) },
                 leadingIcon = {
@@ -279,22 +335,47 @@ fun SongMenu(
                     },
                 )
             }
-            if (onAddToQueue != null) {
-                // Listen Together: the queue belongs to the host, so a guest's
-                // row is greyed instead of looking available (PlayerController
-                // refuses the call either way).
-                DropdownMenuItem(
-                    text = { Text(Localization.get(language, "add_to_queue")) },
-                    leadingIcon = {
-                        Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
-                    },
-                    enabled = !transportLocked(),
-                    onClick = {
-                        expanded = false
-                        onAddToQueue()
-                    },
-                )
-            }
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, if (downloaded) "remove_download" else "download")) },
+                leadingIcon = {
+                    Icon(if (downloaded) Icons.Filled.Delete else Icons.Filled.Download, contentDescription = null)
+                },
+                onClick = {
+                    expanded = false
+                    if (downloaded) actions.deleteDownload(song) else actions.download(song)
+                },
+            )
+            // Listen Together: the queue belongs to the host, so a guest's
+            // row is greyed instead of looking available (PlayerController
+            // refuses the call either way).
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, "add_to_queue")) },
+                leadingIcon = {
+                    Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
+                },
+                enabled = !transportLocked(),
+                onClick = {
+                    expanded = false
+                    onAddToQueue?.invoke() ?: actions.addToQueue(song)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, "play_next")) },
+                leadingIcon = { Icon(Icons.Filled.PlaylistPlay, contentDescription = null) },
+                enabled = !transportLocked(),
+                onClick = {
+                    expanded = false
+                    actions.playNext(song)
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, "start_radio")) },
+                leadingIcon = { Icon(Icons.Filled.Radio, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    actions.startRadio(song)
+                },
+            )
             // "Suggest to the host": offered only while this user is a GUEST in
             // a Listen Together room. The host owns the queue, so the action has
             // no meaning for them, and outside a room it has nowhere to go,
@@ -323,6 +404,34 @@ fun SongMenu(
                     },
                 )
             }
+            if (song.album?.id != null) {
+                DropdownMenuItem(
+                    text = { Text(Localization.get(language, "open_album")) },
+                    leadingIcon = { Icon(Icons.Filled.Album, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        song.album?.id?.let(actions.openAlbum)
+                    },
+                )
+            }
+            song.artists.firstOrNull()?.id?.let { artistId ->
+                DropdownMenuItem(
+                    text = { Text(Localization.get(language, "open_artist")) },
+                    leadingIcon = { Icon(Icons.Filled.Person, contentDescription = null) },
+                    onClick = {
+                        expanded = false
+                        actions.openArtist(artistId)
+                    },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(Localization.get(language, "sleep_timer")) },
+                leadingIcon = { Icon(Icons.Filled.Timer, contentDescription = null) },
+                onClick = {
+                    expanded = false
+                    sleepDialog = true
+                },
+            )
             HorizontalDivider()
             DropdownMenuItem(
                 text = { Text(Localization.get(language, "share")) },
@@ -334,5 +443,36 @@ fun SongMenu(
                 },
             )
         }
+    }
+
+    if (sleepDialog) {
+        AlertDialog(
+            onDismissRequest = { sleepDialog = false },
+            title = { Text(Localization.get(language, "sleep_timer")) },
+            text = {
+                Column {
+                    listOf(5, 10, 15, 30, 45, 60).forEach { minutes ->
+                        TextButton(
+                            onClick = {
+                                actions.setSleepTimer(minutes)
+                                sleepDialog = false
+                            },
+                        ) { Text(Localization.get(language, "${minutes}_minutes")) }
+                    }
+                    TextButton(
+                        onClick = {
+                            actions.setSleepTimer(null)
+                            sleepDialog = false
+                        },
+                    ) { Text(Localization.get(language, "turn_off")) }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { sleepDialog = false }) {
+                    Text(Localization.get(language, "cancel"))
+                }
+            },
+        )
     }
 }

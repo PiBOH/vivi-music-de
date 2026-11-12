@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
@@ -172,25 +173,16 @@ fun BitChordExploreScreen(
         MaterialTheme.colorScheme.onErrorContainer,
     )
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                Icons.Filled.Explore,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(26.dp),
-            )
-            Spacer(Modifier.width(10.dp))
-            Text("Explore", style = MaterialTheme.typography.headlineMedium)
-        }
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         when {
             error != null -> ErrorBox(language, error)
             sections == null -> LoadingBox(language)
-            else -> LazyColumn(Modifier.fillMaxSize().padding(top = 12.dp)) {
+            else -> LazyColumn(Modifier.fillMaxSize()) {
                 item(key = "new_releases_header") {
                     Text(
                         Localization.get(language, "new_release_albums"),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
+                        color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.padding(bottom = 10.dp),
                     )
                 }
@@ -225,7 +217,8 @@ fun BitChordExploreScreen(
                     item(key = "header-" + section.title) {
                         Text(
                             section.title,
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
+                            color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.padding(
                                 top = 22.dp,
                                 bottom = 10.dp,
@@ -462,22 +455,7 @@ fun BitChordLibraryScreen(
         )
     }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                Localization.get(language, "library"),
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.weight(1f),
-            )
-            if (isLoggedIn && selectedTab == 0 && page?.items?.isNotEmpty() == true) {
-                Button(onClick = { onShuffleAll(page!!.items.filterIsInstance<SongItem>()) }) {
-                    Icon(Icons.Filled.Shuffle, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(Localization.get(language, "shuffle_all"))
-                }
-            }
-        }
-
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         // The four listening cards. Real numbers from the local history, and
         // nothing drawn at all while there is no history to count.
         if (history.isNotEmpty()) {

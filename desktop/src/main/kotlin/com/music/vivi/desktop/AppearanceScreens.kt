@@ -543,6 +543,8 @@ fun TransitionsScreen(
     onScreenTransitionChange: (String) -> Unit,
     animationLevel: Int = 4,
     onAnimationLevelChange: (Int) -> Unit = {},
+    lyricsAnimation: String = "standard",
+    onLyricsAnimationChange: (String) -> Unit = {},
 ) {
     // The style's own *Off* is the transitions switch, so the setting is set in
     // one place: off stores "off", and on restores the fade it falls back to.
@@ -626,6 +628,25 @@ fun TransitionsScreen(
                     "slide" to Localization.get(language, "transition_slide"),
                 ),
                 onSelect = onScreenTransitionChange,
+            )
+        }
+
+        M3SettingsFold(visible = level > 0) {
+            Spacer(Modifier.height(16.dp))
+            M3SettingsDropdownItem(
+                icon = Icons.Filled.Lyrics,
+                modifier = Modifier.groupEnter(),
+                title = Localization.get(language, "lyrics_animation"),
+                description = Localization.get(language, "lyrics_animation_desc"),
+                value = Localization.get(
+                    language,
+                    if (lyricsAnimation == "apple_music") "lyrics_animation_apple_music" else "lyrics_animation_standard",
+                ),
+                options = listOf(
+                    "standard" to Localization.get(language, "lyrics_animation_standard"),
+                    "apple_music" to Localization.get(language, "lyrics_animation_apple_music"),
+                ),
+                onSelect = onLyricsAnimationChange,
             )
         }
     }

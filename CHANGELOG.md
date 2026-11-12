@@ -1,5 +1,23 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.6-beta10] - 2026-11-12
+
+### ✨ Added
+- [DE] **[beta10] BitChord's shell replaces the VIVI chrome.**
+- [DE] **[beta10] The right panel is BitChord's 360 dp Now Playing column.**
+- [DE] **[beta10] The song menu carries BitChord's whole action set.**
+- [DE] **[beta10] Animations has a Lyrics animation choice.**
+- [DE] **[beta10] Search lives in the rail, as in BitChord.**
+
+### 🔧 Changed
+- [DE] **[beta10] Home, Explore, Library, History, Playlist and Listen Together use the BitChord surfaces.**
+- [DE] **[beta10] The mini player stays at the bottom.**
+- [DE] **[beta10] Search results are 56 dp rows with the shared menu.**
+
+### 🐛 Fixed
+- [DE] **[beta10] The page no longer shows a duplicate search field.**
+- [DE] **[beta10] The content pane has no top corner radius.**
+
 ## [6.0.8.11_DE-1.58.5-beta9] - 2026-11-11
 
 ### 🔧 Changed

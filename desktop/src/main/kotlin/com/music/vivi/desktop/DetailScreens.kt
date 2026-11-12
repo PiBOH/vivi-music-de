@@ -1,5 +1,6 @@
 package com.music.vivi.desktop
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -42,8 +43,11 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.music.innertube.YouTube
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.Artist
@@ -552,8 +556,12 @@ fun HistoryScreen(
         )
     }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Text(Localization.get(language, "history"), style = MaterialTheme.typography.headlineMedium)
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+        Text(
+            Localization.get(language, "history"),
+            style = MaterialTheme.typography.headlineMedium.copy(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
+            color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onBackground,
+        )
         LazyColumn(Modifier.weight(1f).fillMaxWidth()) {
             if (localSearches.isNotEmpty()) {
                 item(key = "header-local-searches") {
@@ -595,7 +603,7 @@ fun HistoryScreen(
                         // No length on a history row: the local rows know it and
                         // the account's rows do not, so drawing it showed a
                         // duration on some rows and nothing on the others.
-                        showDuration = false,
+                        showDuration = true,
                     )
                 }
             }
@@ -648,7 +656,8 @@ private fun HistorySectionHeader(title: String, clearLabel: String, onClear: () 
     ) {
         Text(
             title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
+            color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
         )
         TextButton(onClick = onClear) { Text(clearLabel) }

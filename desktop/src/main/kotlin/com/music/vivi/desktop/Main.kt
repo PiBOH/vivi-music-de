@@ -476,6 +476,7 @@ fun WindowScope.App(
     var densityScale by remember(settingsFileRevision()) { mutableStateOf(startupSettings.densityScale) }
     var gridItemSize by remember(settingsFileRevision()) { mutableStateOf(startupSettings.gridItemSize) }
     var screenTransition by remember(settingsFileRevision()) { mutableStateOf(startupSettings.screenTransition) }
+    var lyricsAnimation by remember(settingsFileRevision()) { mutableStateOf(startupSettings.lyricsAnimation) }
     var animationLevel by remember(settingsFileRevision()) {
         mutableStateOf(if (startupSettings.animationsEnabled) startupSettings.animationLevel.coerceIn(0, 5) else 0)
     }
@@ -1735,6 +1736,20 @@ fun WindowScope.App(
         // representation replaces it everywhere so every context menu (text
         // selection and ContextMenuArea alike) matches the app.
         LocalContextMenuRepresentation provides Material3ContextMenuRepresentation,
+        // One action set for every song row on every screen. The rows used to
+        // offer only what their screen passed in, so the same song had a
+        // different menu in Search and in a playlist.
+        LocalSongMenuActions provides SongMenuActions(
+            playNext = { player.insertNext(it.toNowPlaying()) },
+            addToQueue = { player.addToQueue(it.toNowPlaying()) },
+            startRadio = { player.startRadio(it.toNowPlaying()) },
+            download = { player.downloadToCache(it.id) },
+            deleteDownload = { player.deleteDownload(it.id) },
+            isDownloaded = { player.isDownloaded(it.id) },
+            openAlbum = { navigate(Screen.Album(it)) },
+            openArtist = { navigate(Screen.Artist(it)) },
+            setSleepTimer = { player.setSleepTimer(it) },
+        ),
     ) {
     CompositionLocalProvider(
         LocalPlayback provides PlaybackContext(
@@ -1784,6 +1799,13 @@ fun WindowScope.App(
                             sidebarCollapsed = !sidebarCollapsed
                             DesktopSettings.update { it.copy(sidebarCollapsed = sidebarCollapsed) }
                         },
+                        searchQuery = headerSearchQuery,
+                        onSearchQueryChange = { headerSearchQuery = it },
+                        onSearch = { q ->
+                            headerSearchQuery = q
+                            recordSearch(q)
+                            navigate(Screen.Search)
+                        },
                         onSelect = openRoot,
                     )
                 }
@@ -1807,6 +1829,13 @@ fun WindowScope.App(
                         sidebarCollapsed = !sidebarCollapsed
                         DesktopSettings.update { it.copy(sidebarCollapsed = sidebarCollapsed) }
                     },
+                    searchQuery = headerSearchQuery,
+                    onSearchQueryChange = { headerSearchQuery = it },
+                    onSearch = { q ->
+                        headerSearchQuery = q
+                        recordSearch(q)
+                        navigate(Screen.Search)
+                    },
                     onSelect = openRoot,
                 )
             }
@@ -1816,48 +1845,12 @@ fun WindowScope.App(
                 .weight(1f)
                 .fillMaxHeight()
         ) {
-            if (spotifyLayout && current != Screen.Player) {
-                SpotifyTopHeader(
-                    language = language,
-                    canGoBack = backStack.size > 1,
-                    onBack = goBack,
-                    onOpenSearch = { navigate(Screen.Search) },
-                    onOpenHome = { openRoot(Screen.Home) },
-                    onOpenHistory = { navigate(Screen.History) },
-                    onOpenStats = { navigate(Screen.SettingsWrapped) },
-                    onOpenListenTogether = { openRoot(Screen.ListenTogether) },
-                    onOpenSettings = { openRoot(Screen.Settings) },
-                    onOpenLyrics = { navigate(Screen.Lyrics) },
-                    onOpenQueue = { openRoot(Screen.Queue) },
-                    onMinimize = onMinimize,
-                    onMaximize = onMaximize,
-                    onClose = onClose,
-                    isMaximized = isMaximized,
-                    // With the native title bar the OS provides the window
-                    // controls, so VIVI's bar hides its own buttons.
-                    showWindowControls = !nativeTitleBar,
-                    searchQuery = headerSearchQuery,
-                    onSearchQueryChange = { newQ -> headerSearchQuery = newQ },
-                    onSearchSubmit = { q -> recordSearch(q) },
-                    selectedFilter = headerSearchFilter,
-                    onFilterSelect = { f -> headerSearchFilter = f },
-                )
-            }
-            // The page is the pane under the chrome: the rail and the top bar are
-            // one tinted frame, and the pane's two upper corners are the curve
-            // that frame leaves free (the owner's reference). The backdrop under
-            // the pane carries the chrome's own colour, so the corners are the
-            // frame showing through and not the page's background painted on
-            // itself.
-            // No top bar on the full player, so there is no frame up there for a
-            // corner to cut into: only the rail's own corner stays rounded.
-            // The right corner is the top bar meeting the Now Playing panel, so
-            // it exists only while that panel does: width-wise the panel is gone
-            // under 1150 dp too, and a curve there would cut into the page with
-            // nothing beside it to explain it.
-            val hasTopBar = spotifyLayout && current != Screen.Player
-            val roundTopEnd = hasTopBar && showRightSidebar && !narrowRightPanel
-            val paneBackdrop = if (hasTopBar) chromeSurfaceColor() else MaterialTheme.colorScheme.background
+            // BitChord has no top bar: the rail is the whole chrome. The page
+            // starts at the window's top edge, and the system window controls
+            // remain in their overlay. A top bar would also duplicate the
+            // search, history and settings that the rail already owns.
+            val hasTopBar = false
+            val paneBackdrop = BitChordColors.page()
             Row(
                 Modifier
                     .weight(1f)
@@ -1868,7 +1861,7 @@ fun WindowScope.App(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(contentPaneShape(roundTopEnd = roundTopEnd)),
+                    .clip(androidx.compose.ui.graphics.RectangleShape),
                 color = MaterialTheme.colorScheme.background,
                 shape = androidx.compose.ui.graphics.RectangleShape,
             ) {
@@ -2157,6 +2150,11 @@ fun WindowScope.App(
                             DesktopSettings.update { it.copy(screenTransition = t) }
                         },
                         animationLevel = animationLevel,
+                        lyricsAnimation = lyricsAnimation,
+                        onLyricsAnimationChange = { a ->
+                            lyricsAnimation = a
+                            DesktopSettings.update { it.copy(lyricsAnimation = a) }
+                        },
                         onAnimationLevelChange = { v ->
                             animationLevel = v.coerceIn(0, 5)
                             // The transition helpers read this directly, so the
@@ -3109,26 +3107,30 @@ fun WindowScope.App(
         AnimatedVisibility(
             // A narrow window gives the panel away to the content instead of
             // squeezing it: it comes back as soon as the window has room.
-            visible = showRightSidebar && spotifyLayout && current != Screen.Player && !narrowRightPanel,
+            visible = showRightSidebar && current != Screen.Player && !narrowRightPanel,
             enter = Animations.panelEnter(),
             exit = Animations.panelExit(),
         ) {
-            SpotifyRightNowPlayingPanel(
+            BitChordRightPanel(
                 nowPlaying = nowPlaying,
                 isPlaying = isPlaying,
                 positionMs = playheadProvider,
+                queue = playerState.queue,
+                queueIndex = playerState.index,
                 language = language,
+                lyricsDisplay = lyricsDisplay.copy(fontFamily = lyricsFontFamily),
+                syncedLyrics = syncedLyrics,
                 onClose = {
                     showRightSidebar = false
                     DesktopSettings.update { it.copy(showRightSidebar = false) }
                 },
+                onTogglePlay = { player.toggle() },
+                onSeek = { player.seekTo(it) },
                 onOpenLyrics = { navigate(Screen.Lyrics) },
+                onSkipTo = { player.skipTo(it) },
+                onRemoveAt = { player.removeAt(it) },
+                onClear = { player.clearQueue() },
                 onAddToPlaylist = addNowPlayingToPlaylist,
-                // Flush to the window's own edges: the 4/6 dp gutter that used
-                // to sit here was the chrome's colour all the way around the
-                // panel, so the panel read as a card laid on the frame instead
-                // of as part of it (the owner's report).
-                modifier = Modifier,
             )
         }
     }
@@ -3320,6 +3322,9 @@ fun Sidebar(
     userHandle: String = "Not signed in",
     isLoggedIn: Boolean = false,
     spotify: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onSearch: (String) -> Unit = {},
     onToggleCollapsed: () -> Unit,
     onSelect: (Screen) -> Unit,
 ) {
@@ -3487,6 +3492,18 @@ fun Sidebar(
                 }
             }
             Spacer(Modifier.height(6.dp))
+
+            if (!collapsed) {
+                BitChordSidebarSearch(
+                    language = language,
+                    value = searchQuery,
+                    placeholder = Localization.get(language, "search_placeholder"),
+                    onValueChange = onSearchQueryChange,
+                    onSubmit = onSearch,
+                    onFocus = { onSearch(searchQuery) },
+                )
+                Spacer(Modifier.height(8.dp))
+            }
 
             // Scrollable Content Region
             val scrollState = rememberScrollState()

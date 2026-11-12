@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.music.innertube.YouTube
 import com.music.innertube.models.Artist
 import com.music.innertube.models.SongItem
@@ -298,16 +299,21 @@ internal fun HomeShelfStack(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceContainer),
-        contentPadding = PaddingValues(top = 24.dp, bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+            .background(BitChordColors.page()),
+        contentPadding = PaddingValues(top = 18.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        // Home is BitChord's shelf stack and nothing else: each section is one
-        // heading over one row of the same 150 dp card, with its name and its
-        // subtitle under the artwork, on the page's 24 dp gutter, 14 dp apart,
-        // and the window cuts the trailing card. There is no greeting, no chip,
-        // no lead card, no arrow and no dot row: the cut card is what says the
-        // row goes on, exactly as the reference's Home draws it.
+        // The owner's one addition to BitChord's shelf stack: a quiet,
+        // time-based greeting. It is not a marketing hero; the shelves start
+        // immediately under it.
+        item(key = "greeting") {
+            Text(
+                greetingFor(language),
+                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
+                color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            )
+        }
         val page = home
 
         // This machine's own playlists come first, drawn with the same mosaic
@@ -357,8 +363,8 @@ private fun ClassicShelf(title: String, content: LazyListScope.() -> Unit) {
         Spacer(Modifier.height(12.dp))
         LazyRow(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            contentPadding = PaddingValues(horizontal = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
             content = content,
         )
     }
@@ -373,13 +379,13 @@ private fun ClassicShelf(title: String, content: LazyListScope.() -> Unit) {
 private fun ClassicShelfCard(item: YTItem, onClick: () -> Unit) {
     Column(
         Modifier
-            .width(150.dp)
+            .width(168.dp)
             .clickable {
                 AppLog.click("card '${item.title}'")
                 onClick()
             },
     ) {
-        Thumbnail(item.thumbnail, Modifier.size(150.dp), shape = MaterialTheme.shapes.small)
+        Thumbnail(item.thumbnail, Modifier.size(168.dp), shape = MaterialTheme.shapes.small)
         Spacer(Modifier.height(8.dp))
         Tooltip(item.title) {
             Text(
@@ -416,7 +422,7 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
     val count = "${playlist.songs.size} " + Localization.get(language, "songs").lowercase()
     Column(
         Modifier
-            .width(150.dp)
+            .width(168.dp)
             .clickable {
                 AppLog.click("local playlist '${playlist.name}'")
                 onClick()
@@ -425,7 +431,7 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
         // The mosaic is this card's artwork, so it wears the shelf's own corner:
         // a playlist and an album differ by what they hold, never by their
         // shape. BitChord draws Home's collection shelf the same way.
-        PlaylistMosaic(playlist = playlist, size = 150.dp, shape = MaterialTheme.shapes.small)
+        PlaylistMosaic(playlist = playlist, size = 168.dp, shape = MaterialTheme.shapes.small)
         Spacer(Modifier.height(8.dp))
         Tooltip(name) {
             Text(
@@ -447,17 +453,35 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
     }
 }
 
-/** A shelf's heading: BitChord's 22 sp semibold line on the 24 dp gutter. */
+/** The owner's time-based greeting, in the two shipping languages. */
+private fun greetingFor(language: String): String {
+    val hour = java.time.LocalTime.now().hour
+    return if (language.startsWith("it")) {
+        when {
+            hour < 12 -> "Buongiorno"
+            hour < 18 -> "Buon pomeriggio"
+            else -> "Buonasera"
+        }
+    } else {
+        when {
+            hour < 12 -> "Good morning"
+            hour < 18 -> "Good afternoon"
+            else -> "Good evening"
+        }
+    }
+}
+
+/** A shelf's heading: BitChord's 22 sp semibold line on the 16 dp gutter. */
 @Composable
 private fun ShelfHeading(title: String) {
     Text(
         text = title,
-        style = MaterialTheme.typography.titleLarge,
+        style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp),
         fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface,
+        color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface,
         maxLines = 2,
         overflow = TextOverflow.Ellipsis,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
     )
 }
 

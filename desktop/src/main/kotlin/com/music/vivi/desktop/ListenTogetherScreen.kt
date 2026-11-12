@@ -341,7 +341,7 @@ fun ListenTogetherScreen(
         DesktopSettings.update { s -> s.copy(listenTogetherAvatarIndex = index) }
     }
 
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).verticalScroll(rememberScrollState()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             BackButton(language, onBack)
             Spacer(Modifier.weight(1f))

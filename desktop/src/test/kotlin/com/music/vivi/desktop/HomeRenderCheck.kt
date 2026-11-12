@@ -884,8 +884,8 @@ object HomeRenderCheck {
             check(changed > 5_000) {
                 "the design switch changed only $changed sampled px, so the Home did not redraw"
             }
-            check(classicHeight in 144..156) {
-                "the Classic frame's lead paints $classicHeight px, expected BitChord's 150 dp card"
+            check(classicHeight in 162..174) {
+                "the Classic frame's lead paints $classicHeight px, expected BitChord's 168 dp card"
             }
             check(m3eHeight in 168..184) {
                 "the m3e frame's lead paints $m3eHeight px, expected the 180 dp card"
@@ -912,10 +912,10 @@ object HomeRenderCheck {
         store.writeText("""{"homeDesign":"classic"}""")
         DesktopSettings.applyDesignDefaults()
         val moved = DesktopSettings.load()
-        check(moved.homeDesign == DesignStyle.M3E.key) {
-            "the previous beta's classic was not moved to m3e (read '${moved.homeDesign}')"
+        check(moved.homeDesign == DesignStyle.CLASSIC.key) {
+            "the previous beta's classic was not kept on the BitChord layout (read '${moved.homeDesign}')"
         }
-        check(moved.designDefaultsVersion == 2) {
+        check(moved.designDefaultsVersion == 3) {
             "the move was not recorded (generation ${moved.designDefaultsVersion})"
         }
         DesktopSettings.update { it.copy(homeDesign = DesignStyle.CLASSIC.key) }
@@ -931,30 +931,30 @@ object HomeRenderCheck {
         }
         DesktopSettings.applyDesignDefaults()
         val fromFirstGeneration = DesktopSettings.load()
-        check(fromFirstGeneration.homeDesign == DesignStyle.M3E.key) {
-            "a store still on the previous Home was not moved to m3e (read '${fromFirstGeneration.homeDesign}')"
+        check(fromFirstGeneration.homeDesign == DesignStyle.CLASSIC.key) {
+            "a store still on the previous Home was not moved to the BitChord layout (read '${fromFirstGeneration.homeDesign}')"
         }
-        check(fromFirstGeneration.designDefaultsVersion == 2) {
+        check(fromFirstGeneration.designDefaultsVersion == 3) {
             "the second move was not recorded (generation ${fromFirstGeneration.designDefaultsVersion})"
         }
         println(
-            "design defaults: the previous Home moves to m3e once (generations 1 and 0), a later Classic stays",
+            "design defaults: every older store moves to the BitChord layout once (generations 1 and 0), a later Classic stays",
         )
     }
 
     @JvmStatic
     fun main(args: Array<String>) {
         designDefaultsMigrateOnce()
-        // The window a new installation opens on: Home is the m3e style unless
-        // the store says otherwise (see [designDefaultsMigrateOnce]).
-        check(DesktopSyncState().homeDesign == DesignStyle.M3E.key) {
-            "the shipped default for Home is '${DesktopSyncState().homeDesign}', expected m3e"
+        // The window a new installation opens on: Home is the BitChord Classic
+        // stack unless the store says otherwise (see [designDefaultsMigrateOnce]).
+        check(DesktopSyncState().homeDesign == DesignStyle.CLASSIC.key) {
+            "the shipped default for Home is '${DesktopSyncState().homeDesign}', expected classic"
         }
         ensureCovers()
         val wide = render(1364, 1560, "home-1364.png")
         val narrow = render(1024, 1560, "home-1024.png")
-        bitChordShelf("home-1364", wide, pad = 24, cardDp = 150, gapDp = 14)
-        bitChordShelf("home-1024", narrow, pad = 24, cardDp = 150, gapDp = 14)
+        bitChordShelf("home-1364", wide, pad = 16, cardDp = 168, gapDp = 18)
+        bitChordShelf("home-1024", narrow, pad = 16, cardDp = 168, gapDp = 18)
         // Explore's New releases row: the screen's own composable, painted inside
         // the page's 16 dp inset so the row sees the 1332 dp viewport it does in
         // the app at 1364.

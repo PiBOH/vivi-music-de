@@ -2,6 +2,7 @@ package com.music.vivi.desktop
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,8 +31,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -170,6 +179,70 @@ internal fun AccountSettingsPill(
                     color = if (settingsSelected) primary else secondary,
                     maxLines = 1,
                 )
+            }
+        }
+    }
+}
+
+/**
+ * BitChord's 36 dp search field at the top of the rail. Typing updates the
+ * shared query; focus opens Search, and Enter submits. The page itself is a
+ * result surface, not a second search box.
+ */
+@Composable
+internal fun BitChordSidebarSearch(
+    language: String,
+    value: String,
+    placeholder: String,
+    onValueChange: (String) -> Unit,
+    onSubmit: (String) -> Unit,
+    onFocus: () -> Unit,
+) {
+    val dark = isAppInDarkTheme()
+    val secondary = BitChordColors.secondary()
+    val primary = if (dark) Color.White else MaterialTheme.colorScheme.onSurface
+    val fill = if (dark) BitChordColors.Search else MaterialTheme.colorScheme.surfaceContainerHigh
+    val border = if (dark) BitChordColors.SearchBorder else MaterialTheme.colorScheme.outlineVariant
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(36.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .background(fill)
+            .border(1.dp, border, RoundedCornerShape(8.dp))
+            .padding(horizontal = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.Filled.Search, contentDescription = null, tint = secondary, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(7.dp))
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium.copy(color = primary),
+            cursorBrush = SolidColor(primary),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { onSubmit(value) }),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged { if (it.isFocused) onFocus() },
+            decorationBox = { inner ->
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (value.isEmpty()) {
+                        Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = secondary, maxLines = 1)
+                    }
+                    inner()
+                }
+            },
+        )
+        if (value.isNotEmpty()) {
+            Tooltip(Localization.get(language, "clear")) {
+                Box(
+                    Modifier.size(22.dp).clip(CircleShape).clickable { onValueChange("") },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Filled.Close, contentDescription = null, tint = secondary, modifier = Modifier.size(13.dp))
+                }
             }
         }
     }

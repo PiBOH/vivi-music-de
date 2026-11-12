@@ -1,5 +1,23 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.58.6-beta10] - 2026-11-12
+
+### ✨ Added
+- [DE] **[beta10] BitChord's shell replaces the VIVI chrome.** The desktop now opens on the reference's 220 dp rail: the VIVI brand, a 36 dp search field in the rail, the Home, Explore, Library and History rows, the Playlist section and the Account | Settings pill at the bottom. The old top bar is gone, so the page starts at the window's top edge and the rail is the only chrome. The page background is `#171717`, the rail is `#242424`, and the rows use BitChord's hover and selected fills. The window keeps its native title bar and drag surface.
+- [DE] **[beta10] The right panel is BitChord's 360 dp Now Playing column.** It replaces the old Spotify panel with the Lyrics and Queue tabs, the blurred cover header, the current track block and the transport row. It is shown while the window has room for it and hides under 1150 dp, as the reference does.
+- [DE] **[beta10] The song menu carries BitChord's whole action set.** Like and dislike stay open for a second choice, and the menu also offers add to library, add to playlist, download or remove download, add to queue, play next, start radio, open album, open artist, sleep timer with 5, 10, 15, 30, 45 and 60 minute presets, share and suggest to host in a Listen Together room. The actions come from one root provider, so the same song has the same menu in Search, Home, Library, History and a playlist. The download row reads and removes the real audio cache, and the sleep timer drives `PlayerController` directly.
+- [DE] **[beta10] Animations has a Lyrics animation choice.** `lyricsAnimation` is `standard` by default and `apple_music` as the second option. Apple Music applies the BitChord right-panel motion to the inline lyric line of Apple Music v17 only: the outgoing line leaves upward while the incoming line arrives from below, both fading, in 300 ms on the emphasized curve. The option is stored in `settings.json` and is ignored outside v17 and at animation level 0.
+- [DE] **[beta10] Search lives in the rail, as in BitChord.** The 36 dp field takes the query, records it in the search history and opens the Search page. The page no longer draws a second field: it is the result surface with the filters, suggestions and 56 dp result rows.
+
+### 🔧 Changed
+- [DE] **[beta10] Home, Explore, Library, History, Playlist and Listen Together use the BitChord surfaces.** Home keeps the dynamic greeting and the shelf rows on `#171717`; Explore drops the large title and icon and uses 22 sp shelf headings; Library adds the device links to Downloads and Local Music; History draws the 30 sp title, the 22 sp section headings and its rows with duration; a local playlist uses the 2x2 mosaic header and the real stored order; Listen Together keeps its rooms, chat and controls on the BitChord page.
+- [DE] **[beta10] The mini player stays at the bottom.** Both VIVI mini players keep their position and their controls; only the full player's inline lyric gains the new optional motion.
+- [DE] **[beta10] Search results are 56 dp rows with the shared menu.** The old 46 dp cover row and the page-level query field are gone, and the result list reads the same `SongMenu` as every other surface.
+
+### 🐛 Fixed
+- [DE] **[beta10] The page no longer shows a duplicate search field.** With the rail's field in place, the Search page's own `OutlinedTextField` was a second query input that could disagree with the rail. It was removed; the page now only filters and lists.
+- [DE] **[beta10] The content pane has no top corner radius.** The old chrome left a rounded top corner for a top bar that no longer exists, which cut a curve into the page under the native title bar. The pane is a plain rectangle now.
+
 ## [6.0.8.11_DE-1.58.5-beta9] - 2026-11-11
 
 ### 🔧 Changed

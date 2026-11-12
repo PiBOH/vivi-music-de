@@ -269,10 +269,8 @@ object AnimationsOrderCheck {
                             onBack = {},
                             screenTransition = screenTransition,
                             onScreenTransitionChange = {},
-                            animationsEnabled = animationsEnabled,
-                            onAnimationsEnabledChange = {},
-                            animationSpeed = "normal",
-                            onAnimationSpeedChange = {},
+                            animationLevel = if (animationsEnabled) 4 else 0,
+                            onAnimationLevelChange = {},
                         )
                     }
                 }

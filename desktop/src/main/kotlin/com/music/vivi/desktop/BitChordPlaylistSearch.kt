@@ -103,7 +103,7 @@ fun BitChordLocalPlaylistScreen(
     var nameDraft by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
         BackButton(language, onBack)
         if (playlist == null) {
             Text(
@@ -451,31 +451,16 @@ fun BitChordSearchScreen(
 
     LaunchedEffect(query, focused) {
         val q = query.trim()
-        if (!focused || q.isEmpty() || page != null || filterItems != null) {
+        if (q.isEmpty() || page != null || filterItems != null) {
             suggestions = emptyList()
             return@LaunchedEffect
         }
         suggestions = YouTube.searchSuggestions(q).getOrNull()?.queries.orEmpty().take(6)
     }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        OutlinedTextField(
-            value = query,
-            onValueChange = updateQuery,
-            modifier = Modifier.fillMaxWidth().onFocusChanged { focused = it.isFocused },
-            singleLine = true,
-            shape = MaterialTheme.shapes.extraLarge,
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-            trailingIcon = {
-                if (query.isNotBlank()) {
-                    M3IconButton(onClick = { updateQuery("") }) {
-                        Icon(Icons.Filled.Close, contentDescription = Localization.get(language, "clear"))
-                    }
-                }
-            },
-            placeholder = { Text(Localization.get(language, "search_placeholder")) },
-        )
-
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+        // The rail's 36 dp field is the only query input, as in BitChord. This
+        // page is the result surface: filters, suggestions and rows.
         val filters = listOf(
             null to Localization.get(language, "filter_all"),
             YouTube.SearchFilter.FILTER_SONG to Localization.get(language, "filter_songs"),
@@ -498,7 +483,7 @@ fun BitChordSearchScreen(
 
         // The service's own suggestions, while the field has the focus and no
         // results are on screen yet.
-        if (focused && suggestions.isNotEmpty() && page == null && filterItems == null) {
+        if (suggestions.isNotEmpty() && page == null && filterItems == null) {
             Column(Modifier.fillMaxWidth().padding(top = 8.dp)) {
                 suggestions.forEach { s ->
                     Row(
@@ -633,7 +618,7 @@ private fun SearchResultRow(
         AsyncImage(
             model = item.thumbnail,
             contentDescription = null,
-            modifier = Modifier.size(46.dp).clip(MaterialTheme.shapes.small),
+            modifier = Modifier.size(56.dp).clip(MaterialTheme.shapes.small),
         )
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {

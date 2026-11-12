@@ -64,6 +64,12 @@ data class DesktopSyncState(
     /** Screen transition style between navigations: off / fade / slide. */
     val screenTransition: String = "fade",
     /**
+     * The inline lyric line's motion on Apple Music v17: "standard" (the line
+     * replaces itself) or "apple_music" (the BitChord right-panel motion, a
+     * shallow slide with a fade). Applies only to v17's inline row.
+     */
+    val lyricsAnimation: String = "standard",
+    /**
      * UI animation intensity, 0..5. 0 is off; 1 is minimal and 5 is richest.
      * [animationsEnabled] is kept in sync for older stores and callers.
      */
@@ -97,10 +103,10 @@ data class DesktopSyncState(
      * edition has had until now, "m3e" is the Material 3 Expressive one. One
      * value per screen, so Home can be Expressive while Explore still draws the
      * original; the Designs screen sets all four from one preview. Home starts
-     * on `m3e`, so a fresh window opens on the Expressive Home (see
-     * [designDefaults]); the other three start on `classic`.
+     * on `classic`, BitChord's shelf stack; `m3e` remains a choice in
+     * Appearance -> Designs. The other three start on `classic` too.
      */
-    val homeDesign: String = "m3e",
+    val homeDesign: String = "classic",
     val exploreDesign: String = "classic",
     val libraryDesign: String = "classic",
     val historyDesign: String = "classic",
@@ -523,11 +529,10 @@ object DesktopSettings {
      * `homeDesign` shipped as `classic` in the beta the designs were built in,
      * and that beta never left this machine, so a store carrying that value has
      * no choice to preserve: the move sets Home to m3e and records the
-     * generation. Generation 2 re-runs it once for a store still on the previous
-     * Home: the m3e Home was rebuilt on the reference sketch and the feed's whole
-     * category set, and a build that carries it has to show it. A Classic picked
-     * in `Appearance → Designs` afterwards is a normal stored option and is never
-     * moved again, because the generation is already the current one.
+     * generation. Generation 3 moves the cloned build to BitChord's Classic
+     * layout across the four screens: a Home left on the Expressive design would
+     * hide the shelf stack this build is for. A later choice in
+     * `Appearance → Designs` is a normal stored option and is never moved again.
      *
      * It runs after `SettingsFile.start()`, not while reading the store: the
      * mirror (settings.json) is adopted there and would otherwise write the old
@@ -539,7 +544,10 @@ object DesktopSettings {
                 state
             } else {
                 state.copy(
-                    homeDesign = DesignStyle.M3E.key,
+                    homeDesign = DesignStyle.CLASSIC.key,
+                    exploreDesign = DesignStyle.CLASSIC.key,
+                    libraryDesign = DesignStyle.CLASSIC.key,
+                    historyDesign = DesignStyle.CLASSIC.key,
                     designDefaultsVersion = DESIGN_DEFAULTS_VERSION,
                 )
             }
@@ -547,7 +555,7 @@ object DesktopSettings {
     }
 
     /** The design-defaults generation this build writes once (see [applyDesignDefaults]). */
-    private const val DESIGN_DEFAULTS_VERSION = 2
+    private const val DESIGN_DEFAULTS_VERSION = 3
 
     /**
      * Brings a settings file written by an older build up to the current model.
