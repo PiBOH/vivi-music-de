@@ -14,7 +14,7 @@ import androidx.compose.material.icons.filled.LibraryAdd
 import androidx.compose.material.icons.filled.LibraryAddCheck
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PlaylistPlay
+import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Radio
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ThumbDown
@@ -254,6 +254,9 @@ fun SongMenu(
      *  button that did nothing (the row never showed whether the song landed in
      *  the queue). The action lives here now, where it is named. */
     onAddToQueue: (() -> Unit)? = null,
+    /** Queue-specific "play next" (the queue reorders itself instead of adding
+     *  a second copy); other surfaces leave it null and use the root action. */
+    onPlayNext: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -361,11 +364,11 @@ fun SongMenu(
             )
             DropdownMenuItem(
                 text = { Text(Localization.get(language, "play_next")) },
-                leadingIcon = { Icon(Icons.Filled.PlaylistPlay, contentDescription = null) },
+                leadingIcon = { Icon(Icons.AutoMirrored.Filled.PlaylistPlay, contentDescription = null) },
                 enabled = !transportLocked(),
                 onClick = {
                     expanded = false
-                    actions.playNext(song)
+                    onPlayNext?.invoke() ?: actions.playNext(song)
                 },
             )
             DropdownMenuItem(

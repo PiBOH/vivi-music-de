@@ -2829,23 +2829,19 @@ fun WindowScope.App(
                         language = language,
                         onBack = goBack,
                     )
-                    is Screen.Album -> AlbumScreen(
+                    is Screen.Album -> BitChordAlbumScreen(
                         browseId = screen.browseId,
                         language = language,
-                        onBack = goBack,
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onPlaySong = playSong,
                         onAddToQueue = addToQueue,
                         onAddToPlaylist = addToPlaylist,
                         onPlayAll = playAll,
                         onShuffleAll = shuffleAll,
-                        onPlayNext = playNextAll,
-                        onAddAllToQueue = addAllToQueue,
                     )
-                    is Screen.Artist -> ArtistScreen(
+                    is Screen.Artist -> BitChordArtistScreen(
                         browseId = screen.browseId,
                         language = language,
-                        onBack = goBack,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
                         onOpenPlaylist = { navigate(Screen.Playlist(it)) },
@@ -2854,8 +2850,6 @@ fun WindowScope.App(
                         onAddToPlaylist = addToPlaylist,
                         onPlayAll = playAll,
                         onShuffleAll = shuffleAll,
-                        onPlayNext = playNextAll,
-                        onAddAllToQueue = addAllToQueue,
                     )
                     is Screen.Playlist -> PlaylistScreen(
                         playlistId = screen.playlistId,

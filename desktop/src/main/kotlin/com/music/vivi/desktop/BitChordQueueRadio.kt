@@ -1,5 +1,6 @@
 package com.music.vivi.desktop
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -21,44 +22,36 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.QueuePlayNext
 import androidx.compose.material.icons.filled.Radio
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.music.innertube.YouTube
 import com.music.innertube.models.WatchEndpoint
 import com.music.innertube.pages.MoodAndGenres
 import com.music.innertube.models.SongItem
-import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -86,8 +79,8 @@ fun BitChordQueueScreen(
     onAddToQueue: (NowPlaying) -> Unit,
     onPlayRelated: (SongItem) -> Unit = {},
 ) {
-    val contentColor = MaterialTheme.colorScheme.onSurface
-    val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface
+    val mutedColor = BitChordColors.secondary()
     val current = queue.getOrNull(index)
     val upcoming = queue.drop(index + 1)
     // Discovery: the Related tab of the track that is playing, which is the
@@ -191,18 +184,18 @@ fun BitChordQueueScreen(
         return
     }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
+    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
         BackButton(language, onBack)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 Localization.get(language, "queue"),
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.headlineMedium.copy(fontSize = 30.sp, fontWeight = FontWeight.ExtraBold),
                 color = contentColor,
                 modifier = Modifier.weight(1f),
             )
             if (queue.isNotEmpty()) {
-                Button(onClick = onClear, enabled = !transportLocked()) {
-                    Text(Localization.get(language, "clear_queue"))
+                TextButton(onClick = onClear, enabled = !transportLocked()) {
+                    Text(Localization.get(language, "clear_queue"), color = MaterialTheme.colorScheme.error)
                 }
             }
         }
@@ -241,7 +234,7 @@ fun BitChordQueueScreen(
                     }
                     item(key = "divider") {
                         HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
+                            color = BitChordColors.Divider,
                             modifier = Modifier.padding(vertical = 10.dp),
                         )
                     }
@@ -254,13 +247,13 @@ fun BitChordQueueScreen(
                 if (current != null) {
                     item(key = "discovery") {
                         HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outlineVariant,
+                            color = BitChordColors.Divider,
                             modifier = Modifier.padding(vertical = 10.dp),
                         )
                         Surface(
                             onClick = { discoverySeed = current },
                             shape = MaterialTheme.shapes.medium,
-                            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            color = BitChordColors.Hover,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
@@ -322,8 +315,11 @@ fun BitChordQueueScreen(
 private fun SectionLabel(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 1.1.sp,
+        ),
+        color = BitChordColors.secondary(),
         modifier = Modifier.padding(vertical = 4.dp),
     )
 }
@@ -333,6 +329,15 @@ private fun SectionLabel(text: String) {
  * artist, the reference's menu, and the remove control. Every entry of the menu
  * is wired to a real call; nothing is listed that the app cannot do.
  */
+private fun NowPlaying.toSongItem(): SongItem = SongItem(
+    id = videoId,
+    title = title,
+    artists = listOf(com.music.innertube.models.Artist(name = artist, id = null)),
+    album = album?.let { com.music.innertube.models.Album(name = it, id = "") },
+    duration = if (durationMs > 0L) (durationMs / 1000L).toInt() else null,
+    thumbnail = thumbnail.orEmpty(),
+)
+
 @Composable
 private fun BitChordQueueRow(
     song: NowPlaying,
@@ -345,11 +350,8 @@ private fun BitChordQueueRow(
     onAddToQueue: () -> Unit,
     dragHandle: Modifier?,
 ) {
-    val contentColor = MaterialTheme.colorScheme.onSurface
-    val mutedColor = MaterialTheme.colorScheme.onSurfaceVariant
-    var menuOpen by remember { mutableStateOf(false) }
-    var liked by remember(song.videoId) { mutableStateOf(SongActions.isLiked(song.videoId)) }
-    val scope = rememberCoroutineScope()
+    val contentColor = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface
+    val mutedColor = BitChordColors.secondary()
 
     Row(
         Modifier
@@ -422,76 +424,13 @@ private fun BitChordQueueRow(
                 )
             }
         }
-        Box {
-            Tooltip(Localization.get(language, "more")) {
-                M3IconButton(onClick = { menuOpen = true }) {
-                    Icon(
-                        Icons.Filled.MoreVert,
-                        contentDescription = Localization.get(language, "more"),
-                        tint = mutedColor,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                DropdownMenuItem(
-                    text = { Text(Localization.get(language, if (liked) "unlike" else "like")) },
-                    leadingIcon = {
-                        Icon(
-                            if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = null,
-                        )
-                    },
-                    onClick = {
-                        menuOpen = false
-                        val next = !liked
-                        liked = next
-                        SongActions.setLiked(
-                            song.videoId,
-                            next,
-                            title = song.title,
-                            artist = song.artist,
-                            thumbnail = song.thumbnail,
-                        )
-                        scope.launch { YouTube.likeVideo(song.videoId, next) }
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text(Localization.get(language, "add_to_playlist")) },
-                    leadingIcon = { Icon(Icons.Filled.PlaylistAdd, contentDescription = null) },
-                    onClick = {
-                        menuOpen = false
-                        onAddToPlaylist()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Play next") },
-                    leadingIcon = { Icon(Icons.Filled.QueuePlayNext, contentDescription = null) },
-                    onClick = {
-                        menuOpen = false
-                        onPlayNext()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Add to queue") },
-                    leadingIcon = {
-                        Icon(Icons.AutoMirrored.Filled.QueueMusic, contentDescription = null)
-                    },
-                    onClick = {
-                        menuOpen = false
-                        onAddToQueue()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Remove from queue") },
-                    leadingIcon = { Icon(Icons.Filled.Close, contentDescription = null) },
-                    onClick = {
-                        menuOpen = false
-                        onRemove()
-                    },
-                )
-            }
-        }
+        SongMenu(
+            song = song.toSongItem(),
+            language = language,
+            onAddToPlaylist = onAddToPlaylist,
+            onAddToQueue = onAddToQueue,
+            onPlayNext = onPlayNext,
+        )
         if (isCurrent) {
             Icon(
                 Icons.Filled.GraphicEq,

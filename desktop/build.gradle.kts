@@ -1831,3 +1831,21 @@ tasks.register<JavaExec>("m3ePlayerRenderCheck") {
     mainClass.set("com.music.vivi.desktop.M3EPlayerRenderCheck")
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
+
+/**
+ * Headless render of the BitChord album and artist surfaces:
+ *
+ *     ./gradlew :desktop:detailSurfacesRenderCheck
+ *
+ * See `desktop/src/test/kotlin/com/music/vivi/desktop/BitChordDetailsRenderCheck.kt`.
+ * The live screens fetch, so the check paints the content composables with the
+ * service's own shapes and reads the page colour, the sleeve, the title block,
+ * the artist banner and the track bands off the frame.
+ */
+tasks.register<JavaExec>("detailSurfacesRenderCheck") {
+    group = "verification"
+    description = "Renders the BitChord album and artist surfaces headlessly"
+    dependsOn(tasks.named("testClasses"))
+    mainClass.set("com.music.vivi.desktop.BitChordDetailsRenderCheck")
+    classpath = sourceSets.getByName("test").runtimeClasspath
+}
