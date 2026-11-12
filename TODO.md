@@ -8,6 +8,11 @@ orientation.
 
 ## Open
 
+### 1.58.6-beta11 - Rendering performance (12 Nov)
+- [x] **[DE] The app detects a graphics driver that cannot present a frame and switches to software rendering once.** The first frame at 8 s or later writes `~/.vivimusic/.gl-software`, logs the measurement and restarts with `SKIKO_RENDER_API=SOFTWARE`; the marker is honored on Windows too and an explicit renderer is never overridden. **Measured:** the OpenGL run took 10.2 s for the first frame and then about 700 ms per frame, while the software run opened in 5.4 s at 10 to 67 FPS. **Open sub-item:** the software path uses more CPU and RAM (about 18% and 530 MB at rest on the test machine), so a newer Skiko renderer remains the better long-term fix.
+- [x] **[DE] Card covers request their drawn size on the first load.** `YtItemCard` passes its width to `Thumbnail`, and `Thumbnail` builds an `ImageRequest` sized to the measured box instead of passing a bare URL at the 544 px default. **Measured:** `:desktop:compileKotlin` passes.
+- [ ] **[DE] A graphics-backend choice in Developer options.** The automatic switch covers a broken driver, but a user with a working-but-slow GPU cannot force software rendering (or return to OpenGL) without editing `~/.vivimusic/.gl-software`.
+
 ### 1.58.6-beta10 - The BitChord clone (12 Nov)
 - [x] **[DE] The BitChord audit and the replication prompt are recorded.** `plans/01-site-dna.md` covers the source tree under `.ignore/BitChord`, the palette, the 220 dp rail, the 36 dp rows, the right panel, the pages and their states; `plans/02-brand-interview.md` holds the choices and `plans/03-replication-prompt.md` the Compose specification. The audit named the surfaces beyond the requested eight: Local Playlists, Local Music, Downloads, Queue, Song recognition, Album, Artist, New releases, Charts, Moods and genres, Login, Changelog, Settings and the Listen Together room states.
 - [x] **[DE] The shell is BitChord's rail.** 220 dp, `#242424`, 36 dp rows, the 36 dp rail search, the playlist section, the Account | Settings pill and no top bar; the page is `#171717` and a plain rectangle. The two Sidebar calls in `Main.kt` pass the query, the record and the Search navigation, and the Search page's duplicate field is gone.

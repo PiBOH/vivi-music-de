@@ -251,9 +251,10 @@ fun WindowScope.App(
     // main(): nothing is written unless DetailedStartupLogs is on.
     LaunchedEffect(Unit) {
         withFrameNanos { }
-        if (DesktopSettings.load().detailedStartupLogs) {
-            val since = ProcessHandle.current().info().startInstant().orElse(null)
-            val elapsed = if (since == null) -1L else java.time.Duration.between(since, java.time.Instant.now()).toMillis()
+        val since = ProcessHandle.current().info().startInstant().orElse(null)
+        val elapsed = if (since == null) -1L else java.time.Duration.between(since, java.time.Instant.now()).toMillis()
+        if (elapsed > 0) fallbackToSoftwareRenderingIfNeeded(elapsed)
+        if (DesktopSettings.load().detailedStartupLogs && elapsed > 0) {
             AppLog.log("app", "startup: first frame at +${elapsed}ms after the JVM started")
         }
     }

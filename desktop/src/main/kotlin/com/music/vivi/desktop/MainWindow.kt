@@ -65,13 +65,15 @@ private fun configureRenderApi() {
         System.setProperty("skiko.renderApi", envApi)
         return
     }
-    val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
-    if (!os.contains("linux")) return // Windows/macOS defaults are fine
-    // A previous run crashed in Skiko's OpenGL renderer → stay on SOFTWARE.
+    // A previous run either crashed in Skiko's OpenGL renderer or measured a
+    // first frame so slow that the driver is unusable (see
+    // [fallbackToSoftwareRenderingIfNeeded]) → stay on SOFTWARE on every OS.
     if (glSoftwareMarkerFile().exists()) {
         System.setProperty("skiko.renderApi", "SOFTWARE")
         return
     }
+    val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
+    if (!os.contains("linux")) return // Windows/macOS defaults are fine
     if (canLoadOpenGL()) return
     System.setProperty("skiko.renderApi", "SOFTWARE")
 }
@@ -107,7 +109,46 @@ private val startupStagesLogged: MutableSet<String> = java.util.concurrent.Concu
  */
 private val startupLogEnabled: Boolean by lazy { DesktopSettings.load().detailedStartupLogs }
 
-/** Marker written by the crash fallback (ErrorDialog.kt) after a Skiko GL crash. */
+/**
+ * A first frame slower than this is not a slow start, it is a graphics stack
+ * that cannot present the window: on the Intel HD 4000 test machine the first
+ * frame blocked about 4.6 s in `glFinish` and every later frame about 700 ms,
+ * while the same screen ran at 10 to 67 fps with Skiko's software renderer.
+ * Switching once, and remembering it in [glSoftwareMarkerFile], turns a
+ * one-frame-per-second window into a usable one without a setting to find; a
+ * healthy machine paints its first frame well under the threshold and never
+ * sees this path.
+ */
+private const val SLOW_FIRST_FRAME_MS = 8000L
+
+/**
+ * Called after the first frame. When that frame took [SLOW_FIRST_FRAME_MS] or
+ * more and the app is not already on the software renderer, it writes the
+ * marker and restarts once with `SKIKO_RENDER_API=SOFTWARE`.
+ */
+internal fun fallbackToSoftwareRenderingIfNeeded(firstFrameMs: Long) {
+    if (firstFrameMs < SLOW_FIRST_FRAME_MS) return
+    // An explicit renderer is a choice, not a symptom: respect it even when it
+    // is slower than the software path.
+    if (System.getProperty("skiko.renderApi") != null) return
+    if (System.getenv("SKIKO_RENDER_API") != null) return
+    if (glSoftwareMarkerFile().exists()) return
+    val written = runCatching {
+        glSoftwareMarkerFile().parentFile?.mkdirs()
+        glSoftwareMarkerFile().writeText("slow first frame: ${firstFrameMs}ms")
+    }.isSuccess
+    if (!written) {
+        AppLog.log("window", "render: first frame took ${firstFrameMs}ms, but the software marker could not be written")
+        return
+    }
+    AppLog.log(
+        "window",
+        "render: first frame took ${firstFrameMs}ms, restarting once with the software renderer",
+    )
+    restartApplication(mapOf("SKIKO_RENDER_API" to "SOFTWARE"))
+}
+
+/** Marker written by the crash fallback (ErrorDialog.kt) and the slow-frame fallback. */
 private fun glSoftwareMarkerFile(): java.io.File =
     java.io.File(System.getProperty("user.home"), ".vivimusic/.gl-software")
 

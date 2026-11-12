@@ -93,6 +93,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.compose.LocalPlatformContext
+import coil3.request.ImageRequest
 import com.music.innertube.models.AlbumItem
 import com.music.innertube.models.ArtistItem
 import com.music.innertube.models.PlaylistItem
@@ -358,15 +360,28 @@ fun Thumbnail(
     val shown = remember(model, fellBack) {
         if (fellBack) fallbackThumbnailUrl(model) ?: model else model
     }
+    // The URL only chooses which rendition to fetch. The bitmap itself is
+    // decoded at the size the box is drawn at (the measured size wins, the
+    // caller's default is the floor), so a 150 dp card never holds a 544 px
+    // bitmap in memory and the first paint uploads a smaller texture.
+    val context = LocalPlatformContext.current
+    val request = remember(shown, drawnPx, context) {
+        shown?.takeIf { it.isNotBlank() }?.let {
+            ImageRequest.Builder(context)
+                .data(it)
+                .size(drawnPx)
+                .build()
+        }
+    }
     Box(
         modifier
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .onSizeChanged { measuredPx = maxOf(it.width, it.height) },
     ) {
-        if (!shown.isNullOrBlank()) {
+        if (request != null) {
             AsyncImage(
-                model = shown,
+                model = request,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 onError = { if (!fellBack) fellBack = true },
@@ -423,6 +438,10 @@ fun YtItemCard(
     modifier: Modifier = Modifier,
 ) {
     val root = if (width != null) Modifier.width(width) else Modifier.fillMaxWidth()
+    // The first request is already the card's own size, not the 544 px default
+    // that the measurement would correct one frame later.
+    val density = LocalDensity.current
+    val requestPx = width?.let { with(density) { it.roundToPx() } } ?: 544
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     // A shelf card is a rectangle, so its cookie is stretched to it; a square
@@ -453,6 +472,7 @@ fun YtItemCard(
                 Modifier.fillMaxWidth().aspectRatio(1f)
             },
             shape = cardCookie,
+            sizePx = requestPx,
         )
         Tooltip(item.title) {
             Text(

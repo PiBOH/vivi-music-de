@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-## [6.0.8.11_DE-1.58.6-beta10] - 2026-11-12
+## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
 
 ### ✨ Added
 - [DE] **[beta10] BitChord's shell replaces the VIVI chrome.**
@@ -17,6 +17,8 @@
 - [DE] **[beta7] The Home is BitChord's shelf stack.**
 
 ### 🔧 Changed
+- [DE] **[beta11] A graphics driver that cannot present a frame switches the window to software rendering once.**
+- [DE] **[beta11] Cover thumbnails are decoded at the size they are drawn.**
 - [DE] **[beta10] Album, artist and queue are BitChord surfaces, and a check paints them.**
 - [DE] **[beta10] Home, Explore, Library, History, Playlist and Listen Together use the BitChord surfaces.**
 - [DE] **[beta10] The mini player stays at the bottom.**
