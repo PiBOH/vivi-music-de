@@ -64,6 +64,11 @@
 #ifndef InstallerVersion
 #define InstallerVersion "0.0.0"
 #endif
+; Inno's VersionInfo fields take four numbers only; the display version keeps
+; the -DE SemVer in AppVersion and the output filename.
+#ifndef VersionInfoVersion
+#define VersionInfoVersion "0.0.0.0"
+#endif
 #ifndef SourceDir
 #define SourceDir "."
 #endif
@@ -171,8 +176,8 @@ UninstallDisplayIcon={app}\{#AppExe}
 VersionInfoCompany={#AppPublisher}
 VersionInfoDescription={#AppName} desktop client
 VersionInfoProductName={#AppName}
-VersionInfoVersion={#InstallerVersion}
-VersionInfoProductVersion={#InstallerVersion}
+VersionInfoVersion={#VersionInfoVersion}
+VersionInfoProductVersion={#VersionInfoVersion}
 VersionInfoProductTextVersion={#AppVersion}
 VersionInfoTextVersion={#AppVersion}
 VersionInfoCopyright=Copyright (c) 2026 PiBOH

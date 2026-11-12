@@ -56,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -160,12 +161,13 @@ internal fun BitChordAlbumContent(
     ) {
         item(key = "album-header") {
             Row(
-                Modifier.fillMaxWidth().padding(bottom = 28.dp),
+                Modifier.fillMaxWidth().padding(bottom = 36.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Thumbnail(
                     album.thumbnail,
-                    Modifier.size(240.dp).clip(MaterialTheme.shapes.small),
+                    Modifier.size(286.dp),
+                    shape = RoundedCornerShape(8.dp),
                 )
                 Spacer(Modifier.width(30.dp))
                 Column(Modifier.weight(1f)) {
@@ -269,7 +271,9 @@ internal fun BitChordAlbumContent(
                     song = song,
                     language = language,
                     showCover = false,
+                    showArtist = false,
                     showAlbum = false,
+                    striped = index % 2 == 1,
                     onPlay = { onPlaySong(song) },
                     onAddToQueue = { onAddToQueue(song) },
                     onAddToPlaylist = { onAddToPlaylist(song) },
@@ -426,7 +430,7 @@ internal fun BitChordArtistContent(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         items(topSongs.chunked(4), key = { column -> column.first().id + "-" + column.size }) { column ->
-                            Column(Modifier.width(430.dp)) {
+                            Column(Modifier.width(400.dp)) {
                                 column.forEach { song ->
                                     BitChordArtistTrack(
                                         song = song,
@@ -480,7 +484,7 @@ internal fun BitChordArtistContent(
 @Composable
 private fun BitChordArtistBanner(url: String?, name: String) {
     Box(Modifier.fillMaxWidth().height(340.dp)) {
-        Thumbnail(url, Modifier.fillMaxSize())
+        Thumbnail(url, Modifier.fillMaxSize(), shape = RectangleShape)
         Box(
             Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
@@ -576,22 +580,22 @@ private fun BitChordArtistTrack(
     onAddToPlaylist: () -> Unit,
 ) {
     Row(
-        Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(7.dp)).clickable(onClick = onPlay).padding(horizontal = 6.dp),
+        Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(7.dp)).clickable(onClick = onPlay).padding(horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Thumbnail(song.thumbnail, Modifier.size(40.dp).clip(MaterialTheme.shapes.small))
-        Spacer(Modifier.width(10.dp))
+        Thumbnail(song.thumbnail, Modifier.size(48.dp), shape = RoundedCornerShape(7.dp))
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(
                 song.title,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.titleMedium,
                 color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 song.artists.joinToString(", ") { it.name },
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = BitChordColors.secondary(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -617,7 +621,9 @@ private fun BitChordDetailSongRow(
     song: SongItem,
     language: String,
     showCover: Boolean,
+    showArtist: Boolean,
     showAlbum: Boolean,
+    striped: Boolean,
     onPlay: () -> Unit,
     onAddToQueue: () -> Unit,
     onAddToPlaylist: () -> Unit,
@@ -632,9 +638,15 @@ private fun BitChordDetailSongRow(
     Row(
         Modifier
             .fillMaxWidth()
-            .height(44.dp)
+            .height(56.dp)
             .clip(RoundedCornerShape(6.dp))
-            .background(if (hovered) BitChordColors.Hover else Color.Transparent)
+            .background(
+                when {
+                    hovered -> BitChordColors.Hover
+                    striped -> Color.White.copy(alpha = 0.04f)
+                    else -> Color.Transparent
+                },
+            )
             .hoverable(interaction)
             .clickable(onClick = onPlay)
             .padding(horizontal = 8.dp),
@@ -654,19 +666,21 @@ private fun BitChordDetailSongRow(
         }
         Text(
             song.title,
-            Modifier.weight(0.42f),
+            if (showArtist) Modifier.weight(0.42f) else Modifier.weight(1f),
             color = if (isAppInDarkTheme()) Color.White.copy(alpha = 0.88f) else MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             fontWeight = FontWeight.Medium,
         )
-        Text(
-            song.artists.joinToString(", ") { it.name },
-            Modifier.weight(0.20f).padding(horizontal = 8.dp),
-            color = BitChordColors.secondary(),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        if (showArtist) {
+            Text(
+                song.artists.joinToString(", ") { it.name },
+                Modifier.weight(0.20f).padding(horizontal = 8.dp),
+                color = BitChordColors.secondary(),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
         if (showAlbum) {
             Text(
                 song.album?.name ?: "-",
