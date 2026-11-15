@@ -200,6 +200,8 @@ private fun screenForSection(section: String?): Screen? = when (section) {
     "explore" -> Screen.NewReleases
     "library" -> Screen.Library
     "search" -> Screen.Search
+    "downloads" -> Screen.Downloads
+    "local" -> Screen.LocalMusic
     // Settings and its pages can be opened from a launch as well: the window
     // checks use it to render the real screen instead of driving the gear.
     "settings" -> Screen.Settings
@@ -210,7 +212,7 @@ private fun screenForSection(section: String?): Screen? = when (section) {
 }
 
 @Composable
-fun WindowScope.App(
+fun WindowScope.LegacyApp(
     language: String,
     onLanguageChange: (String) -> Unit,
     font: AppFont,
@@ -1846,12 +1848,12 @@ fun WindowScope.App(
                 .weight(1f)
                 .fillMaxHeight()
         ) {
-            // BitChord has no top bar: the rail is the whole chrome. The page
+            // Bit has no top bar: the rail is the whole chrome. The page
             // starts at the window's top edge, and the system window controls
             // remain in their overlay. A top bar would also duplicate the
             // search, history and settings that the rail already owns.
             val hasTopBar = false
-            val paneBackdrop = BitChordColors.page()
+            val paneBackdrop = BitColors.page()
             Row(
                 Modifier
                     .weight(1f)
@@ -1926,7 +1928,7 @@ fun WindowScope.App(
                         ),
                         showWrapped = showWrappedOnHome,
                     )
-                    is Screen.Search -> BitChordSearchScreen(
+                    is Screen.Search -> BitSearchScreen(
                         language = language,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                         onOpenArtist = { navigate(Screen.Artist(it)) },
@@ -1943,7 +1945,7 @@ fun WindowScope.App(
                         externalFilter = headerSearchFilter,
                         onFilterChange = { f -> headerSearchFilter = f },
                     )
-                    is Screen.Library -> BitChordLibraryScreen(
+                    is Screen.Library -> BitLibraryScreen(
                         language = language,
                         isLoggedIn = isLoggedIn,
                         gridItemSize = gridItemSize,
@@ -1988,14 +1990,14 @@ fun WindowScope.App(
                         },
                     )
                     is Screen.LocalMusic -> LocalMusicScreen(language = language)
-                    // BitChord's Explore: the moods and genres as one grid of
+                    // Bit's Explore: the moods and genres as one grid of
                     // big cards, the screen that replaced "New".
-                    is Screen.NewReleases -> BitChordExploreScreen(
+                    is Screen.NewReleases -> BitExploreScreen(
                         language = language,
                         onOpenBrowse = { browseId, params -> navigate(Screen.Browse(browseId, params)) },
                         onOpenAlbum = { navigate(Screen.Album(it)) },
                     )
-                    // The radio screen is gone: BitChord has none, and nothing
+                    // The radio screen is gone: Bit has none, and nothing
                     // navigates here any more. The branch stays so the `when`
                     // over Screen keeps being exhaustive without an `else` that
                     // would silently swallow a screen added later.
@@ -2830,7 +2832,7 @@ fun WindowScope.App(
                         language = language,
                         onBack = goBack,
                     )
-                    is Screen.Album -> BitChordAlbumScreen(
+                    is Screen.Album -> BitAlbumScreen(
                         browseId = screen.browseId,
                         language = language,
                         onOpenArtist = { navigate(Screen.Artist(it)) },
@@ -2840,7 +2842,7 @@ fun WindowScope.App(
                         onPlayAll = playAll,
                         onShuffleAll = shuffleAll,
                     )
-                    is Screen.Artist -> BitChordArtistScreen(
+                    is Screen.Artist -> BitArtistScreen(
                         browseId = screen.browseId,
                         language = language,
                         onOpenAlbum = { navigate(Screen.Album(it)) },
@@ -2870,7 +2872,7 @@ fun WindowScope.App(
                         onBack = goBack,
                         onOpenPlaylist = { navigate(Screen.LocalPlaylist(it)) },
                     )
-                    is Screen.LocalPlaylist -> BitChordLocalPlaylistScreen(
+                    is Screen.LocalPlaylist -> BitLocalPlaylistScreen(
                         playlistId = screen.playlistId,
                         language = language,
                         onBack = goBack,
@@ -2978,7 +2980,7 @@ fun WindowScope.App(
                         onTogglePlay = { player.toggle() },
                         onBack = goBack,
                     )
-                    is Screen.Queue -> BitChordQueueScreen(
+                    is Screen.Queue -> BitQueueScreen(
                         queue = playerState.queue,
                         index = playerState.index,
                         language = language,
@@ -3106,7 +3108,7 @@ fun WindowScope.App(
             enter = Animations.panelEnter(),
             exit = Animations.panelExit(),
         ) {
-            BitChordRightPanel(
+            BitRightPanel(
                 nowPlaying = nowPlaying,
                 isPlaying = isPlaying,
                 positionMs = playheadProvider,
@@ -3328,14 +3330,14 @@ fun Sidebar(
     // The preview's rail, in both layouts: the selected entry is
     // `primaryContainer` and an entry wears one 12 dp corner
     // (`css/shell.css`, `.rail-row` on `--md-sys-shape-corner-small`).
-    // BitChord's measured rail: white 12 percent selection, #242424 hover,
+    // Bit's measured rail: white 12 percent selection, #242424 hover,
     // #8E8E93 secondary labels and 7 dp row corners. Light mode keeps the
     // tonal scheme instead of forcing a dark rail.
     val bitChord = isAppInDarkTheme()
     val selectedBg = if (bitChord) Color.White.copy(alpha = 0.12f) else MaterialTheme.colorScheme.primaryContainer
     val selectedFg = if (bitChord) Color.White else MaterialTheme.colorScheme.onPrimaryContainer
-    val hoverBg = if (bitChord) BitChordColors.Hover else MaterialTheme.colorScheme.surfaceContainerHigh
-    val secondaryFg = if (bitChord) BitChordColors.Secondary else MaterialTheme.colorScheme.onSurfaceVariant
+    val hoverBg = if (bitChord) BitColors.Hover else MaterialTheme.colorScheme.surfaceContainerHigh
+    val secondaryFg = if (bitChord) BitColors.Secondary else MaterialTheme.colorScheme.onSurfaceVariant
     val mainRadius = if (bitChord) 7.dp else 12.dp
     val subRadius = if (bitChord) 7.dp else 12.dp
     var libraryExpanded by remember { mutableStateOf(true) }
@@ -3378,11 +3380,11 @@ fun Sidebar(
         label = "playlistsChevronRotation",
     )
 
-    // BitChord's sidebar, in that client's own order: Home, Explore, Library,
+    // Bit's sidebar, in that client's own order: Home, Explore, Library,
     // Search, History, and then the playlists. Two entries are gone on purpose:
     // the radio one, because that client has no radio screen at all, and the
     // separate Songs and Albums ones, because one Library screen holds both the
-    // way BitChord's does. The list is remembered: it used to be built on every
+    // way Bit's does. The list is remembered: it used to be built on every
     // recomposition of the rail, which handed the rows a new list each time.
     val mainEntries = remember {
         listOf(
@@ -3422,7 +3424,7 @@ fun Sidebar(
     val width = targetWidth
 
     Surface(
-        color = if (bitChord) BitChordColors.Chrome else chromeSurfaceColor()
+        color = if (bitChord) BitColors.Chrome else chromeSurfaceColor()
     ) {
         Box(Modifier.width(animatedWidth).fillMaxHeight().clipToBounds()) {
         Column(
@@ -3489,7 +3491,7 @@ fun Sidebar(
             Spacer(Modifier.height(6.dp))
 
             if (!collapsed) {
-                BitChordSidebarSearch(
+                BitSidebarSearch(
                     language = language,
                     value = searchQuery,
                     placeholder = Localization.get(language, "search_placeholder"),
@@ -3957,7 +3959,7 @@ fun Sidebar(
 
             Spacer(Modifier.height(8.dp))
 
-            // BitChord's bottom control, split into VIVI's two destinations.
+            // Bit's bottom control, split into VIVI's two destinations.
             // The account half opens Account; the settings half opens VIVI's
             // Settings, whose own style and structure are not cloned.
             val settingsSelected = current == Screen.Settings || current == Screen.SettingsAccount

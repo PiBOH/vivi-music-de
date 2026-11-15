@@ -281,6 +281,11 @@ fun Modifier.pointerTilt(
     maxDegrees: Float = Motion.TILT_MAX_DEGREES,
     label: String = "pointerTilt",
 ): Modifier {
+    // The software renderer composites on the CPU. A 3D layer per card, even at
+    // its flat angle, is one of the most expensive things it can be asked to do;
+    // on the Intel HD 4000 test machine the Home cards spent most of the frame
+    // budget there. The flat card, its cookie and every other animation stay.
+    if (System.getProperty("skiko.renderApi").equals("SOFTWARE", ignoreCase = true)) return this
     // The master switch turns the tilt off entirely, not down to no duration: a
     // card that snapped to its tilted angle the moment the pointer touched it
     // would be a movement, and with Animations off the pointer moves nothing.

@@ -41,12 +41,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * BitChord's right drawer: 360 dp, a hairline on the page side, and two tabs
+ * Bit's right drawer: 360 dp, a hairline on the page side, and two tabs
  * over the same player the rest of the app uses. The page narrows under it; the
  * panel never covers the content. Lyrics are VIVI's renderer, not a second one.
  */
 @Composable
-fun BitChordRightPanel(
+fun BitRightPanel(
     nowPlaying: NowPlaying?,
     isPlaying: Boolean,
     positionMs: () -> Long,
@@ -66,16 +66,16 @@ fun BitChordRightPanel(
 ) {
     var tab by remember { mutableStateOf(0) } // 0 = lyrics, 1 = queue
     val dark = isAppInDarkTheme()
-    val secondary = BitChordColors.secondary()
+    val secondary = BitColors.secondary()
     val primary = if (dark) Color.White else MaterialTheme.colorScheme.onSurface
 
     Surface(
         modifier = Modifier.fillMaxHeight().width(360.dp),
-        color = if (tab == 0) BitChordColors.page() else BitChordColors.chrome(),
+        color = if (tab == 0) BitColors.page() else BitColors.chrome(),
         shape = RoundedCornerShape(topStart = 10.dp, bottomStart = 10.dp),
     ) {
         Row(Modifier.fillMaxSize()) {
-            Box(Modifier.width(1.dp).fillMaxHeight().background(BitChordColors.Divider))
+            Box(Modifier.width(1.dp).fillMaxHeight().background(BitColors.Divider))
             Column(Modifier.fillMaxSize()) {
                 Row(
                     Modifier.fillMaxWidth().height(46.dp).padding(start = 14.dp, end = 6.dp),
@@ -99,7 +99,7 @@ fun BitChordRightPanel(
                         }
                     }
                 }
-                HorizontalDivider(color = BitChordColors.Divider)
+                HorizontalDivider(color = BitColors.Divider)
                 if (tab == 0) {
                     Box(Modifier.fillMaxSize()) {
                         LyricsScreen(
@@ -189,7 +189,7 @@ private fun QueuePanel(
                         Text(
                             current.artist,
                             style = MaterialTheme.typography.bodySmall,
-                            color = BitChordColors.secondary(),
+                            color = BitColors.secondary(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -203,7 +203,7 @@ private fun QueuePanel(
                                 Icon(
                                     Icons.AutoMirrored.Filled.PlaylistAdd,
                                     contentDescription = Localization.get(language, "add_to_playlist"),
-                                    tint = BitChordColors.secondary(),
+                                    tint = BitColors.secondary(),
                                     modifier = Modifier.size(17.dp),
                                 )
                             }
@@ -215,19 +215,19 @@ private fun QueuePanel(
                     Text(
                         Localization.get(language, "up_next"),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = BitChordColors.secondary(),
+                        color = BitColors.secondary(),
                         modifier = Modifier.weight(1f),
                     )
                     if (queue.isNotEmpty()) {
                         Text(
                             Localization.get(language, "clear"),
                             style = MaterialTheme.typography.labelSmall,
-                            color = BitChordColors.secondary(),
+                            color = BitColors.secondary(),
                             modifier = Modifier.clip(RoundedCornerShape(6.dp)).clickable(onClick = onClear).padding(6.dp),
                         )
                     }
                 }
-                HorizontalDivider(color = BitChordColors.Divider, modifier = Modifier.padding(vertical = 4.dp))
+                HorizontalDivider(color = BitColors.Divider, modifier = Modifier.padding(vertical = 4.dp))
             }
         }
         if (upNext.isEmpty()) {
@@ -235,7 +235,7 @@ private fun QueuePanel(
                 Text(
                     Localization.get(language, "queue_empty"),
                     style = MaterialTheme.typography.bodySmall,
-                    color = BitChordColors.secondary(),
+                    color = BitColors.secondary(),
                     modifier = Modifier.padding(vertical = 16.dp),
                 )
             }
@@ -258,7 +258,7 @@ private fun QueuePanel(
                         Text(
                             entry.value.artist,
                             style = MaterialTheme.typography.bodySmall,
-                            color = BitChordColors.secondary(),
+                            color = BitColors.secondary(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -268,7 +268,7 @@ private fun QueuePanel(
                             Modifier.size(28.dp).clip(RoundedCornerShape(7.dp)).clickable { onRemove(entry.index) },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Icon(Icons.Filled.Delete, contentDescription = Localization.get(language, "remove"), tint = BitChordColors.secondary(), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Delete, contentDescription = Localization.get(language, "remove"), tint = BitColors.secondary(), modifier = Modifier.size(16.dp))
                         }
                     }
                 }

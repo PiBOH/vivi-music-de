@@ -56,16 +56,16 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 /**
- * "Queue" in BitChord's own shape: the track that is playing, then the tracks
+ * "Queue" in Bit's own shape: the track that is playing, then the tracks
  * that come next, each row carrying the drag handle, the context menu and the
  * remove control of the reference. The list is the player's real queue: a drag
  * commits through [onReorder], the menu runs the same calls the rest of the app
  * uses, and nothing here is decorative.
  *
- * Ported from BitChord's queue panel (GPLv3).
+ * Ported from Bit's queue panel (GPLv3).
  */
 @Composable
-fun BitChordQueueScreen(
+fun BitQueueScreen(
     queue: List<NowPlaying>,
     index: Int,
     language: String,
@@ -80,7 +80,7 @@ fun BitChordQueueScreen(
     onPlayRelated: (SongItem) -> Unit = {},
 ) {
     val contentColor = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface
-    val mutedColor = BitChordColors.secondary()
+    val mutedColor = BitColors.secondary()
     val current = queue.getOrNull(index)
     val upcoming = queue.drop(index + 1)
     // Discovery: the Related tab of the track that is playing, which is the
@@ -184,7 +184,7 @@ fun BitChordQueueScreen(
         return
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
         BackButton(language, onBack)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -220,7 +220,7 @@ fun BitChordQueueScreen(
                         SectionLabel(Localization.get(language, "now_playing"))
                     }
                     item(key = "now") {
-                        BitChordQueueRow(
+                        BitQueueRow(
                             song = current,
                             language = language,
                             isCurrent = true,
@@ -234,7 +234,7 @@ fun BitChordQueueScreen(
                     }
                     item(key = "divider") {
                         HorizontalDivider(
-                            color = BitChordColors.Divider,
+                            color = BitColors.Divider,
                             modifier = Modifier.padding(vertical = 10.dp),
                         )
                     }
@@ -247,13 +247,13 @@ fun BitChordQueueScreen(
                 if (current != null) {
                     item(key = "discovery") {
                         HorizontalDivider(
-                            color = BitChordColors.Divider,
+                            color = BitColors.Divider,
                             modifier = Modifier.padding(vertical = 10.dp),
                         )
                         Surface(
                             onClick = { discoverySeed = current },
                             shape = MaterialTheme.shapes.medium,
-                            color = BitChordColors.Hover,
+                            color = BitColors.Hover,
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
@@ -292,7 +292,7 @@ fun BitChordQueueScreen(
                 }
                 itemsIndexed(local, key = { i, song -> song.videoId + "#" + i }, contentType = { _, _ -> "song" }) { i, song ->
                     ReorderableItem(state = reorderState, key = song.videoId) {
-                        BitChordQueueRow(
+                        BitQueueRow(
                             song = song,
                             language = language,
                             isCurrent = false,
@@ -319,7 +319,7 @@ private fun SectionLabel(text: String) {
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.1.sp,
         ),
-        color = BitChordColors.secondary(),
+        color = BitColors.secondary(),
         modifier = Modifier.padding(vertical = 4.dp),
     )
 }
@@ -341,7 +341,7 @@ private fun NowPlaying.toSongItem(): SongItem = SongItem(
 )
 
 @Composable
-private fun BitChordQueueRow(
+private fun BitQueueRow(
     song: NowPlaying,
     language: String,
     isCurrent: Boolean,
@@ -353,7 +353,7 @@ private fun BitChordQueueRow(
     dragHandle: Modifier?,
 ) {
     val contentColor = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface
-    val mutedColor = BitChordColors.secondary()
+    val mutedColor = BitColors.secondary()
 
     Row(
         Modifier

@@ -216,7 +216,7 @@ fun copyToClipboard(text: String): Boolean {
 /**
  * The row actions every screen shares. The menu used to reach the player only
  * through the per-row callbacks, so most screens offered a shorter menu than
- * BitChord's. The app provides these once at the root, and any row on any
+ * Bit's. The app provides these once at the root, and any row on any
  * screen gets the same actions the player itself has.
  */
 data class SongMenuActions(
@@ -288,7 +288,7 @@ fun SongMenu(
                     )
                 },
                 onClick = {
-                    // A rating row stays open: BitChord lets a listener change
+                    // A rating row stays open: Bit lets a listener change
                     // their mind without reopening the menu.
                     val next = !liked
                     // The metadata travels with the like: it is what lets the

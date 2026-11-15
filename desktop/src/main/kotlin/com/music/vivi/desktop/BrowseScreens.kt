@@ -299,11 +299,11 @@ internal fun HomeShelfStack(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(BitChordColors.page()),
+            .background(BitColors.page()),
         contentPadding = PaddingValues(top = 18.dp, bottom = 28.dp),
         verticalArrangement = Arrangement.spacedBy(22.dp),
     ) {
-        // The owner's one addition to BitChord's shelf stack: a quiet,
+        // The owner's one addition to Bit's shelf stack: a quiet,
         // time-based greeting. It is not a marketing hero; the shelves start
         // immediately under it.
         item(key = "greeting") {
@@ -350,7 +350,7 @@ internal fun HomeShelfStack(
 }
 
 /**
- * One BitChord shelf: the section's heading and one row of cards under it.
+ * One Bit shelf: the section's heading and one row of cards under it.
  *
  * The row is a plain sideways list: no arrow, no dot row, no lead card. Every
  * card is the same 150 dp square ([ClassicShelfCard]), 14 dp apart, starting on
@@ -371,7 +371,7 @@ private fun ClassicShelf(title: String, content: LazyListScope.() -> Unit) {
 }
 
 /**
- * BitChord's card: a 150 dp cover on the square's 12 dp corner, the name under
+ * Bit's card: a 150 dp cover on the square's 12 dp corner, the name under
  * it and the subtitle under that, one line each. Both are cut with an ellipsis
  * and both are read whole on hover.
  */
@@ -430,7 +430,7 @@ private fun LocalPlaylistCard(playlist: SyncedPlaylist, language: String, onClic
     ) {
         // The mosaic is this card's artwork, so it wears the shelf's own corner:
         // a playlist and an album differ by what they hold, never by their
-        // shape. BitChord draws Home's collection shelf the same way.
+        // shape. Bit draws Home's collection shelf the same way.
         PlaylistMosaic(playlist = playlist, size = 168.dp, shape = MaterialTheme.shapes.small)
         Spacer(Modifier.height(8.dp))
         Tooltip(name) {
@@ -471,7 +471,7 @@ private fun greetingFor(language: String): String {
     }
 }
 
-/** A shelf's heading: BitChord's 22 sp semibold line on the 16 dp gutter. */
+/** A shelf's heading: Bit's 22 sp semibold line on the 16 dp gutter. */
 @Composable
 private fun ShelfHeading(title: String) {
     Text(

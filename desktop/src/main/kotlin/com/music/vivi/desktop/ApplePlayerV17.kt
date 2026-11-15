@@ -121,18 +121,18 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * "Apple Player v17": the BitChord desktop player, ported to the DE on top of
+ * "Apple Player v17": the Bit desktop player, ported to the DE on top of
  * the same PlayerController as every other design.
  *
- * The layout is BitChord's: the artwork is a large square on the left and the
+ * The layout is Bit's: the artwork is a large square on the left and the
  * whole control set is a column on the right (the context caption, the title
  * with the like and menu circles, the artist, the lyric row, the scrubber with
  * the elapsed and remaining time, the transport, and the volume). The queue
- * replaces that column with BitChord's own queue panel instead of opening a
+ * replaces that column with Bit's own queue panel instead of opening a
  * separate screen, and the "Stats for nerds" overlay is the tiny monospace line
- * BitChord prints on the artwork, whose full detail is one hover away.
+ * Bit prints on the artwork, whose full detail is one hover away.
  *
- * Ported from BitChord's `NowPlayingScreen` / `PlayerControls` (GPLv3).
+ * Ported from Bit's `NowPlayingScreen` / `PlayerControls` (GPLv3).
  */
 @Composable
 internal fun ApplePlayerV17Screen(
@@ -253,7 +253,7 @@ internal fun ApplePlayerV17Screen(
             modifier = Modifier.fillMaxSize(),
             isPlaying = isPlaying,
         )
-        // Only the two styles that ARE a blurred cover keep BitChord's own blur:
+        // Only the two styles that ARE a blurred cover keep Bit's own blur:
         // drawn over the canvas or the visualizer it would hide them.
         val ownBackdrop = background == PlayerBackgroundStyle.BLUR ||
             background == PlayerBackgroundStyle.APPLE_MUSIC
@@ -284,7 +284,7 @@ internal fun ApplePlayerV17Screen(
                 ),
         )
         // The cover is asked for at the reference's player rung (1200 px, see
-        // `ArtworkPx`), the size BitChord loads for the same square, so the
+        // `ArtworkPx`), the size Bit loads for the same square, so the
         // artwork is not a 120 px variant stretched over half the screen.
         val artworkUrl = adjustedThumbnailUrl(
             np.thumbnail,
@@ -557,7 +557,7 @@ internal fun ApplePlayerV17Screen(
                     DesktopSettings.load().inlineLyrics
                 }
                 if (inlineLyricsOn) {
-                    // BitChord prints the line being sung here, right above the
+                    // Bit prints the line being sung here, right above the
                     // scrubber, and opens the lyrics page from it. The line is read
                     // from the same cache and providers the lyrics screen uses. With
                     // the option off there is no row at all: nothing is fetched and
@@ -607,9 +607,9 @@ internal fun ApplePlayerV17Screen(
 
                 Spacer(Modifier.height(8.dp))
 
-                V17SeekRow(positionMs, durationMs, sliderStyle, onSeek, mutedColor)
+                V17SeekRow(positionMs, durationMs, isPlaying, sliderStyle, onSeek, mutedColor)
 
-                // BitChord's gap: the scrubber and the transport are two blocks,
+                // Bit's gap: the scrubber and the transport are two blocks,
                 // and the row holds a breath between them instead of sitting on
                 // the time line.
                 Spacer(Modifier.height(28.dp))
@@ -907,7 +907,7 @@ internal fun ApplePlayerV17Screen(
 }
 
 /**
- * The transport's sizes, on BitChord's own scale: a 74 dp play glyph in a
+ * The transport's sizes, on Bit's own scale: a 74 dp play glyph in a
  * 92 dp touch box, and 53 dp skip glyphs beside it (the reference's
  * TransportRow, non-compact). The box is invisible: no circle is drawn.
  */
@@ -922,7 +922,7 @@ internal enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
 /**
  * One transport glyph, drawn rather than taken from the icon set.
  *
- * The shapes are BitChord's, measured on its player frame (1220x780): the
+ * The shapes are Bit's, measured on its player frame (1220x780): the
  * previous and next are two filled triangles whose bases meet at the middle,
  * 46 x 25 px, and the pause is a pair of 12 x 36 bars 6 px apart, each corner
  * taken a third of the bar's width so the ends read as soft squares rather
@@ -1000,7 +1000,7 @@ internal fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
 }
 
 /**
- * BitChord's own queue: the track that is playing, then everything that comes
+ * Bit's own queue: the track that is playing, then everything that comes
  * next, with the equalizer mark on the current one and the remove control on
  * every entry. It replaces the player's right column instead of pushing a
  * second screen, which is how the reference shows it.
@@ -1160,7 +1160,7 @@ private fun QueueEntry(
             )
             Spacer(Modifier.width(6.dp))
         }
-        // BitChord's context menu on a queue row: the actions that make sense
+        // Bit's context menu on a queue row: the actions that make sense
         // on a track that is already in the queue, each one running the same
         // call the rest of the app uses for it.
         // The same context menu the standalone queue shows, on the same rows:
@@ -1255,7 +1255,7 @@ private fun QueueEntry(
 }
 
 /**
- * The "Stats for nerds" line BitChord prints on the artwork, built from what the
+ * The "Stats for nerds" line Bit prints on the artwork, built from what the
  * player really reported (`PlaybackTech`): nothing is estimated, and a field the
  * stream or the sound card has not reported yet is left out of the line.
  */
@@ -1374,7 +1374,7 @@ private fun rememberInlineLyricLine(np: NowPlaying, positionMs: () -> Long): Sta
 /**
  * The inline line, with the motion chosen in Settings > Animations.
  *
- * "Apple Music" is the BitChord right-panel motion: the old line leaves upward
+ * "Apple Music" is the Bit right-panel motion: the old line leaves upward
  * while the new one arrives from below, both fading, never the whole row. The
  * standard choice keeps the line in place and replaces the text.
  */
@@ -1438,11 +1438,31 @@ private fun V17InlineLyricLine(
 private fun V17SeekRow(
     positionMs: () -> Long,
     durationMs: Long,
+    isPlaying: Boolean,
     sliderStyle: ViviSliderStyle,
     onSeek: (Long) -> Unit,
     mutedColor: Color,
 ) {
-    val live = positionMs()
+    // A smooth head while the track plays: the line follows the clock at the
+    // display's own rate instead of stepping 25 times a second. The frame is
+    // requested by the animation itself, so the pacing probe can measure real
+    // paints without being the thing that drives them. Paused, the value is
+    // read once and the window goes back to idle.
+    val liveState = remember { androidx.compose.runtime.mutableLongStateOf(positionMs()) }
+    if (isPlaying) {
+        // Keyed on playback only: the effect used to restart on every duration
+        // report, which cancelled the frame awaiter before it ever resumed and
+        // left the head stepping again.
+        LaunchedEffect(isPlaying) {
+            while (true) {
+                androidx.compose.runtime.withFrameNanos { frameTime ->
+                    liveState.longValue = positionMs()
+                    BitFramePacing.tick(frameTime)
+                }
+            }
+        }
+    }
+    val live = if (isPlaying) liveState.longValue else positionMs()
     val duration = durationMs.coerceAtLeast(1L)
     ViviSlider(
         value = live.toFloat().coerceIn(0f, duration.toFloat()),
@@ -1473,7 +1493,7 @@ private fun V17SeekRow(
  * page they open is the one on screen, and the queue glyph closes its own
  * panel instead of leading to a dead end.
  *
- * The glyphs are [BitChordIcons], the reference's own: same paths, same
+ * The glyphs are [BitIcons], the reference's own: same paths, same
  * 2.2 px strokes, same round caps. The fills are the reference's too - a 44 dp
  * circle and a capsule as tall as it, at 12 to 20 percent of the content
  * colour, with the icon at full strength when its control is on.
@@ -1594,7 +1614,7 @@ private fun V17BottomBar(
     ) {
         // The lyrics page, lit while it is the column being shown.
         bottomGlyph(
-            BitChordIcons.LyricsQuote,
+            BitIcons.LyricsQuote,
             Localization.get(language, "lyrics"),
             lyricsOpen,
             onToggleLyrics,
@@ -1609,7 +1629,7 @@ private fun V17BottomBar(
                         Localization.get(language, "shuffle"),
                         isShuffle,
                         V17_PILL_TRIPLE,
-                        icon = BitChordIcons.Shuffle,
+                        icon = BitIcons.Shuffle,
                         onClick = onToggleShuffle,
                     )
                     pillDivider()
@@ -1621,7 +1641,7 @@ private fun V17BottomBar(
                         },
                         repeatMode != RepeatMode.OFF,
                         V17_PILL_TRIPLE,
-                        icon = if (repeatMode == RepeatMode.ONE) null else BitChordIcons.Repeat,
+                        icon = if (repeatMode == RepeatMode.ONE) null else BitIcons.Repeat,
                         text = if (repeatMode == RepeatMode.ONE) "1" else null,
                         onClick = onCycleRepeat,
                     )
@@ -1630,7 +1650,7 @@ private fun V17BottomBar(
                         Localization.get(language, "tooltip_autoplay"),
                         autoPlayNext,
                         V17_PILL_TRIPLE,
-                        icon = BitChordIcons.Infinity,
+                        icon = BitIcons.Infinity,
                         onClick = { onToggleAutoPlayNext(!autoPlayNext) },
                     )
                 }
@@ -1701,7 +1721,7 @@ private fun V17BottomBar(
         // The queue, lit while its panel is up: the same control opens and closes
         // it, the way the reference's does.
         bottomGlyph(
-            BitChordIcons.Queue,
+            BitIcons.Queue,
             Localization.get(language, "queue"),
             queueOpen,
             onOpenQueue,

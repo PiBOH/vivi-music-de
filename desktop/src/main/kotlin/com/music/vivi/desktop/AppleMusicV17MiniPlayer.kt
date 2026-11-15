@@ -46,16 +46,16 @@ import com.music.vivi.desktop.player.AudioOutput
 import com.music.vivi.desktop.player.RepeatMode
 
 /**
- * "Apple Music v17": BitChord's player bar, kept at the bottom of the DE window
+ * "Apple Music v17": Bit's player bar, kept at the bottom of the DE window
  * as a mini player.
  *
  * It is the whole transport of that bar (shuffle, previous, play/pause, next,
- * repeat), the artwork with BitChord's swipe, the title and the artist, the
+ * repeat), the artwork with Bit's swipe, the title and the artist, the
  * volume, the output-device picker, the lyrics and the queue, over the same
  * PlayerController as every other mini player. The bar sits at the bottom of the
  * window and the artwork still changes track when dragged sideways.
  *
- * Ported from BitChord's `PlayerBar` (GPLv3).
+ * Ported from Bit's `PlayerBar` (GPLv3).
  */
 @Composable
 internal fun AppleMusicV17MiniPlayer(
@@ -107,14 +107,14 @@ internal fun AppleMusicV17MiniPlayer(
                     .height(64.dp)
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                // One dp between 34 dp slots: BitChord's 32 px pitch at its
+                // One dp between 34 dp slots: Bit's 32 px pitch at its
                 // 59 px bar is 35 dp at this 64 dp one.
                 horizontalArrangement = Arrangement.spacedBy(1.dp),
             ) {
                 if (!compact) {
                     MiniTransportButton(Localization.get(language, "shuffle"), onToggleShuffle) {
                         Icon(
-                            BitChordIcons.Shuffle,
+                            BitIcons.Shuffle,
                             contentDescription = null,
                             tint = if (isShuffle) primaryColor else mutedColor,
                             modifier = Modifier.size(18.dp),
@@ -148,7 +148,7 @@ internal fun AppleMusicV17MiniPlayer(
                 if (!compact) {
                     MiniTransportButton(Localization.get(language, "repeat"), onCycleRepeat) {
                         Icon(
-                            BitChordIcons.Repeat,
+                            BitIcons.Repeat,
                             contentDescription = null,
                             tint = if (repeatMode == RepeatMode.OFF) mutedColor else primaryColor,
                             modifier = Modifier.size(18.dp),
@@ -156,7 +156,7 @@ internal fun AppleMusicV17MiniPlayer(
                     }
                 }
 
-                // BitChord leaves a wider breath between the last control and
+                // Bit leaves a wider breath between the last control and
                 // the cover than between the controls themselves.
                 Spacer(Modifier.width(22.dp))
 
@@ -250,7 +250,7 @@ internal fun AppleMusicV17MiniPlayer(
                 Tooltip(Localization.get(language, "tooltip_lyrics")) {
                     M3IconButton(onClick = onOpenLyrics) {
                         Icon(
-                            BitChordIcons.LyricsQuote,
+                            BitIcons.LyricsQuote,
                             contentDescription = Localization.get(language, "tooltip_lyrics"),
                             tint = mutedColor,
                             modifier = Modifier.size(19.dp),
@@ -260,7 +260,7 @@ internal fun AppleMusicV17MiniPlayer(
                 Tooltip(Localization.get(language, "tooltip_queue")) {
                     M3IconButton(onClick = onOpenQueue) {
                         Icon(
-                            BitChordIcons.Queue,
+                            BitIcons.Queue,
                             contentDescription = Localization.get(language, "tooltip_queue"),
                             tint = mutedColor,
                             modifier = Modifier.size(19.dp),
@@ -269,7 +269,7 @@ internal fun AppleMusicV17MiniPlayer(
                 }
             }
 
-            // BitChord's bar carries the position as a hairline at its own edge.
+            // Bit's bar carries the position as a hairline at its own edge.
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -306,7 +306,7 @@ internal fun AppleMusicV17MiniPlayer(
 }
 
 /**
- * One control of the bar's transport, on BitChord's own pitch.
+ * One control of the bar's transport, on Bit's own pitch.
  *
  * The reference lays shuffle, previous, play/pause, next and repeat out on a
  * 32 px step at its 59 px bar, which is 35 dp at this 64 dp one. An

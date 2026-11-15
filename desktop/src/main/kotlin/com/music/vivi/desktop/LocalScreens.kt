@@ -78,7 +78,7 @@ fun DownloadsScreen(
     var files by remember { mutableStateOf(initialFiles) }
     LaunchedEffect(initialFiles) { files = initialFiles }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
                 Localization.get(language, "downloads"),
@@ -90,7 +90,7 @@ fun DownloadsScreen(
                 Text(
                     Localization.get(language, "clear_all"),
                     style = MaterialTheme.typography.labelLarge,
-                    color = BitChordColors.secondary(),
+                    color = BitColors.secondary(),
                     modifier = Modifier
                         .clip(RoundedCornerShape(7.dp))
                         .clickable {
@@ -104,7 +104,7 @@ fun DownloadsScreen(
             Icon(
                 Icons.Filled.Folder,
                 contentDescription = Localization.get(language, "open_folder"),
-                tint = BitChordColors.secondary(),
+                tint = BitColors.secondary(),
                 modifier = Modifier
                     .size(30.dp)
                     .clip(RoundedCornerShape(7.dp))
@@ -115,7 +115,7 @@ fun DownloadsScreen(
         Text(
             if (files.isEmpty()) Localization.get(language, "downloads_empty") else "${files.size} ${Localization.get(language, "tracks")}",
             style = MaterialTheme.typography.bodyMedium,
-            color = BitChordColors.secondary(),
+            color = BitColors.secondary(),
             modifier = Modifier.padding(top = 6.dp, bottom = 14.dp),
         )
 
@@ -182,7 +182,7 @@ private fun DownloadRow(
             Text(
                 "$subtitle - ${formatLocalBytes(size)}",
                 style = MaterialTheme.typography.bodySmall,
-                color = BitChordColors.secondary(),
+                color = BitColors.secondary(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -193,7 +193,7 @@ private fun DownloadRow(
             }
         }
     }
-    HorizontalDivider(color = BitChordColors.Divider)
+    HorizontalDivider(color = BitColors.Divider)
 }
 
 /**
@@ -216,7 +216,7 @@ fun LocalMusicScreen(language: String) {
         scanning = false
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
@@ -227,7 +227,7 @@ fun LocalMusicScreen(language: String) {
                 Text(
                     Localization.get(language, "local_music_subtitle"),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = BitChordColors.secondary(),
+                    color = BitColors.secondary(),
                     modifier = Modifier.padding(top = 4.dp),
                 )
             }
@@ -236,7 +236,7 @@ fun LocalMusicScreen(language: String) {
                     Icon(
                         Icons.Filled.Refresh,
                         contentDescription = Localization.get(language, "rescan"),
-                        tint = BitChordColors.secondary(),
+                        tint = BitColors.secondary(),
                         modifier = Modifier.size(20.dp),
                     )
                 }
@@ -259,7 +259,7 @@ fun LocalMusicScreen(language: String) {
                 else -> "${files.size} ${Localization.get(language, "tracks")}"
             },
             style = MaterialTheme.typography.bodyMedium,
-            color = BitChordColors.secondary(),
+            color = BitColors.secondary(),
             modifier = Modifier.padding(top = 14.dp, bottom = 8.dp),
         )
 
@@ -279,10 +279,10 @@ fun LocalMusicScreen(language: String) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)).background(BitChordColors.Hover),
+                        Modifier.size(44.dp).clip(RoundedCornerShape(6.dp)).background(BitColors.Hover),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Icon(Icons.Filled.MusicNote, contentDescription = null, tint = BitChordColors.secondary(), modifier = Modifier.size(20.dp))
+                        Icon(Icons.Filled.MusicNote, contentDescription = null, tint = BitColors.secondary(), modifier = Modifier.size(20.dp))
                     }
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
@@ -296,7 +296,7 @@ fun LocalMusicScreen(language: String) {
                         Text(
                             "${local.artist} - ${formatLocalBytes(local.file.length())}",
                             style = MaterialTheme.typography.bodySmall,
-                            color = BitChordColors.secondary(),
+                            color = BitColors.secondary(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -307,7 +307,7 @@ fun LocalMusicScreen(language: String) {
                         }
                     }
                 }
-                HorizontalDivider(color = BitChordColors.Divider)
+                HorizontalDivider(color = BitColors.Divider)
             }
         }
     }
@@ -316,14 +316,14 @@ fun LocalMusicScreen(language: String) {
 @Composable
 private fun FolderChip(folder: File) {
     Surface(
-        color = BitChordColors.Search,
+        color = BitColors.Search,
         shape = RoundedCornerShape(7.dp),
         modifier = Modifier.clip(RoundedCornerShape(7.dp)).clickable { openFolder(folder) },
     ) {
         Row(Modifier.padding(horizontal = 10.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Folder, contentDescription = null, tint = BitChordColors.secondary(), modifier = Modifier.size(14.dp))
+            Icon(Icons.Filled.Folder, contentDescription = null, tint = BitColors.secondary(), modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(6.dp))
-            Text(folder.name, style = MaterialTheme.typography.labelMedium, color = BitChordColors.secondary())
+            Text(folder.name, style = MaterialTheme.typography.labelMedium, color = BitColors.secondary())
         }
     }
 }
@@ -334,9 +334,9 @@ private fun EmptyLocalState(icon: androidx.compose.ui.graphics.vector.ImageVecto
         Modifier.fillMaxWidth().padding(top = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Icon(icon, contentDescription = null, tint = BitChordColors.Secondary, modifier = Modifier.size(38.dp))
+        Icon(icon, contentDescription = null, tint = BitColors.Secondary, modifier = Modifier.size(38.dp))
         Spacer(Modifier.height(10.dp))
-        Text(text, style = MaterialTheme.typography.bodyMedium, color = BitChordColors.secondary())
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = BitColors.secondary())
     }
 }
 

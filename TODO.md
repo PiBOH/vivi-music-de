@@ -477,6 +477,20 @@ orientation.
 - [ ] **Azerbaijani: the desktop is clean, the phone's long paragraphs are not.** Every string the desktop shows is proper Azerbaijani now (the batch 83 pass), but `app/src/main/res/values-az/vivi_strings.xml` still holds ~250 word-by-word ones like "göstər sıxlıq dəyiş will take effekt sonra restarting tətbiq. Do siz want -a yenidən başlat now?" — multi-sentence descriptions that need a native Azerbaijani pass, not a guess from here. They only reach the desktop through the keys it maps to an Android resource, and those were fixed in the extras batch; on the phone they show as-is. The generator's no-op guard already stops such a string from silently *becoming* the desktop wording, so the remaining work is visible instead of hidden.
 
 ### UI parity (mobile → desktop)
+- [x] **Bit UI parity pass 15 Nov (1.56.0-beta).** Search draws the reference's
+  "Recent searches" list with `Clear` and a cross per row, stored for real by
+  `BitSearchHistory.kt` in `~/.vivimusic/bit-search-history.json`; Downloads and
+  Local Music draw the "Search your music" field, the A-Z label, the grid/list
+  toggle and the Songs / Artists / Albums tabs; Library keeps three cards and one
+  playlist row; Settings is the ACCOUNT / LISTEN TOGETHER / SOURCES / AUDIO
+  QUALITY frame in a centred 800 px column; Explore tiles carry a real cover per
+  mood. Second pass the same day: the cards take their tint from the artwork at
+  300 x 189 px with a fourth card cut, "Show all" on the Playlist title, tiles
+  233 x 133 px with no scrim over the photograph, and Settings at the reference's
+  100 px group pitch with "Add a source" on two lines. Pairs refreshed in
+  `docs/ui-parity/side/`, frame pacing from the packaged image 60.0 fps with a
+  p95 gap of 16.9 ms and no dropped frame over 20 s.
+
 - [x] **Every horizontal row has scroll arrows (done 1 Oct, 1.54.8, #99).** With a plain mouse the cards past the right edge of a `LazyRow` were unreachable and nothing said there were more, which is what made "Mood & genres" and the "made for you" playlists look short. `HorizontalCarousel` (`Components.kt`) overlays a round arrow on each end (the Spotify desktop affordance): the direction that still has content is active, the other is dimmed, a press moves the row about 85 % of a screenful, and a row that already fits shows no arrows. Applied to the Home sections, Recommended, Made for you, the Mood & genres preview, Charts/Top music videos, the search-result cards and the album/artist carousels. **Watch:** the pair has to appear/disappear with a window resize (the flags come from the row's own layout), and the first/last cards stay clickable underneath the arrows. **1.54.8:** the Home category chips and the Search filter chips went through it too, so `HorizontalCarousel` wraps every horizontal row in the app and the only `LazyRow` left is the one inside it.
 - [x] **Album / artist / playlist context menus (done 26 Sep, 1.53.29).** The header now carries the "⋮" the song rows already had: play next, add the whole collection to the queue, go to the artist, like the album/playlist (`YouTube.likePlaylist`) or subscribe to the artist (`YouTube.subscribeChannel`), share and refresh. The like/subscribe label is session-local — the desktop has no album/artist row to read it from — so it is optimistic and resets on restart.
 - [x] **Gradient header on Album / Artist / Playlist (done 26 Sep, 1.53.29).** The plain row became the artwork behind a scrim that fades into the page background, the mobile shape. It is the same `CachedBlurBackdrop` the rest of the app uses, so the decode is cached per URL.

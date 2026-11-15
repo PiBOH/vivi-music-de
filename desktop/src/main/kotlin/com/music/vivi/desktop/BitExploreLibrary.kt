@@ -119,7 +119,7 @@ private suspend fun loadNewReleaseAlbums(): List<YTItem> {
 }
 
 /**
- * BitChord's Explore, on the sidebar entry that used to be "New".
+ * Bit's Explore, on the sidebar entry that used to be "New".
  *
  * Nothing here is drawn for the look of it: the moods and genres are the ones
  * the service returns for `FEmusic_moods_and_genres` and each card is the real
@@ -136,7 +136,7 @@ private suspend fun loadNewReleaseAlbums(): List<YTItem> {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BitChordExploreScreen(
+fun BitExploreScreen(
     language: String,
     onOpenBrowse: (String, String?) -> Unit,
     onOpenAlbum: (String) -> Unit,
@@ -173,7 +173,7 @@ fun BitChordExploreScreen(
         MaterialTheme.colorScheme.onErrorContainer,
     )
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         when {
             error != null -> ErrorBox(language, error)
             sections == null -> LoadingBox(language)
@@ -374,7 +374,7 @@ internal fun MoodTile(
 }
 
 /**
- * BitChord's Library: the listening cards, the playlists that live on this
+ * Bit's Library: the listening cards, the playlists that live on this
  * machine, and then the account's own liked songs / albums / artists /
  * playlists, with the tabs the app already had.
  *
@@ -383,7 +383,7 @@ internal fun MoodTile(
  * album, each with its number of plays. With no history yet the row is not
  * drawn at all, instead of showing zeros.
  *
- * BitChord's two rows above its "on device" section (Downloads and Local Music)
+ * Bit's two rows above its "on device" section (Downloads and Local Music)
  * are not here because the desktop has neither feature: there is no download
  * store and no local-files scan to open, and a row that opens an empty list
  * would be worse than no row. The playlist tiles and the "+" are real
@@ -391,7 +391,7 @@ internal fun MoodTile(
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun BitChordLibraryScreen(
+fun BitLibraryScreen(
     language: String,
     isLoggedIn: Boolean,
     gridItemSize: Int,
@@ -455,7 +455,7 @@ fun BitChordLibraryScreen(
         )
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
         // The four listening cards. Real numbers from the local history, and
         // nothing drawn at all while there is no history to count.
         if (history.isNotEmpty()) {
@@ -491,7 +491,7 @@ fun BitChordLibraryScreen(
             }
         }
 
-        // BitChord's two device links. They open real screens: the audio cache
+        // Bit's two device links. They open real screens: the audio cache
         // and the files found under Music and Downloads.
         Row(
             Modifier.fillMaxWidth().padding(top = 16.dp),

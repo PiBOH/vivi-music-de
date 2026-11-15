@@ -73,7 +73,7 @@ import com.music.innertube.pages.ArtistPage
 import kotlinx.coroutines.launch
 
 /**
- * BitChord's album page. The reference draws the release as one wide block:
+ * Bit's album page. The reference draws the release as one wide block:
  * the 286 dp sleeve, the small ALBUM label, the title, the artist in the accent
  * colour, the metadata line and the round shuffle / play / search / overflow
  * controls. The table under it drops the sleeve, because every row is on that
@@ -83,7 +83,7 @@ import kotlinx.coroutines.launch
  * colour, so the screen never flashes a different background while it waits.
  */
 @Composable
-fun BitChordAlbumScreen(
+fun BitAlbumScreen(
     browseId: String,
     language: String,
     onOpenArtist: (String) -> Unit,
@@ -105,11 +105,11 @@ fun BitChordAlbumScreen(
         )
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page())) {
+    Column(Modifier.fillMaxSize().background(BitColors.page())) {
         when {
             error != null -> ErrorBox(language, error)
             page == null -> LoadingBox(language)
-            else -> BitChordAlbumContent(
+            else -> BitAlbumContent(
                 album = page!!.album,
                 songs = page!!.songs,
                 language = language,
@@ -131,7 +131,7 @@ fun BitChordAlbumScreen(
 }
 
 @Composable
-internal fun BitChordAlbumContent(
+internal fun BitAlbumContent(
     album: AlbumItem,
     songs: List<SongItem>,
     language: String,
@@ -155,7 +155,7 @@ internal fun BitChordAlbumContent(
     }.joinToString(" • ").uppercase()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(BitChordColors.page()),
+        modifier = Modifier.fillMaxSize().background(BitColors.page()),
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
@@ -173,7 +173,7 @@ internal fun BitChordAlbumContent(
                 Column(Modifier.weight(1f)) {
                     Text(
                         "ALBUM",
-                        color = BitChordColors.secondary(),
+                        color = BitColors.secondary(),
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = 1.2.sp,
@@ -204,7 +204,7 @@ internal fun BitChordAlbumContent(
                         Spacer(Modifier.height(8.dp))
                         Text(
                             metadata,
-                            color = BitChordColors.secondary(),
+                            color = BitColors.secondary(),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }
@@ -213,14 +213,14 @@ internal fun BitChordAlbumContent(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        BitChordCircleAction(Icons.Filled.Shuffle, Localization.get(language, "shuffle"), enabled = songs.isNotEmpty()) {
+                        BitCircleAction(Icons.Filled.Shuffle, Localization.get(language, "shuffle"), enabled = songs.isNotEmpty()) {
                             onShuffleAll(songs)
                         }
-                        BitChordPlayPill(Localization.get(language, "play"), enabled = songs.isNotEmpty()) {
+                        BitPlayPill(Localization.get(language, "play"), enabled = songs.isNotEmpty()) {
                             onPlayAll(songs)
                         }
                         Box {
-                            BitChordCircleAction(Icons.Filled.MoreHoriz, Localization.get(language, "more")) {
+                            BitCircleAction(Icons.Filled.MoreHoriz, Localization.get(language, "more")) {
                                 menuOpen = true
                             }
                             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -260,13 +260,13 @@ internal fun BitChordAlbumContent(
                 Text(
                     Localization.get(language, "empty_playlist"),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = BitChordColors.secondary(),
+                    color = BitColors.secondary(),
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
         } else {
             itemsIndexed(songs, key = { index, song -> "${song.id}-$index" }, contentType = { _, _ -> "albumSong" }) { index, song ->
-                BitChordDetailSongRow(
+                BitDetailSongRow(
                     number = index + 1,
                     song = song,
                     language = language,
@@ -284,13 +284,13 @@ internal fun BitChordAlbumContent(
 }
 
 /**
- * BitChord's artist page: the 340 dp photograph with the name across its foot,
+ * Bit's artist page: the 340 dp photograph with the name across its foot,
  * the listener chips, subscribe / play / shuffle, the about block, the top
  * songs in two columns of four and then the release shelves. There are no tabs:
  * the phone's artist page draws its shelves one after another and so does this.
  */
 @Composable
-fun BitChordArtistScreen(
+fun BitArtistScreen(
     browseId: String,
     language: String,
     onOpenAlbum: (String) -> Unit,
@@ -313,11 +313,11 @@ fun BitChordArtistScreen(
         )
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page())) {
+    Column(Modifier.fillMaxSize().background(BitColors.page())) {
         when {
             error != null -> ErrorBox(language, error)
             page == null -> LoadingBox(language)
-            else -> BitChordArtistContent(
+            else -> BitArtistContent(
                 artist = page!!.artist,
                 sections = page!!.sections,
                 description = page!!.description,
@@ -338,7 +338,7 @@ fun BitChordArtistScreen(
 }
 
 @Composable
-internal fun BitChordArtistContent(
+internal fun BitArtistContent(
     artist: ArtistItem,
     sections: List<com.music.innertube.pages.ArtistSection>,
     description: String?,
@@ -363,12 +363,12 @@ internal fun BitChordArtistContent(
     val scope = rememberCoroutineScope()
 
     LazyColumn(
-        modifier = Modifier.fillMaxSize().background(BitChordColors.page()),
+        modifier = Modifier.fillMaxSize().background(BitColors.page()),
         contentPadding = PaddingValues(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item(key = "artist-banner") {
-            BitChordArtistBanner(artist.thumbnail, artist.title)
+            BitArtistBanner(artist.thumbnail, artist.title)
         }
         if (subscriberCountText != null || monthlyListenerCount != null) {
             item(key = "artist-stats") {
@@ -377,10 +377,10 @@ internal fun BitChordArtistContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     subscriberCountText?.let {
-                        BitChordStatChip(Icons.Filled.Person, it.substringBefore(' ') + " subscribers")
+                        BitStatChip(Icons.Filled.Person, it.substringBefore(' ') + " subscribers")
                     }
                     monthlyListenerCount?.let {
-                        BitChordStatChip(Icons.Filled.GraphicEq, it.substringBefore(' ') + " monthly listeners")
+                        BitStatChip(Icons.Filled.GraphicEq, it.substringBefore(' ') + " monthly listeners")
                     }
                 }
             }
@@ -391,17 +391,17 @@ internal fun BitChordArtistContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BitChordCircleAction(
+                BitCircleAction(
                     if (subscribed) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     Localization.get(language, if (subscribed) "subscribed" else "subscribe"),
                 ) {
                     val next = DetailActions.toggleArtistSubscribed(artist.id)
                     scope.launch { YouTube.subscribeChannel(artist.id, next) }
                 }
-                BitChordPlayPill(Localization.get(language, "play"), enabled = topSongs.isNotEmpty()) {
+                BitPlayPill(Localization.get(language, "play"), enabled = topSongs.isNotEmpty()) {
                     onPlayAll(topSongs)
                 }
-                BitChordCircleAction(Icons.Filled.Shuffle, Localization.get(language, "shuffle"), enabled = topSongs.isNotEmpty()) {
+                BitCircleAction(Icons.Filled.Shuffle, Localization.get(language, "shuffle"), enabled = topSongs.isNotEmpty()) {
                     onShuffleAll(topSongs)
                 }
             }
@@ -409,11 +409,11 @@ internal fun BitChordArtistContent(
         description?.takeIf { it.isNotBlank() }?.let { blurb ->
             item(key = "artist-about") {
                 Column(Modifier.padding(top = 16.dp)) {
-                    BitChordSectionTitle(Localization.get(language, "about_artist"))
+                    BitSectionTitle(Localization.get(language, "about_artist"))
                     Spacer(Modifier.height(8.dp))
                     Text(
                         blurb,
-                        color = BitChordColors.secondary(),
+                        color = BitColors.secondary(),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.padding(horizontal = 24.dp),
                     )
@@ -423,7 +423,7 @@ internal fun BitChordArtistContent(
         if (topSongs.isNotEmpty()) {
             item(key = "artist-top-songs") {
                 Column(Modifier.padding(top = 20.dp, bottom = 6.dp)) {
-                    BitChordSectionTitle(Localization.get(language, "top_songs"))
+                    BitSectionTitle(Localization.get(language, "top_songs"))
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 24.dp),
@@ -432,7 +432,7 @@ internal fun BitChordArtistContent(
                         items(topSongs.chunked(4), key = { column -> column.first().id + "-" + column.size }) { column ->
                             Column(Modifier.width(400.dp)) {
                                 column.forEach { song ->
-                                    BitChordArtistTrack(
+                                    BitArtistTrack(
                                         song = song,
                                         language = language,
                                         onPlay = { onPlaySong(song) },
@@ -449,7 +449,7 @@ internal fun BitChordArtistContent(
         sections.forEach { section ->
             item(key = "artist-shelf-${section.title}") {
                 Column(Modifier.padding(top = 18.dp)) {
-                    BitChordSectionTitle(section.title)
+                    BitSectionTitle(section.title)
                     Spacer(Modifier.height(8.dp))
                     LazyRow(
                         contentPadding = PaddingValues(horizontal = 24.dp),
@@ -472,7 +472,7 @@ internal fun BitChordArtistContent(
             item(key = "artist-empty") {
                 Text(
                     Localization.get(language, "empty_playlist"),
-                    color = BitChordColors.secondary(),
+                    color = BitColors.secondary(),
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(24.dp),
                 )
@@ -482,7 +482,7 @@ internal fun BitChordArtistContent(
 }
 
 @Composable
-private fun BitChordArtistBanner(url: String?, name: String) {
+private fun BitArtistBanner(url: String?, name: String) {
     Box(Modifier.fillMaxWidth().height(340.dp)) {
         Thumbnail(url, Modifier.fillMaxSize(), shape = RectangleShape)
         Box(
@@ -506,19 +506,19 @@ private fun BitChordArtistBanner(url: String?, name: String) {
 }
 
 @Composable
-private fun BitChordStatChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+private fun BitStatChip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(
-        Modifier.clip(CircleShape).background(BitChordColors.chrome()).padding(horizontal = 12.dp, vertical = 6.dp),
+        Modifier.clip(CircleShape).background(BitColors.chrome()).padding(horizontal = 12.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = BitChordColors.secondary(), modifier = Modifier.size(15.dp))
+        Icon(icon, contentDescription = null, tint = BitColors.secondary(), modifier = Modifier.size(15.dp))
         Spacer(Modifier.width(7.dp))
         Text(text, style = MaterialTheme.typography.bodySmall, color = if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @Composable
-private fun BitChordSectionTitle(text: String) {
+private fun BitSectionTitle(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.titleLarge.copy(fontSize = 22.sp, fontWeight = FontWeight.SemiBold),
@@ -528,7 +528,7 @@ private fun BitChordSectionTitle(text: String) {
 }
 
 @Composable
-private fun BitChordPlayPill(label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun BitPlayPill(label: String, enabled: Boolean, onClick: () -> Unit) {
     Surface(
         shape = CircleShape,
         color = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -547,7 +547,7 @@ private fun BitChordPlayPill(label: String, enabled: Boolean, onClick: () -> Uni
 }
 
 @Composable
-private fun BitChordCircleAction(
+private fun BitCircleAction(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     enabled: Boolean = true,
@@ -556,7 +556,7 @@ private fun BitChordCircleAction(
     Tooltip(label) {
         Surface(
             shape = CircleShape,
-            color = if (isAppInDarkTheme()) BitChordColors.chrome() else MaterialTheme.colorScheme.surfaceContainerHigh,
+            color = if (isAppInDarkTheme()) BitColors.chrome() else MaterialTheme.colorScheme.surfaceContainerHigh,
             contentColor = if (enabled) {
                 if (isAppInDarkTheme()) Color.White else MaterialTheme.colorScheme.onSurface
             } else {
@@ -572,7 +572,7 @@ private fun BitChordCircleAction(
 }
 
 @Composable
-private fun BitChordArtistTrack(
+private fun BitArtistTrack(
     song: SongItem,
     language: String,
     onPlay: () -> Unit,
@@ -596,7 +596,7 @@ private fun BitChordArtistTrack(
             Text(
                 song.artists.joinToString(", ") { it.name },
                 style = MaterialTheme.typography.bodyMedium,
-                color = BitChordColors.secondary(),
+                color = BitColors.secondary(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -616,7 +616,7 @@ private fun BitChordArtistTrack(
  * fixed action column, so the duration lines up down the page.
  */
 @Composable
-private fun BitChordDetailSongRow(
+private fun BitDetailSongRow(
     number: Int,
     song: SongItem,
     language: String,
@@ -642,7 +642,7 @@ private fun BitChordDetailSongRow(
             .clip(RoundedCornerShape(6.dp))
             .background(
                 when {
-                    hovered -> BitChordColors.Hover
+                    hovered -> BitColors.Hover
                     striped -> Color.White.copy(alpha = 0.04f)
                     else -> Color.Transparent
                 },
@@ -655,7 +655,7 @@ private fun BitChordDetailSongRow(
         Text(
             number.toString(),
             Modifier.width(28.dp),
-            color = BitChordColors.secondary(),
+            color = BitColors.secondary(),
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.labelSmall,
         )
@@ -676,7 +676,7 @@ private fun BitChordDetailSongRow(
             Text(
                 song.artists.joinToString(", ") { it.name },
                 Modifier.weight(0.20f).padding(horizontal = 8.dp),
-                color = BitChordColors.secondary(),
+                color = BitColors.secondary(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -685,7 +685,7 @@ private fun BitChordDetailSongRow(
             Text(
                 song.album?.name ?: "-",
                 Modifier.weight(0.25f).padding(horizontal = 8.dp),
-                color = BitChordColors.secondary(),
+                color = BitColors.secondary(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -693,7 +693,7 @@ private fun BitChordDetailSongRow(
         Text(
             song.duration?.let { formatTime(it * 1000L) } ?: "-",
             Modifier.width(58.dp),
-            color = BitChordColors.secondary(),
+            color = BitColors.secondary(),
             textAlign = TextAlign.End,
             style = MaterialTheme.typography.bodySmall,
         )
@@ -716,7 +716,7 @@ private fun BitChordDetailSongRow(
                 Icon(
                     if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                     contentDescription = Localization.get(language, if (liked) "unlike" else "like"),
-                    tint = if (liked) MaterialTheme.colorScheme.primary else BitChordColors.secondary(),
+                    tint = if (liked) MaterialTheme.colorScheme.primary else BitColors.secondary(),
                     modifier = Modifier.size(17.dp),
                 )
             }
@@ -726,7 +726,7 @@ private fun BitChordDetailSongRow(
                 Icon(
                     if (downloaded) Icons.Filled.Delete else Icons.Filled.Download,
                     contentDescription = Localization.get(language, if (downloaded) "remove_download" else "download"),
-                    tint = BitChordColors.secondary(),
+                    tint = BitColors.secondary(),
                     modifier = Modifier.size(17.dp),
                 )
             }
@@ -738,7 +738,7 @@ private fun BitChordDetailSongRow(
             )
         }
     }
-    HorizontalDivider(color = BitChordColors.Divider)
+    HorizontalDivider(color = BitColors.Divider)
 }
 
 private fun totalDurationLabel(totalSeconds: Int): String? {

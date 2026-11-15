@@ -258,7 +258,7 @@ fun adjustedThumbnailUrl(url: String?, requestedPx: Int = 544, dataSaver: Boolea
     val isYtimg = url.contains("ytimg") || url.contains("youtube.com") || url.contains("/vi/")
     return when {
         isGoogleCdn -> {
-            // BitChord's rule, at BitChord's sizes: the size hint the provider
+            // Bit's rule, at Bit's sizes: the size hint the provider
             // put in the URL is rewritten in place at the rung the surface draws
             // at (see `ArtworkPx`), which keeps the crop and the palette around
             // it. The full player is the ladder's 1200, so a cover that fills
@@ -1030,7 +1030,7 @@ fun ViviSlider(
     /** Kept for the stored key: the wavy and squiggly tracks are gone. */
     style: ViviSliderStyle = ViviSliderStyle.SLIM,
     enabled: Boolean = true,
-    /** The circle at the head of the line. BitChord's sliders have none. */
+    /** The circle at the head of the line. Bit's sliders have none. */
     showThumb: Boolean = true,
     /** Optional buffered fraction (0..1) drawn as a fainter secondary segment
      *  behind the played portion (YouTube-style). Null hides it entirely;
@@ -1091,7 +1091,7 @@ fun ViviSlider(
         }
         Canvas(Modifier.fillMaxWidth().height(28.dp)) {
             val cy = size.height / 2f
-            // One track, BitChord's: a 3 px line for the whole length, the
+            // One track, Bit's: a 3 px line for the whole length, the
             // buffered segment behind the played part and the played part on
             // top. The squiggly zig-zag, the wavy sine and the thick Expressive
             // capsule are gone, together with the circle that used to sit at the
@@ -1578,7 +1578,7 @@ fun <T> ExpressiveShelf(
                 }
             }
         }
-        // The m3e Home's rows carry no dot row: BitChord's Home draws
+        // The m3e Home's rows carry no dot row: Bit's Home draws
         // nothing under its shelves, and the card the window cuts already says
         // the row goes on.
         if (showIndicator) IndicatorDots(pages = pages, current = lead / step)

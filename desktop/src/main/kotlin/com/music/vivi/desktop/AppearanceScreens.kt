@@ -323,7 +323,7 @@ fun ThemeSection(
         // The accent-from-artwork switch belongs on this page: it is the seed
         // of the accent, not a diagnostic, and it takes effect on every track
         // change from here. Off by default, so the shipped accent stays the
-        // neutral white BitChord's scheme uses.
+        // neutral white Bit's scheme uses.
         Spacer(Modifier.height(20.dp))
         M3SettingsGroup(
             items = listOf(

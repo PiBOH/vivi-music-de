@@ -65,15 +65,20 @@ private fun configureRenderApi() {
         System.setProperty("skiko.renderApi", envApi)
         return
     }
+    val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
+    // Windows (Direct3D) and macOS (Metal) are not asked to sit on the software
+    // renderer: the marker below is a Linux OpenGL remedy, and honoring it on
+    // Windows cost this machine two thirds of its frame rate (37 fps software
+    // against 108 fps on Direct3D for the same player). A real GPU failure
+    // there is caught by the crash handler instead.
+    if (!os.contains("linux")) return
     // A previous run either crashed in Skiko's OpenGL renderer or measured a
     // first frame so slow that the driver is unusable (see
-    // [fallbackToSoftwareRenderingIfNeeded]) → stay on SOFTWARE on every OS.
+    // [fallbackToSoftwareRenderingIfNeeded]) → stay on SOFTWARE.
     if (glSoftwareMarkerFile().exists()) {
         System.setProperty("skiko.renderApi", "SOFTWARE")
         return
     }
-    val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
-    if (!os.contains("linux")) return // Windows/macOS defaults are fine
     if (canLoadOpenGL()) return
     System.setProperty("skiko.renderApi", "SOFTWARE")
 }
@@ -128,6 +133,9 @@ private const val SLOW_FIRST_FRAME_MS = 8000L
  */
 internal fun fallbackToSoftwareRenderingIfNeeded(firstFrameMs: Long) {
     if (firstFrameMs < SLOW_FIRST_FRAME_MS) return
+    // Linux only: a slow first frame is not proof of a broken driver, and on
+    // Windows this check is what pinned the app to software rendering for good.
+    if (!System.getProperty("os.name", "").lowercase(Locale.ROOT).contains("linux")) return
     // An explicit renderer is a choice, not a symptom: respect it even when it
     // is slower than the software path.
     if (System.getProperty("skiko.renderApi") != null) return
@@ -338,7 +346,7 @@ fun main(args: Array<String>) {
     // is playing, read by `ArtworkAccent` and updated by the player.
     val artworkAccent by ArtworkAccent.current
     // The cover's colour is opt-in (Developer options). Left off, the app is
-    // built from the neutral white seed BitChord's own scheme uses.
+    // built from the neutral white seed Bit's own scheme uses.
     val accentFromArtwork = remember(settingsFileRevision()) { initialSettings.accentFromArtwork }
     val themeAccent = if (accentFromArtwork) artworkAccent ?: accent else NeutralAccent
     var accentIntensity by remember(settingsFileRevision()) { mutableStateOf(initialSettings.accentIntensity) }
@@ -444,7 +452,7 @@ fun main(args: Array<String>) {
     // The live part is written on the AWT frame directly instead, off the
     // composition (see `LaunchedEffect(frameWindow)` below); the composition only
     // ever sees the constant base title.
-    val windowTitle = "VIVI Music — desktop"
+    val windowTitle = "VIVI Music DE"
 
     var isFullscreen by remember(settingsFileRevision()) { mutableStateOf(DesktopSettings.load().isFullscreen) }
     // Native OS title bar vs VIVI's custom one (window chrome is fixed at

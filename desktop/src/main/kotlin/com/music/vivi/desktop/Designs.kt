@@ -73,7 +73,7 @@ internal fun designStyleLabel(language: String, style: DesignStyle): String = wh
  * one applies it to every screen; under them the four screens each carry their
  * own dropdown, so a screen can stay on the original layout while another is
  * Expressive. The preview is drawn from the same shapes the screens use
- * (BitChord's equal cards with their names under them, the m3e 16 dp cards with
+ * (Bit's equal cards with their names under them, the m3e 16 dp cards with
  * the title over the artwork, Explore's multi-browse lead), not from a picture:
  * a preview that lies about the layout is worse than no preview.
  */
@@ -213,7 +213,7 @@ private fun DesignMock(style: DesignStyle) {
     val label = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
     when (style) {
         DesignStyle.CLASSIC -> Column(Modifier.fillMaxSize()) {
-            // BitChord's shelf: a heading, one row of equal rounded squares and
+            // Bit's shelf: a heading, one row of equal rounded squares and
             // their names under them, then the next shelf. No lead card and no
             // dot row, exactly as Classic's Home draws them.
             repeat(2) { index ->

@@ -41,10 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * The colours measured on BitChord's desktop window. They are used by the
+ * The colours measured on Bit's desktop window. They are used by the
  * cloned chrome only; VIVI's Settings keep the tonal scheme.
  */
-internal object BitChordColors {
+internal object BitColors {
     val Chrome = Color(0xFF171717)
     val Page = Color(0xFF202020)
     val Divider = Color(0xFF121213)
@@ -70,7 +70,7 @@ internal object BitChordColors {
 }
 
 /**
- * BitChord's bottom control, narrowed to VIVI's two destinations: the account
+ * Bit's bottom control, narrowed to VIVI's two destinations: the account
  * half opens Account, the settings half opens VIVI's Settings. Collapsed to the
  * 72 dp rail, the same two destinations become two icon targets.
  */
@@ -85,10 +85,10 @@ internal fun AccountSettingsPill(
     onSettings: () -> Unit,
 ) {
     val dark = isAppInDarkTheme()
-    val fill = if (dark) BitChordColors.Search else MaterialTheme.colorScheme.surfaceContainerHigh
-    val border = if (dark) BitChordColors.SearchBorder else MaterialTheme.colorScheme.outlineVariant
+    val fill = if (dark) BitColors.Search else MaterialTheme.colorScheme.surfaceContainerHigh
+    val border = if (dark) BitColors.SearchBorder else MaterialTheme.colorScheme.outlineVariant
     val primary = if (dark) Color.White else MaterialTheme.colorScheme.onSurface
-    val secondary = BitChordColors.secondary()
+    val secondary = BitColors.secondary()
     val settingsLabel = Localization.get(language, "settings")
 
     if (collapsed) {
@@ -98,7 +98,7 @@ internal fun AccountSettingsPill(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Tooltip(userName) {
-                BitChordAvatar(
+                BitAvatar(
                     userName = userName,
                     selected = currentAccountDestination(settingsSelected),
                     modifier = Modifier.size(26.dp).clickable { onAccount() },
@@ -138,7 +138,7 @@ internal fun AccountSettingsPill(
                     .padding(horizontal = 9.dp, vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BitChordAvatar(userName = userName, selected = !settingsSelected, modifier = Modifier.size(26.dp))
+                BitAvatar(userName = userName, selected = !settingsSelected, modifier = Modifier.size(26.dp))
                 Spacer(Modifier.width(7.dp))
                 Column(Modifier.weight(1f)) {
                     Tooltip(userName) {
@@ -185,12 +185,12 @@ internal fun AccountSettingsPill(
 }
 
 /**
- * BitChord's 36 dp search field at the top of the rail. Typing updates the
+ * Bit's 36 dp search field at the top of the rail. Typing updates the
  * shared query; focus opens Search, and Enter submits. The page itself is a
  * result surface, not a second search box.
  */
 @Composable
-internal fun BitChordSidebarSearch(
+internal fun BitSidebarSearch(
     language: String,
     value: String,
     placeholder: String,
@@ -199,10 +199,10 @@ internal fun BitChordSidebarSearch(
     onFocus: () -> Unit,
 ) {
     val dark = isAppInDarkTheme()
-    val secondary = BitChordColors.secondary()
+    val secondary = BitColors.secondary()
     val primary = if (dark) Color.White else MaterialTheme.colorScheme.onSurface
-    val fill = if (dark) BitChordColors.Search else MaterialTheme.colorScheme.surfaceContainerHigh
-    val border = if (dark) BitChordColors.SearchBorder else MaterialTheme.colorScheme.outlineVariant
+    val fill = if (dark) BitColors.Search else MaterialTheme.colorScheme.surfaceContainerHigh
+    val border = if (dark) BitColors.SearchBorder else MaterialTheme.colorScheme.outlineVariant
     Row(
         Modifier
             .fillMaxWidth()
@@ -252,10 +252,10 @@ internal fun BitChordSidebarSearch(
 private fun currentAccountDestination(settingsSelected: Boolean): Boolean = !settingsSelected
 
 @Composable
-private fun BitChordAvatar(userName: String, selected: Boolean, modifier: Modifier = Modifier) {
+private fun BitAvatar(userName: String, selected: Boolean, modifier: Modifier = Modifier) {
     val dark = isAppInDarkTheme()
     val disc = if (dark) {
-        if (selected) Color.White else BitChordColors.Hover
+        if (selected) Color.White else BitColors.Hover
     } else {
         if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest
     }

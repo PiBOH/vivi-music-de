@@ -74,7 +74,7 @@ import com.music.vivi.sync.SyncedSong
 import kotlinx.coroutines.launch
 
 /**
- * BitChord's playlist screen, on this machine's own playlists.
+ * Bit's playlist screen, on this machine's own playlists.
  *
  * The header is the reference's: the 2x2 mosaic built from the first four
  * covers the playlist actually holds, the small PLAYLIST label, the name, the
@@ -88,7 +88,7 @@ import kotlinx.coroutines.launch
  * share link to copy.
  */
 @Composable
-fun BitChordLocalPlaylistScreen(
+fun BitLocalPlaylistScreen(
     playlistId: String,
     language: String,
     onBack: () -> Unit,
@@ -103,7 +103,7 @@ fun BitChordLocalPlaylistScreen(
     var nameDraft by remember { mutableStateOf("") }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 12.dp)) {
         BackButton(language, onBack)
         if (playlist == null) {
             Text(
@@ -379,7 +379,7 @@ private fun PlaylistTrackRow(
 }
 
 /**
- * BitChord's search: one large field, the service's own suggestions under it
+ * Bit's search: one large field, the service's own suggestions under it
  * while typing, then a flat list of results with the cover, the title and the
  * line that says what the row is (Album - artist - year, Artist - subscribers,
  * Playlist - author - count, or the song's artists).
@@ -390,7 +390,7 @@ private fun PlaylistTrackRow(
  * keeps the recent searches and the plain prompt instead.
  */
 @Composable
-fun BitChordSearchScreen(
+fun BitSearchScreen(
     language: String,
     onOpenAlbum: (String) -> Unit,
     onOpenArtist: (String) -> Unit,
@@ -458,8 +458,8 @@ fun BitChordSearchScreen(
         suggestions = YouTube.searchSuggestions(q).getOrNull()?.queries.orEmpty().take(6)
     }
 
-    Column(Modifier.fillMaxSize().background(BitChordColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
-        // The rail's 36 dp field is the only query input, as in BitChord. This
+    Column(Modifier.fillMaxSize().background(BitColors.page()).padding(start = 16.dp, end = 18.dp, top = 18.dp)) {
+        // The rail's 36 dp field is the only query input, as in Bit. This
         // page is the result surface: filters, suggestions and rows.
         val filters = listOf(
             null to Localization.get(language, "filter_all"),

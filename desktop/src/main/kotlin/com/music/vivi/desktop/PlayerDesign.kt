@@ -69,7 +69,7 @@ enum class PlayerDesign(val key: String) {
     EXPRESSIVE_TRANSLUCENT("expressive_translucent"),
 
     /**
-     * BitChord's Apple Music player, ported to the DE and the default of a
+     * Bit's Apple Music player, ported to the DE and the default of a
      * fresh install.
      *
      * It is a layout over the same [com.music.vivi.desktop.player.PlayerController]

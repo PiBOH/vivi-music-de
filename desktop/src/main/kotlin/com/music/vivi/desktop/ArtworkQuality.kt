@@ -1,7 +1,7 @@
 package com.music.vivi.desktop
 
 /**
- * BitChord's artwork ladder, in px, for the sizes the desktop asks its covers at.
+ * Bit's artwork ladder, in px, for the sizes the desktop asks its covers at.
  *
  * The reference names one size per surface so every surface showing the same
  * picture asks for the same number and shares one cache entry: a row is 160 px,
@@ -14,7 +14,12 @@ object ArtworkPx {
     const val CARD = 480
     const val HEADER = 720
     const val NOTIFICATION = 544
-    const val PLAYER = 1200
+    /**
+     * The player square is drawn at 494 dp, so 720 px covers a 1.4x density.
+     * 1200 px was a 1.0x-density window's leftover and cost texture memory and
+     * scaling time on every player frame without being visible.
+     */
+    const val PLAYER = 720
 }
 
 /**
@@ -24,7 +29,7 @@ object ArtworkPx {
 private val artworkSizeHint = Regex("""w\d+-h\d+""")
 
 /**
- * BitChord's `String?.artworkAt(px)`: the provider's own URL, at another size.
+ * Bit's `String?.artworkAt(px)`: the provider's own URL, at another size.
  *
  * The hint already inside the URL is replaced in place, so the crop and the
  * palette the provider put there stay exactly as they were - `=w120-h120-p-l90-rj`

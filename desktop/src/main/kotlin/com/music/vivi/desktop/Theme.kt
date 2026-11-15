@@ -519,7 +519,7 @@ val ComponentModeInk = Color(0xFF7A7A7A)
 
 /**
  * The neutral accent the desktop ships with: white, which is the accent of
- * BitChord's own desktop scheme. The tonal engine turns it into the greys of a
+ * Bit's own desktop scheme. The tonal engine turns it into the greys of a
  * neutral interface; the cover's colour is the opt-in seed from Developer
  * options (`accentFromArtwork`).
  */
@@ -727,22 +727,12 @@ fun AppTheme(
             // the app's language (see `platformLocalization`).
             LocalLocalization provides platformLocalization(language),
         ) {
-            // Developer options -> Unlock frame rate -> Show frame rate. Read
-            // here because every window of the app comes through this theme, so
-            // the reading follows the window it is measuring.
-            val revision = settingsFileRevision()
-            val showFps = remember(revision) { DesktopSettings.load().showFps }
+            // The Bit UI owns the whole window: no debug badge is painted over
+            // it. Developer options -> Show frame rate still measures frames in
+            // the developer panel; the overlay itself belongs to the previous
+            // surface and is not drawn here.
             Box(Modifier.fillMaxSize().background(effective.background)) {
                 content()
-                if (showFps) {
-                    FpsCounterOverlay(
-                        Modifier
-                            .align(Alignment.TopEnd)
-                            // Under the title bar / top bar, clear of the window
-                            // controls.
-                            .padding(top = 52.dp, end = 14.dp),
-                    )
-                }
             }
         }
     }
