@@ -397,11 +397,13 @@ the tonal scheme, and every screen added to it follows these rules.
   sideways and the next cover is left cut at the right edge, as in the
   reference. The measured numbers come from the running reference at 1220 x 780
   (`docs/ui-parity/side/`), not from a screenshot estimate.
-- **Mini players sit at the bottom.** The compact bar (cover, title, artist,
-  play/pause, next) is anchored to the bottom of the content column, above
-  nothing, in the narrow layout (under 980 dp) where the rail is folded away.
-  A wide window keeps the reference's transport strip at the top and has no
-  second, duplicated mini player.
+- **Mini players sit at the bottom.** Bit's capsule (cover at 40 dp with an
+  8 dp radius, title, artist, play/pause, next, 12 x 8 dp of padding, capped at
+  440 dp) floats on the bottom edge of the content column in every layout, wide
+  window included, as the reference draws it. It is an overlay: the pages keep a
+  104 dp bottom inset so the last row can be scrolled clear of it, and nothing
+  is drawn while nothing plays. The transport strip at the top stays the
+  reference's own, so the window has the same two surfaces Bit has.
 - **Window controls follow the OS.** With the custom (undecorated) title bar the
   three controls are drawn at the top-left on macOS and at the top-right on
   Windows and Linux, in that platform's own order and colours. With the native
@@ -411,6 +413,13 @@ the tonal scheme, and every screen added to it follows these rules.
   (shuffle, repeat, lyrics, queue, infinity); the rest are the platform
   Material Rounded symbols, always referenced literally so the icon jar
   minimizer keeps them. Apple surfaces keep Apple shapes (see the rule above).
+- **The lyrics clock reads the playhead every frame.** `rememberSmoothPosition`
+  in `LyricsView.kt` reads the `positionMs` lambda inside `withFrameNanos`. The
+  lambda is not a Compose state, so the `snapshotFlow` it used to be collected
+  through took exactly one sample and never emitted again: the clock stayed at
+  that sample, the sung line never changed and the list never scrolled, which is
+  the "lyrics do not scroll" report. Verified against a playing track: the sung
+  line moved on and the list followed (`side/14-player-lyrics-scroll.png`).
 - **Performance is the surface's own rule**: the playhead and the audio level
   are read inside the leaf that draws them (the pill's 2 px line, the scrubber,
   the karaoke line), never at the root; every lazy list carries a stable key;
@@ -461,24 +470,32 @@ and a row that changes is updated with the change.
 | Album, Artist, Playlist, local playlist | album, playlist and artist routes verified; the artist credit in an album header opens the artist page (the browse id is resolved from the album's own song credits when the header run carries none) |
 | Context menus (song row, album, playlist) | the collection menu carries Play next, Add to queue, Save to library, Download and Share in the reference's order, the row menu adds Play and Add to playlist; every entry runs its action (Play next writes the queue, Download reaches `downloadToCache`, Save to library writes `playlists.json`); captured in `docs/ui-parity/22-menu-album.png`, `23-menu-song.png`, `24-menu-playlist.png` |
 | Search | the reference's "Recent searches": heading with a `Clear` action, rows of 40 px cover, title, artist and duration with a cross that removes one. The list is stored by `BitSearchHistory.kt` in `~/.vivimusic/bit-search-history.json` (newest first, twenty entries, record, remove, clear, the shape of the reference's `search_entities`), recorded when a result is opened. The page has no field of its own, the rail field is the input and submits on a physical Enter (`Modifier.bcSubmitOnEnter` in `BitTheme.kt`: `KeyboardActions(onSearch)` is the soft-keyboard IME action and never fires on desktop). The filter chips were removed, as in the reference |
-| Player, full window | shared with the DE's Apple Player v17, which is the reference surface |
-| Mini player | Bit's player bar, bottom edge, compact layout under 980 dp only |
+| Player, full window | shared with the DE's Apple Player v17, which is the reference surface. Transport at the reference's numbers: play 74 dp in a 92 dp target, skip 53 dp glyph in a 53 dp target squashed to 0.85 of its height, 28 dp above the transport and 20 dp below it, volume glyphs 20 dp with 10 dp gaps, artwork requested at `ArtworkPx.PLAYER` (1200 px, the reference's `PLAYER_ART_PX`), bottom row 44 dp actions with the 64 / 52 dp capsule segments and 24 / 23 / 22 dp glyphs. Verified (`side/09-player.png`, `side/14-player-lyrics-scroll.png`) |
+| Mini player | Bit's capsule (40 dp cover, title, artist, play/pause, next, 440 dp cap), floating on the bottom edge in every layout and hidden while nothing plays; verified on the packaged app (`side/12-mini-player.png`) |
 | Queue and lyrics side panels | verified; the rail icon for the queue is `QueueMusic` |
 | Downloads and Local Music | the reference's frame: 44 px "Search your music" field with the `A-Z` label and the grid/list toggle, then the Songs / Artists / Albums tabs with the 2 px white underline, a hairline under the row and the content below; no page title. Verified on the installed copy (`side/06-downloads.png`, `side/07-local-music.png`) |
 | Library listening cards | measured at 1220 x 780: 300 px wide, 189 px tall, 12 px apart, 16 px inset, in a row that scrolls and leaves the fourth card cut at the right edge. The tint comes from the artwork itself (`BitTint.kt`: the cover is reduced to a 12 x 12 grid, averaged with a luma weight and set to saturation 0.35 and brightness 0.28, then run into a vertical gradient that darkens to 62 percent), a 28 px figure for a number and 21 px for a name. Verified (`side/03-library.png`) |
 | Library "Show all" | the Playlist shelf title carries `Show all` on the right, as the reference draws it, and it opens the first playlist of the row |
-| Settings, empty states, error state | the reference's ACCOUNT / LISTEN TOGETHER / SOURCES, TRIED IN THIS ORDER / AUDIO QUALITY frame with numbered sources, their switches and `Always on`, the four quality pills with Medium chosen (the page has no `Normal` label). Measured spacing: the column is centred and 800 px wide (text starts at 340 px of a 1220 px window), 12 px above the title, 8 px under it, then 10 px over each group label and 6 px under its rows, which gives the reference's 100 px group pitch. The detail line is capped at 630 px so a long one wraps on two lines as the reference's "Add a source" does. Verified (`side/08-settings.png`) |
+| Settings, empty states, error state | the reference's frame (title with `Search settings`, group label, 64 dp rows) carrying this build's real settings: ACCOUNT, PLAYBACK, AUDIO QUALITY (Auto / High / Low), LYRICS, APPEARANCE, ADVANCED, every switch writing `DesktopSettings` and the page re-reading on the settings revision. Verified (`side/13-settings-real.png`). Measured spacing: the column is centred and 800 px wide (text starts at 340 px of a 1220 px window), 12 px above the title, 8 px under it, then 10 px over each group label and 6 px under its rows, which gives the reference's 100 px group pitch. The detail line is capped at 630 px so a long one wraps on two lines as the reference's "Add a source" does. Verified (`side/08-settings.png`) |
 | Loading placeholders | shimmer shelves and rows, 1400 ms sweep, same metrics as the real content |
 
-**Deliberate divergence: the settings this build really has.** The reference's
-page ends at AUDIO QUALITY. This build keeps MISCELLANEOUS (Don't repeat songs,
-Tray icon, Keep playing when closed, Hide volume bar), LANGUAGE, ADVANCED
-OPTIONS (Show stats for nerds) and PLAYBACK (Audio output) below it, because
-those options exist and removing them would remove function. They are drawn in
-the reference's own row language instead of being appended as another style: the
-same 64 px row, the same 34 px icon tile with an 8 px corner, the same title and
-13 px detail line, and the switch or chevron on the right. This is the one place
-where the page is longer than the reference on purpose.
+**The settings page carries this build's own settings.** The reference's frame
+is unchanged (centred 800 px column, 64 px rows, 34 px icon tile with an 8 px
+corner, title and 13 px detail line, switch or chevron on the right), but the
+rows are the options VIVI Music DE really has, read from and written to
+`DesktopSettings` through one `DesktopSettings.update` per switch: ACCOUNT (the
+signed-in name, or "Not signed in"), PLAYBACK (autoplay next, skip silence,
+shuffle persistence, one copy in the queue, pause when muted, the audio output
+this machine runs), AUDIO QUALITY (the three steps this build resolves: Auto,
+High, Low - the reference's fourth step streams from a service this build does
+not use), LYRICS (synced words, follow the sung line, click to seek, the inline
+line, the blur), APPEARANCE (animations, round artwork, accent from the artwork,
+pure black) and ADVANCED (stats for nerds, FPS, unlocked frame rate). The
+reference's invented rows (tray icon, keep playing when closed, hide volume bar,
+JioSaavn, the add-a-source addon, listen together) are gone: a settings page
+that writes nothing is worse than a shorter one. The rail's foot splits the
+single Settings entry into [ACCOUNT | SETTINGS] as two rows, because half of the
+208 dp rail clips both labels ("Acco..." / "Settin..." measured).
 
 **Motion, with the reference's numbers.** A page change is a 180 ms crossfade
 (`fadeIn`/`fadeOut`). A hover wash is 120 ms; a card lifts 3.5% and casts an

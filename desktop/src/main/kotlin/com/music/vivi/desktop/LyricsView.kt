@@ -483,41 +483,44 @@ private fun rememberSmoothPosition(positionMs: () -> Long, isPlaying: Boolean): 
     var started by remember { mutableStateOf(false) }
     var wasPlaying by remember { mutableStateOf(isPlaying) }
 
-    // A play/pause toggle is re-keyed too: on resume the extrapolation must
-    // start from the sample the player just handed over, not from a timestamp
-    // that was frozen for the whole pause.
+    // The position arrives as a plain lambda, not as a Compose state: a
+    // `snapshotFlow` over it read the function once and never saw another
+    // sample, so the clock kept its first value and the lyrics never moved on.
+    // Reading the lambda inside the frame loop takes every report the player
+    // makes, which is the only way the singer's line can change.
     LaunchedEffect(Unit) {
-        snapshotFlow { currentPosition.value() to playing.value }.collect { (positionMs, isPlaying) ->
-            val now = System.nanoTime()
-            val toggled = wasPlaying != isPlaying
-            wasPlaying = isPlaying
-            if (!started || toggled || abs(positionMs - output.value) > SNAP_THRESHOLD_MS) {
-                started = true
-                drift = 0f
-                sample = positionMs.toFloat()
-            } else {
-                // What we were showing when this sample was taken, against what the
-                // player now reports: usually a few milliseconds, hidden by the
-                // decay below rather than shown as a step back.
-                val predicted = sample + (now - sampleAtNanos) / 1_000_000f
-                drift = (positionMs - predicted).coerceIn(-200f, 200f)
-                sample = positionMs.toFloat()
-            }
-            sampleAtNanos = now
-            output.value = positionMs
-        }
-    }
-
-    LaunchedEffect(Unit) {
+        var lastReported = -1L
         while (true) {
             withFrameNanos { now ->
-                if (!started) return@withFrameNanos
+                val reported = currentPosition.value()
+                val isPlaying = playing.value
+                val toggled = wasPlaying != isPlaying
+                val fresh = reported != lastReported
+                // A jump larger than the threshold is a seek, and a resume starts
+                // from the sample the player just handed over instead of a
+                // timestamp frozen for the whole pause.
+                if (!started || toggled || abs(reported - sample) > SNAP_THRESHOLD_MS) {
+                    started = true
+                    drift = 0f
+                    sample = reported.toFloat()
+                    sampleAtNanos = now
+                } else if (fresh) {
+                    // What we were showing when this sample was taken, against what
+                    // the player now reports: usually a few milliseconds, hidden by
+                    // the decay below rather than shown as a step back.
+                    val predicted = sample + (now - sampleAtNanos) / 1_000_000f
+                    drift = (reported - predicted).coerceIn(-200f, 200f)
+                    sample = reported.toFloat()
+                    sampleAtNanos = now
+                }
+                lastReported = reported
+                wasPlaying = isPlaying
                 drift *= 0.75f
                 if (drift < 0.4f && drift > -0.4f) drift = 0f
                 // Clamped as a safety net: if the player ever stops reporting
                 // for a while, the lyrics stall half a second ahead instead of
                 // running off on their own.
-                val advance = if (playing.value) {
+                val advance = if (isPlaying && !fresh) {
                     ((now - sampleAtNanos) / 1_000_000f).coerceIn(0f, MAX_EXTRAPOLATION_MS)
                 } else {
                     0f
@@ -588,6 +591,12 @@ fun LyricsList(
         if (scrolledRows !== rows) {
             listState.scrollToItem(target)
             scrolledRows = rows
+        } else if (abs(target - listState.firstVisibleItemIndex) > 4) {
+            // A line more than a few rows away is a seek or a jump in a song with
+            // long instrumental breaks: gliding there would sweep every line in
+            // between, and the animation would be cancelled by the next line
+            // change before it arrived, which read as a list that never moved.
+            listState.scrollToItem(target)
         } else {
             listState.animateScrollToItem(target)
         }

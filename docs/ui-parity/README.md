@@ -71,6 +71,39 @@ at 1220 x 780:
   which is the payload the installer ships, so nothing depends on an
   administrator prompt.
 
+**Third pass, 15 Nov 2026 (later the same day): the player, the mini player,
+the rail's foot and the real settings.**
+
+- **Mini player** is Bit's capsule, copied from the reference's
+  `DesktopMiniPlayer`: one row capped at 440 dp, a 40 dp cover with an 8 dp
+  radius, a 10 dp gap, title over artist, play/pause and next, 12 x 8 dp of
+  padding, a 50 percent radius and the whole capsule opening the player
+  (`side/12-mini-player.png`). It floats on the bottom edge of the content
+  column in every layout now, not only under 980 dp, and the pages keep a
+  104 dp bottom inset so the last row clears it.
+- **Player transport** at the reference's own numbers: skip glyph 53 dp in a
+  53 dp target (it used to sit in a 72 dp one) squashed to 0.85 of its height,
+  volume glyphs 20 dp with 10 dp gaps (they were 16 and 22 with 8 dp gaps),
+  play 74 dp in a 92 dp target, 28 dp above and 20 dp below, artwork requested
+  at the reference's 1200 px player rung. Measured on the packaged build.
+- **Rail foot** splits the one Settings entry into ACCOUNT and SETTINGS. Two
+  rows, not two halves of one: half of the 208 dp rail clipped both labels
+  ("Acco..." / "Settin..." measured), so the split is two full rows.
+- **Settings** keeps the reference's frame and carries this build's own
+  options, every switch writing `DesktopSettings`: ACCOUNT (the signed-in name
+  or "Not signed in"), PLAYBACK (autoplay next, skip silence, shuffle
+  persistence, one copy in the queue, pause when muted, the audio output this
+  machine runs), AUDIO QUALITY (Auto / High / Low, the three steps this build
+  resolves), LYRICS, APPEARANCE and ADVANCED (`side/13-settings-real.png`).
+  The reference's invented rows are gone.
+- **Lyrics scroll** again. The panel's clock read the player's position lambda
+  through a `snapshotFlow`, and a lambda is not Compose state, so the flow
+  emitted once and the words froze on that first sample. It now reads the
+  position inside `withFrameNanos`; the sung line moves from "Just don't blame
+  it on me girl" to "'Cause you wanted to have fun" and the list follows
+  (`side/14-player-lyrics-scroll.png`, two captures ten seconds apart on a
+  playing track).
+
 Still not identical: the reference resolves artwork for only some of its moods,
 so many of its tiles are flat colour, while this build resolves a playlist cover
 for every mood and therefore shows photographs on nearly all of them; the
@@ -111,6 +144,9 @@ not part of this pass.
 | `26-search-playing.png` | The same list after clicking the first row: the track plays and the mini player shows it |
 | `27-search-enter.png` | Enter submitted from the rail field on the rebuilt 1.56.0-beta, results returned |
 | `28-installed-search.png` | The same submit on the installed copy in `C:\Program Files\VIVIMusic` |
+| `side/12-mini-player.png` | The floating capsule mini player over the Search page (third pass) |
+| `side/13-settings-real.png` | Settings carrying this build's own options, rail foot at ACCOUNT + SETTINGS (third pass) |
+| `side/14-player-lyrics-scroll.png` | The lyrics panel following the playhead (third pass) |
 
 The screens were reached the way a person reaches them: the rail rows for the
 pages, a card for a release, a sidebar playlist for a local playlist, the

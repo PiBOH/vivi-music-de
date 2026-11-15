@@ -99,7 +99,9 @@ internal fun BcPage(
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize().background(BC.Page),
-        contentPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 20.dp, bottom = 40.dp),
+        // The bottom inset clears the floating mini player, which sits over the
+        // page's last row instead of taking a row of its own.
+        contentPadding = PaddingValues(start = 28.dp, end = 28.dp, top = 20.dp, bottom = 104.dp),
         content = content,
     )
 }
@@ -798,7 +800,7 @@ internal fun BcSearchPage(
             loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = BC.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
             }
-            results != null -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
+            results != null -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 104.dp)) {
                 // Read through the nullable state, not with `!!`: a search can
                                 // clear `results` while this lazy scope is being invalidated,
                                 // and the old read crashed with a NullPointerException.
@@ -859,7 +861,7 @@ private fun BcSearchRecent(
         BcSearchEmpty()
         return
     }
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 40.dp)) {
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 104.dp)) {
         item(key = "recent-header") {
             Row(
                 Modifier.fillMaxWidth().padding(bottom = 14.dp),

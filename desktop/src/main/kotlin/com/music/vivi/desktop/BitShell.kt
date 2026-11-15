@@ -41,6 +41,7 @@ import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.PlaylistAdd
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.QueueMusic
 import androidx.compose.material.icons.rounded.RemoveCircleOutline
 import androidx.compose.material.icons.rounded.Repeat
@@ -462,6 +463,17 @@ internal fun BcRoot(
                             )
                             }
                         }
+                        // Bit's mini player floats over the page in every
+                        // layout, not only in the narrow one: it is one capsule
+                        // on the bottom edge, and the pages keep a bottom inset
+                        // so nothing hides under it.
+                        BcBottomMini(
+                            player = player,
+                            state = state,
+                            language = language,
+                            onOpen = { expanded = true },
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp),
+                        )
                     }
                     panel?.let { active ->
                         BcSidePanel(
@@ -477,15 +489,6 @@ internal fun BcRoot(
                             onTogglePlay = player::toggle,
                         )
                     }
-                }
-                if (compact) {
-                    BcBottomMini(
-                        player = player,
-                        state = state,
-                        language = language,
-                        positionProvider = positionProvider,
-                        onOpen = { expanded = true },
-                    )
                 }
             }
         }
@@ -530,7 +533,10 @@ private fun BcSidebar(
                     if (drawWindowControls) BcWindowDots(isMaximized, onMinimize, onMaximize, onClose)
                 }
             }
-            Column(Modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, bottom = 16.dp)) {
+            // weight, not fillMaxSize: the caption above already took its 44 dp,
+            // and a full-height column under it pushed the bottom rows (the
+            // playlists' end, [ACCOUNT | SETTINGS]) past the window's edge.
+            Column(Modifier.weight(1f).fillMaxWidth().padding(start = 12.dp, end = 12.dp, bottom = 16.dp)) {
                 BcSidebarSearch(
                     value = query,
                     onValueChange = onQueryChange,
@@ -572,6 +578,13 @@ private fun BcSidebar(
                 }
                 BcDivider(Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
+                // The reference ends on one Settings row. This build splits that
+                // row in two, [ACCOUNT | SETTINGS], with the account group and the
+                // settings groups of the same page behind them. Two rows rather
+                // than two halves of one: half of the 208 dp rail clips both
+                // labels ("Acco..." / "Settin..." measured), and a label the
+                // reader has to guess is worse than a second row.
+                BcNavRow(Icons.Rounded.AccountCircle, "Account", false) { onOpen(BcRoute.Settings) }
                 BcNavRow(Icons.Rounded.Settings, "Settings", route is BcRoute.Settings) { onOpen(BcRoute.Settings) }
             }
         }
@@ -584,11 +597,12 @@ private fun BcNavRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     selected: Boolean,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     BcHover(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(32.dp),
+        modifier = modifier.fillMaxWidth().height(32.dp),
         shape = RoundedCornerShape(7.dp),
         hoverFill = Color.White.copy(alpha = 0.07f),
     ) {
@@ -886,47 +900,22 @@ private fun BcBottomMini(
     player: PlayerController,
     state: PlayerState,
     language: String,
-    positionProvider: () -> Long,
     onOpen: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val track = state.current
-    if (track == null) {
-        Column(Modifier.fillMaxWidth().background(BC.Chrome)) {
-            BcDivider(Modifier.fillMaxWidth())
-            Box(
-                Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 12.dp),
-                contentAlignment = Alignment.CenterStart,
-            ) {
-                Text("Not playing", style = MaterialTheme.typography.bodyMedium, color = BC.Secondary)
-            }
-        }
-        return
-    }
-    // Bit's player bar, the reference's own mini player: it sits on the window's
-    // bottom edge and carries the whole transport, the artwork, the title, the
-    // volume, the output picker, the lyrics and the queue.
+    val track = state.current ?: return
+    // The reference's mini player: one floating capsule on the window's bottom
+    // edge. Nothing is drawn while nothing plays, the way the reference leaves
+    // the edge empty.
     AppleMusicV17MiniPlayer(
         nowPlaying = track,
         isPlaying = state.isPlaying,
         isLoading = state.isLoading,
-        swipeThumbnail = false,
-        swipeSensitivity = 1f,
+        language = language,
         onTogglePlay = player::toggle,
         onNext = player::next,
-        onPrevious = player::previous,
         onOpenPlayer = onOpen,
-        language = language,
-        volume = state.volume,
-        isShuffle = state.isShuffle,
-        repeatMode = state.repeatMode,
-        positionMs = positionProvider,
-        durationMs = state.durationMs,
-        onVolume = player::setVolume,
-        onToggleShuffle = player::toggleShuffle,
-        onCycleRepeat = player::cycleRepeatMode,
-        onOpenLyrics = onOpen,
-        onOpenQueue = onOpen,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
     )
 }
 

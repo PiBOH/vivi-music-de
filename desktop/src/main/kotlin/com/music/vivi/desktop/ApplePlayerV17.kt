@@ -633,7 +633,12 @@ internal fun ApplePlayerV17Screen(
                             Modifier.size(V17SkipButton).clickable(onClick = onPrevious),
                             contentAlignment = Alignment.Center,
                         ) {
-                            V17Glyph(V17TransportGlyph.PREVIOUS, V17SkipGlyph, contentColor)
+                            V17Glyph(
+                                V17TransportGlyph.PREVIOUS,
+                                V17SkipGlyph,
+                                contentColor,
+                                heightScale = V17SkipHeightScale,
+                            )
                         }
                     }
                     Tooltip(Localization.get(language, if (isPlaying) "pause" else "play")) {
@@ -653,7 +658,12 @@ internal fun ApplePlayerV17Screen(
                             Modifier.size(V17SkipButton).clickable(onClick = onNext),
                             contentAlignment = Alignment.Center,
                         ) {
-                            V17Glyph(V17TransportGlyph.NEXT, V17SkipGlyph, contentColor)
+                            V17Glyph(
+                                V17TransportGlyph.NEXT,
+                                V17SkipGlyph,
+                                contentColor,
+                                heightScale = V17SkipHeightScale,
+                            )
                         }
                     }
                 }
@@ -670,9 +680,9 @@ internal fun ApplePlayerV17Screen(
                         Icons.Filled.VolumeDown,
                         contentDescription = Localization.get(language, "volume"),
                         tint = mutedColor,
-                        modifier = Modifier.size(16.dp),
+                        modifier = Modifier.size(20.dp),
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     ViviSlider(
                         value = volume.coerceIn(0f, 1f),
                         onValueChange = onVolume,
@@ -681,12 +691,12 @@ internal fun ApplePlayerV17Screen(
                         showThumb = false,
                         modifier = Modifier.weight(1f),
                     )
-                    Spacer(Modifier.width(8.dp))
+                    Spacer(Modifier.width(10.dp))
                     Icon(
                         Icons.Filled.VolumeUp,
                         contentDescription = Localization.get(language, "volume"),
                         tint = mutedColor,
-                        modifier = Modifier.size(22.dp),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
 
@@ -912,9 +922,14 @@ internal fun ApplePlayerV17Screen(
  * TransportRow, non-compact). The box is invisible: no circle is drawn.
  */
 private val V17PlayButton = 92.dp
-private val V17SkipButton = 72.dp
+
+/** The reference's skip target is the glyph's own 53 dp, not a larger box. */
+private val V17SkipButton = 53.dp
 private val V17PlayGlyph = 74.dp
 private val V17SkipGlyph = 53.dp
+
+/** The skip glyphs are drawn a little flatter than they are wide, like Bit's. */
+private const val V17SkipHeightScale = 0.85f
 
 /** The four glyphs the transport row draws. */
 internal enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
@@ -933,8 +948,14 @@ internal enum class V17TransportGlyph { PREVIOUS, PLAY, PAUSE, NEXT }
  * drawing and not a second set of shapes.
  */
 @Composable
-internal fun V17Glyph(kind: V17TransportGlyph, glyphSize: Dp, tint: Color) {
-    Canvas(Modifier.size(glyphSize)) {
+internal fun V17Glyph(
+    kind: V17TransportGlyph,
+    glyphSize: Dp,
+    tint: Color,
+    /** Vertical squash of the glyph alone, at the reference's 0.85 for skips. */
+    heightScale: Float = 1f,
+) {
+    Canvas(Modifier.size(glyphSize).graphicsLayer { scaleY = heightScale }) {
         val box = size.minDimension
         if (kind == V17TransportGlyph.PAUSE) {
             // Reference: 12 x 36 bars, 6 apart, at the 74 dp box the player
