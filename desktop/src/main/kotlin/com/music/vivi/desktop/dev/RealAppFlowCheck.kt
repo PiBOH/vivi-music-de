@@ -156,26 +156,29 @@ object RealAppFlowCheck {
                 true
             } ?: false
             val firstPosition = engine.currentPositionMs.value
-            val firstLine = activeLine(synced, firstPosition)
-            // A sung line lasts as long as the singer takes over it, so the reading follows
-            // the playhead until the highlighted line is a different one.
+            val firstIndex = activeIndex(synced, firstPosition)
+            val firstLine = synced.getOrNull(firstIndex)?.line.orEmpty()
+            // The comparison is on the index and not on the text: a chorus repeats the same
+            // words several times, so equal text can still be a later line, and advancing to
+            // the next identical chorus must count as the pane following the playhead.
             var secondPosition = firstPosition
-            var secondLine = firstLine
+            var secondIndex = firstIndex
             withTimeoutOrNull(45_000) {
                 while (engine.playbackState.value == PlaybackState.PLAYING) {
                     secondPosition = engine.currentPositionMs.value
-                    secondLine = activeLine(synced, secondPosition)
-                    if (secondLine != firstLine) break
+                    secondIndex = activeIndex(synced, secondPosition)
+                    if (secondIndex != firstIndex) break
                     delay(250)
                 }
             }
+            val secondLine = synced.getOrNull(secondIndex)?.line.orEmpty()
             println(
-                "[app] active line: at ${firstPosition}ms \"${firstLine.take(70)}\", " +
-                    "at ${secondPosition}ms \"${secondLine.take(70)}\""
+                "[app] active line: index $firstIndex at ${firstPosition}ms \"${firstLine.take(70)}\", " +
+                    "index $secondIndex at ${secondPosition}ms \"${secondLine.take(70)}\""
             )
-            if (!entered || firstLine.isBlank()) failures += "no lyric line matched the playhead"
-            if (firstLine == secondLine && secondPosition > firstPosition) {
-                failures += "the active line did not follow the playhead"
+            if (!entered || firstIndex < 0) failures += "no lyric line matched the playhead"
+            if (secondIndex <= firstIndex) {
+                failures += "the active line index did not advance with the playhead"
             }
             if (secondPosition <= firstPosition) failures += "the playhead did not advance between the two readings"
         }
@@ -197,8 +200,9 @@ object RealAppFlowCheck {
         return 1
     }
 
-    private fun activeLine(synced: List<com.music.vivi.desktop.data.model.SyncedLine>, positionMs: Long): String =
-        synced.lastOrNull { it.time <= positionMs }?.line.orEmpty()
+    /** Index of the line the pane highlights at [positionMs], or -1 before the first one. */
+    private fun activeIndex(synced: List<com.music.vivi.desktop.data.model.SyncedLine>, positionMs: Long): Int =
+        synced.indexOfLast { it.time <= positionMs }
 
     /**
      * The window's content, composed with the running view model: the search page shows
