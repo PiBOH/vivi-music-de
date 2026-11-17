@@ -954,6 +954,29 @@ tasks.register<JavaExec>("streamResolveProbe") {
     classpath = sourceSets.getByName("test").runtimeClasspath
 }
 
+/**
+ * End-to-end backend check, no window and no account:
+ *
+ *     ./gradlew :desktop:backendPlaybackCheck [--args="a search query"]
+ *
+ * See `desktop/src/main/kotlin/com/music/vivi/desktop/BackendPlaybackCheck.kt`.
+ * It searches the catalogue, resolves the stream with [StreamResolver], plays it
+ * through [AudioPlayer], asks [DesktopLyrics] for the same video id and paints
+ * the real rows with `BcYTItemRow`, printing the playhead it reached. The task
+ * fails (non-zero exit) when a stage does, which is what makes "the chain
+ * works" a result instead of a claim. Needs the network and an audio device.
+ *
+ * It runs off the main classpath, not the test one: `src/test` still carries
+ * render checks written against screens that were renamed, so a check that
+ * compiles through them is a check nobody can run.
+ */
+tasks.register<JavaExec>("backendPlaybackCheck") {
+    group = "verification"
+    description = "Searches, resolves, plays the stream through AudioPlayer, fetches lyrics and paints the rows"
+    mainClass.set("com.music.vivi.desktop.BackendPlaybackCheck")
+    classpath = sourceSets.getByName("main").runtimeClasspath
+}
+
 
 /**
  * Headless check of the Google sign-in screen:

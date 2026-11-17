@@ -8,6 +8,9 @@ orientation.
 
 ## Open
 
+### 1.56.0-beta - The backend chain is checked end to end (17 Nov)
+- [x] **[DE] The catalogue chain has a check that fails instead of a claim.** `:desktop:backendPlaybackCheck` runs the app's own search, `StreamResolver`, `AudioPlayer`, the lyrics chain and `BcYTItemRow` in one headless process and exits non-zero when a stage fails. **Measured:** on 17 Nov it picked video id `4D7u5KF7SP8` (itag 140, VISIONOS), the decoder reached 6120 ms of a 370 s track with no error, the lyrics chain returned 114 timed lines, and the rows composed once per list change and not once per frame.
+
 ### 1.56.0-beta - The player, the capsule, the rail's foot and the real settings (15 Nov, third pass)
 - [x] **[DE] The mini player is Bit's capsule in every layout.** `AppleMusicV17MiniPlayer` is the reference's `DesktopMiniPlayer` (440 dp cap, 40 dp cover with an 8 dp radius, 10 dp gap, title over artist, play/pause and next, 12 x 8 dp padding, whole capsule opens the player), floating on the bottom edge of the content column at 1220 px as well, not only under 980 dp. The pages take a 104 dp bottom inset for it and nothing is drawn while nothing plays. **Measured:** 1220 x 803 packaged build, capsule 440 px wide and 56 px tall at 14 px from the edge (`docs/ui-parity/side/12-mini-player.png`).
 - [x] **[DE] The player's transport sits on the reference's numbers.** Skip glyph 53 dp in a 53 dp target (was 72) squashed to 0.85 of its height, volume glyphs 20 dp with 10 dp gaps (were 16 / 22 with 8), play 74 dp in a 92 dp target, 28 dp above and 20 dp below, artwork at 1200 px (`ArtworkPx.PLAYER`, the reference's `PLAYER_ART_PX`). **Measured:** the glyph widths read off the packaged player at 1220 px.

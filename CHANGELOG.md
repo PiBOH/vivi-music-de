@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+### ✨ Added
+- [DE] **The backend chain has a check that fails instead of a claim.** `:desktop:backendPlaybackCheck`
+  searches the catalogue, resolves the stream, decodes it through `AudioPlayer`, asks the lyrics chain for
+  the same video id and paints the real rows, printing the playhead it reached and the composition counts,
+  and exits non-zero when a stage fails.
+
+### 🩹 Fixed
+- [DE] **The mini player render check compiles again.** It still passed the arguments of the previous
+  `AppleMusicV17MiniPlayer` signature, so the whole test source set failed to compile and no render check
+  could run.
+
 ## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
 
 ### ✨ Added
