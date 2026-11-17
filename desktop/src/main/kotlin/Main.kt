@@ -36,6 +36,7 @@ import org.jetbrains.compose.resources.painterResource as composePainterResource
 
 import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.dev.BackendPlaybackVerifier
+import com.music.vivi.desktop.dev.RealAppFlowCheck
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_tray
 import com.music.vivi.desktop.presentation.components.InputFocusTracker
@@ -179,6 +180,9 @@ fun main(args: Array<String> = emptyArray()) {
     // Headless entry points run before any window exists: the backend verification
     // harness needs the engine and the repositories, not a stage.
     BackendPlaybackVerifier.handle(args)
+    // The same chain, but through the window's own Koin graph and the screens' own
+    // callbacks: it is the check that a stub view model could not pass.
+    RealAppFlowCheck.handle(args)
     val isBenchmark = args.contains("--benchmark-first-frame")
     AppShutdownCoordinator.registerShutdownHook()
     FileKit.init("com.music.vivi.desktop")

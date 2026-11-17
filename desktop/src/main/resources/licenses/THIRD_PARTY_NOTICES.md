@@ -32,7 +32,6 @@ User interface and Compose Multiplatform:
 | Compose Multiplatform (Desktop) | `org.jetbrains.compose:compose-desktop` | Apache-2.0 |
 | Compose Material 3 | `androidx.compose.material3` | Apache-2.0 |
 | Skiko (Skia Multiplatform Graphics) | `org.jetbrains.skiko:skiko-awt` | Apache-2.0 |
-| NavigationEvent Compose | `androidx.navigationevent:navigationevent-compose:1.1.1` | Apache-2.0 |
 | Reorderable LazyList | `sh.calvin.reorderable:reorderable:2.4.3` | Apache-2.0 |
 | MaterialKolor (M3 Dynamic Colors) | `com.materialkolor:material-kolor:2.0.2` | MIT |
 | FileKit (Native File Picker) | `io.github.vinceglb:filekit-dialogs:0.16.0` | MIT |

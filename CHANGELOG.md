@@ -3,6 +3,8 @@
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
+- [DE] **The whole flow now runs through the app's own view models, and a check proves it.**
+- [DE] **The evidence frames are the app's own screens.**
 - [DE] **The backend chain now has a runnable proof on the packaged binary.**
 - [DE] **The engine reports what it really opened.**
 - [DE] **The desktop module is PixelPlayerDesktop's app.**

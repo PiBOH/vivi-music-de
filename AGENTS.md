@@ -435,6 +435,13 @@ cloned screen, not by adding a parallel surface next to it.
   lyrics from `:lyricsProvider` and both screens composed headlessly. It writes
   `build/verify-youtube-screen.png` and `build/verify-lyrics-screen.png`, and
   that is the evidence a playback claim is made with.
+  `--verify-app-flow` is the same claim made through the app instead of beside
+  it: it starts the window's Koin graph, drives the search holder the screen
+  binds, calls the `onPlaySongs` lambda the screen passes and reads the state
+  the panes read, then writes `build/app-search-screen.png` (MainAppScaffold on
+  YouTube Music) and `build/app-lyrics-screen.png` (the expanded player's
+  lyrics). A stub view model cannot pass it, so a playback claim is made with
+  this check when the question is whether the app itself plays.
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
   `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
   `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the
