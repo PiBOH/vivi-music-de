@@ -1,31 +1,20 @@
+## [Unreleased]
+
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
-- [DE] **The desktop window is PixelPlayerDesktop's UI, cloned file by file.** The shell and the
-  shortcuts in `Main.kt`, the Material 3 theme in `ui/theme/`, the components, the screens and the
-  libmpv engine in `data/player/mpv/` replace the Bit UI, so the desktop surface is the one the
-  owner asked for.
-- [DE] **The backend chain has a check that fails instead of a claim.** `:desktop:backendPlaybackCheck`
-  searches the catalogue, resolves the stream, decodes it through `AudioPlayer`, asks the lyrics chain
-  for the same video id and paints the real rows, printing the playhead it reached and the composition
-  counts, and exits non-zero when a stage fails.
+- [DE] **The backend chain now has a runnable proof on the packaged binary.**
+- [DE] **The engine reports what it really opened.**
+- [DE] **The desktop module is PixelPlayerDesktop's app.**
 
 ### 🔧 Changed
-- [DE] **libmpv receives the headers the stream needs.** `PlaybackUriResolver` returns the stream with
-  its `User-Agent` and `Referer`, and `MpvAudioEngine` hands them to the engine through
-  `http-header-fields` on `play` and on `crossfadeTo`, so an innertube URL plays as innertube expects.
-- [DE] **Every lazy list carries a key and a content type.** The two online search dialogs, the lyrics
-  panes, the folder tree and the licence chips were the last lists without one, so a changed page can
-  no longer reuse a row's state.
-- [DE] **The renderer is forced and the vsync cap is off.** The packaged build runs Direct3D on Windows,
-  Metal on macOS and OpenGL elsewhere, with `-Dskiko.vsync.enabled=false`, and the UI keeps its
-  frame-rate work in the draw phase (`@Immutable`/`@Stable` models, `graphicsLayer`, `derivedStateOf`,
-  colour extraction and parsing off the main thread).
+- [DE] **A clean checkout packages an app that plays.**
+- [DE] **The libmpv binaries sit outside the repository.**
+- [DE] **The navigation-event back channel is gone.**
+- [DE] **`ExpressiveCircularProgressIndicator` keeps its signature but not `gapSize`.**
 
 ### 🛑 Removed
-- [DE] **The Bit UI, its render checks and its build tasks are gone.** `Bit*` files, the
-  icon-minimizer task, the class-data-sharing archive and `desktop/src/test` went with the surface;
-  `desktop/build.gradle.kts` is the clone's script wired to `:innertube` and `:lyricsProvider`.
+- [DE] **The Bit UI and its machinery.**
 
 ## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
 

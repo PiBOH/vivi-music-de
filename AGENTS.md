@@ -413,18 +413,28 @@ cloned screen, not by adding a parallel surface next to it.
   fixed-size layer over a static image, never a full-window blur recomputed per
   frame, and no new `Modifier.blur` goes on anything that redraws with the
   playhead.
-- **The libmpv binaries are not in the repository.** `libmpv-2.dll` and the
-  Vulkan loader live in the gitignored `desktop/app-resources/windows/mpv` tree,
-  which `appResourcesRootDir` packages; `setupMpvWindows` re-fetches them when
-  the directory is empty. The path cannot sit under a hidden directory: Compose
-  reports `prepareAppResources NO-SOURCE` for a root inside `.ignore`. A
-  checkout without that directory still compiles and runs the UI, and playback
-  fails with the engine's own error.
+- **The libmpv payload: engine fetched, loader tracked.**
+  `desktop/app-resources/windows/mpv/vulkan-1.dll` (616 KB) is in git, because
+  the loader is what this GPU needs and it is small; `libmpv-2.dll` (121 MB) is
+  gitignored and fetched by `:desktop:setupMpvWindows` from the mpv-winbuild
+  release. `prepareAppResources`, `createDistributable`, `run` and every
+  packaging task depend on that task, so a clean checkout packages an app that
+  plays without a manual step. `setupMpvWindows` must not declare the directory
+  as an output: Compose's `prepareAppResources` reads it as an input and Gradle
+  rejects the pair as an undeclared dependency. The path cannot sit under a
+  hidden directory either: Compose reports `prepareAppResources NO-SOURCE` for a
+  root inside `.ignore`.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in
   `build/compose/binaries/main/app/VIVIMusic/`. `--benchmark-first-frame` prints
-  the time to the first painted frame.
+  the time to the first painted frame. `--verify-backend-playback` runs the whole
+  backend chain in one process and exits non-zero when a stage fails: the
+  catalogue search through `:innertube`, the stream resolution, libmpv playing
+  it with the innertube headers (position advancing and `current-ao` set), the
+  lyrics from `:lyricsProvider` and both screens composed headlessly. It writes
+  `build/verify-youtube-screen.png` and `build/verify-lyrics-screen.png`, and
+  that is the evidence a playback claim is made with.
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
   `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
   `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the

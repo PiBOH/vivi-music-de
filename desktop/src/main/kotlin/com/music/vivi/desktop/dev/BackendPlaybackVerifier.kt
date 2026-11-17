@@ -6,7 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.unit.Density
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import com.music.vivi.desktop.data.model.Lyrics
 import com.music.vivi.desktop.data.model.Song
+import com.music.vivi.desktop.presentation.screens.player.LyricsView
 import com.music.vivi.desktop.data.player.mpv.MpvAudioEngine
 import com.music.vivi.desktop.data.youtube.YouTubeLyrics
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
@@ -126,6 +133,19 @@ object BackendPlaybackVerifier {
             val withHeaders = playAndMeasure(engine, stream.url, headers, "with headers", 25_000L)
             println("[verify] stage B (innertube headers): position ${withHeaders.positionMs}ms, state ${withHeaders.state}")
 
+            // What mpv opened on the other side of the decode: the audio out it runs and
+            // the format it negotiated. An empty output means mpv never opened a device.
+            val audio = engine.runtimeAudioSnapshot()
+            println(
+                "[verify] mpv audio out: ${audio.output.ifEmpty { "n/a" }}, " +
+                    "codec ${audio.codec.ifEmpty { "n/a" }}, " +
+                    "${audio.sampleRate.ifEmpty { "?" }} Hz, ${audio.channels.ifEmpty { "?" }} channels, " +
+                    "device ${audio.device.ifEmpty { "n/a" }}"
+            )
+            if (audio.output.isEmpty()) {
+                failures += "mpv reported no audio output (current-ao is empty)"
+            }
+
             if (withHeaders.positionMs < REQUIRED_POSITION_MS || withHeaders.state == PlaybackState.ERROR) {
                 failures += "engine did not reach ${REQUIRED_POSITION_MS}ms of audio (reached ${withHeaders.positionMs}ms, state ${withHeaders.state})"
             }
@@ -153,6 +173,10 @@ object BackendPlaybackVerifier {
                 ?: plainLines.firstOrNull().orEmpty()
             println("[verify] lyrics first line: ${firstLine.take(120).ifBlank { "<empty>" }}")
             if (synced == 0 && plain == 0) failures += "lyrics provider returned an empty body for $videoId"
+            // 4b. The synced pane itself, composed with what the provider returned.
+            if (!verifyLyricsRender(lyricsResult)) {
+                failures += "the synced lyrics screen did not draw the provider's lines"
+            }
         }
 
         // 5. The network and the JSON parsing must not run on the UI dispatcher.
@@ -220,6 +244,68 @@ object BackendPlaybackVerifier {
                 onAddToQueue = {}
             )
         }
+    }
+
+    /**
+     * The synced lyrics pane, composed with the provider's own lines and the clock parked on
+     * a real one. The frame it writes is compared with the same pane and no lyrics: a pane
+     * that draws nothing produces the blank frame's size, so the two must differ.
+     */
+    @Composable
+    private fun VerifiedLyrics(lyrics: Lyrics?, positionMs: Long) {
+        PixelPlayerTheme(darkTheme = true) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+                LyricsView(
+                    lyrics = lyrics,
+                    onSeekToMs = {},
+                    isPlaying = true,
+                    currentPositionMs = positionMs,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
+    }
+
+    private fun verifyLyricsRender(lyrics: Lyrics): Boolean {
+        val synced = lyrics.synced.orEmpty()
+        if (synced.isEmpty()) return true
+        val position = synced.getOrNull(3)?.time?.toLong() ?: synced.first().time.toLong()
+        val active = synced.lastOrNull { it.time <= position }?.line.orEmpty()
+        println(
+            "[verify] lyrics screen: ${synced.size} lines, clock at ${position}ms, " +
+                "active \"${active.take(80)}\""
+        )
+        fun draw(payload: Lyrics?, name: String): Int {
+            val scene = ImageComposeScene(
+                width = 1280,
+                height = 900,
+                density = Density(1f),
+                coroutineContext = Dispatchers.Main
+            ) {
+                VerifiedLyrics(payload, position)
+            }
+            return try {
+                repeat(3) { scene.render() }
+                val image = scene.render()
+                val png = image.encodeToData()?.bytes
+                if (png != null) {
+                    val out = File("build/$name")
+                    out.parentFile?.mkdirs()
+                    runCatching { out.writeBytes(png) }
+                    println("[verify] lyrics screenshot: ${out.absolutePath} (${png.size} bytes)")
+                }
+                png?.size ?: 0
+            } finally {
+                scene.close()
+            }
+        }
+        val withLyrics = runCatching { draw(lyrics, "verify-lyrics-screen.png") }
+            .onFailure { println("[verify] lyrics render FAILED: ${it::class.simpleName}: ${it.message}") }
+            .getOrDefault(0)
+        val blank = runCatching { draw(null, "verify-lyrics-blank.png") }.getOrDefault(0)
+        val drew = withLyrics > blank + 2_000
+        println("[verify] lyrics render: ${if (drew) "pane drew ${withLyrics - blank} bytes more than the empty pane" else "pane drew nothing (${withLyrics} vs ${blank} bytes)"}")
+        return drew && active.isNotBlank()
     }
 
     private data class PlaybackMeasurement(val positionMs: Long, val state: PlaybackState)

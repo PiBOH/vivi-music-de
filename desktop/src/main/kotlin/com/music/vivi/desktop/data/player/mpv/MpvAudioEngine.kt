@@ -753,6 +753,23 @@ class MpvAudioEngine(
         }
     }
 
+    /**
+     * What mpv is really doing with the audio, for the headless playback check: the output
+     * backend it opened, the codec it decoded and the sample rate and channel count it
+     * negotiated. An empty field means mpv had not set that property yet.
+     */
+    fun runtimeAudioSnapshot(): RuntimeAudioSnapshot {
+        val player = playerPair.get()?.active ?: return RuntimeAudioSnapshot()
+        fun read(name: String): String = api.getPropertyString(player, name)?.trim().orEmpty()
+        return RuntimeAudioSnapshot(
+            output = read("current-ao"),
+            codec = read("audio-codec-name"),
+            sampleRate = read("audio-params/samplerate"),
+            channels = read("audio-params/channel-count"),
+            device = read("audio-device")
+        )
+    }
+
     override fun crossfadeTo(
         mediaPathOrUri: String,
         durationMs: Long,
@@ -920,3 +937,12 @@ class MpvAudioEngine(
         engineJob.cancel()
     }
 }
+
+/** The audio figures mpv reports at the moment they are read, for the playback check. */
+data class RuntimeAudioSnapshot(
+    val output: String = "",
+    val codec: String = "",
+    val sampleRate: String = "",
+    val channels: String = "",
+    val device: String = ""
+)

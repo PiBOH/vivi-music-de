@@ -266,7 +266,9 @@ tasks.register("setupMpvWindows") {
     val downloadDir = layout.buildDirectory.dir("downloads").get().asFile
     val archiveFile = downloadDir.resolve("mpv-dev-x86_64.7z")
 
-    outputs.dir(targetDir)
+    // The directory is an input of Compose's prepareAppResources, so declaring it here as an
+    // output makes Gradle reject the pair as an undeclared dependency. The task stays untyped
+    // and is ordered through the dependsOn below.
     onlyIf {
         !targetDir.resolve("libmpv-2.dll").exists()
     }
@@ -308,8 +310,24 @@ tasks.register("setupMpvWindows") {
         if (process.waitFor() != 0) {
             throw GradleException("Failed to extract the libmpv archive with 7z:\n$output")
         }
+
+        val loader = targetDir.resolve("vulkan-1.dll")
+        if (!loader.isFile) {
+            throw GradleException(
+                "vulkan-1.dll is missing from ${loader.parentFile}. It ships with the repository " +
+                    "(desktop/app-resources/windows/mpv/vulkan-1.dll); restore it before packaging."
+            )
+        }
     }
 }
+
+// Everything that reads app-resources needs the engine present. A clean checkout carries the
+// 600 KB Vulkan loader in git and nothing else, so libmpv is fetched before the first use.
+val mpvConsumers = setOf(
+    "prepareAppResources", "createDistributable", "run", "runDistributable",
+    "packageExe", "packageMsi", "packageDeb", "packageRpm", "packageDmg", "packagePkg"
+)
+tasks.matching { it.name in mpvConsumers }.configureEach { dependsOn("setupMpvWindows") }
 
 compose.resources {
     packageOfResClass = "com.music.vivi.desktop.generated.resources"
