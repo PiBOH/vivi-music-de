@@ -1,0 +1,168 @@
+package com.music.vivi.desktop.presentation.components.subcomps
+
+import com.music.vivi.desktop.generated.resources.Res
+import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_keyboard_arrow_right
+import com.music.vivi.desktop.generated.resources.ic_rounded_folder
+import com.music.vivi.desktop.generated.resources.ic_rounded_play_arrow
+import org.jetbrains.compose.resources.painterResource
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.music.vivi.desktop.data.model.MusicFolder
+
+@Composable
+fun FolderListItem(
+    folder: MusicFolder,
+    modifier: Modifier = Modifier,
+    customShape: Shape? = null,
+    onClick: () -> Unit,
+    onPlayClick: (() -> Unit)? = null
+) {
+    val colors = MaterialTheme.colorScheme
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    val containerColor by animateColorAsState(
+        targetValue = if (isHovered) colors.surfaceContainerHigh else colors.surfaceContainerLow,
+        label = "folderListItemContainer"
+    )
+
+    val cardShape = customShape ?: RoundedCornerShape(20.dp)
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .clip(cardShape)
+            .hoverable(interactionSource)
+            .clickable(onClick = onClick),
+        shape = cardShape,
+        colors = CardDefaults.cardColors(containerColor = containerColor)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(colors.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_rounded_folder),
+                    contentDescription = null,
+                    tint = colors.onPrimaryContainer,
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = folder.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                val subtitle = buildString {
+                    append("${folder.totalSongCount} ${if (folder.totalSongCount == 1) "song" else "songs"}")
+                    if (folder.subFolders.isNotEmpty()) {
+                        append(" • ${folder.subFolders.size} ${if (folder.subFolders.size == 1) "subfolder" else "subfolders"}")
+                    }
+                }
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Box(
+                modifier = Modifier.size(40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_automirrored_rounded_keyboard_arrow_right),
+                    contentDescription = null,
+                    tint = colors.onSurfaceVariant.copy(alpha = if (isHovered && onPlayClick != null && folder.totalSongCount > 0) 0f else 0.5f),
+                    modifier = Modifier.size(22.dp)
+                )
+
+                if (onPlayClick != null && folder.totalSongCount > 0) {
+                    androidx.compose.animation.AnimatedVisibility(
+                        visible = isHovered,
+                        enter = fadeIn(animationSpec = tween(150)),
+                        exit = fadeOut(animationSpec = tween(150))
+                    ) {
+                        FilledTonalIconButton(
+                            onClick = onPlayClick,
+                            modifier = Modifier.size(38.dp),
+                            shape = CircleShape,
+                            colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                containerColor = colors.primary,
+                                contentColor = colors.onPrimary
+                            )
+                        ) {
+                            Icon(
+                                painter = painterResource(Res.drawable.ic_rounded_play_arrow),
+                                contentDescription = "Play folder",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

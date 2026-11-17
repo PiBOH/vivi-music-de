@@ -1,15 +1,31 @@
-## [Unreleased]
+## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
+- [DE] **The desktop window is PixelPlayerDesktop's UI, cloned file by file.** The shell and the
+  shortcuts in `Main.kt`, the Material 3 theme in `ui/theme/`, the components, the screens and the
+  libmpv engine in `data/player/mpv/` replace the Bit UI, so the desktop surface is the one the
+  owner asked for.
 - [DE] **The backend chain has a check that fails instead of a claim.** `:desktop:backendPlaybackCheck`
-  searches the catalogue, resolves the stream, decodes it through `AudioPlayer`, asks the lyrics chain for
-  the same video id and paints the real rows, printing the playhead it reached and the composition counts,
-  and exits non-zero when a stage fails.
+  searches the catalogue, resolves the stream, decodes it through `AudioPlayer`, asks the lyrics chain
+  for the same video id and paints the real rows, printing the playhead it reached and the composition
+  counts, and exits non-zero when a stage fails.
 
-### 🩹 Fixed
-- [DE] **The mini player render check compiles again.** It still passed the arguments of the previous
-  `AppleMusicV17MiniPlayer` signature, so the whole test source set failed to compile and no render check
-  could run.
+### 🔧 Changed
+- [DE] **libmpv receives the headers the stream needs.** `PlaybackUriResolver` returns the stream with
+  its `User-Agent` and `Referer`, and `MpvAudioEngine` hands them to the engine through
+  `http-header-fields` on `play` and on `crossfadeTo`, so an innertube URL plays as innertube expects.
+- [DE] **Every lazy list carries a key and a content type.** The two online search dialogs, the lyrics
+  panes, the folder tree and the licence chips were the last lists without one, so a changed page can
+  no longer reuse a row's state.
+- [DE] **The renderer is forced and the vsync cap is off.** The packaged build runs Direct3D on Windows,
+  Metal on macOS and OpenGL elsewhere, with `-Dskiko.vsync.enabled=false`, and the UI keeps its
+  frame-rate work in the draw phase (`@Immutable`/`@Stable` models, `graphicsLayer`, `derivedStateOf`,
+  colour extraction and parsing off the main thread).
+
+### 🛑 Removed
+- [DE] **The Bit UI, its render checks and its build tasks are gone.** `Bit*` files, the
+  icon-minimizer task, the class-data-sharing archive and `desktop/src/test` went with the surface;
+  `desktop/build.gradle.kts` is the clone's script wired to `:innertube` and `:lyricsProvider`.
 
 ## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
 

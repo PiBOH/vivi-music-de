@@ -1,0 +1,19 @@
+Bundled native components
+=========================
+
+libmpv-2.dll
+    mpv / libmpv, GPLv2+ / LGPLv2.1+ build from the mpv project
+    (https://mpv.io). Used unmodified as the audio engine.
+
+vulkan-1.dll
+    Vulkan loader, version 1.4.304.1, from the Khronos Group
+    (https://github.com/KhronosGroup/Vulkan-Loader), Apache License 2.0,
+    x86_64 build taken from the MSYS2 mingw-w64 package
+    mingw-w64-x86_64-vulkan-loader.
+
+    libmpv imports this loader statically. Drivers that still ship the old
+    Vulkan 1.0 loader (for example the Intel HD 4000 driver, 1.0.65) do not
+    export vkGetPhysicalDeviceProperties2 or
+    vkGetPhysicalDeviceQueueFamilyProperties2, and libmpv then refuses to
+    load. MpvApi preloads this copy by name before loading libmpv, so those
+    machines work; a machine that already has a current loader keeps its own.

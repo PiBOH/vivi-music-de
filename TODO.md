@@ -8,6 +8,10 @@ orientation.
 
 ## Open
 
+### 1.56.0-beta1 - The desktop surface is the PixelPlayerDesktop clone (17 Nov)
+- [x] **[DE] The Bit UI is replaced by the cloned surface.** The window, theme, components, screens and libmpv engine come from PixelPlayerDesktop; the Bit files, their render checks and the build tasks that carried them are gone, and `AGENTS.md` describes the clone's surface instead. **Measured:** `:desktop:compileKotlin` and `:desktop:createDistributable` pass, the packaged app printed `TIME_TO_FIRST_FRAME: 6445ms`, and the installer is `VIVIMusic-6.0.8.11_DE-1.56.0-beta1.exe`.
+- [ ] **[DE] A fresh checkout needs `desktop/app-resources/windows/mpv`.** The DLLs are gitignored (117 MB); `:desktop:setupMpvWindows` refills them, and until then the UI runs and playback fails with the engine's own error.
+
 ### 1.56.0-beta - The backend chain is checked end to end (17 Nov)
 - [x] **[DE] The catalogue chain has a check that fails instead of a claim.** `:desktop:backendPlaybackCheck` runs the app's own search, `StreamResolver`, `AudioPlayer`, the lyrics chain and `BcYTItemRow` in one headless process and exits non-zero when a stage fails. **Measured:** on 17 Nov it picked video id `4D7u5KF7SP8` (itag 140, VISIONOS), the decoder reached 6120 ms of a 370 s track with no error, the lyrics chain returned 114 timed lines, and the rows composed once per list change and not once per frame.
 

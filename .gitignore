@@ -130,3 +130,6 @@ skills-lock.json
 
 # The installers the Windows pipeline writes at the repository root.
 /dist/
+
+# libmpv binaries for the desktop installer (117 MB, fetched by :desktop:setupMpvWindows)
+desktop/app-resources/

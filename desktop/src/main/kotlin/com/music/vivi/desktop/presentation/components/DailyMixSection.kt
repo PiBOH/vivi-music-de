@@ -1,0 +1,324 @@
+package com.music.vivi.desktop.presentation.components
+
+import com.music.vivi.desktop.generated.resources.Res
+import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_forward
+import com.music.vivi.desktop.generated.resources.ic_rounded_music_note
+import org.jetbrains.compose.resources.painterResource
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.platform.Font
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.music.vivi.desktop.data.model.Song
+import com.music.vivi.desktop.presentation.components.subcomps.EnhancedSongListItem
+import com.music.vivi.desktop.utils.shapes.RoundedStarShape
+
+@Composable
+fun DailyMixSection(
+    songs: List<Song>,
+    currentSong: Song?,
+    isPlaying: Boolean,
+    onSongClick: (Song) -> Unit,
+    onPlayMix: () -> Unit = {},
+    onSeeAllClick: () -> Unit = {},
+    onPlayNext: ((Song) -> Unit)? = null,
+    onAddToQueue: ((Song) -> Unit)? = null,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onToggleFavorite: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    if (songs.isEmpty()) return
+
+    val colors = MaterialTheme.colorScheme
+    val headerSongs = remember(songs) { songs.take(3) }
+    val visibleSongs = remember(songs) { songs.take(4) }
+    val cornerRadius = 30.dp
+
+    Card(
+        shape = RoundedCornerShape(cornerRadius),
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceContainer),
+        elevation = CardDefaults.cardElevation(0.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+
+            DailyMixHeader(
+                thumbnails = headerSongs
+            )
+
+            DailyMixSongList(
+                songs = visibleSongs,
+                currentSong = currentSong,
+                isPlaying = isPlaying,
+                onSongClick = onSongClick,
+                onPlayNext = onPlayNext,
+                onAddToQueue = onAddToQueue,
+                onAddToPlaylist = onAddToPlaylist,
+                onToggleFavorite = onToggleFavorite,
+                onDelete = onDelete,
+                onEditMetadata = onEditMetadata
+            )
+
+            ViewAllDailyMixButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                onClickOpen = onSeeAllClick
+            )
+        }
+    }
+}
+
+@Composable
+private fun DailyMixHeader(
+    thumbnails: List<Song>
+) {
+    val colors = MaterialTheme.colorScheme
+
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        val isCompact = maxWidth < 640.dp
+        val titleStyle = rememberDailyMixTitleStyle(isCompact)
+        val headerHeight = if (isCompact) 96.dp else 112.dp
+        val horizontalPaddingStart = if (isCompact) 18.dp else 26.dp
+        val horizontalPaddingEnd = if (isCompact) 16.dp else 24.dp
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(headerHeight)
+                .background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            colors.primary,
+                            colors.tertiary
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = horizontalPaddingStart, end = horizontalPaddingEnd),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "DAILY MIX",
+                        style = titleStyle,
+                        color = colors.onPrimary,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = "Based on History",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = if (isCompact) 14.5.sp else 17.sp,
+                        color = colors.onPrimary.copy(alpha = 0.90f),
+                        modifier = Modifier.padding(start = 1.dp, top = if (isCompact) 1.dp else 3.dp),
+                        maxLines = 1
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(if (isCompact) (-18).dp else (-24).dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    thumbnails.forEachIndexed { index, song ->
+                        val shape = threeShapeSwitch(index, thirdShapeCornerRadius = if (isCompact) 18.dp else 22.dp)
+                        val sizeModifier = when (index) {
+                            0 -> if (isCompact) Modifier.size(60.dp).padding(top = 3.dp) else Modifier.size(76.dp).padding(top = 4.dp)
+                            1 -> if (isCompact) Modifier.size(52.dp).padding(bottom = 3.dp) else Modifier.size(66.dp).padding(bottom = 4.dp)
+                            else -> if (isCompact) Modifier.size(56.dp) else Modifier.size(72.dp)
+                        }
+
+                        Box(
+                            modifier = sizeModifier
+                                .clip(shape)
+                                .border(if (isCompact) 2.5.dp else 3.dp, colors.surface, shape)
+                        ) {
+                            AsyncArtworkImage(
+                                artworkUri = song.albumArtUriString,
+                                modifier = Modifier.fillMaxSize(),
+                                placeholderIcon = Res.drawable.ic_rounded_music_note,
+                                placeholderIconSize = if (isCompact) 26.dp else 32.dp,
+                                contentDescription = song.title
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun threeShapeSwitch(index: Int, thirdShapeCornerRadius: Dp = 22.dp): Shape {
+    return when (index) {
+        0 -> RoundedStarShape(
+            sides = 6,
+            rotation = 10f
+        )
+        1 -> CircleShape
+        2 -> RoundedCornerShape(thirdShapeCornerRadius)
+        else -> CircleShape
+    }
+}
+
+@Composable
+private fun DailyMixSongList(
+    songs: List<Song>,
+    currentSong: Song?,
+    isPlaying: Boolean,
+    onSongClick: (Song) -> Unit,
+    onPlayNext: ((Song) -> Unit)? = null,
+    onAddToQueue: ((Song) -> Unit)? = null,
+    onAddToPlaylist: ((Song) -> Unit)? = null,
+    onToggleFavorite: ((Song) -> Unit)? = null,
+    onDelete: ((Song) -> Unit)? = null,
+    onEditMetadata: ((Song) -> Unit)? = null
+) {
+    val colors = MaterialTheme.colorScheme
+    val itemContainerColor = colors.surfaceContainerLow
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, start = 8.dp, end = 8.dp)
+            .clip(RoundedCornerShape(24.dp)),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        songs.forEach { song ->
+            val isSelected = currentSong?.id == song.id
+            EnhancedSongListItem(
+                song = song,
+                isCurrentSong = isSelected,
+                isPlaying = isPlaying && isSelected,
+                containerColorOverride = itemContainerColor,
+                customShape = RoundedCornerShape(12.dp),
+                showAlbumArt = false,
+                onPlayNext = if (onPlayNext != null) { { onPlayNext(song) } } else null,
+                onAddToQueue = if (onAddToQueue != null) { { onAddToQueue(song) } } else null,
+                onAddToPlaylist = if (onAddToPlaylist != null) { { onAddToPlaylist(song) } } else null,
+                onToggleFavorite = if (onToggleFavorite != null) { { onToggleFavorite(song) } } else null,
+                onEditMetadata = if (onEditMetadata != null) { { onEditMetadata(song) } } else null,
+                onDelete = if (onDelete != null) { { onDelete(song) } } else null,
+                onClick = { onSongClick(song) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ViewAllDailyMixButton(
+    modifier: Modifier = Modifier,
+    onClickOpen: () -> Unit
+) {
+    val buttonShape = RoundedCornerShape(
+        topStart = 10.dp,
+        topEnd = 10.dp,
+        bottomStart = 24.dp,
+        bottomEnd = 24.dp
+    )
+
+    Surface(
+        modifier = modifier
+            .clip(buttonShape)
+            .clickable(onClick = onClickOpen),
+        shape = buttonShape,
+        color = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Check all of Daily Mix",
+                style = MaterialTheme.typography.titleMedium,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Icon(
+                painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_forward),
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+@Composable
+private fun rememberDailyMixTitleStyle(isCompact: Boolean = false): TextStyle {
+    return remember(isCompact) {
+        val fontSize = if (isCompact) 22.sp else 28.sp
+        val lineHeight = if (isCompact) 24.sp else 30.sp
+        TextStyle(
+            fontFamily = FontFamily(
+                Font(
+                    "font/gflex_variable.ttf",
+                    weight = FontWeight(630),
+                    variationSettings = FontVariation.Settings(
+                        FontVariation.weight(630),
+                        FontVariation.width(136f),
+                        FontVariation.grade(40),
+                        FontVariation.Setting("ROND", 100f),
+                        FontVariation.Setting("XTRA", 520f),
+                        FontVariation.Setting("YOPQ", 90f),
+                        FontVariation.Setting("YTLC", 505f)
+                    )
+                )
+            ),
+            fontWeight = FontWeight(630),
+            fontSize = fontSize,
+            lineHeight = lineHeight,
+            letterSpacing = (-0.35).sp
+        )
+    }
+}

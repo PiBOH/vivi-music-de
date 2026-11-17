@@ -1,0 +1,82 @@
+package com.music.vivi.desktop.domain.repository
+
+import kotlinx.coroutines.flow.StateFlow
+
+import com.music.vivi.desktop.data.model.EqualizerPreset
+import com.music.vivi.desktop.data.model.QuickAccessItem
+import com.music.vivi.desktop.data.model.QuickAccessType
+import com.music.vivi.desktop.data.preferences.AlbumArtPaletteStyle
+import com.music.vivi.desktop.data.preferences.LyricsSourcePreference
+import com.music.vivi.desktop.data.preferences.UserSettings
+
+interface SettingsRepository {
+    val settingsFlow: StateFlow<UserSettings>
+    suspend fun getSettings(): UserSettings
+    suspend fun updateSettings(transform: (UserSettings) -> UserSettings)
+    suspend fun addMusicDirectory(path: String)
+    suspend fun removeMusicDirectory(path: String)
+    suspend fun addExcludedDirectory(path: String)
+    suspend fun removeExcludedDirectory(path: String)
+    suspend fun setDynamicColoringEnabled(enabled: Boolean)
+    suspend fun setDarkMode(isDark: Boolean)
+    suspend fun setUiScale(scale: Float)
+    suspend fun setAlbumArtPaletteStyle(style: AlbumArtPaletteStyle)
+    suspend fun setAlbumArtColorAccuracy(accuracy: Int)
+    suspend fun setVolume(volume: Float)
+    suspend fun setMuted(muted: Boolean)
+    suspend fun setShuffleEnabled(enabled: Boolean)
+    suspend fun setRepeatMode(repeatMode: Int)
+    suspend fun setInitialSetupDone(done: Boolean)
+    suspend fun setFetchDeezerArtistImages(enabled: Boolean)
+    suspend fun setFetchOnlineLyrics(enabled: Boolean)
+    suspend fun setArtistDelimiters(delimiters: List<String>)
+    suspend fun addArtistDelimiter(delimiter: String)
+    suspend fun removeArtistDelimiter(delimiter: String)
+    suspend fun resetArtistDelimiters()
+    suspend fun setWordDelimiters(delimiters: List<String>)
+    suspend fun addWordDelimiter(delimiter: String)
+    suspend fun removeWordDelimiter(delimiter: String)
+    suspend fun resetWordDelimiters()
+    suspend fun setExtractArtistFromTitle(enabled: Boolean)
+    suspend fun clearArtistSettingsRescanRequired()
+    suspend fun setAlbumsListView(isListView: Boolean)
+    suspend fun setArtistsListView(isListView: Boolean)
+    suspend fun setFoldersPlaylistView(isPlaylistView: Boolean)
+    suspend fun setMinSongDuration(durationMs: Int)
+    suspend fun setMinTracksPerAlbum(minTracks: Int)
+    suspend fun setAlbumArtCacheLimitMb(limitMb: Int)
+    suspend fun setAutoScanLrcFiles(enabled: Boolean)
+    suspend fun setLyricsSourcePreference(preference: LyricsSourcePreference)
+    suspend fun setShowPlayerFileInfo(show: Boolean)
+    suspend fun setNavBarCompactMode(enabled: Boolean)
+    suspend fun setDefaultTab(tab: String)
+    suspend fun setLyricsAlignment(alignment: String)
+    suspend fun setLyricsTextSize(size: String)
+    suspend fun setLyricsSyncOffset(songId: String, offsetMs: Int)
+    suspend fun setSongPlaybackSpeed(songId: String, speed: Float?)
+    suspend fun clearAllSongPlaybackSpeeds()
+    suspend fun setShowLyricsRomanization(enabled: Boolean)
+    suspend fun setReplayGainEnabled(enabled: Boolean)
+    suspend fun setReplayGainMode(mode: String)
+    suspend fun setCrossfadeEnabled(enabled: Boolean)
+    suspend fun setCrossfadeDurationSeconds(durationSeconds: Int)
+    suspend fun setAudioFadeOnPlayPause(enabled: Boolean)
+    suspend fun setShowQueueHistory(show: Boolean)
+    suspend fun setCloseToTray(enabled: Boolean)
+    suspend fun setSelectedAudioDevice(device: String)
+    suspend fun setEqualizerEnabled(enabled: Boolean)
+    suspend fun setEqualizerPreset(preset: String)
+    suspend fun setEqualizerBands(bands: List<Float>)
+    suspend fun setEqualizerPreamp(preamp: Float)
+    suspend fun saveCustomEqualizerPreset(preset: EqualizerPreset)
+    suspend fun deleteCustomEqualizerPreset(presetName: String)
+    suspend fun renameCustomEqualizerPreset(oldName: String, newName: String)
+    suspend fun setPinnedEqualizerPresets(pinnedNames: List<String>)
+    suspend fun setEqualizerViewMode(mode: String)
+    suspend fun setCheckUpdatesOnStartup(enabled: Boolean)
+    suspend fun setLastDismissedUpdateVersion(version: String?)
+    suspend fun setQuickAccessItems(items: List<QuickAccessItem>)
+    suspend fun pinToQuickAccess(item: QuickAccessItem): Boolean
+    suspend fun unpinFromQuickAccess(id: String)
+    suspend fun syncQuickAccessItemTitle(type: QuickAccessType, targetKey: String, newTitle: String)
+}

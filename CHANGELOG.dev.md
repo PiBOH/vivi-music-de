@@ -1,5 +1,18 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
+
+### ✨ Added
+- [DE] **The desktop module is PixelPlayerDesktop's app.** `desktop/src/main/kotlin` now holds the clone's 253 files: the shell and the shortcuts in `Main.kt`, `ui/theme/` (Material 3 with the MaterialKolor scheme seeded from the cover), `presentation/components/`, `presentation/screens/` and `data/player/mpv/` (JNA over libmpv). `desktop/build.gradle.kts` is the clone's script wired to the repo's `:innertube` and `:lyricsProvider`, with the renderer forced per OS (`-Dskiko.renderApi`), `-Dskiko.vsync.enabled=false`, `compose.resources` for the 155 drawables and the branded `nativeDistributions`. **Measured:** `:desktop:compileKotlin` and `:desktop:createDistributable` pass, the packaged `VIVIMusic.exe --benchmark-first-frame` printed `TIME_TO_FIRST_FRAME: 6445ms` with no exception, and `app/resources/mpv/libmpv-2.dll` is inside the image.
+
+### 🔧 Changed
+- [DE] **The libmpv binaries sit outside the repository.** `libmpv-2.dll` and `vulkan-1.dll` live in the gitignored `desktop/app-resources/windows/mpv`, which `appResourcesRootDir` packages and `setupMpvWindows` refills. The first attempt pointed at `.ignore/mpv` and Compose reported `prepareAppResources NO-SOURCE`, so nothing was packaged and the app died on `Failed to load libmpv native library`; a root that is not hidden fixed it, and the app image now carries the engine.
+- [DE] **The navigation-event back channel is gone.** `LocalNavigationEventDispatcherOwner.current` throws (`LocalHostDefaultProvider not present`) on the repo's Compose Multiplatform 1.8.2, because that local arrived with 1.10. Back still runs from the window's own key and mouse handlers, and the dependency with its two substitution stanzas was removed, so the image no longer mixes 1.11 runtime jars into a 1.8.2 surface.
+- [DE] **`ExpressiveCircularProgressIndicator` keeps its signature but not `gapSize`.** Material 3 in 1.8.2 has no `gapSize` on `CircularProgressIndicator`, so the wrapper drops the argument and says why in place.
+
+### 🛑 Removed
+- [DE] **The Bit UI and its machinery.** The `Bit*` files, `desktop/src/test` with the Bit render checks, the icon-minimizer, the class-data-sharing archive and the desktop build tasks that carried them. `version.txt` reads `6.0.8.11 / 149 / beta / 1.56.0 / 450 / beta1`.
+
 ## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
 
 ### ✨ Added

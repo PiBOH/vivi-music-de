@@ -1,0 +1,36 @@
+package com.music.vivi.desktop.platform.mediasession
+
+import java.util.Locale
+
+import kotlinx.coroutines.CoroutineScope
+
+import com.music.vivi.desktop.platform.mediasession.linux.LinuxMprisMediaSessionController
+import com.music.vivi.desktop.platform.mediasession.macos.MacOsMediaSessionController
+import com.music.vivi.desktop.platform.mediasession.windows.WindowsMediaKeySessionController
+
+object MediaSessionFactory {
+    fun create(
+        commands: MediaSessionCommands,
+        coroutineScope: CoroutineScope
+    ): MediaSessionController {
+        val os = System.getProperty("os.name", "").lowercase(Locale.ROOT)
+        return when {
+            os.contains("linux") || os.contains("nix") -> {
+                AsyncMediaSessionController(coroutineScope) {
+                    LinuxMprisMediaSessionController(commands, coroutineScope)
+                }
+            }
+            os.contains("win") -> {
+                AsyncMediaSessionController(coroutineScope) {
+                    WindowsMediaKeySessionController(commands, coroutineScope)
+                }
+            }
+            os.contains("mac") || os.contains("darwin") -> {
+                AsyncMediaSessionController(coroutineScope) {
+                    MacOsMediaSessionController(commands, coroutineScope)
+                }
+            }
+            else -> NoOpMediaSessionController
+        }
+    }
+}

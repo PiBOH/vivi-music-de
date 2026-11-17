@@ -363,229 +363,77 @@ dependencies there, or you break the desktop build.
   You design it like the way the Spotify, Apple, etc. do, but don't move away
   from Material theme color.
 
-### The Bit UI (the desktop surface) - MANDATORY
+### The desktop surface: the PixelPlayerDesktop clone - MANDATORY
 
-The desktop window is drawn by the **Bit UI**, a surface modelled screen by
-screen on BitChord's desktop client. It is a defined system, not a skin over
-the tonal scheme, and every screen added to it follows these rules.
+The desktop window is PixelPlayerDesktop's surface, carried over file by file:
+the shell and the shortcuts in `Main.kt`, the Material 3 theme in `ui/theme/`,
+the components in `presentation/components/`, the screens in
+`presentation/screens/` and the audio engine in `data/player/mpv/`. VIVI Music
+DE owns the name, the icon, the installer metadata and the backend wiring. It
+does not own a second design language, so a screen changes by changing the
+cloned screen, not by adding a parallel surface next to it.
 
-- **It is not Material 3.** The Bit UI owns its palette, type scale, spacing
-  and control shapes; it does not read `MaterialTheme.colorScheme`, does not
-  use tonal elevation, dynamic colour or the M3 motion table, and does not gain
-  a Material component just because Material has one. A primitive borrowed for
-  its mechanics (a popup, a switch, a slider) is restyled to the tokens below
-  before it is used. The Material 3 rules above still govern every screen that
-  is not part of this surface.
-- **Tokens** (`BitTheme.kt`, object `BC`): chrome `#0F0F11` (the rail and the
-  transport bar are darker than the page, as in the reference), page `#202020`,
-  1 px rules `#121213`, cards `#0C0C0C` with `#141414` borders, search fields
-  `#1F1F21` with `#2A2A2C` borders, hover wash `#242424`, the selected rail row
-  `#2C2C2D`, secondary text `#8E8E93`, the now-playing pill `#323236`, and Apple
-  red `#FA2D48` kept for a single accent (the playing track and an artist
-  credit), never as the app accent. Surfaces are separated by 1 px rules and
-  small grey steps, never by shadows. The light theme is not part of this
-  surface.
-- **Type**: the SF Pro Display scale drawn with the platform face (SF Pro may
-  not be redistributed): display 34/800, page title 30/800, shelf title 22/700,
-  row title 16/600, body 14/400, caption 11 to 12/600, with the reference's
-  negative tracking on the large sizes.
-- **Layout**: an 8 px base. A 208 dp full-height rail with the window controls
-  in its head, a 64 dp transport bar over the content column only, 28 px content
-  insets on both sides, 150 dp covers with a 15 dp gap, 36 dp rail rows, 22 px
-  shelf titles, 12 dp between a cover and its title, 44 dp between shelves.
-  Content is a stack of horizontal shelves; a page scrolls, a shelf scrolls
-  sideways and the next cover is left cut at the right edge, as in the
-  reference. The measured numbers come from the running reference at 1220 x 780
-  (`docs/ui-parity/side/`), not from a screenshot estimate.
-- **Mini players sit at the bottom.** Bit's capsule (cover at 40 dp with an
-  8 dp radius, title, artist, play/pause, next, 12 x 8 dp of padding, capped at
-  440 dp) floats on the bottom edge of the content column in every layout, wide
-  window included, as the reference draws it. It is an overlay: the pages keep a
-  104 dp bottom inset so the last row can be scrolled clear of it, and nothing
-  is drawn while nothing plays. The transport strip at the top stays the
-  reference's own, so the window has the same two surfaces Bit has.
-- **Window controls follow the OS.** With the custom (undecorated) title bar the
-  three controls are drawn at the top-left on macOS and at the top-right on
-  Windows and Linux, in that platform's own order and colours. With the native
-  title bar the app draws none: the OS owns them on its own side. The rail's
-  head is the drag area in both cases.
-- **Icon language**: `BitIcons` carries the reference's stroked glyphs
-  (shuffle, repeat, lyrics, queue, infinity); the rest are the platform
-  Material Rounded symbols, always referenced literally so the icon jar
-  minimizer keeps them. Apple surfaces keep Apple shapes (see the rule above).
-- **The lyrics clock reads the playhead every frame.** `rememberSmoothPosition`
-  in `LyricsView.kt` reads the `positionMs` lambda inside `withFrameNanos`. The
-  lambda is not a Compose state, so the `snapshotFlow` it used to be collected
-  through took exactly one sample and never emitted again: the clock stayed at
-  that sample, the sung line never changed and the list never scrolled, which is
-  the "lyrics do not scroll" report. Verified against a playing track: the sung
-  line moved on and the list followed (`side/14-player-lyrics-scroll.png`).
-- **Performance is the surface's own rule**: the playhead and the audio level
-  are read inside the leaf that draws them (the pill's 2 px line, the scrubber,
-  the karaoke line), never at the root; every lazy list carries a stable key;
-  covers are requested at the size they are drawn at; no blur and no infinite
-  animation runs on the content. A screen that violates this is not finished.
-- **File names**: every file of this surface starts with `Bit` (`BitTheme.kt`,
-  `BitShell.kt`, `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`,
-  `BitIcons.kt`, ...). The reference project's name and the word `Clone` never
-  appear in a file name; they may appear in a code comment or KDoc when a
-  behaviour was taken from the reference, with the reason.
-- Kotlin formatting: keep to the project's existing style; do not run a global
-  formatter that rewrites unrelated lines.
-- Verify non-trivial changes by compiling the affected module
-  (`./gradlew :module:compileKotlin`, `:app:compileUniversalFossDebugKotlin`,
-  `:desktop:compileKotlin`) before committing.
-- **Ponytail (always):** on every coding task, apply the `ponytail` skill
-  (installed in `.agents/skills/ponytail`): smallest working solution, reuse
-  what already exists in the codebase, stdlib/native over new code and new
-  dependencies, one line before fifty. It complements the golden rule in §4 and
-  never overrides explicit user requests, the trust-boundary/error-handling
-  rules, or the localization rule in §6.
-
-### Bit UI screen map and parity table - MANDATORY
-
-The surface is measured against BitChord's desktop client, screen by screen. A
-new screen or component starts from this table instead of from a fresh design,
-and a row that changes is updated with the change.
-
-| Surface | File | Reference source |
-|---|---|---|
-| Window shell, rail, transport strip, side panels | `BitShell.kt` | `DesktopFrame`, `DesktopTopBar`, rail |
-| Player (full window), mini player | `BitShell.kt` calling `ApplePlayerV17.kt` / `AppleMusicV17MiniPlayer.kt` | `NowPlayingScreen`, `PlayerBar` |
-| Home, Explore, Library, Search, History, Downloads, Local Music | `BitPages.kt` | the reference's home/explore/library/search screens |
-| Album, Artist, Playlist, local playlist, song rows and their menu | `BitDetail.kt` | detail screens, row and menu components |
-| Settings | `BitSettings.kt` | reference settings page frame |
-| Theme tokens, type scale, hover, artwork, slider, `Modifier.bcSubmitOnEnter` | `BitTheme.kt` | measured palette and type of the reference |
-| Icons | `BitIcons.kt` | `BitChordIcons` glyphs |
-| Frame pacing probe (dev only) | `BitFramePacing.kt` | none: instrumentation, not a surface |
-
-| Component | Parity |
+| Surface | Files |
 |---|---|
-| Rail, 208 dp, 36 dp rows, playlists list, chrome `#0F0F11`, selected row `#2C2C2D` | verified against the running reference (`docs/ui-parity/side/01-home.png`) |
-| Transport strip, 64 dp, logo, back, shuffle, transport, pill, volume, lyrics, queue, more, avatar | verified |
-| 150 dp covers, 15 dp gap, 22 px shelf titles, 16 px card title, 13 px meta line | verified |
-| No page title on Home, Explore, Library, Search or History (the reference has none); Settings keeps a 22 px one | verified |
-| Explore is one grid of mood tiles measured at 233 x 133 px with 12 px gaps, four to a row: the stripe colour fills the tile, the label sits on it at 14 px from the top left, and the artwork takes the right 72 percent of the tile with no overlay at all (the reference draws its photographs bare, so the label is read against the colour strip, not against a scrim) | verified (`side/02-explore.png`) |
-| Home, Explore, Library, Search, History, Downloads, Local Music | verified from the packaged app, screenshots in `docs/ui-parity/` |
-| Album, Artist, Playlist, local playlist | album, playlist and artist routes verified; the artist credit in an album header opens the artist page (the browse id is resolved from the album's own song credits when the header run carries none) |
-| Context menus (song row, album, playlist) | the collection menu carries Play next, Add to queue, Save to library, Download and Share in the reference's order, the row menu adds Play and Add to playlist; every entry runs its action (Play next writes the queue, Download reaches `downloadToCache`, Save to library writes `playlists.json`); captured in `docs/ui-parity/22-menu-album.png`, `23-menu-song.png`, `24-menu-playlist.png` |
-| Search | the reference's "Recent searches": heading with a `Clear` action, rows of 40 px cover, title, artist and duration with a cross that removes one. The list is stored by `BitSearchHistory.kt` in `~/.vivimusic/bit-search-history.json` (newest first, twenty entries, record, remove, clear, the shape of the reference's `search_entities`), recorded when a result is opened. The page has no field of its own, the rail field is the input and submits on a physical Enter (`Modifier.bcSubmitOnEnter` in `BitTheme.kt`: `KeyboardActions(onSearch)` is the soft-keyboard IME action and never fires on desktop). The filter chips were removed, as in the reference |
-| Player, full window | shared with the DE's Apple Player v17, which is the reference surface. Transport at the reference's numbers: play 74 dp in a 92 dp target, skip 53 dp glyph in a 53 dp target squashed to 0.85 of its height, 28 dp above the transport and 20 dp below it, volume glyphs 20 dp with 10 dp gaps, artwork requested at `ArtworkPx.PLAYER` (1200 px, the reference's `PLAYER_ART_PX`), bottom row 44 dp actions with the 64 / 52 dp capsule segments and 24 / 23 / 22 dp glyphs. Verified (`side/09-player.png`, `side/14-player-lyrics-scroll.png`) |
-| Mini player | Bit's capsule (40 dp cover, title, artist, play/pause, next, 440 dp cap), floating on the bottom edge in every layout and hidden while nothing plays; verified on the packaged app (`side/12-mini-player.png`) |
-| Queue and lyrics side panels | verified; the rail icon for the queue is `QueueMusic` |
-| Downloads and Local Music | the reference's frame: 44 px "Search your music" field with the `A-Z` label and the grid/list toggle, then the Songs / Artists / Albums tabs with the 2 px white underline, a hairline under the row and the content below; no page title. Verified on the installed copy (`side/06-downloads.png`, `side/07-local-music.png`) |
-| Library listening cards | measured at 1220 x 780: 300 px wide, 189 px tall, 12 px apart, 16 px inset, in a row that scrolls and leaves the fourth card cut at the right edge. The tint comes from the artwork itself (`BitTint.kt`: the cover is reduced to a 12 x 12 grid, averaged with a luma weight and set to saturation 0.35 and brightness 0.28, then run into a vertical gradient that darkens to 62 percent), a 28 px figure for a number and 21 px for a name. Verified (`side/03-library.png`) |
-| Library "Show all" | the Playlist shelf title carries `Show all` on the right, as the reference draws it, and it opens the first playlist of the row |
-| Settings, empty states, error state | the reference's frame (title with `Search settings`, group label, 64 dp rows) carrying this build's real settings: ACCOUNT, PLAYBACK, AUDIO QUALITY (Auto / High / Low), LYRICS, APPEARANCE, ADVANCED, every switch writing `DesktopSettings` and the page re-reading on the settings revision. Verified (`side/13-settings-real.png`). Measured spacing: the column is centred and 800 px wide (text starts at 340 px of a 1220 px window), 12 px above the title, 8 px under it, then 10 px over each group label and 6 px under its rows, which gives the reference's 100 px group pitch. The detail line is capped at 630 px so a long one wraps on two lines as the reference's "Add a source" does. Verified (`side/08-settings.png`) |
-| Loading placeholders | shimmer shelves and rows, 1400 ms sweep, same metrics as the real content |
+| Window, shortcuts, startup flags, dev harnesses | `Main.kt` |
+| Theme, typography, dynamic colour | `ui/theme/` |
+| Player, lyrics, queue | `presentation/screens/player/` |
+| Library tabs | `presentation/screens/library/` |
+| Album, artist, playlist, folder, daily mix | `presentation/screens/*DetailScreen.kt`, `DailyMixScreen.kt` |
+| YouTube Music search | `presentation/screens/YouTubeMusicScreen.kt` |
+| Settings | `presentation/screens/settings/` |
+| Dialogs and shared rows | `presentation/components/` |
+| Audio engine, stream handoff | `data/player/mpv/MpvAudioEngine.kt`, `data/player/PlaybackUriResolver.kt` |
 
-**The settings page carries this build's own settings.** The reference's frame
-is unchanged (centred 800 px column, 64 px rows, 34 px icon tile with an 8 px
-corner, title and 13 px detail line, switch or chevron on the right), but the
-rows are the options VIVI Music DE really has, read from and written to
-`DesktopSettings` through one `DesktopSettings.update` per switch: ACCOUNT (the
-signed-in name, or "Not signed in"), PLAYBACK (autoplay next, skip silence,
-shuffle persistence, one copy in the queue, pause when muted, the audio output
-this machine runs), AUDIO QUALITY (the three steps this build resolves: Auto,
-High, Low - the reference's fourth step streams from a service this build does
-not use), LYRICS (synced words, follow the sung line, click to seek, the inline
-line, the blur), APPEARANCE (animations, round artwork, accent from the artwork,
-pure black) and ADVANCED (stats for nerds, FPS, unlocked frame rate). The
-reference's invented rows (tray icon, keep playing when closed, hide volume bar,
-JioSaavn, the add-a-source addon, listen together) are gone: a settings page
-that writes nothing is worse than a shorter one. The rail's foot splits the
-single Settings entry into [ACCOUNT | SETTINGS] as two rows, because half of the
-208 dp rail clips both labels ("Acco..." / "Settin..." measured).
-
-**Motion, with the reference's numbers.** A page change is a 180 ms crossfade
-(`fadeIn`/`fadeOut`). A hover wash is 120 ms; a card lifts 3.5% and casts an
-18 dp shadow over 140 ms. A loading placeholder sweeps in 1400 ms. A panel opens
-with the shell's own 180 ms fade. These durations live at the call site in the
-Bit files, and a new animation copies one of them instead of inventing a value.
-
-**Text fields submit on Enter.** Compose's `KeyboardActions(onSearch = ...)` is the
-soft-keyboard IME action and a desktop never sends it, so a search field that
-only bound `onSearch` kept the query and did nothing. Any text field that submits
-binds `Modifier.bcSubmitOnEnter { ... }` (`BitTheme.kt`) so `Key.Enter` and
-`Key.NumPadEnter` run the action; do not add another search field without it.
-
-**Keys, identical to the reference.** `MediaPlayPause` toggles playback,
-`MediaNext` and `MediaPrevious` skip, `Alt+Left` goes back, and `Escape` closes
-one layer at a time: the player first, then a side panel, then the page. They are
-handled on preview at the window root (`BitShell.kt`), so a focused text field
-does not swallow them. The search field and the queue take `Enter`.
-
-**Window controls.** The three dots are drawn only on a custom (undecorated)
-title bar: left on macOS, right on Windows and Linux. With the native title bar
-the OS owns them and the app draws none.
-
-**Where the reference lives.** Two sources ship with the workspace, both
-`.ignore` (never committed): `.ignore/BitChord` holds the 1.8-beta1 Windows
-portable build, the installer, `STYLE-GUIDE.md` and the owner's expectation
-screenshots under `vivimusic vs bitchord/`; `.ignore/BitChord-source` holds its
-source, whose `desktopApp/src/main/kotlin/com/music/bitchord/desktop/` is the
-file that draws the whole surface (`DesktopApp.kt`). Measure against the running
-app, not against a remembered number: the 208 dp rail, `#0F0F11` chrome, 150 dp
-covers, 15 dp gap, 28 px insets and the 22/16/13 type of the Bit UI all come
-from pixel measurements of that window at 1220 x 780.
-
-**Running the reference on this machine.** Its Skiko backend asks for Direct3D
-12 and this GPU (Intel HD 4000) cannot create a device, so the window paints one
-flat grey rectangle: run
-`powershell -ExecutionPolicy Bypass -File .ignore/BitChord/apply-software-render.ps1 -InstallDir <portable folder>`
-first, which appends `-Dskiko.renderApi=SOFTWARE` to its `app/BitChord.cfg`. An
-update replaces that file, so run it again after one. Under software rendering
-the reference paints every page, but opening its player screen exits the
-process, so the player comparison uses the owner's expectation image plus a
-capture of ours.
-
-**Side-by-side evidence.** `docs/ui-parity/side/NN-name.png` holds the pair,
-reference on the left and VIVI Music DE on the right, at the same height (the
-reference window is 1220 x 780, ours 1220 x 803 because the OS title bar is part
-of the capture). `.ignore/tmp/sbs.py <ref.png> <ours.png> <out.png>` builds one.
-The numbered files are `01-home`, `02-explore`, `03-library`, `04-search`,
-`05-history`, `06-downloads`, `07-local-music`, `08-settings`, `09-player`.
-
-**How parity is checked.** Launch the packaged `VIVIMusic.exe`, open a screen by
-clicking the rail or the player, and save the window with
-`agent-desktop screenshot --app VIVIMusic.exe <path>`. The screenshots live in
-`docs/ui-parity/` with a README that names each one. A screen can also be opened
-by a launch, with no click: `VIVIMusic.exe --open=<section>` (`search`, `downloads`, `local`, `player`,
-`queue`, `library`, `settings`, `appearance`, `designs`, `theme`, `updates`,
-`developer`, `devices`; `Main.kt` `screenForSection`), which is the reliable way
-when a script's click keeps landing on a window that does not own the focus.
-A synthetic click only reaches the UI when the window is confirmed foreground
-first (repeat `SetForegroundWindow` until `GetForegroundWindow` returns it); a
-click that only activates the window is otherwise spent on the activation, and
-a `SendKeys` from a background shell reaches nothing at all: send real keys with
-`agent-desktop press --app VIVIMusic.exe --headed <key>`.
-
-**Frame pacing is measured, not guessed.** `-Dvivi.frameProbe=<file>` (through
-`JAVA_TOOL_OPTIONS`) makes `BitFramePacing.kt` timestamp the frames Compose
-really paints and rewrite the file with the last ten seconds: `frames`,
-`span_s`, `avg_fps`, `p95_gap_ms`, `p95_draw_ms`, `dropped` (gaps over 25 ms)
-and `max_gap_ms`. The probe requests nothing on its own. While a track plays the
-player's own playhead drives the frame clock at the display rate, so the figure
-is the player's, not the probe's; an idle screen paints only on change, so a
-still page reports the frames a scroll would ask for and never a fabricated
-rate. Measured on the reference machine (i7-3630QM, Intel HD Graphics 4000,
-Windows 11, window 1249 x 917, 60 Hz, `-Dskiko.vsync.enabled=true`, packaged
-build): player 60.0 fps, p95 17.3 ms, 0 dropped frames over 20 s; Home 59.9 fps,
-0 dropped; Explore 59.3 fps, 5 dropped (cover decodes on entry). With vsync
-unlocked, which is the shipped default, the same player runs at 108 fps average
-with a p95 gap of 14.3 ms. Repeated on the installed 1.56.0-beta copy (15 Nov
-2026, same machine, player open and playing, window on Direct3D): 59.9 fps,
-p95 17.3 ms, 0 dropped, max gap 19.2 ms over 20 s; a window that includes the
-player opening reports 58.5 fps and one 460 ms gap, which is the transition.
-
-**The renderer matters more than any code path.** After one slow first frame the
-app wrote `~/.vivimusic/.gl-software` and started on Skia's software renderer on
-every OS; on this machine that cost two thirds of the frame rate (37 fps software
-against 108 fps on Direct3D for the same player). The marker and the slow-frame
-fallback are Linux only now, where a loadable libGL is not a working GL context;
-Windows keeps Direct3D, macOS keeps Metal, and the crash handler still covers a
-driver that really fails. A frame rate claim without this check is worthless:
-verify the renderer before touching a composable.
+- **Material 3, with the palette from the artwork.** Every screen reads
+  `MaterialTheme.colorScheme`; the scheme comes from MaterialKolor, seeded from
+  the current cover. No screen carries a hand-written palette, and a new colour
+  is a scheme role, not a hex value at the call site.
+- **libmpv is the engine, and the URL comes from innertube.** `MpvAudioEngine`
+  is the only playback path: `play(uri, httpHeaders)` and
+  `crossfadeTo(uri, httpHeaders, ...)` receive the resolved stream together with
+  the `User-Agent` and `Referer` headers that `PlaybackUriResolver` produced,
+  and the engine sets them through `http-header-fields`. A stream that needs the
+  handoff is a bug in the resolver, never a reason to bypass the engine.
+- **Branding is data, not a fork.** The app name and version come from
+  `version.txt` through `BuildConfig` (`APP_NAME`, `APP_VERSION_NAME`), the
+  window title from `BuildConfig.APP_NAME`, the installer name from
+  `packageName = "VIVIMusic"`, and the icon from `src/main/resources/icons/`
+  (`icon.ico`, `icon.icns`, `icon.png`, taken from `vivi-music-de`). A branded
+  string is edited in one of those places, never searched and replaced through
+  the sources.
+- **Performance is the surface's own rule: 120 FPS or it is not finished.**
+  The renderer is forced (`-Dskiko.renderApi`, Direct3D on Windows, Metal on
+  macOS, OpenGL elsewhere) with `-Dskiko.vsync.enabled=false`. UI models are
+  `@Immutable` or `@Stable`; the playhead, the seek bar and the synced lyrics
+  read their value inside the leaf that draws them (`Modifier.graphicsLayer`,
+  `Canvas`, `derivedStateOf`); every `LazyColumn` and `LazyRow` carries a stable
+  `key` and a `contentType`; JSON parsing, network calls and colour extraction
+  run on `Dispatchers.IO` or `Dispatchers.Default`; a blurred backdrop is a
+  fixed-size layer over a static image, never a full-window blur recomputed per
+  frame, and no new `Modifier.blur` goes on anything that redraws with the
+  playhead.
+- **The libmpv binaries are not in the repository.** `libmpv-2.dll` and the
+  Vulkan loader live in the gitignored `desktop/app-resources/windows/mpv` tree,
+  which `appResourcesRootDir` packages; `setupMpvWindows` re-fetches them when
+  the directory is empty. The path cannot sit under a hidden directory: Compose
+  reports `prepareAppResources NO-SOURCE` for a root inside `.ignore`. A
+  checkout without that directory still compiles and runs the UI, and playback
+  fails with the engine's own error.
+- **Verification.** A desktop change is checked with `./gradlew
+  :desktop:compileKotlin` and, when it reaches playback or the shell,
+  `./gradlew :desktop:run` or the packaged app in
+  `build/compose/binaries/main/app/VIVIMusic/`. `--benchmark-first-frame` prints
+  the time to the first painted frame.
+- **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
+  `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
+  `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the
+  class-data-sharing archive and the Bit render checks were retired with that
+  surface, and `desktop/src/test` no longer ships them. The sections of this
+  file that describe those mechanisms (the headless render checks, the
+  icon-minimization measurement, the class-data-sharing note) describe the
+  retired surface; the desktop has no such tasks today. `desktop/build.gradle.kts`
+  is the clone's script, wired to `:innertube` and `:lyricsProvider`.
 
 ### Skills - scan before installing - MANDATORY
 
