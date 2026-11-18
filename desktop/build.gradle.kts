@@ -349,7 +349,21 @@ tasks.register("windowsInstaller") {
     group = "distribution"
     description = "Builds the Windows setup from the packaged app image (Inno Setup 7)."
     dependsOn("createDistributable")
-    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows }
+    // Everything this task reads is resolved here, at configuration time. A doLast
+    // closure that touches `rootProject` or `layout` cannot be stored in the
+    // configuration cache, and the repository enables that cache.
+    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val rootDir = rootProject.projectDir
+    val installerOutputDir = File(rootDir, "build/installer")
+    val appImageDir = layout.buildDirectory.dir("compose/binaries/main/app/VIVIMusic").get().asFile
+    val iconsDir = File(projectDir, "icons")
+    val issScript = File(rootDir, "installer/windows/VIVIMusic.iss")
+    // The release numbers are script properties; read them into locals so the task
+    // action captures strings instead of the build script itself.
+    val appVersion = fullVersion
+    val installerVersion = deVersion
+    val fileVersion = numericPackageVersion
+    onlyIf { isWindows }
     doLast {
         val roots = listOfNotNull(
             System.getenv("LOCALAPPDATA")?.let { File(it, "Programs") },
@@ -364,24 +378,24 @@ tasks.register("windowsInstaller") {
                     "and run this task again."
             )
 
-        val outputDir = rootProject.file("build/installer").apply { mkdirs() }
+        val outputDir = installerOutputDir.apply { mkdirs() }
         val logDir = File(outputDir, "logs").apply { mkdirs() }
         val logFile = File(logDir, "iscc.log")
-        val icons = layout.projectDirectory.dir("icons").asFile
+        val icons = iconsDir
 
         val command = listOf(
             iscc.absolutePath,
-            "/DAppVersion=$fullVersion",
-            "/DInstallerVersion=$deVersion",
-            "/DVersionInfoVersion=$numericPackageVersion",
-            "/DSourceDir=${layout.buildDirectory.dir("compose/binaries/main/app/VIVIMusic").get().asFile.absolutePath}",
+            "/DAppVersion=$appVersion",
+            "/DInstallerVersion=$installerVersion",
+            "/DVersionInfoVersion=$fileVersion",
+            "/DSourceDir=${appImageDir.absolutePath}",
             "/DOutputDir=${outputDir.absolutePath}",
             "/DIconFile=${File(icons, "logo_vmde.ico").absolutePath}",
             "/DWizardImageFile=${File(icons, "logo_vmde_wizard.bmp").absolutePath}",
             "/DWizardSmallImageFile=${File(icons, "logo_vmde_small.bmp").absolutePath}",
             "/DWizardImageFileDark=${File(icons, "logo_vmde_wizard_dark.bmp").absolutePath}",
             "/DWizardSmallImageFileDark=${File(icons, "logo_vmde_small_dark.bmp").absolutePath}",
-            rootProject.file("installer/windows/VIVIMusic.iss").absolutePath
+            issScript.absolutePath
         )
         logger.lifecycle("Using Inno Setup compiler: ${iscc.absolutePath}")
         val process = ProcessBuilder(command).redirectErrorStream(true).start()
@@ -397,7 +411,7 @@ tasks.register("windowsInstaller") {
         if (exit != 0) {
             throw GradleException("Inno Setup compilation failed (exit $exit); log: $logFile")
         }
-        val setup = File(outputDir, "VIVIMusic-$fullVersion-setup.exe")
+        val setup = File(outputDir, "VIVIMusic-$appVersion-setup.exe")
         if (!setup.isFile) throw GradleException("ISCC exited 0 but $setup is missing")
         val engine = Regex("Compiler engine version: (.+)").find(collected)?.groupValues?.get(1)?.trim()
         if (engine == null || !engine.startsWith("Inno Setup 7")) {

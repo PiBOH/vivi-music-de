@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.presentation.components
 
+import com.music.vivi.desktop.BuildConfig
 import kotlin.math.roundToLong
 
 import androidx.compose.animation.core.Spring
@@ -276,7 +277,7 @@ fun MiniPlayerWindowView(
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = currentSong?.artist ?: "VIVI Music DE",
+                        text = currentSong?.artist ?: BuildConfig.APP_NAME,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onPrimaryContainer.copy(alpha = 0.75f),
                         maxLines = 1,

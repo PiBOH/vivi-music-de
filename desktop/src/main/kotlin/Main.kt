@@ -40,6 +40,7 @@ import org.jetbrains.compose.resources.painterResource as composePainterResource
 import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.dev.BackendPlaybackVerifier
 import com.music.vivi.desktop.dev.RealAppFlowCheck
+import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_tray
 import com.music.vivi.desktop.presentation.components.InputFocusTracker
@@ -350,14 +351,14 @@ fun main(args: Array<String> = emptyArray()) {
             // The tray reads the same PNG the window uses, so the shipped brand
             // artwork is the one icon there is to update.
             icon = painterResource("icons/icon.png"),
-            tooltip = "VIVI Music DE",
+            tooltip = BuildConfig.APP_NAME,
             onAction = {
                 isWindowVisible = true
                 windowState.isMinimized = false
             },
             menu = {
                 Item(
-                    text = "Open PixelPlayer",
+                    text = "Open ${BuildConfig.APP_NAME}",
                     onClick = {
                         isWindowVisible = true
                         windowState.isMinimized = false
@@ -400,7 +401,7 @@ fun main(args: Array<String> = emptyArray()) {
                 exitApp()
             }
         },
-        title = "VIVI Music DE",
+        title = BuildConfig.APP_NAME,
         icon = painterResource("icons/icon.png"),
         state = windowState,
         onPreviewKeyEvent = { keyEvent ->
@@ -696,7 +697,7 @@ fun main(args: Array<String> = emptyArray()) {
             onCloseRequest = {
                 playerViewModel.setMiniPlayerMode(false)
             },
-            title = currentSong?.let { "${it.title} • ${it.artist}" } ?: "VIVI Music DE Mini",
+            title = currentSong?.let { "${it.title} • ${it.artist}" } ?: "${BuildConfig.APP_NAME} Mini",
             icon = painterResource("icons/icon.png"),
             state = miniWindowState,
             alwaysOnTop = isMiniPlayerAlwaysOnTop,

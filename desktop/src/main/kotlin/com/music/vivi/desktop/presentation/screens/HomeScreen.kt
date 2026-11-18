@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.presentation.screens
 
+import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
@@ -416,7 +417,7 @@ private fun HomeEmptyState(
 
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    text = "Welcome to PixelPlayer",
+                                    text = "Welcome to ${BuildConfig.APP_NAME}",
                                     style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = colors.onSurface
@@ -492,7 +493,7 @@ private fun HomeEmptyState(
 
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(
-                                        text = "Welcome to PixelPlayer",
+                                        text = "Welcome to ${BuildConfig.APP_NAME}",
                                         style = MaterialTheme.typography.headlineLarge,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.onSurface

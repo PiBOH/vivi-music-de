@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.platform.mediasession.linux
 
+import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.platform.mediasession.MediaMetadata
 import com.music.vivi.desktop.platform.mediasession.MediaPlaybackStatus
 import com.music.vivi.desktop.platform.mediasession.MediaSessionCommands
@@ -294,7 +295,7 @@ class LinuxMprisMediaSessionController(
                     "CanQuit" to Variant(true),
                     "CanRaise" to Variant(true),
                     "HasTrackList" to Variant(false),
-                    "Identity" to Variant("VIVI Music DE"),
+                    "Identity" to Variant(BuildConfig.APP_NAME),
                     "SupportedUriSchemes" to Variant(arrayOf("file"), "as"),
                     "SupportedMimeTypes" to Variant(arrayOf("audio/mpeg", "audio/flac", "audio/ogg", "audio/wav", "audio/x-vorbis+ogg"), "as")
                 )

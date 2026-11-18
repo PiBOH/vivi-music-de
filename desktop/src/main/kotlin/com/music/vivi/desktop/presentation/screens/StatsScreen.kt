@@ -1,5 +1,7 @@
 package com.music.vivi.desktop.presentation.screens
 
+import com.music.vivi.desktop.BuildConfig
+
 
 import java.text.NumberFormat
 import java.util.Locale
@@ -1753,7 +1755,7 @@ private fun StatsEmptyState(
                 )
 
                 Text(
-                    text = "Play songs in PixelPlayer to track your listening statistics and habits.",
+                    text = "Play songs in ${BuildConfig.APP_NAME} to track your listening statistics and habits.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center

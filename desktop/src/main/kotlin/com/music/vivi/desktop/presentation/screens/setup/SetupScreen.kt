@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.presentation.screens.setup
 
+import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_back
@@ -174,7 +175,7 @@ fun SetupScreen(
                         modifier = Modifier.size(18.dp)
                     )
                     Text(
-                        text = "VIVI Music DE",
+                        text = BuildConfig.APP_NAME,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onSurface
@@ -485,7 +486,7 @@ private fun WelcomeStepContent() {
             Spacer(modifier = Modifier.height(18.dp))
 
             Text(
-                text = "Welcome to PixelPlayer",
+                text = "Welcome to ${BuildConfig.APP_NAME}",
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontFamily = RoundedSans,
                     fontWeight = FontWeight.Bold,
@@ -603,7 +604,7 @@ private fun FoldersStepContent(
                 color = colors.onSurface
             )
             Text(
-                text = "Add the directories containing your music files. PixelPlayer will index these into your library.",
+                text = "Add the directories containing your music files. ${BuildConfig.APP_NAME} will index these into your library.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant
             )

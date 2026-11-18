@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.data.player.mpv
 
+import com.music.vivi.desktop.BuildConfig
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -135,7 +136,7 @@ class MpvAudioEngine(
         api.mpv_set_property_string(handle, "terminal", "no")
         api.mpv_set_property_string(handle, "msg-level", "all=warn")
         api.mpv_set_property_string(handle, "gapless-audio", "yes")
-        api.mpv_set_property_string(handle, "audio-client-name", "VIVI Music DE")
+        api.mpv_set_property_string(handle, "audio-client-name", BuildConfig.APP_NAME)
         api.mpv_set_property_string(handle, "audio-pitch-correction", "yes")
         api.mpv_set_property_string(handle, "audio-fallback-to-null", "no")
         val speedStr = String.format(java.util.Locale.US, "%.2f", _playbackSpeed.value)

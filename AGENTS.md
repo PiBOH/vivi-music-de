@@ -412,10 +412,16 @@ cloned screen, not by adding a parallel surface next to it.
   `packageName = "VIVIMusic"`, and the icon from `src/main/resources/icons/`
   (`icon.ico`, `icon.icns`, `icon.png`, taken from `vivi-music-de`). A branded
   string is edited in one of those places, never searched and replaced through
-  the sources.
+  the sources: every user-visible use of the name (window title, tray, sidebar,
+  welcome screens, shortcuts dialog, mini window) reads
+  `BuildConfig.APP_NAME`, so a hardcoded brand string is a bug.
 - **Performance is the surface's own rule: 120 FPS or it is not finished.**
   The renderer is forced (`-Dskiko.renderApi`, Direct3D on Windows, Metal on
-  macOS, OpenGL elsewhere) with `-Dskiko.vsync.enabled=false`. UI models are
+  macOS, OpenGL elsewhere) and the frame clock stays on vsync. Turning vsync off
+  (`-Dskiko.vsync.enabled=false`) was measured at one frame every 4.3 s while the
+  window was resized, against a steady 60 fps with it on: the uncapped repaint
+  loop competes with the AWT event pump. The cap is the panel, not a limiter, so
+  a 120/144 Hz display is served at its own rate. UI models are
   `@Immutable` or `@Stable`; the playhead, the seek bar and the synced lyrics
   read their value inside the leaf that draws them (`Modifier.graphicsLayer`,
   `Canvas`, `derivedStateOf`); every `LazyColumn` and `LazyRow` carries a stable
@@ -424,6 +430,12 @@ cloned screen, not by adding a parallel surface next to it.
   fixed-size layer over a static image, never a full-window blur recomputed per
   frame, and no new `Modifier.blur` goes on anything that redraws with the
   playhead.
+- **A resize is a layout, not a repaint storm.** `Main.kt` debounces the
+  window's `WM_SIZE` reports by 180 ms and repaints from the debounced size, so
+  dragging an edge moves a frame per step instead of re-laying out the whole
+  window per pixel. `--fps-log=<file>` appends one line per second with the
+  frames the window actually produced; a performance claim is made with that
+  log, not by feel.
 - **The libmpv payload: engine fetched, loader tracked.**
   `desktop/app-resources/windows/mpv/vulkan-1.dll` (616 KB) is in git, because
   the loader is what this GPU needs and it is small; `libmpv-2.dll` (121 MB) is
@@ -435,6 +447,13 @@ cloned screen, not by adding a parallel surface next to it.
   rejects the pair as an undeclared dependency. The path cannot sit under a
   hidden directory either: Compose reports `prepareAppResources NO-SOURCE` for a
   root inside `.ignore`.
+- **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
+  enables the configuration cache, so the task resolves its paths, the Inno
+  compiler and the release numbers while the build is configured, and its action
+  captures only strings and files. A `rootProject`, `layout` or build-script
+  property read inside `doLast` fails the build (after the setup has already
+  been written) with "cannot serialize Gradle script object references". The
+  setup lands in `build/installer/VIVIMusic-<version>-setup.exe`.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in

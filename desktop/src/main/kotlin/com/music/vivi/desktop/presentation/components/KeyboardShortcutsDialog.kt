@@ -1,5 +1,7 @@
 package com.music.vivi.desktop.presentation.components
 
+import com.music.vivi.desktop.BuildConfig
+
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_rounded_close
 import com.music.vivi.desktop.generated.resources.ic_rounded_keyboard
@@ -98,7 +100,7 @@ fun KeyboardShortcutsDialog(
                                 color = colors.onSurface
                             )
                             Text(
-                                text = "Quick hotkeys reference for PixelPlayer",
+                                text = "Quick hotkeys reference for ${BuildConfig.APP_NAME}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onSurfaceVariant
                             )

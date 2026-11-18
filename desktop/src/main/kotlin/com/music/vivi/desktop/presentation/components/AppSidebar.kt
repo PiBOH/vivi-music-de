@@ -78,6 +78,7 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
 import com.music.vivi.desktop.generated.resources.ic_rounded_delete
 import com.music.vivi.desktop.generated.resources.ic_rounded_edit
 import com.music.vivi.desktop.generated.resources.ic_rounded_history
+import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.presentation.components.subcomps.AppTooltip
 import com.music.vivi.desktop.presentation.navigation.DesktopNavDestination
 import com.music.vivi.desktop.presentation.navigation.DesktopNavTarget
@@ -133,7 +134,7 @@ fun AppSidebar(
                 ) {
                     Icon(
                         painter = painterResource(Res.drawable.ic_app_logo),
-                        contentDescription = "VIVI Music DE",
+                        contentDescription = BuildConfig.APP_NAME,
                         tint = colors.primary,
                         modifier = Modifier.size(24.dp)
                     )
@@ -144,14 +145,18 @@ fun AppSidebar(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = "VIVI Music DE",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.5.sp),
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onSurface,
-                                maxLines = 1,
-                                softWrap = false
-                            )
+                            // 200 dp is narrower than the name at this size, so the
+                            // pill is a cut text: hovering says the whole of it.
+                            AppTooltip(BuildConfig.APP_NAME) {
+                                Text(
+                                    text = BuildConfig.APP_NAME,
+                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.5.sp),
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.onSurface,
+                                    maxLines = 1,
+                                    softWrap = false
+                                )
+                            }
                         }
                     }
                 }

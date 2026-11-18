@@ -10,6 +10,8 @@
 - [DE] **The desktop module is PixelPlayerDesktop's app.**
 
 ### 🔧 Changed
+- [DE] **Every brand string comes from `BuildConfig.APP_NAME`.** The window title, tray, sidebar, welcome screens, shortcuts dialog, mini window, About screen, the Linux media identity and the audio client name read the one constant instead of a literal per file.
+- [DE] **The window resizes without freezing.** Vsync stays on (turned off, a resize measured one frame every 4.3 s against a steady 60 fps) and the shell debounces `WM_SIZE` by 180 ms; `--fps-log` writes the produced frame rate to a file, so the claim is measured rather than felt.
 - [DE] **A clean checkout packages an app that plays.**
 - [DE] **The libmpv binaries sit outside the repository.**
 - [DE] **The navigation-event back channel is gone.**

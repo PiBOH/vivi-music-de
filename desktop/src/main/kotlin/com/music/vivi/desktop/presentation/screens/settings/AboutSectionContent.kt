@@ -218,7 +218,7 @@ fun AboutSectionContent(
 
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "VIVI Music DE",
+                            text = BuildConfig.APP_NAME,
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface
@@ -336,7 +336,7 @@ fun AboutSectionContent(
                             val subtitle = when (checkResult) {
                                 is UpdateCheckResult.Checking -> "Checking GitHub Releases..."
                                 is UpdateCheckResult.UpdateAvailable -> "Update available: ${checkResult.release.versionTag}. Click to view."
-                                is UpdateCheckResult.UpToDate -> "VIVI Music DE is up to date (v${checkResult.currentVersion})."
+                                is UpdateCheckResult.UpToDate -> "${BuildConfig.APP_NAME} is up to date (v${checkResult.currentVersion})."
                                 is UpdateCheckResult.Error -> "${checkResult.message} Click to retry."
                                 is UpdateCheckResult.Idle -> "Current: v${BuildConfig.APP_VERSION_NAME} • Check GitHub Releases"
                             }
