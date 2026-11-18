@@ -383,6 +383,185 @@ dependencies there, or you break the desktop build.
   never overrides explicit user requests, the trust-boundary/error-handling
   rules, or the localization rule in §6.
 
+### The desktop UI: anatomy, patterns, style - MANDATORY
+
+This is the working reference for the cloned window: what the files are, how a
+screen is put together, and which visual decisions are already made. It
+describes `desktop/src/main/kotlin/com/music/vivi/desktop` as it stands today.
+The counts below are from that tree and are there to answer "does this codebase
+do it this way?" without a search: 0 `stringResource` calls (the module has no
+string resources), 0 `Icons.*` references against 594 `Res.drawable.*`, 155
+vector drawables, 29 `@Immutable`/`@Stable` annotations across 16 files, 50
+`graphicsLayer`, 34 `derivedStateOf`, 73 `LazyColumn`, 23 `contentType`, 107
+`Dispatchers.IO`, 16 `Dispatchers.Default`, 66 `AppTooltip`, 0 `Modifier.blur`.
+
+**Where a change goes.** Nothing is added next to a screen: the screen is
+edited.
+
+| The change is about | It lives in |
+|---|---|
+| Window, shortcuts, tray, mini window, startup flags | `Main.kt` |
+| Colours, type, shapes, dynamic palette | `ui/theme/` (`Color.kt`, `Type.kt`, `Shape.kt`, `Theme.kt`, `dynamic/`) |
+| Shell, sidebar, top bar, mini bar, queue panel | `presentation/screens/MainAppScaffold.kt`, `presentation/components/AppSidebar.kt`, `AppTopBar.kt`, `MiniPlayerBar.kt`, `QueueSidePanel.kt` |
+| A screen's layout | `presentation/screens/<screen>.kt` (`library/` for the five tabs, `player/` for the player and lyrics, `settings/` for settings) |
+| A row, an item, an empty state | `presentation/components/subcomps/` |
+| A dialog | `presentation/components/*Dialog.kt` |
+| Navigation targets | `presentation/navigation/DesktopNavDestination.kt`, `DesktopNavTarget.kt` |
+| Library, queue, playback, settings state | `presentation/viewmodel/` (`PlayerViewModel`, the `*StateHolder`s) |
+
+**1. The window.** `main()` installs an uncaught-exception filter, then hands
+the args to the two headless harnesses (they exit before a stage exists), then
+`application { }`: `Window` at `WindowPlacement.Maximized` with 1100x800 dp
+design size, a minimum content size of 600x400 dp (physical pixels on Windows),
+the multi-resolution `icon.ico` loaded by hand, `title` and the tray tooltip
+naming the edition, and an `onPreviewKeyEvent` that owns every shortcut. Inside
+the window: `CompositionLocalProvider(LocalDensity scaled by uiScale,
+LocalWindowMinimized, LocalInputFocusTracker, LocalBackDispatcher)`,
+then `PixelPlayerTheme`, then `SetupScreen` or `MainAppScaffold`. The mini
+player is a second `Window` (360x184 dp, not resizable, optionally always on
+top) that re-themes itself with the same scheme. A shortcut must test
+`isInputActive` before acting, because a focused text field owns space, arrows
+and letters.
+
+**2. The shell.** `MainAppScaffold` is one `BoxWithConstraints`: the breakpoint
+is `maxWidth < 800.dp`. A `Row` holds `AppSidebar` (72 dp compact, 200 dp
+expanded, animated with a no-bounce medium-low spring, `surfaceContainer`) and
+a `Column` with `AppTopBar` (64 dp, back/forward, the search field, the actions)
+over the content `Row` (the current screen with `weight(1f)`, then the queue
+panel). The queue panel is an `AnimatedVisibility` that expands from the end;
+under 800 dp a visible queue becomes a full-size panel with a back handler, and
+the window closes the docked panel when it gets narrow. `MiniPlayerBar` sits
+under the content and re-themes with the playing song's scheme. Navigation is
+`DesktopNavigator`: two `mutableStateListOf` stacks of `DesktopNavTarget`, with
+`canGoBack`/`canGoForward` and no navigation library. A new screen is a
+`DesktopNavDestination`, a target case and a branch in the scaffold's `when`;
+nothing gets its own router.
+
+**3. Theme.** `PixelPlayerTheme(darkTheme, colorSchemeOverride, content)` is
+`MaterialTheme(colorScheme, Typography, Shapes)` plus
+`LocalPixelPlayerDarkTheme`. The static palettes live only in `Color.kt`
+(`PixelPlayerPurpleDark/Primary/Pink/Orange/...` and the `Light*` set). At
+runtime the scheme is generated: the system accent (Windows/Linux) through
+`DynamicColorProcessor` on `Dispatchers.IO`, and, when dynamic colour is on,
+the playing song's artwork through `produceState` + `extractColorScheme` on
+`Dispatchers.Default`, cached by path with `getCachedColorScheme`. Corners come
+from `Shapes` (small 8, medium 16, large 24); a component that needs another
+corner passes its own `RoundedCornerShape` there (mini bar 36 top / 12 bottom,
+settings group 24 outer / 4 inner, rows and lyrics 12, pills 999) and never a
+stray 14. Type is the Google Sans Flex variable file with `ROND` 100, plus
+`SquashedYourMixFontFamily` (wght 800, wdth 152) for the squashed wordmark. So:
+colour is a role (`primary`, `onSurfaceVariant`, `surfaceContainerHigh`), a
+text style is `MaterialTheme.typography.<style>.copy(...)` and not a fresh
+`TextStyle`, and a new colour or font family does not exist until it is added to
+the theme's own files.
+
+**4. Screens and components.** One public `@Composable` per file, named for what
+it draws (`SongsTab`, `AlbumDetailScreen`, `QueueSidePanel`, `SleepTimerDialog`).
+Parameters go data first, then `on*` callbacks, then `viewModel:
+PlayerViewModel` where the screen owns library, search, queue or settings state,
+then `modifier: Modifier = Modifier` last. Optional callbacks default to `null`
+or `{}` so a screen can omit an action it does not offer. A screen never builds
+a repository, an engine or a Koin module: dependencies come from
+`di/AppModules.kt` through `PlayerViewModel` and its holders, and the state it
+shows is `collectAsState()` over a `StateFlow` or data hoisted by the scaffold.
+Dialogs are `AlertDialog`: a leading `Icon` (tinted `error` when destructive), a
+bold title, the message as text, a `TextButton` confirm (`error` content colour
+for a delete) and a `TextButton` dismiss. A dialog whose content can take focus
+calls `TrackDialogInput()` first (from `LocalInputFocus.kt`), which keeps the
+window shortcuts from firing while a field inside it has focus: 31 of the 38
+dialogs already do, and a text field inside a dialog without it is a defect.
+
+**5. Icons and tooltips.** Every glyph is a vector drawable in
+`desktop/src/main/composeResources/drawable/`, named
+`ic_<style>_<material_symbol_name>.xml` (`ic_rounded_play_arrow.xml`,
+`ic_automirrored_rounded_queue_music.xml`, `ic_app_logo.xml`), referenced as
+`Res.drawable.<name>` with `painterResource`. There is no `Icons.Default.*` call
+in this module: a new icon is copied from Material Symbols as an XML drawable
+and named the same way, then referenced by that name. The meaning map is the
+one written above (queue `queue_music`, playlist `playlist_play`, add to
+playlist `playlist_add`, menu `more_vert`, settings `settings`, library
+`library_music`), and the right-hand queue panel's own toggle button draws
+`ic_automirrored_rounded_queue_music` as well, so the panel and the action it
+toggles read as one concept. Every clickable icon sits inside
+`AppTooltip(<action name>)`, and so does every text the layout truncates.
+Back arrows and other directional glyphs use the `ic_automirrored_*` variants so
+they flip with the reading direction.
+
+**6. Lists, rows, artwork.** A list is `LazyColumn` + `itemsIndexed` with a
+stable `key` and a `contentType`, and a `rememberLazyListState` when it scrolls
+to the playing song. 73 lists exist and only 23 declare `contentType`: add it
+when you touch a list that does not. Song rows are `EnhancedSongListItem`,
+albums `AlbumGridItem`/`AlbumListItem`, artists `ArtistGridItem`/
+`ArtistListItem`, folders `FolderListItem`, playlists `PlaylistListItem`; a
+library tab pairs them with `LibraryActionRow`, `LibraryEmptyState` and
+`ExpressiveScrollBar`. Artwork goes through `AsyncArtworkImage` with an
+`ArtworkSize` (SMALL and the rest), which decodes off the UI thread and serves
+from its cache: a 40 dp row asks for the small size, never the original cover.
+
+**7. Values that change many times a second.** The playhead is
+`PlayerViewModel.currentPositionMs`, a `StateFlow<Long>`. It travels as a flow
+(`MiniPlayerBar(currentPositionFlow = ...)`, `LyricsView(currentPositionFlow =
+...)`) and is read inside the leaf that draws it, never passed down as a `Long`
+through a container. The synced lyrics keep `activeIndex` in a `derivedStateOf`
+over position plus `syncOffsetMs`, scroll in a `LaunchedEffect(activeIndex)`, and
+animate the active line's scale/alpha through `Modifier.graphicsLayer`, so the
+row's content is not rebuilt at tick rate. The seek bar is
+`WavySliderExpressive`: a `Canvas` that draws a `Path`, with the wave phase
+running only while playing, not dragging and not minimized. When adding a new
+high-frequency value, follow the same shape: `StateFlow` or lambda into the
+leaf, `derivedStateOf` for a slower derivation, `graphicsLayer`/`Canvas` for
+what is drawn per frame.
+
+**8. Off the main thread.** JSON, network and colour extraction never run in
+composition: `Dispatchers.IO` for files, sockets and the system accent,
+`Dispatchers.Default` for artwork colour extraction and parsing.
+`produceState`/`LaunchedEffect` with `withContext` is the pattern; a blocking
+call inside a composable is a defect. There is no `Modifier.blur` in the
+window: depth is tonal (`surfaceContainer`, `surfaceContainerHighest.copy(alpha
+= 0.60f)`) and gradients are remembered at a fixed size, so no blurred layer is
+recomputed per frame.
+
+**9. Text, brand and language.** The module has no string resources: user-facing
+text is an English literal at the call site, sentence case, no localization
+keys. The brand lives in exactly these places: `version.txt` through
+`BuildConfig.APP_NAME`/`APP_VERSION_NAME`, the `Window`/tray titles and tooltip
+in `Main.kt`, `packageName = "VIVIMusic"` in `desktop/build.gradle.kts`, the
+installer metadata in `installer/`, `src/main/resources/icons/`
+(`icon.ico`/`icns`/`png`) and `composeResources/drawable/ic_app_logo.xml`. A
+version number on a screen is read from `BuildConfig.APP_VERSION_NAME`, never
+typed. Known drift to fix when that code is touched: the tray menu's first item
+still says `Open PixelPlayer`, and the window title is a literal instead of
+`BuildConfig.APP_NAME`.
+
+**10. Motion.** Motion is written at the call site in the vocabulary the clone
+already uses: `AnimatedVisibility` with `fadeIn`/`slideIn`/
+`expandHorizontally` for panels and overlays in the 180-350 ms band,
+`animateFloatAsState`/`animateDpAsState` springs for hover, press and width
+(160 ms `FastOutSlowInEasing` in `AppTooltip`; medium-bouncy/low for the mini
+player's play/pause morph; no-bounce/medium-low for the sidebar), and the
+active lyric line's own alpha/scale. A new transition stays inside the band the
+neighbouring screen uses, and an infinite animation stops with playback and
+with a minimized window.
+
+**11. How a UI change is checked.** `./gradlew :desktop:compileKotlin` first.
+Then the window itself: `./gradlew :desktop:run`, or the packaged app in
+`desktop/build/compose/binaries/main/app/VIVIMusic/`. When the change reaches
+the wiring (`Main.kt`, `MainAppScaffold`, a screen's callbacks, the view
+models), `--verify-app-flow` is the evidence: it starts the real Koin graph,
+drives the holder the YouTube Music screen binds, plays, and writes
+`build/app-search-screen.png` and `build/app-lyrics-screen.png`. Read those two
+PNGs: the search screen shows the shell, the sidebar and the results; the
+lyrics screen shows the expanded player with the active line. This module has
+no headless render-check task (`build.gradle.kts` registers only
+`generateBuildConfig` and `setupMpvWindows`), so a layout is verified by that
+screenshot and by its numbers, not by a claim. A visual change that was not
+looked at is not verified: say so.
+
+**Precedence.** Where a rule in this file and the cloned screen disagree, the
+screen is the reference and this file is corrected in the same change. Nothing
+above licenses a second design language: no parallel component library, no
+second theme, no extra icon set.
+
 ### Skills - scan before installing - MANDATORY
 
 An agent skill is trusted instructions, so installing one is trusting its author:
