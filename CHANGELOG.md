@@ -11,6 +11,7 @@
 
 ### 🔧 Changed
 - [DE] **The desktop has no database.** Library, liked songs, playlists, the lyrics cache, playback events, the ListenBrainz queue and artist images persist in `~/.vivimusic/device-sync.json` under the 1.55.0 model instead of an embedded database; the old `vivimusicde.db` is imported once at the first start and kept on disk, and the browser-cookie import no longer needs a driver.
+- [DE] **Upgrading removes the database driver an older install left behind.** The setup deletes the files of the previous build that this one no longer ships, so the installed package contains no SQLite jar even when it was installed over an earlier version.
 - [DE] **Every brand string comes from `BuildConfig.APP_NAME`.** The window title, tray, sidebar, welcome screens, shortcuts dialog, mini window, About screen, the Linux media identity and the audio client name read the one constant instead of a literal per file.
 - [DE] **The window resizes without freezing.** Vsync stays on (turned off, a resize measured one frame every 4.3 s against a steady 60 fps) and the shell debounces `WM_SIZE` by 180 ms; `--fps-log` writes the produced frame rate to a file, so the claim is measured rather than felt.
 - [DE] **A clean checkout packages an app that plays.**

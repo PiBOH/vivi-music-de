@@ -469,7 +469,12 @@ cloned screen, not by adding a parallel surface next to it.
   captures only strings and files. A `rootProject`, `layout` or build-script
   property read inside `doLast` fails the build (after the setup has already
   been written) with "cannot serialize Gradle script object references". The
-  setup lands in `build/installer/VIVIMusic-<version>-setup.exe`.
+  setup lands in `build/installer/VIVIMusic-<version>-setup.exe`. The script has
+  an `[InstallDelete]` rule for the app folder files a previous build shipped
+  and the current one does not, which is why the database driver an older
+  install left behind is gone after an upgrade: a file that is not in the new
+  image but sits in the target folder survives an in-place install otherwise,
+  and the installed package is verified by listing `app/` for it.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in
@@ -488,6 +493,11 @@ cloned screen, not by adding a parallel surface next to it.
   YouTube Music) and `build/app-lyrics-screen.png` (the expanded player's
   lyrics). A stub view model cannot pass it, so a playback claim is made with
   this check when the question is whether the app itself plays.
+  `--verify-store-write` proves the JSON store takes a real write: it starts the
+  same graph, calls `PlayerViewModel.toggleFavorite`, the call the heart makes,
+  and prints the favorite flag and the liked count read back from the file
+  before and after; `--store-state` prints the same values without writing, so a
+  second process proves the value survived the restart.
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
   `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
   `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the

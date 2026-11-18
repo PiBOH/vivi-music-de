@@ -275,6 +275,14 @@ Name: "vietnamese"; MessagesFile: "compiler:Default.isl,languages\vietnamese.isl
 ; language that has a wizard translation.
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
+; A file an older build put in the app folder and this build does not ship any
+; more would otherwise survive the upgrade inside the uninstaller's own copy of
+; the folder. The database driver is exactly that case: this build has no
+; database, so a leftover driver must not stay in the installed package.
+[InstallDelete]
+Type: files; Name: "{app}\app\sqlite-jdbc-*.jar"
+Type: files; Name: "{app}\app\sqlite-*.jar"
+
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 

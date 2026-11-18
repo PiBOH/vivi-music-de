@@ -40,6 +40,7 @@ import org.jetbrains.compose.resources.painterResource as composePainterResource
 import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.dev.BackendPlaybackVerifier
 import com.music.vivi.desktop.dev.RealAppFlowCheck
+import com.music.vivi.desktop.dev.StoreWriteCheck
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_tray
@@ -188,6 +189,9 @@ fun main(args: Array<String> = emptyArray()) {
     // The same chain, but through the window's own Koin graph and the screens' own
     // callbacks: it is the check that a stub view model could not pass.
     RealAppFlowCheck.handle(args)
+    // The store check writes through the window's view model and reads the JSON
+    // file back, so a persistence claim is made with a value, not a call.
+    StoreWriteCheck.handle(args)
     val isBenchmark = args.contains("--benchmark-first-frame")
     // Diagnostic frame probe: "--fps-log=<file>" appends one line per second with the
     // frames the window actually produced. It is how a resize gesture is measured.
