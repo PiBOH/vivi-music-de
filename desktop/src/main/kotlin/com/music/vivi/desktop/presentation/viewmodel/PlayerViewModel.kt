@@ -48,6 +48,15 @@ class PlayerViewModel(
         coroutineScope = kotlinx.coroutines.CoroutineScope(
             kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default
         )
+    ),
+    /**
+     * YouTube Music account state. The default keeps the view model constructible
+     * on its own (tests); the app always injects the Koin instance.
+     */
+    val youtubeAccountStateHolder: YouTubeAccountStateHolder = YouTubeAccountStateHolder(
+        coroutineScope = kotlinx.coroutines.CoroutineScope(
+            kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default
+        )
     )
 ) {
     val isEndOfTrackTimerActive = sleepTimerStateHolder?.isEndOfTrackTimerActive ?: MutableStateFlow(false)

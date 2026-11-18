@@ -42,6 +42,7 @@ import com.music.vivi.desktop.data.network.RemoteArtworkResolver
 import com.music.vivi.desktop.data.player.PlaybackUriResolver
 import com.music.vivi.desktop.data.youtube.YouTubeLyrics
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
+import com.music.vivi.desktop.presentation.viewmodel.YouTubeAccountStateHolder
 import com.music.vivi.desktop.presentation.viewmodel.YouTubeMusicStateHolder
 import com.music.vivi.desktop.data.player.QueueManager
 import com.music.vivi.desktop.data.player.mpv.MpvAudioEngine
@@ -231,6 +232,9 @@ val stateModule: Module = module {
         YouTubeMusicStateHolder(repository = get(), coroutineScope = get())
     }
     single {
+        YouTubeAccountStateHolder(coroutineScope = get())
+    }
+    single {
         PlayerViewModel(
             playbackStateHolder = get(),
             libraryStateHolder = get(),
@@ -239,7 +243,8 @@ val stateModule: Module = module {
             updateStateHolder = get(),
             sleepTimerStateHolder = get(),
             mediaSessionBridge = get(),
-            youtubeMusicStateHolder = get()
+            youtubeMusicStateHolder = get(),
+            youtubeAccountStateHolder = get()
         )
     }
 }

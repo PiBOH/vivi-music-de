@@ -51,6 +51,7 @@ import com.music.vivi.desktop.presentation.components.DismissUndoBar
 import com.music.vivi.desktop.presentation.components.EditSongMetadataDialog
 import com.music.vivi.desktop.presentation.components.KeyboardShortcutsDialog
 import com.music.vivi.desktop.presentation.components.MiniPlayerBar
+import com.music.vivi.desktop.presentation.components.YouTubeMusicSearchSection
 import com.music.vivi.desktop.presentation.components.QueueSidePanel
 import com.music.vivi.desktop.presentation.components.QuickAccessLimitDialog
 import com.music.vivi.desktop.presentation.components.QuickAccessSettingsDialog
@@ -72,6 +73,7 @@ import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 import com.music.vivi.desktop.ui.theme.PixelPlayerTheme
 import com.music.vivi.desktop.ui.theme.dynamic.DynamicColorProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -181,6 +183,18 @@ fun MainAppScaffold(
         }
         searchQuery = newQuery
         viewModel.onSearchQueryChanged(newQuery)
+    }
+
+    // One query, two catalogues: the library filters locally while the catalogue
+    // is asked for the same text after a short pause, so typing does not fire a
+    // request per keystroke. The YouTube Music page reads the same state.
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.isBlank()) {
+            viewModel.youtubeMusicStateHolder.clear()
+        } else {
+            delay(SEARCH_DEBOUNCE_MS)
+            viewModel.youtubeMusicStateHolder.search(searchQuery)
+        }
     }
 
     var isExpandedPlayerOpen by remember { mutableStateOf(false) }
@@ -439,17 +453,34 @@ fun MainAppScaffold(
                                 }
 
                                 DesktopNavDestination.SONGS, DesktopNavDestination.LIKED -> {
-                                    SongsTab(
-                                        filteredSongs = displayedSongs,
-                                        currentSong = currentSong,
-                                        isPlaying = playerInfo.isPlaying,
-                                        searchQuery = searchQuery,
-                                        viewModel = viewModel,
-                                        isLikedTab = currentDestination == DesktopNavDestination.LIKED,
-                                        onAddToPlaylist = { song -> songToAddToPlaylist = song },
-                                        onDelete = { song -> songToDelete = song },
-                                        onEditMetadata = { song -> songToEditMetadata = song }
-                                    )
+                                    Column(modifier = Modifier.fillMaxSize()) {
+                                        if (searchQuery.isNotBlank() &&
+                                            currentDestination == DesktopNavDestination.SONGS
+                                        ) {
+                                            YouTubeMusicSearchSection(
+                                                stateHolder = viewModel.youtubeMusicStateHolder,
+                                                currentSong = currentSong,
+                                                isPlaying = playerInfo.isPlaying,
+                                                onPlaySongs = { results, index -> viewModel.playSongs(results, index) },
+                                                onPlayNext = { song -> viewModel.playSongNext(song) },
+                                                onAddToQueue = { song -> viewModel.addSongToQueue(song) },
+                                                onSeeAll = { nav.navigate(DesktopNavTarget.YouTubeMusic) },
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                            )
+                                        }
+                                        SongsTab(
+                                            filteredSongs = displayedSongs,
+                                            currentSong = currentSong,
+                                            isPlaying = playerInfo.isPlaying,
+                                            searchQuery = searchQuery,
+                                            viewModel = viewModel,
+                                            isLikedTab = currentDestination == DesktopNavDestination.LIKED,
+                                            onAddToPlaylist = { song -> songToAddToPlaylist = song },
+                                            onDelete = { song -> songToDelete = song },
+                                            onEditMetadata = { song -> songToEditMetadata = song },
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
                                 }
 
                                 DesktopNavDestination.ALBUMS -> {
@@ -891,3 +922,6 @@ fun MainAppScaffold(
         }
     }
 }
+
+/** How long the search field must rest before the catalogue is asked. */
+private const val SEARCH_DEBOUNCE_MS = 400L

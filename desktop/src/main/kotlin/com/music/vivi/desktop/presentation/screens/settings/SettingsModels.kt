@@ -49,7 +49,7 @@ enum class SettingsSection(
     ACCOUNTS(
         id = "accounts",
         title = "Accounts",
-        subtitle = "Manage Navidrome and Jellyfin services",
+        subtitle = "YouTube Music, Navidrome, and Jellyfin",
         icon = Res.drawable.ic_rounded_account_circle
     ),
     SHORTCUTS(

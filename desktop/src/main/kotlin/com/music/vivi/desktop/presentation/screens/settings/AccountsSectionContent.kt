@@ -73,6 +73,7 @@ import com.music.vivi.desktop.presentation.components.ExpressiveCircularProgress
 import com.music.vivi.desktop.presentation.components.TrackDialogInput
 import com.music.vivi.desktop.presentation.components.trackInputFocus
 import com.music.vivi.desktop.presentation.viewmodel.PlaybackStateHolder
+import com.music.vivi.desktop.presentation.viewmodel.YouTubeAccountStateHolder
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -83,10 +84,12 @@ fun AccountsSectionContent(
     jellyfinRepository: JellyfinRepository = koinInject(),
     listenBrainzRepository: ListenBrainzRepository = koinInject(),
     settingsRepository: SettingsRepository = koinInject(),
-    playbackStateHolder: PlaybackStateHolder = koinInject()
+    playbackStateHolder: PlaybackStateHolder = koinInject(),
+    youtubeAccount: YouTubeAccountStateHolder = koinInject()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val settings by settingsRepository.settingsFlow.collectAsState()
+    val youtubeAccountState by youtubeAccount.state.collectAsState()
 
     val isNavidromeLoggedIn by navidromeRepository.isLoggedInFlow.collectAsState()
     val navidromeSyncProgress by navidromeRepository.syncProgressFlow.collectAsState()
@@ -106,6 +109,13 @@ fun AccountsSectionContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        YouTubeAccountCard(
+            state = youtubeAccountState,
+            onFindBrowsers = youtubeAccount::detectProfiles,
+            onUseProfile = youtubeAccount::signIn,
+            onDisconnect = youtubeAccount::signOut
+        )
+
         ServerAccountCard(
             title = "Subsonic / Navidrome",
             subtitle = if (isNavidromeLoggedIn) {

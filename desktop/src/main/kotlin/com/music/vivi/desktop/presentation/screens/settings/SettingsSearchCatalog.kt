@@ -1,5 +1,7 @@
 package com.music.vivi.desktop.presentation.screens.settings
 
+import com.music.vivi.desktop.BuildConfig
+
 import com.music.vivi.desktop.generated.resources.ic_lyrics
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_queue_music
@@ -262,6 +264,13 @@ object SettingsSearchCatalog {
 
         // --- ACCOUNTS & STREAMING ---
         SettingSearchItem(
+            title = "YouTube Music Account",
+            description = "Sign in with the YouTube session your browser already holds to unlock the full catalog",
+            section = SettingsSection.ACCOUNTS,
+            keywords = listOf("youtube", "ytm", "youtube music", "account", "sign in", "login", "cookies", "browser", "session"),
+            icon = Res.drawable.ic_rounded_account_circle
+        ),
+        SettingSearchItem(
             title = "ListenBrainz Scrobbler",
             description = "Scrobble listened tracks and history to ListenBrainz profile",
             section = SettingsSection.ACCOUNTS,
@@ -285,7 +294,7 @@ object SettingsSearchCatalog {
 
         // --- ABOUT ---
         SettingSearchItem(
-            title = "About PixelPlayer",
+            title = "About ${BuildConfig.APP_NAME}",
             description = "Application version, developer links, build details, and open-source licenses",
             section = SettingsSection.ABOUT,
             keywords = listOf("about", "version", "update", "github", "license", "credits"),

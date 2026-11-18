@@ -45,6 +45,19 @@ class YouTubeMusicStateHolder(
         _state.update { it.copy(query = query) }
     }
 
+    /**
+     * Runs the search for [query], the text the window's search field holds.
+     *
+     * The search screen and the catalogue page share this one query, so the
+     * shell is the only owner of it and neither surface has a field of its own.
+     */
+    fun search(query: String) {
+        if (_state.value.query != query) {
+            _state.update { it.copy(query = query) }
+        }
+        submit()
+    }
+
     /** Runs the search for the current query. A new submit cancels the one in flight. */
     fun submit() {
         val query = _state.value.query.trim()
