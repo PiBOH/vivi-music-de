@@ -171,12 +171,21 @@ compose.desktop {
             "-Dfile.encoding=UTF-8",
             "-Dsun.jnu.encoding=UTF-8",
             "-Djna.encoding=UTF-8",
-            // Hardware renderer, forced: no silent software fallback on the packaged build.
+            // Hardware renderer. Skiko tries Direct3D first and falls back on its own
+            // when the driver cannot create a device (the Intel HD 4000 and GeForce 610M
+            // in this class of machine have no Direct3D 12, so the fallback is the normal
+            // path there, not an error).
             "-Dskiko.renderApi=$skikoRenderApi",
-            // No presenter vsync cap: the frame clock follows the work, not the display.
-            "-Dskiko.vsync.enabled=false",
-            "-Xms64m",
-            "-Xmx512m",
+            // Vsync is deliberately left at its default (on): it paces the frame clock
+            // to the panel. Disabled, the presenter repaints as fast as the GPU allows,
+            // and while the window is being resized that loop competes with the AWT
+            // event pump: the measured result on this machine was one frame every 4.3 s
+            // during a resize, against 60 fps with it on. A 120/144 Hz panel is still
+            // served at its own rate - the cap is the display, not a frame limiter.
+            "-Xms256m",
+            // 512 MB was not enough for artwork, the catalogue and mpv together: the app
+            // spent whole resize gestures collecting. 1.25 GB leaves the collector idle.
+            "-Xmx1280m",
             "-XX:+UseG1GC",
             "-XX:G1HeapRegionSize=8m",
             "-XX:MinHeapFreeRatio=20",
@@ -328,6 +337,77 @@ val mpvConsumers = setOf(
     "packageExe", "packageMsi", "packageDeb", "packageRpm", "packageDmg", "packagePkg"
 )
 tasks.matching { it.name in mpvConsumers }.configureEach { dependsOn("setupMpvWindows") }
+
+
+// The Windows setup: the same Inno Setup script and pinned compiler the CI uses,
+// driven from here so producing an installer is one command, not a shell session.
+// The Windows setup, one command: the app image is packaged by jpackage, then the
+// project's own Inno Setup script compiles it into build/installer. The compiler is
+// invoked directly instead of through a shell wrapper, so its output is drained and
+// logged and a build can never hang on a full pipe.
+tasks.register("windowsInstaller") {
+    group = "distribution"
+    description = "Builds the Windows setup from the packaged app image (Inno Setup 7)."
+    dependsOn("createDistributable")
+    onlyIf { org.gradle.internal.os.OperatingSystem.current().isWindows }
+    doLast {
+        val roots = listOfNotNull(
+            System.getenv("LOCALAPPDATA")?.let { File(it, "Programs") },
+            System.getenv("ProgramFiles")?.let { File(it) },
+            System.getenv("ProgramFiles(x86)")?.let { File(it) }
+        )
+        val iscc = roots.asSequence()
+            .map { File(it, "Inno Setup 7/ISCC.exe") }
+            .firstOrNull { it.isFile }
+            ?: throw GradleException(
+                "Inno Setup 7 was not found. Install it (per user under %LOCALAPPDATA%/Programs/Inno Setup 7) " +
+                    "and run this task again."
+            )
+
+        val outputDir = rootProject.file("build/installer").apply { mkdirs() }
+        val logDir = File(outputDir, "logs").apply { mkdirs() }
+        val logFile = File(logDir, "iscc.log")
+        val icons = layout.projectDirectory.dir("icons").asFile
+
+        val command = listOf(
+            iscc.absolutePath,
+            "/DAppVersion=$fullVersion",
+            "/DInstallerVersion=$deVersion",
+            "/DVersionInfoVersion=$numericPackageVersion",
+            "/DSourceDir=${layout.buildDirectory.dir("compose/binaries/main/app/VIVIMusic").get().asFile.absolutePath}",
+            "/DOutputDir=${outputDir.absolutePath}",
+            "/DIconFile=${File(icons, "logo_vmde.ico").absolutePath}",
+            "/DWizardImageFile=${File(icons, "logo_vmde_wizard.bmp").absolutePath}",
+            "/DWizardSmallImageFile=${File(icons, "logo_vmde_small.bmp").absolutePath}",
+            "/DWizardImageFileDark=${File(icons, "logo_vmde_wizard_dark.bmp").absolutePath}",
+            "/DWizardSmallImageFileDark=${File(icons, "logo_vmde_small_dark.bmp").absolutePath}",
+            rootProject.file("installer/windows/VIVIMusic.iss").absolutePath
+        )
+        logger.lifecycle("Using Inno Setup compiler: ${iscc.absolutePath}")
+        val process = ProcessBuilder(command).redirectErrorStream(true).start()
+        val collected = StringBuilder()
+        process.inputStream.bufferedReader().useLines { lines ->
+            lines.forEach { line ->
+                collected.append(line).append(System.lineSeparator())
+                logger.lifecycle("iscc: $line")
+            }
+        }
+        val exit = process.waitFor()
+        logFile.writeText(collected.toString())
+        if (exit != 0) {
+            throw GradleException("Inno Setup compilation failed (exit $exit); log: $logFile")
+        }
+        val setup = File(outputDir, "VIVIMusic-$fullVersion-setup.exe")
+        if (!setup.isFile) throw GradleException("ISCC exited 0 but $setup is missing")
+        val engine = Regex("Compiler engine version: (.+)").find(collected)?.groupValues?.get(1)?.trim()
+        if (engine == null || !engine.startsWith("Inno Setup 7")) {
+            throw GradleException("Expected the Inno Setup 7 compiler, the log says: $engine")
+        }
+        logger.lifecycle(
+            "Installer: ${setup.absolutePath} (${setup.length() / (1024 * 1024)} MB, $engine)"
+        )
+    }
+}
 
 compose.resources {
     packageOfResClass = "com.music.vivi.desktop.generated.resources"

@@ -1,6 +1,7 @@
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,6 +10,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import java.io.File
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -70,6 +73,7 @@ import java.awt.event.WindowStateListener
 import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import javax.swing.SwingUtilities
+import javax.swing.Timer
 import kotlin.math.roundToInt
 import kotlin.system.exitProcess
 import org.koin.core.context.GlobalContext
@@ -184,6 +188,11 @@ fun main(args: Array<String> = emptyArray()) {
     // callbacks: it is the check that a stub view model could not pass.
     RealAppFlowCheck.handle(args)
     val isBenchmark = args.contains("--benchmark-first-frame")
+    // Diagnostic frame probe: "--fps-log=<file>" appends one line per second with the
+    // frames the window actually produced. It is how a resize gesture is measured.
+    val fpsLogPath = args.firstOrNull { it.startsWith("--fps-log=") }
+        ?.substringAfter('=')
+        ?.takeIf { it.isNotBlank() }
     AppShutdownCoordinator.registerShutdownHook()
     FileKit.init("com.music.vivi.desktop")
     application {
@@ -593,6 +602,11 @@ fun main(args: Array<String> = emptyArray()) {
             }
             window.addWindowStateListener(windowStateListener)
 
+            // A resize drag arrives as a burst of WM_SIZE events. Recomputing the
+            // maximized bounds (a native call plus a screen lookup) for every one of
+            // them is work the gesture does not need, so the burst is coalesced and the
+            // window is only adjusted once the drag settles.
+            val resizeDebounce = Timer(180) { updateMaximizedBounds() }.apply { isRepeats = false }
             val componentListener = object : ComponentAdapter() {
                 override fun componentMoved(e: ComponentEvent?) {
                     updateMaximizedBounds()
@@ -600,12 +614,13 @@ fun main(args: Array<String> = emptyArray()) {
                     applyMinimumContentSize()
                 }
                 override fun componentResized(e: ComponentEvent?) {
-                    updateMaximizedBounds()
+                    resizeDebounce.restart()
                 }
             }
             window.addComponentListener(componentListener)
 
             onDispose {
+                resizeDebounce.stop()
                 window.removeComponentListener(componentListener)
                 window.removeWindowStateListener(windowStateListener)
             }
@@ -636,6 +651,9 @@ fun main(args: Array<String> = emptyArray()) {
             LocalInputFocusTracker provides inputFocusTracker,
             LocalBackDispatcher provides backDispatcher
         ) {
+            if (fpsLogPath != null) {
+                FrameRateProbe(fpsLogPath)
+            }
             PixelPlayerTheme(
                 darkTheme = isDarkTheme,
                 colorSchemeOverride = systemColorScheme
@@ -762,4 +780,29 @@ fun main(args: Array<String> = emptyArray()) {
 }
     AppShutdownCoordinator.performTeardown(timeoutMs = 1000L)
     exitProcess(0)
+}
+
+/**
+ * Writes one line per second with the frames the UI actually produced, for
+ * `--fps-log=<file>`. A resize gesture is measured with it: the file shows how many
+ * frames the window painted while the edges were being dragged.
+ */
+@Composable
+private fun FrameRateProbe(path: String) {
+    LaunchedEffect(path) {
+        val file = File(path)
+        var frames = 0
+        var windowStart = System.nanoTime()
+        while (true) {
+            withFrameNanos { frames++ }
+            val now = System.nanoTime()
+            val elapsed = now - windowStart
+            if (elapsed >= 1_000_000_000L) {
+                val line = "frames=$frames over=${elapsed / 1_000_000}ms\n"
+                frames = 0
+                windowStart = now
+                withContext(Dispatchers.IO) { file.appendText(line) }
+            }
+        }
+    }
 }
