@@ -2,7 +2,8 @@ package com.music.vivi.desktop.data.backup.module
 
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.BackupSongMetadata
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.store.StoredLyrics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -24,7 +25,7 @@ data class LyricsBackupEntry(
 )
 
 class LyricsModuleHandler(
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val songResolver: BackupSongResolver,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) : BackupModuleHandler {
@@ -32,64 +33,34 @@ class LyricsModuleHandler(
     override val section: BackupSection = BackupSection.LYRICS
 
     override suspend fun export(): String = withContext(Dispatchers.IO) {
-        val list = mutableListOf<LyricsBackupEntry>()
-        val songIds = mutableListOf<String>()
-
-        database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT song_id, plain_lyrics, synced_lyrics_json, is_from_remote, last_updated FROM lyrics_cache"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sId = rs.getString("song_id")
-                        songIds.add(sId)
-                        list.add(
-                            LyricsBackupEntry(
-                                songId = sId,
-                                plainLyrics = rs.getString("plain_lyrics"),
-                                syncedLyricsJson = rs.getString("synced_lyrics_json"),
-                                isFromRemote = rs.getInt("is_from_remote") == 1,
-                                lastUpdated = rs.getLong("last_updated")
-                            )
-                        )
-                    }
-                }
-            }
+        val list = store.load().lyrics.map { entry ->
+            LyricsBackupEntry(
+                songId = entry.songId,
+                plainLyrics = entry.plainJson,
+                syncedLyricsJson = entry.syncedJson,
+                isFromRemote = entry.isFromRemote,
+                lastUpdated = entry.lastUpdated
+            )
         }
 
-        val metadataMap = songResolver.metadataFor(songIds)
+        val metadataMap = songResolver.metadataFor(list.map { it.songId })
         val entriesWithMeta = list.map { it.copy(song = metadataMap[it.songId]) }
         json.encodeToString(ListSerializer(LyricsBackupEntry.serializer()), entriesWithMeta)
     }
 
     override suspend fun countEntries(): Int = withContext(Dispatchers.IO) {
-        database.withConnection(readOnly = true) { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT COUNT(*) FROM lyrics_cache").use { rs ->
-                    if (rs.next()) rs.getInt(1) else 0
-                }
-            }
-        }
+        store.load().lyrics.size
     }
 
     override suspend fun snapshot(): String = withContext(Dispatchers.IO) {
-        val list = mutableListOf<LyricsBackupEntry>()
-        database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT song_id, plain_lyrics, synced_lyrics_json, is_from_remote, last_updated FROM lyrics_cache"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        list.add(
-                            LyricsBackupEntry(
-                                songId = rs.getString("song_id"),
-                                plainLyrics = rs.getString("plain_lyrics"),
-                                syncedLyricsJson = rs.getString("synced_lyrics_json"),
-                                isFromRemote = rs.getInt("is_from_remote") == 1,
-                                lastUpdated = rs.getLong("last_updated")
-                            )
-                        )
-                    }
-                }
-            }
+        val list = store.load().lyrics.map { entry ->
+            LyricsBackupEntry(
+                songId = entry.songId,
+                plainLyrics = entry.plainJson,
+                syncedLyricsJson = entry.syncedJson,
+                isFromRemote = entry.isFromRemote,
+                lastUpdated = entry.lastUpdated
+            )
         }
         json.encodeToString(ListSerializer(LyricsBackupEntry.serializer()), list)
     }
@@ -107,58 +78,29 @@ class LyricsModuleHandler(
             entry.copy(songId = resolvedId)
         }.distinctBy { it.songId }
 
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM lyrics_cache")
-            }
-
-            if (resolved.isNotEmpty()) {
-                val sql = """
-                    INSERT INTO lyrics_cache (song_id, plain_lyrics, synced_lyrics_json, is_from_remote, last_updated)
-                    VALUES (?, ?, ?, ?, ?)
-                """.trimIndent()
-                conn.prepareStatement(sql).use { stmt ->
-                    for (item in resolved) {
-                        stmt.setString(1, item.songId)
-                        stmt.setString(2, item.plainLyrics)
-                        stmt.setString(3, item.syncedLyricsJson)
-                        stmt.setInt(4, if (item.isFromRemote) 1 else 0)
-                        stmt.setLong(5, item.lastUpdated)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
-        }
-        database.notifyTableChanged("lyrics_cache")
+        replaceLyrics(resolved)
     }
 
     override suspend fun rollback(snapshot: String) = withContext(Dispatchers.IO) {
         val entries = json.decodeFromString(ListSerializer(LyricsBackupEntry.serializer()), snapshot)
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM lyrics_cache")
-            }
+        replaceLyrics(entries)
+    }
 
-            if (entries.isNotEmpty()) {
-                val sql = """
-                    INSERT INTO lyrics_cache (song_id, plain_lyrics, synced_lyrics_json, is_from_remote, last_updated)
-                    VALUES (?, ?, ?, ?, ?)
-                """.trimIndent()
-                conn.prepareStatement(sql).use { stmt ->
-                    for (item in entries) {
-                        stmt.setString(1, item.songId)
-                        stmt.setString(2, item.plainLyrics)
-                        stmt.setString(3, item.syncedLyricsJson)
-                        stmt.setInt(4, if (item.isFromRemote) 1 else 0)
-                        stmt.setLong(5, item.lastUpdated)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
+    private suspend fun replaceLyrics(entries: List<LyricsBackupEntry>) {
+        store.update("lyrics_cache") { state ->
+            state.copy(
+                lyrics = entries.map { item ->
+                    StoredLyrics(
+                        songId = item.songId,
+                        plainJson = item.plainLyrics,
+                        syncedJson = item.syncedLyricsJson,
+                        isFromRemote = item.isFromRemote,
+                        lastUpdated = item.lastUpdated
+                    )
                 }
-            }
+            )
         }
-        database.notifyTableChanged("lyrics_cache")
+        Unit
     }
 
     private fun parseLegacyLyrics(payload: String): List<LyricsBackupEntry> {

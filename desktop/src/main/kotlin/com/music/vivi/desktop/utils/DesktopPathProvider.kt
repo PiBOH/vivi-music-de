@@ -75,6 +75,17 @@ object DesktopPathProvider {
         File(configDir, "vivimusicde.db")
     }
 
+    /**
+     * The library store: `~/.vivimusic/device-sync.json`, the file 1.55.0 used.
+     * It is not under [configDir] because that version wrote it in the user's
+     * home, and the whole point of the store is to read the file that is there.
+     */
+    val syncStateFile: File by lazy {
+        File(userHome, ".vivimusic/device-sync.json").apply {
+            parentFile?.mkdirs()
+        }
+    }
+
     val settingsFile: File by lazy {
         File(configDir, "settings.json")
     }

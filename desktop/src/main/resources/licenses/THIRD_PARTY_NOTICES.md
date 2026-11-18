@@ -58,7 +58,6 @@ Data, serialization and networking:
 | SnakeYAML | `org.yaml:snakeyaml:2.4` | Apache-2.0 |
 | OkHttp Client | `com.squareup.okhttp3:okhttp:4.12.0` | Apache-2.0 |
 | Koin Core & Compose | `io.insert-koin:koin-core:4.0.2` | Apache-2.0 |
-| SQLite JDBC | `org.xerial:sqlite-jdbc:3.47.2.0` | Apache-2.0 |
 
 Text parsing and romanization:
 

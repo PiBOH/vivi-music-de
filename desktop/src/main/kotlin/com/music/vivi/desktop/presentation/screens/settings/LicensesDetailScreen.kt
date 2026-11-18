@@ -176,8 +176,6 @@ private fun getItemIcon(item: LicenseNotice): DrawableResource {
             Res.drawable.ic_rounded_palette
         name.contains("okhttp") ->
             Res.drawable.ic_rounded_public
-        name.contains("sqlite") ->
-            Res.drawable.ic_rounded_dataset
         name.contains("kuromoji") || name.contains("pinyin") || name.contains("icu") ->
             Res.drawable.ic_rounded_sort_by_alpha
         name.contains("jna") || name.contains("dbus") ->

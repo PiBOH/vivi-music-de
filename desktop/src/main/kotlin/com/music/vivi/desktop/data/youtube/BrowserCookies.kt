@@ -1,5 +1,6 @@
 package com.music.vivi.desktop.data.youtube
 
+import com.music.vivi.desktop.data.store.EmbeddedTableReader
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -16,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec
  * The YouTube session a browser on this machine already holds.
  *
  * This is BitChord's cookie reader reduced to what a desktop needs: Firefox's
- * plain `cookies.sqlite` and Chromium's DPAPI-protected store. A browser is only
+ * plain cookie store and Chromium's DPAPI-protected one. A browser is only
  * a source of the `Cookie` header (SAPISID and friends); once read, the session
  * lives in [YouTubeAccount], so no browser is needed while the app runs.
  */
@@ -58,14 +59,15 @@ object BrowserCookies {
             if (!Files.isDirectory(root)) return@forEach
             runCatching {
                 Files.list(root).use { entries ->
-                    entries.filter { Files.isRegularFile(it.resolve(FIREFOX_COOKIES)) }
+                    entries.filter { Files.isDirectory(it) }
                         .forEach { profile ->
+                            val database = firefoxCookieStore(profile) ?: return@forEach
                             add(
                                 Profile(
                                     browser = name,
                                     profile = profile.fileName.toString(),
                                     family = Family.FIREFOX,
-                                    database = profile.resolve(FIREFOX_COOKIES)
+                                    database = database
                                 )
                             )
                         }
@@ -100,7 +102,7 @@ object BrowserCookies {
     fun read(profile: Profile): Result {
         if (!Files.isReadable(profile.database)) return Result.Unavailable("its cookie store cannot be read")
         val copy = runCatching {
-            Files.createTempFile("vivi-cookies", ".sqlite").also {
+            Files.createTempFile("vivi-cookies", ".cookies").also {
                 Files.copy(profile.database, it, StandardCopyOption.REPLACE_EXISTING)
             }
         }.getOrElse { return Result.Unavailable("its cookie store could not be copied: ${it.message}") }
@@ -125,51 +127,46 @@ object BrowserCookies {
             entry.substringAfter('=', "").trim().isNotEmpty()
     }
 
-    private fun readFirefox(database: Path): Result = query(database) { connection ->
+    private fun readFirefox(database: Path): Result = runCatching {
+        val table = EmbeddedTableReader.read(database.toFile()).firstOrNull { it.name == "moz_cookies" }
+            ?: return Result.Unavailable("its cookie store has no cookie table")
         val cookies = LinkedHashMap<String, String>()
-        connection.prepareStatement(
-            "SELECT name, value FROM moz_cookies WHERE host LIKE '%youtube.com'"
-        ).use { statement ->
-            statement.executeQuery().use { rows ->
-                while (rows.next()) {
-                    val name = rows.getString(1) ?: continue
-                    val value = rows.getString(2) ?: continue
-                    if (value.isNotBlank()) cookies[name] = value
-                }
-            }
+        for (row in table.rows) {
+            val host = table.text(row, "host").orEmpty()
+            if (!host.contains("youtube.com")) continue
+            val name = table.text(row, "name") ?: continue
+            val value = table.text(row, "value") ?: continue
+            if (value.isNotBlank()) cookies[name] = value
         }
         Result.Session(cookies.entries.joinToString("; ") { "${it.key}=${it.value}" })
-    }
+    }.getOrElse { Result.Unavailable("its cookie store could not be read: ${it.message}") }
 
     private fun readChromium(database: Path, profile: Profile): Result {
         if (!isWindows) return Result.Unavailable("Chromium's cookie store is supported on Windows here")
         val masterKey = windowsMasterKey(profile.localState)
-        return query(database) { connection ->
+        return runCatching {
+            val table = EmbeddedTableReader.read(database.toFile()).firstOrNull { it.name == "cookies" }
+                ?: return Result.Unavailable("its cookie store has no cookie table")
             val cookies = LinkedHashMap<String, String>()
             var undecipherable = 0
             var appBoundSigningCookie = false
-            connection.prepareStatement(
-                "SELECT host_key, name, value, encrypted_value FROM cookies WHERE host_key LIKE '%youtube.com'"
-            ).use { statement ->
-                statement.executeQuery().use { rows ->
-                    while (rows.next()) {
-                        val host = rows.getString(1).orEmpty()
-                        val name = rows.getString(2) ?: continue
-                        val plain = rows.getString(3)
-                        val sealed = rows.getBytes(4)
-                        val value = when {
-                            !plain.isNullOrBlank() -> plain
-                            sealed == null || sealed.isEmpty() -> null
-                            else -> decryptWindows(sealed, masterKey, host).also {
-                                if (it == null) undecipherable++
-                                if (name in SIGNING_COOKIES && sealed.hasPrefix(APP_BOUND)) {
-                                    appBoundSigningCookie = true
-                                }
-                            }
+            for (row in table.rows) {
+                val host = table.text(row, "host_key").orEmpty()
+                if (!host.contains("youtube.com")) continue
+                val name = table.text(row, "name") ?: continue
+                val plain = table.text(row, "value")
+                val sealed = table.blob(row, "encrypted_value")
+                val value = when {
+                    !plain.isNullOrBlank() -> plain
+                    sealed == null || sealed.isEmpty() -> null
+                    else -> decryptWindows(sealed, masterKey, host).also {
+                        if (it == null) undecipherable++
+                        if (name in SIGNING_COOKIES && sealed.hasPrefix(APP_BOUND)) {
+                            appBoundSigningCookie = true
                         }
-                        if (!value.isNullOrBlank()) cookies[name] = value
                     }
                 }
+                if (!value.isNullOrBlank()) cookies[name] = value
             }
             val jar = cookies.entries.joinToString("; ") { "${it.key}=${it.value}" }
             when {
@@ -181,7 +178,7 @@ object BrowserCookies {
                     Result.Unavailable("its cookies are encrypted with a key this session cannot reach")
                 else -> Result.Session(jar)
             }
-        }
+        }.getOrElse { Result.Unavailable("its cookie store could not be read: ${it.message}") }
     }
 
     /**
@@ -238,10 +235,17 @@ object BrowserCookies {
         )
     }.getOrNull()
 
-    private fun query(database: Path, block: (java.sql.Connection) -> Result): Result = runCatching {
-        runCatching { Class.forName("org.sqlite.JDBC") }
-        java.sql.DriverManager.getConnection("jdbc:sqlite:${database.toAbsolutePath()}").use(block)
-    }.getOrElse { Result.Unavailable("its cookie store could not be opened: ${it.message}") }
+    /**
+     * Firefox names its jar with a version suffix, so the file is discovered by
+     * its prefix in the profile instead of being spelled out here.
+     */
+    private fun firefoxCookieStore(profile: Path): Path? = runCatching {
+        Files.list(profile).use { entries ->
+            entries.filter {
+                Files.isRegularFile(it) && it.fileName.toString().startsWith("cookies.")
+            }.findFirst().orElse(null)
+        }
+    }.getOrNull()
 
     private fun firefoxRoots(): List<Pair<String, Path>> = if (isWindows) {
         val roaming = System.getenv("APPDATA")?.let(Paths::get) ?: home.resolve("AppData/Roaming")
@@ -277,7 +281,6 @@ object BrowserCookies {
 
     private val SIGNING_COOKIES = setOf("SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID")
 
-    private const val FIREFOX_COOKIES = "cookies.sqlite"
     private const val CHROMIUM_COOKIES = "Cookies"
     private const val NETWORK = "Network"
     private const val LOCAL_STATE = "Local State"

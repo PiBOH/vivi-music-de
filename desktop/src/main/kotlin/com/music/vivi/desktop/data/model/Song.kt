@@ -14,6 +14,7 @@ data class ArtistRef(
     val isPrimary: Boolean = false
 )
 
+@Serializable
 @Immutable
 data class Song(
     val id: String,

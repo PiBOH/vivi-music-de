@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 import com.music.vivi.desktop.data.database.FavoritesDao
 import com.music.vivi.desktop.data.database.LocalPlaylistDao
 import com.music.vivi.desktop.data.database.MusicDao
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.data.metadata.AudioMetadataDetails
 import com.music.vivi.desktop.data.metadata.BatchMetadataResult
 import com.music.vivi.desktop.data.metadata.BatchSongMetadataUpdate
@@ -39,7 +39,7 @@ import com.music.vivi.desktop.domain.repository.MusicRepository
 import com.music.vivi.desktop.utils.DesktopPathProvider
 
 class MusicRepositoryImpl(
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val musicDao: MusicDao,
     private val favoritesDao: FavoritesDao,
     private val playlistDao: LocalPlaylistDao,
@@ -51,7 +51,7 @@ class MusicRepositoryImpl(
 
     override fun getAllSongsFlow(sortOption: SortOption, minDurationMs: Long): Flow<List<Song>> = flow {
         emit(musicDao.getAllSongs(sortOption, minDurationMs))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "songs" || table == "favorites") {
                 emit(musicDao.getAllSongs(sortOption, minDurationMs))
             }
@@ -92,7 +92,7 @@ class MusicRepositoryImpl(
 
     override fun getAllAlbumsFlow(sortOption: SortOption, minTracks: Int, minDurationMs: Long): Flow<List<Album>> = flow {
         emit(musicDao.getAllAlbums(sortOption, minTracks, minDurationMs))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "songs") {
                 emit(musicDao.getAllAlbums(sortOption, minTracks, minDurationMs))
             }
@@ -113,7 +113,7 @@ class MusicRepositoryImpl(
 
     override fun getAllArtistsFlow(sortOption: SortOption, minDurationMs: Long): Flow<List<Artist>> = flow {
         emit(musicDao.getAllArtists(sortOption, minDurationMs))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "songs" || table == "artists") {
                 emit(musicDao.getAllArtists(sortOption, minDurationMs))
             }
@@ -172,7 +172,7 @@ class MusicRepositoryImpl(
 
     override fun getAllGenresFlow(): Flow<List<Genre>> = flow {
         emit(musicDao.getAllGenres())
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "songs") {
                 emit(musicDao.getAllGenres())
             }
@@ -185,7 +185,7 @@ class MusicRepositoryImpl(
 
     override fun getAllPlaylistsFlow(sortOption: SortOption): Flow<List<Playlist>> = flow {
         emit(playlistDao.getAllPlaylists(sortOption))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "playlists") {
                 emit(playlistDao.getAllPlaylists(sortOption))
             }
@@ -337,7 +337,7 @@ class MusicRepositoryImpl(
     override fun getFavoriteSongsFlow(): Flow<List<Song>> = flow {
         val favIds = favoritesDao.getFavoriteSongIds()
         emit(musicDao.getSongsByIds(favIds))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "favorites" || table == "songs") {
                 val currentFavIds = favoritesDao.getFavoriteSongIds()
                 emit(musicDao.getSongsByIds(currentFavIds))
@@ -363,7 +363,7 @@ class MusicRepositoryImpl(
 
     override fun getRecentlyPlayedSongsFlow(limit: Int): Flow<List<Song>> = flow {
         emit(musicDao.getRecentlyPlayedSongs(limit))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "recently_played" || table == "songs") {
                 emit(musicDao.getRecentlyPlayedSongs(limit))
             }
@@ -376,7 +376,7 @@ class MusicRepositoryImpl(
 
     override fun getPlaybackEventsFlow(limit: Int): Flow<List<PlaybackEvent>> = flow {
         emit(musicDao.getPlaybackEvents(limit))
-        database.tableInvalidationFlow.collect { table ->
+        store.tableInvalidationFlow.collect { table ->
             if (table == "playback_events") {
                 emit(musicDao.getPlaybackEvents(limit))
             }

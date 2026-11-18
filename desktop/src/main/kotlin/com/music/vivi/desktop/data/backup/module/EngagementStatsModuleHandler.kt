@@ -2,7 +2,7 @@ package com.music.vivi.desktop.data.backup.module
 
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.BackupSongMetadata
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -23,7 +23,7 @@ data class EngagementStatBackupEntry(
 )
 
 class EngagementStatsModuleHandler(
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val songResolver: BackupSongResolver,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) : BackupModuleHandler {
@@ -31,41 +31,23 @@ class EngagementStatsModuleHandler(
     override val section: BackupSection = BackupSection.ENGAGEMENT_STATS
 
     override suspend fun export(): String = withContext(Dispatchers.IO) {
-        val list = mutableListOf<EngagementStatBackupEntry>()
-        val songIds = mutableListOf<String>()
-
-        database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT id, play_count, last_played_timestamp FROM songs WHERE play_count > 0"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sId = rs.getString("id")
-                        songIds.add(sId)
-                        list.add(
-                            EngagementStatBackupEntry(
-                                songId = sId,
-                                playCount = rs.getInt("play_count"),
-                                lastPlayedTimestamp = rs.getLong("last_played_timestamp")
-                            )
-                        )
-                    }
-                }
+        val list = store.load().songs
+            .filter { it.playCount > 0 }
+            .map { song ->
+                EngagementStatBackupEntry(
+                    songId = song.id,
+                    playCount = song.playCount,
+                    lastPlayedTimestamp = song.lastPlayedTimestamp
+                )
             }
-        }
 
-        val metadataMap = songResolver.metadataFor(songIds)
+        val metadataMap = songResolver.metadataFor(list.map { it.songId })
         val entries = list.map { it.copy(song = metadataMap[it.songId]) }
         json.encodeToString(ListSerializer(EngagementStatBackupEntry.serializer()), entries)
     }
 
     override suspend fun countEntries(): Int = withContext(Dispatchers.IO) {
-        database.withConnection(readOnly = true) { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT COUNT(*) FROM songs WHERE play_count > 0").use { rs ->
-                    if (rs.next()) rs.getInt(1) else 0
-                }
-            }
-        }
+        store.load().songs.count { it.playCount > 0 }
     }
 
     override suspend fun snapshot(): String = export()
@@ -84,36 +66,28 @@ class EngagementStatsModuleHandler(
             entry.copy(songId = resolvedId)
         }
 
-        database.withTransaction { conn ->
-            val sql = "UPDATE songs SET play_count = ?, last_played_timestamp = ? WHERE id = ?"
-            conn.prepareStatement(sql).use { stmt ->
-                for (item in resolved) {
-                    stmt.setInt(1, item.playCount)
-                    stmt.setLong(2, item.lastPlayedTimestamp)
-                    stmt.setString(3, item.songId)
-                    stmt.addBatch()
-                }
-                stmt.executeBatch()
-            }
-        }
-        database.notifyTableChanged("songs")
+        applyStats(resolved)
     }
 
     override suspend fun rollback(snapshot: String) = withContext(Dispatchers.IO) {
         val entries = json.decodeFromString(ListSerializer(EngagementStatBackupEntry.serializer()), snapshot)
-        database.withTransaction { conn ->
-            val sql = "UPDATE songs SET play_count = ?, last_played_timestamp = ? WHERE id = ?"
-            conn.prepareStatement(sql).use { stmt ->
-                for (item in entries) {
-                    stmt.setInt(1, item.playCount)
-                    stmt.setLong(2, item.lastPlayedTimestamp)
-                    stmt.setString(3, item.songId)
-                    stmt.addBatch()
+        applyStats(entries)
+    }
+
+    private suspend fun applyStats(entries: List<EngagementStatBackupEntry>) {
+        val byId = entries.associateBy { it.songId }
+        store.update("songs") { state ->
+            state.copy(
+                songs = state.songs.map { song ->
+                    val stat = byId[song.id] ?: return@map song
+                    song.copy(
+                        playCount = stat.playCount,
+                        lastPlayedTimestamp = stat.lastPlayedTimestamp
+                    )
                 }
-                stmt.executeBatch()
-            }
+            )
         }
-        database.notifyTableChanged("songs")
+        Unit
     }
 
     private fun parseLegacyEngagement(payload: String): List<EngagementStatBackupEntry> {

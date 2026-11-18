@@ -5,7 +5,7 @@ import com.music.vivi.desktop.data.database.ListenBrainzDao
 import com.music.vivi.desktop.data.database.LocalPlaylistDao
 import com.music.vivi.desktop.data.database.LyricsDao
 import com.music.vivi.desktop.data.database.MusicDao
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.data.backup.BackupManager
 import com.music.vivi.desktop.data.backup.format.BackupFormatDetector
 import com.music.vivi.desktop.data.backup.format.BackupReader
@@ -102,19 +102,21 @@ val settingsModule: Module = module {
 }
 
 val databaseModule: Module = module {
-    single { PixelPlayerDatabase(DesktopPathProvider.databaseFile) }
-    single { MusicDao(database = get(), ioDispatcher = get()) }
-    single { LocalPlaylistDao(database = get(), ioDispatcher = get(), json = get()) }
-    single { FavoritesDao(database = get(), ioDispatcher = get()) }
-    single { LyricsDao(database = get(), ioDispatcher = get(), json = get()) }
-    single { ListenBrainzDao(database = get(), ioDispatcher = get()) }
+    // One JSON store, the 1.55.0 `~/.vivimusic/device-sync.json`. The old
+    // `vivimusicde.db`, when it exists, is read once by the store itself.
+    single { LocalLibraryStore(DesktopPathProvider.syncStateFile, DesktopPathProvider.databaseFile) }
+    single { MusicDao(store = get(), ioDispatcher = get()) }
+    single { LocalPlaylistDao(store = get(), ioDispatcher = get()) }
+    single { FavoritesDao(store = get(), ioDispatcher = get()) }
+    single { LyricsDao(store = get(), ioDispatcher = get()) }
+    single { ListenBrainzDao(store = get(), ioDispatcher = get()) }
 }
 
 val repositoryModule: Module = module {
     single { MusicBrainzClient(ioDispatcher = get()) }
     single<MusicRepository> {
         MusicRepositoryImpl(
-            database = get(),
+            store = get(),
             musicDao = get(),
             favoritesDao = get(),
             playlistDao = get(),
@@ -269,7 +271,7 @@ val backupModule: Module = module {
         mapOf(
             BackupSection.PLAYLISTS to PlaylistsModuleHandler(
                 localPlaylistDao = get(),
-                database = get(),
+                store = get(),
                 songResolver = get(),
                 json = get()
             ),
@@ -279,12 +281,12 @@ val backupModule: Module = module {
             ),
             BackupSection.FAVORITES to FavoritesModuleHandler(
                 favoritesDao = get(),
-                database = get(),
+                store = get(),
                 songResolver = get(),
                 json = get()
             ),
             BackupSection.LYRICS to LyricsModuleHandler(
-                database = get(),
+                store = get(),
                 songResolver = get(),
                 json = get()
             ),
@@ -293,17 +295,17 @@ val backupModule: Module = module {
                 json = get()
             ),
             BackupSection.PLAYBACK_HISTORY to PlaybackHistoryModuleHandler(
-                database = get(),
+                store = get(),
                 songResolver = get(),
                 json = get()
             ),
             BackupSection.ENGAGEMENT_STATS to EngagementStatsModuleHandler(
-                database = get(),
+                store = get(),
                 songResolver = get(),
                 json = get()
             ),
             BackupSection.ARTIST_IMAGES to ArtistImagesModuleHandler(
-                database = get(),
+                store = get(),
                 json = get()
             )
         )

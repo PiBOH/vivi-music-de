@@ -63,6 +63,7 @@ data class ListenBrainzPlayingNowPayload(
     val listens: List<ListenBrainzListen> = emptyList()
 )
 
+@kotlinx.serialization.Serializable
 data class ListenBrainzPendingListen(
     val id: Long = 0L,
     val listenedAtMs: Long,

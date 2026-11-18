@@ -77,8 +77,7 @@ dependencies {
     implementation("io.insert-koin:koin-core:4.0.2")
     implementation("io.insert-koin:koin-compose:4.0.2")
 
-    // Database (SQLite JDBC)
-    implementation("org.xerial:sqlite-jdbc:3.47.2.0")
+    // JSON store (the 1.55.0 device-sync.json model, no database engine)
 
     // Audio tag reader + the libmpv audio engine (JNA)
     implementation("net.jthink:jaudiotagger:3.0.1")
@@ -200,7 +199,6 @@ compose.desktop {
 
         nativeDistributions {
             modules(
-                "java.sql",
                 "java.naming",
                 "java.desktop",
                 "jdk.unsupported",

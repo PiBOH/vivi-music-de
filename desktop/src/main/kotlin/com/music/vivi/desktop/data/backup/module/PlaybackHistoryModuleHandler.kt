@@ -2,7 +2,8 @@ package com.music.vivi.desktop.data.backup.module
 
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.BackupSongMetadata
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.model.PlaybackEvent
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -36,7 +37,7 @@ data class PlaybackHistoryBackupPayload(
 )
 
 class PlaybackHistoryModuleHandler(
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val songResolver: BackupSongResolver,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) : BackupModuleHandler {
@@ -44,47 +45,24 @@ class PlaybackHistoryModuleHandler(
     override val section: BackupSection = BackupSection.PLAYBACK_HISTORY
 
     override suspend fun export(): String = withContext(Dispatchers.IO) {
-        val events = mutableListOf<PlaybackEventBackupEntry>()
-        val engagementStats = mutableListOf<SongEngagementBackupEntry>()
-        val allSongIds = mutableSetOf<String>()
-
-        database.withConnection(readOnly = true) { conn ->
-            val eventSql = "SELECT song_id, timestamp, duration_ms FROM playback_events ORDER BY timestamp DESC LIMIT 10000"
-            conn.prepareStatement(eventSql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sId = rs.getString("song_id")
-                        allSongIds.add(sId)
-                        events.add(
-                            PlaybackEventBackupEntry(
-                                songId = sId,
-                                timestamp = rs.getLong("timestamp"),
-                                durationMs = rs.getLong("duration_ms")
-                            )
-                        )
-                    }
-                }
+        val state = store.load()
+        val events = state.playbackEvents
+            .sortedByDescending { it.timestamp }
+            .take(10000)
+            .map { PlaybackEventBackupEntry(songId = it.songId, timestamp = it.timestamp, durationMs = it.durationMs) }
+        val engagementStats = state.songs
+            .filter { it.playCount > 0 }
+            .map {
+                SongEngagementBackupEntry(
+                    songId = it.id,
+                    playCount = it.playCount,
+                    lastPlayedTimestamp = it.lastPlayedTimestamp
+                )
             }
 
-            val statsSql = "SELECT id, play_count, last_played_timestamp FROM songs WHERE play_count > 0"
-            conn.prepareStatement(statsSql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sId = rs.getString("id")
-                        allSongIds.add(sId)
-                        engagementStats.add(
-                            SongEngagementBackupEntry(
-                                songId = sId,
-                                playCount = rs.getInt("play_count"),
-                                lastPlayedTimestamp = rs.getLong("last_played_timestamp")
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        val metadataMap = songResolver.metadataFor(allSongIds)
+        val metadataMap = songResolver.metadataFor(
+            (events.map { it.songId } + engagementStats.map { it.songId }).toSet()
+        )
         val payload = PlaybackHistoryBackupPayload(
             events = events.map { it.copy(song = metadataMap[it.songId]) },
             engagementStats = engagementStats.map { it.copy(song = metadataMap[it.songId]) }
@@ -93,52 +71,25 @@ class PlaybackHistoryModuleHandler(
     }
 
     override suspend fun countEntries(): Int = withContext(Dispatchers.IO) {
-        database.withConnection(readOnly = true) { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT COUNT(*) FROM playback_events").use { rs ->
-                    if (rs.next()) rs.getInt(1) else 0
-                }
-            }
-        }
+        store.load().playbackEvents.size
     }
 
     override suspend fun snapshot(): String = withContext(Dispatchers.IO) {
-        val events = mutableListOf<PlaybackEventBackupEntry>()
-        val engagementStats = mutableListOf<SongEngagementBackupEntry>()
-
-        database.withConnection(readOnly = true) { conn ->
-            val eventSql = "SELECT song_id, timestamp, duration_ms FROM playback_events"
-            conn.prepareStatement(eventSql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        events.add(
-                            PlaybackEventBackupEntry(
-                                songId = rs.getString("song_id"),
-                                timestamp = rs.getLong("timestamp"),
-                                durationMs = rs.getLong("duration_ms")
-                            )
-                        )
-                    }
+        val state = store.load()
+        val payload = PlaybackHistoryBackupPayload(
+            events = state.playbackEvents.map {
+                PlaybackEventBackupEntry(songId = it.songId, timestamp = it.timestamp, durationMs = it.durationMs)
+            },
+            engagementStats = state.songs
+                .filter { it.playCount > 0 }
+                .map {
+                    SongEngagementBackupEntry(
+                        songId = it.id,
+                        playCount = it.playCount,
+                        lastPlayedTimestamp = it.lastPlayedTimestamp
+                    )
                 }
-            }
-
-            val statsSql = "SELECT id, play_count, last_played_timestamp FROM songs WHERE play_count > 0"
-            conn.prepareStatement(statsSql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        engagementStats.add(
-                            SongEngagementBackupEntry(
-                                songId = rs.getString("id"),
-                                playCount = rs.getInt("play_count"),
-                                lastPlayedTimestamp = rs.getLong("last_played_timestamp")
-                            )
-                        )
-                    }
-                }
-            }
-        }
-
-        val payload = PlaybackHistoryBackupPayload(events, engagementStats)
+        )
         json.encodeToString(PlaybackHistoryBackupPayload.serializer(), payload)
     }
 
@@ -166,76 +117,42 @@ class PlaybackHistoryModuleHandler(
             stat.copy(songId = resolvedId)
         }
 
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM playback_events")
-            }
-
-            if (resolvedEvents.isNotEmpty()) {
-                val insertSql = "INSERT INTO playback_events (song_id, timestamp, duration_ms) VALUES (?, ?, ?)"
-                conn.prepareStatement(insertSql).use { stmt ->
-                    for (e in resolvedEvents) {
-                        stmt.setString(1, e.songId)
-                        stmt.setLong(2, e.timestamp)
-                        stmt.setLong(3, e.durationMs)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
-
-            if (resolvedStats.isNotEmpty()) {
-                val updateSql = "UPDATE songs SET play_count = ?, last_played_timestamp = ? WHERE id = ?"
-                conn.prepareStatement(updateSql).use { stmt ->
-                    for (s in resolvedStats) {
-                        stmt.setInt(1, s.playCount)
-                        stmt.setLong(2, s.lastPlayedTimestamp)
-                        stmt.setString(3, s.songId)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
-        }
-        database.notifyTableChanged("playback_events")
-        database.notifyTableChanged("songs")
+        replaceHistory(resolvedEvents, resolvedStats)
     }
 
     override suspend fun rollback(snapshot: String) = withContext(Dispatchers.IO) {
         val parsed = json.decodeFromString(PlaybackHistoryBackupPayload.serializer(), snapshot)
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM playback_events")
-            }
+        replaceHistory(parsed.events, parsed.engagementStats)
+    }
 
-            if (parsed.events.isNotEmpty()) {
-                val insertSql = "INSERT INTO playback_events (song_id, timestamp, duration_ms) VALUES (?, ?, ?)"
-                conn.prepareStatement(insertSql).use { stmt ->
-                    for (e in parsed.events) {
-                        stmt.setString(1, e.songId)
-                        stmt.setLong(2, e.timestamp)
-                        stmt.setLong(3, e.durationMs)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
+    private suspend fun replaceHistory(
+        events: List<PlaybackEventBackupEntry>,
+        stats: List<SongEngagementBackupEntry>
+    ) {
+        val statsById = stats.associateBy { it.songId }
+        store.update("playback_events", "songs") { state ->
+            var nextId = 1L
+            val storedEvents = events.map { event ->
+                PlaybackEvent(
+                    id = nextId++,
+                    songId = event.songId,
+                    timestamp = event.timestamp,
+                    durationMs = event.durationMs
+                )
             }
-
-            if (parsed.engagementStats.isNotEmpty()) {
-                val updateSql = "UPDATE songs SET play_count = ?, last_played_timestamp = ? WHERE id = ?"
-                conn.prepareStatement(updateSql).use { stmt ->
-                    for (s in parsed.engagementStats) {
-                        stmt.setInt(1, s.playCount)
-                        stmt.setLong(2, s.lastPlayedTimestamp)
-                        stmt.setString(3, s.songId)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
+            state.copy(
+                playbackEvents = storedEvents,
+                nextEventId = nextId,
+                songs = state.songs.map { song ->
+                    val stat = statsById[song.id] ?: return@map song
+                    song.copy(
+                        playCount = stat.playCount,
+                        lastPlayedTimestamp = stat.lastPlayedTimestamp
+                    )
                 }
-            }
+            )
         }
-        database.notifyTableChanged("playback_events")
-        database.notifyTableChanged("songs")
+        Unit
     }
 
     private fun parseLegacyPlaybackEvents(payload: String): List<PlaybackEventBackupEntry> {

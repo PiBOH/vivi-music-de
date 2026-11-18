@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.stopKoin
 
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.data.watcher.LibraryWatcherService
 import com.music.vivi.desktop.domain.player.AudioEngine
 import com.music.vivi.desktop.platform.mediasession.MediaSessionBridge
@@ -70,8 +70,8 @@ object AppShutdownCoordinator {
             }
 
             runCatching {
-                val database = GlobalContext.getOrNull()?.getOrNull<PixelPlayerDatabase>()
-                database?.close()
+                val store = GlobalContext.getOrNull()?.getOrNull<LocalLibraryStore>()
+                store?.close()
             }
 
             runCatching {

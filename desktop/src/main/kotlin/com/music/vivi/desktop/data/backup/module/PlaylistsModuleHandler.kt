@@ -3,15 +3,14 @@ package com.music.vivi.desktop.data.backup.module
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.BackupSongMetadata
 import com.music.vivi.desktop.data.database.LocalPlaylistDao
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
 import com.music.vivi.desktop.data.model.Playlist
 import com.music.vivi.desktop.data.model.SortOption
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.utils.DesktopPathProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -19,7 +18,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.longOrNull
 import java.io.File
-import java.sql.Types
 import java.util.Base64
 
 @Serializable
@@ -50,7 +48,7 @@ data class PlaylistBackupEntry(
 
 class PlaylistsModuleHandler(
     private val localPlaylistDao: LocalPlaylistDao,
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val songResolver: BackupSongResolver,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) : BackupModuleHandler {
@@ -73,28 +71,8 @@ class PlaylistsModuleHandler(
             }
         }
 
-        val entries = playlists.map { pl ->
-            PlaylistBackupEntry(
-                id = pl.id,
-                name = pl.name,
-                songIds = pl.songIds,
-                createdAt = pl.createdAt,
-                lastModified = pl.lastModified,
-                isQueueGenerated = pl.isQueueGenerated,
-                coverImageUri = pl.coverImageUri,
-                coverColorArgb = pl.coverColorArgb,
-                coverIconName = pl.coverIconName,
-                coverShapeType = pl.coverShapeType,
-                coverShapeDetail1 = pl.coverShapeDetail1,
-                coverShapeDetail2 = pl.coverShapeDetail2,
-                coverShapeDetail3 = pl.coverShapeDetail3,
-                coverShapeDetail4 = pl.coverShapeDetail4,
-                source = pl.source
-            )
-        }
-
         val payload = PlaylistsBackupPayload(
-            playlists = entries,
+            playlists = playlists.map { it.toBackupEntry() },
             songMetadata = metadata.ifEmpty { null },
             coverImages = coverImages.ifEmpty { null }
         )
@@ -106,26 +84,8 @@ class PlaylistsModuleHandler(
     }
 
     override suspend fun snapshot(): String = withContext(Dispatchers.IO) {
-        val playlists = localPlaylistDao.getAllPlaylists(SortOption.PlaylistNameAZ)
-        val entries = playlists.map { pl ->
-            PlaylistBackupEntry(
-                id = pl.id,
-                name = pl.name,
-                songIds = pl.songIds,
-                createdAt = pl.createdAt,
-                lastModified = pl.lastModified,
-                isQueueGenerated = pl.isQueueGenerated,
-                coverImageUri = pl.coverImageUri,
-                coverColorArgb = pl.coverColorArgb,
-                coverIconName = pl.coverIconName,
-                coverShapeType = pl.coverShapeType,
-                coverShapeDetail1 = pl.coverShapeDetail1,
-                coverShapeDetail2 = pl.coverShapeDetail2,
-                coverShapeDetail3 = pl.coverShapeDetail3,
-                coverShapeDetail4 = pl.coverShapeDetail4,
-                source = pl.source
-            )
-        }
+        val entries = localPlaylistDao.getAllPlaylists(SortOption.PlaylistNameAZ)
+            .map { it.toBackupEntry() }
         json.encodeToString(ListSerializer(PlaylistBackupEntry.serializer()), entries)
     }
 
@@ -173,46 +133,50 @@ class PlaylistsModuleHandler(
         insertPlaylistsTransaction(list)
     }
 
-    private fun insertPlaylistsTransaction(playlists: List<PlaylistBackupEntry>) {
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM playlists WHERE source = 'LOCAL'")
-            }
-
-            if (playlists.isNotEmpty()) {
-                val sql = """
-                    INSERT INTO playlists (
-                        id, name, song_ids_json, created_at, last_modified, is_queue_generated,
-                        cover_image_uri, cover_color_argb, cover_icon_name, cover_shape_type,
-                        cover_shape_detail1, cover_shape_detail2, cover_shape_detail3, cover_shape_detail4, source
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """.trimIndent()
-
-                conn.prepareStatement(sql).use { stmt ->
-                    for (pl in playlists) {
-                        stmt.setString(1, pl.id)
-                        stmt.setString(2, pl.name)
-                        stmt.setString(3, json.encodeToString(ListSerializer(String.serializer()), pl.songIds))
-                        stmt.setLong(4, pl.createdAt)
-                        stmt.setLong(5, pl.lastModified)
-                        stmt.setInt(6, if (pl.isQueueGenerated) 1 else 0)
-                        stmt.setString(7, pl.coverImageUri)
-                        if (pl.coverColorArgb != null) stmt.setInt(8, pl.coverColorArgb) else stmt.setNull(8, Types.INTEGER)
-                        stmt.setString(9, pl.coverIconName)
-                        stmt.setString(10, pl.coverShapeType)
-                        if (pl.coverShapeDetail1 != null) stmt.setFloat(11, pl.coverShapeDetail1) else stmt.setNull(11, Types.REAL)
-                        if (pl.coverShapeDetail2 != null) stmt.setFloat(12, pl.coverShapeDetail2) else stmt.setNull(12, Types.REAL)
-                        if (pl.coverShapeDetail3 != null) stmt.setFloat(13, pl.coverShapeDetail3) else stmt.setNull(13, Types.REAL)
-                        if (pl.coverShapeDetail4 != null) stmt.setFloat(14, pl.coverShapeDetail4) else stmt.setNull(14, Types.REAL)
-                        stmt.setString(15, pl.source)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
+    private suspend fun insertPlaylistsTransaction(playlists: List<PlaylistBackupEntry>) {
+        val others = localPlaylistDao.getAllPlaylists().filter { it.source != "LOCAL" }
+        val restored = playlists.map { it.toPlaylist() }
+        store.update("playlists") { state ->
+            state.copy(playlists = others + restored)
         }
-        database.notifyTableChanged("playlists")
+        Unit
     }
+
+    private fun Playlist.toBackupEntry(): PlaylistBackupEntry = PlaylistBackupEntry(
+        id = id,
+        name = name,
+        songIds = songIds,
+        createdAt = createdAt,
+        lastModified = lastModified,
+        isQueueGenerated = isQueueGenerated,
+        coverImageUri = coverImageUri,
+        coverColorArgb = coverColorArgb,
+        coverIconName = coverIconName,
+        coverShapeType = coverShapeType,
+        coverShapeDetail1 = coverShapeDetail1,
+        coverShapeDetail2 = coverShapeDetail2,
+        coverShapeDetail3 = coverShapeDetail3,
+        coverShapeDetail4 = coverShapeDetail4,
+        source = source
+    )
+
+    private fun PlaylistBackupEntry.toPlaylist(): Playlist = Playlist(
+        id = id,
+        name = name,
+        songIds = songIds,
+        createdAt = createdAt,
+        lastModified = lastModified,
+        isQueueGenerated = isQueueGenerated,
+        coverImageUri = coverImageUri,
+        coverColorArgb = coverColorArgb,
+        coverIconName = coverIconName,
+        coverShapeType = coverShapeType,
+        coverShapeDetail1 = coverShapeDetail1,
+        coverShapeDetail2 = coverShapeDetail2,
+        coverShapeDetail3 = coverShapeDetail3,
+        coverShapeDetail4 = coverShapeDetail4,
+        source = source
+    )
 
     private fun readFileAsBase64(path: String): String? {
         return try {

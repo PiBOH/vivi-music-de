@@ -3,7 +3,8 @@ package com.music.vivi.desktop.data.backup.module
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.BackupSongMetadata
 import com.music.vivi.desktop.data.database.FavoritesDao
-import com.music.vivi.desktop.data.database.PixelPlayerDatabase
+import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.store.StoredFavorite
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -23,7 +24,7 @@ data class FavoriteBackupEntry(
 
 class FavoritesModuleHandler(
     private val favoritesDao: FavoritesDao,
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val songResolver: BackupSongResolver,
     private val json: Json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 ) : BackupModuleHandler {
@@ -31,18 +32,9 @@ class FavoritesModuleHandler(
     override val section: BackupSection = BackupSection.FAVORITES
 
     override suspend fun export(): String = withContext(Dispatchers.IO) {
-        val entries = database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT song_id, date_added FROM favorites ORDER BY date_added DESC"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    val list = mutableListOf<Pair<String, Long>>()
-                    while (rs.next()) {
-                        list.add(rs.getString("song_id") to rs.getLong("date_added"))
-                    }
-                    list
-                }
-            }
-        }
+        val entries = store.load().favorites
+            .sortedByDescending { it.dateAdded }
+            .map { it.songId to it.dateAdded }
 
         val metadataMap = songResolver.metadataFor(entries.map { it.first })
         val backupEntries = entries.map { (songId, dateAdded) ->
@@ -57,28 +49,11 @@ class FavoritesModuleHandler(
     }
 
     override suspend fun countEntries(): Int = withContext(Dispatchers.IO) {
-        database.withConnection(readOnly = true) { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeQuery("SELECT COUNT(*) FROM favorites").use { rs ->
-                    if (rs.next()) rs.getInt(1) else 0
-                }
-            }
-        }
+        store.load().favorites.size
     }
 
     override suspend fun snapshot(): String = withContext(Dispatchers.IO) {
-        val entries = database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT song_id, date_added FROM favorites"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    val list = mutableListOf<FavoriteBackupEntry>()
-                    while (rs.next()) {
-                        list.add(FavoriteBackupEntry(rs.getString("song_id"), rs.getLong("date_added")))
-                    }
-                    list
-                }
-            }
-        }
+        val entries = store.load().favorites.map { FavoriteBackupEntry(it.songId, it.dateAdded) }
         json.encodeToString(ListSerializer(FavoriteBackupEntry.serializer()), entries)
     }
 
@@ -95,69 +70,28 @@ class FavoritesModuleHandler(
             resolvedId to entry.dateAdded
         }.distinctBy { it.first }
 
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM favorites")
-                stmt.executeUpdate("UPDATE songs SET is_favorite = 0")
-            }
-
-            if (resolvedEntries.isNotEmpty()) {
-                val insertSql = "INSERT OR REPLACE INTO favorites (song_id, date_added) VALUES (?, ?)"
-                conn.prepareStatement(insertSql).use { stmt ->
-                    for ((songId, dateAdded) in resolvedEntries) {
-                        stmt.setString(1, songId)
-                        stmt.setLong(2, dateAdded)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-
-                val updateSongSql = "UPDATE songs SET is_favorite = 1 WHERE id = ?"
-                conn.prepareStatement(updateSongSql).use { stmt ->
-                    for ((songId, _) in resolvedEntries) {
-                        stmt.setString(1, songId)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
-        }
-
-        database.notifyTableChanged("favorites")
-        database.notifyTableChanged("songs")
+        replaceFavorites(resolvedEntries)
+        Unit
     }
 
     override suspend fun rollback(snapshot: String) = withContext(Dispatchers.IO) {
         val entries = json.decodeFromString(ListSerializer(FavoriteBackupEntry.serializer()), snapshot)
-        database.withTransaction { conn ->
-            conn.createStatement().use { stmt ->
-                stmt.executeUpdate("DELETE FROM favorites")
-                stmt.executeUpdate("UPDATE songs SET is_favorite = 0")
-            }
+        replaceFavorites(entries.map { it.songId to it.dateAdded }.distinctBy { it.first })
+        Unit
+    }
 
-            if (entries.isNotEmpty()) {
-                val insertSql = "INSERT OR REPLACE INTO favorites (song_id, date_added) VALUES (?, ?)"
-                conn.prepareStatement(insertSql).use { stmt ->
-                    for (entry in entries) {
-                        stmt.setString(1, entry.songId)
-                        stmt.setLong(2, entry.dateAdded)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
+    private suspend fun replaceFavorites(entries: List<Pair<String, Long>>) {
+        val liked = entries.map { it.first }.toSet()
+        store.update("favorites", "songs") { state ->
+            state.copy(
+                favorites = entries.map { StoredFavorite(songId = it.first, dateAdded = it.second) },
+                songs = state.songs.map { song ->
+                    val isLiked = song.id in liked
+                    if (song.isFavorite == isLiked) song else song.copy(isFavorite = isLiked)
                 }
-
-                val updateSongSql = "UPDATE songs SET is_favorite = 1 WHERE id = ?"
-                conn.prepareStatement(updateSongSql).use { stmt ->
-                    for (entry in entries) {
-                        stmt.setString(1, entry.songId)
-                        stmt.addBatch()
-                    }
-                    stmt.executeBatch()
-                }
-            }
+            )
         }
-        database.notifyTableChanged("favorites")
-        database.notifyTableChanged("songs")
+        Unit
     }
 
     private fun parseLegacyFavorites(payload: String): List<FavoriteBackupEntry> {

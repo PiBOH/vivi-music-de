@@ -447,6 +447,22 @@ cloned screen, not by adding a parallel surface next to it.
   rejects the pair as an undeclared dependency. The path cannot sit under a
   hidden directory either: Compose reports `prepareAppResources NO-SOURCE` for a
   root inside `.ignore`.
+- **Storage: one JSON store, no database engine.** The desktop has no database
+  dependency and no driver. The library (songs, liked songs, playlists, the
+  lyrics cache, the playback events, the ListenBrainz queue and the artist
+  images) is `LocalLibraryState` in `data/store/`, persisted under the
+  `localLibrary` key of `~/.vivimusic/device-sync.json`: the 1.55.0 model, where
+  one pretty JSON state is read once into memory (`LocalLibraryStore.load`),
+  every change goes through `update` under a lock, and the whole file is written
+  back. Keys the store does not own are preserved on every write, and the
+  options stay in `settings.json`. A library written by the previous build is
+  imported once, on the first start that has no `localLibrary` key, by
+  `LegacyLibraryImport` (a parser of the old file, not an engine), and that file
+  is left on disk untouched. Never add a database dependency, driver, ORM or a
+  database-backed cache to `desktop`: a new persisted value is a field of
+  `LocalLibraryState` plus the DAO method that reads it and the invalidation
+  name it emits. The same parser reads the browsers' cookie stores
+  (`BrowserCookies`), so importing a browser session needs no driver either.
 - **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
   enables the configuration cache, so the task resolves its paths, the Inno
   compiler and the release numbers while the build is configured, and its action

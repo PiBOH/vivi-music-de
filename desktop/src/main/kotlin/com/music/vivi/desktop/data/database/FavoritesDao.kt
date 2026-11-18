@@ -1,78 +1,62 @@
 package com.music.vivi.desktop.data.database
 
+import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.store.StoredFavorite
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Liked songs, on the JSON store.
+ *
+ * A like is an entry in `favorites` (with the moment it was liked) plus the
+ * `isFavorite` flag on the song, exactly the two rows the previous build wrote
+ * in one transaction.
+ */
 class FavoritesDao(
-    private val database: PixelPlayerDatabase,
+    private val store: LocalLibraryStore,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     suspend fun isFavorite(songId: String): Boolean = withContext(ioDispatcher) {
-        database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT 1 FROM favorites WHERE song_id = ?"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.setString(1, songId)
-                stmt.executeQuery().use { rs -> rs.next() }
-            }
-        }
+        store.load().favorites.any { it.songId == songId }
     }
 
     suspend fun getFavoriteSongIds(): List<String> = withContext(ioDispatcher) {
-        database.withConnection(readOnly = true) { conn ->
-            val sql = "SELECT song_id FROM favorites ORDER BY date_added DESC"
-            conn.prepareStatement(sql).use { stmt ->
-                stmt.executeQuery().use { rs ->
-                    val ids = mutableListOf<String>()
-                    while (rs.next()) {
-                        ids.add(rs.getString("song_id"))
-                    }
-                    ids
-                }
-            }
-        }
+        store.load().favorites
+            .sortedByDescending { it.dateAdded }
+            .map { it.songId }
     }
 
     suspend fun addFavorite(songId: String) = withContext(ioDispatcher) {
-        database.withTransaction { conn ->
-            conn.prepareStatement("INSERT OR REPLACE INTO favorites (song_id, date_added) VALUES (?, ?)").use { stmt ->
-                stmt.setString(1, songId)
-                stmt.setLong(2, System.currentTimeMillis())
-                stmt.executeUpdate()
-            }
-            conn.prepareStatement("UPDATE songs SET is_favorite = 1 WHERE id = ?").use { stmt ->
-                stmt.setString(1, songId)
-                stmt.executeUpdate()
-            }
+        val now = System.currentTimeMillis()
+        store.update("favorites", "songs") { state ->
+            state.copy(
+                favorites = state.favorites.filterNot { it.songId == songId } +
+                    StoredFavorite(songId = songId, dateAdded = now),
+                songs = state.songs.map { song ->
+                    if (song.id == songId) song.copy(isFavorite = true) else song
+                }
+            )
         }
-        database.notifyTableChanged("favorites")
-        database.notifyTableChanged("songs")
+        Unit
     }
 
     suspend fun removeFavorite(songId: String) = withContext(ioDispatcher) {
-        database.withTransaction { conn ->
-            conn.prepareStatement("DELETE FROM favorites WHERE song_id = ?").use { stmt ->
-                stmt.setString(1, songId)
-                stmt.executeUpdate()
-            }
-            conn.prepareStatement("UPDATE songs SET is_favorite = 0 WHERE id = ?").use { stmt ->
-                stmt.setString(1, songId)
-                stmt.executeUpdate()
-            }
+        store.update("favorites", "songs") { state ->
+            state.copy(
+                favorites = state.favorites.filterNot { it.songId == songId },
+                songs = state.songs.map { song ->
+                    if (song.id == songId) song.copy(isFavorite = false) else song
+                }
+            )
         }
-        database.notifyTableChanged("favorites")
-        database.notifyTableChanged("songs")
+        Unit
     }
 
     suspend fun toggleFavorite(songId: String): Boolean = withContext(ioDispatcher) {
-        val currentlyFav = isFavorite(songId)
-        if (currentlyFav) {
-            removeFavorite(songId)
-            false
-        } else {
-            addFavorite(songId)
-            true
-        }
+        val currentlyFavorite = store.load().favorites.any { it.songId == songId }
+        if (currentlyFavorite) removeFavorite(songId) else addFavorite(songId)
+        !currentlyFavorite
     }
 }
