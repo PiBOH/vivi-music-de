@@ -132,6 +132,45 @@ object DirectoryPicker {
         }
     }
 
+    fun chooseVivideBackupFile(
+        title: String = "Select a .vivide.backup file",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.File(listOf("vivide.backup", "backup")),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                onSelected(file.file)
+            }
+        }
+    }
+
+    fun saveVivideBackupFile(
+        defaultFileName: String = "VIVIMusicDE.vivide.backup",
+        initialDir: File? = null,
+        title: String = "Export full device backup",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val file = FileKit.openFileSaver(
+                suggestedName = defaultFileName.removeSuffix(".vivide.backup"),
+                defaultExtension = "vivide.backup",
+                directory = initialDir?.let { PlatformFile(it) },
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                val finalFile = if (file.file.name.endsWith(".vivide.backup", ignoreCase = true)) {
+                    file.file
+                } else {
+                    File(file.file.parentFile, "${file.file.name}.vivide.backup")
+                }
+                onSelected(finalFile)
+            }
+        }
+    }
+
     fun chooseM3uFile(
         title: String = "Select .m3u Playlist File",
         onSelected: (File) -> Unit

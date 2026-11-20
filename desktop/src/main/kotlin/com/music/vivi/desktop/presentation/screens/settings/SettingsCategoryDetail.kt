@@ -55,6 +55,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.music.vivi.desktop.presentation.components.TrackDialogInput
 import com.music.vivi.desktop.presentation.navigation.DesktopNavDestination
+import com.music.vivi.desktop.utils.RenderMode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -176,6 +177,8 @@ fun SettingsCategoryDetail(
                         )
                     }
                 }
+
+                item { LegacyLibraryCard() }
 
                 item {
                     val minSongDuration by viewModel.minSongDurationMs.collectAsState()
@@ -853,6 +856,25 @@ fun SettingsCategoryDetail(
                             onSelectDevice = { viewModel.setSelectedAudioDevice(it) },
                             onRefreshDevices = { viewModel.refreshAudioDevices() },
                             onDismiss = { showAudioDeviceDialog = false }
+                        )
+                    }
+                }
+
+                item {
+                    var softwareRendering by remember { mutableStateOf(RenderMode.isSoftware()) }
+                    SettingsSubsection(title = "PERFORMANCE") {
+                        ExpressiveSwitchRow(
+                            title = "Software rendering",
+                            subtitle = "Keeps the window responsive where the OpenGL fallback stalls. Restart to apply.",
+                            checked = softwareRendering,
+                            onCheckedChange = { enabled ->
+                                softwareRendering = enabled
+                                RenderMode.setSoftware(enabled)
+                            },
+                            leadingIcon = {
+                                Icon(painterResource(Res.drawable.ic_rounded_speed), null, tint = colors.secondary, modifier = Modifier.size(22.dp))
+                            },
+                            shape = getGroupShape(0, 1)
                         )
                     }
                 }

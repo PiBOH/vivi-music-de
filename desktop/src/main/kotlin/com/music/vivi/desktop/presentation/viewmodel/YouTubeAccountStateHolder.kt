@@ -2,6 +2,7 @@ package com.music.vivi.desktop.presentation.viewmodel
 
 import com.music.vivi.desktop.data.youtube.BrowserCookies
 import com.music.vivi.desktop.data.youtube.YouTubeAccount
+import com.music.vivi.desktop.data.youtube.YouTubeWebLogin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -66,6 +67,34 @@ class YouTubeAccountStateHolder(
                         it.copy(isBusy = false, message = error.message ?: "The account did not answer")
                     }
                 )
+            }
+        }
+    }
+
+    /**
+     * Opens the in-app WebView so the user can sign in on Google's page. The
+     * browser cookie-jar path stays available when Google refuses an embedded
+     * browser.
+     */
+    fun signInWithWebView() {
+        if (_state.value.isBusy) return
+        _state.update {
+            it.copy(isBusy = true, message = "Complete the sign-in in the YouTube Music window.")
+        }
+        YouTubeWebLogin.open { result ->
+            result.onSuccess { cookie ->
+                YouTubeAccount.adopt(cookie)
+                _state.update {
+                    it.copy(isSignedIn = true, isBusy = false, profiles = emptyList(), message = null)
+                }
+                refresh()
+            }.onFailure { error ->
+                _state.update {
+                    it.copy(
+                        isBusy = false,
+                        message = error.message ?: "The sign-in window could not be opened."
+                    )
+                }
             }
         }
     }

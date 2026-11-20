@@ -100,13 +100,25 @@ dependencies {
     // FileKit (native file and directory picker)
     implementation("io.github.vinceglb:filekit-dialogs:0.16.0")
 
+    // JavaFX WebView: the in-app YouTube Music sign-in window. The fallback is the
+    // cookie jar of a browser already signed in, read by BrowserCookies.
+    // The platform classifier is explicit: the unclassified JavaFX jars are empty
+    // module descriptors, and Gradle does not apply the JavaFX variant attributes
+    // to this plain JVM project.
+    implementation("org.openjfx:javafx-base:21.0.5:win")
+    implementation("org.openjfx:javafx-graphics:21.0.5:win")
+    implementation("org.openjfx:javafx-controls:21.0.5:win")
+    implementation("org.openjfx:javafx-media:21.0.5:win")
+    implementation("org.openjfx:javafx-web:21.0.5:win")
+
     // Linux D-Bus and MPRIS
     implementation("com.github.hypfvieh:dbus-java-core:5.1.0")
     implementation("com.github.hypfvieh:dbus-java-transport-native-unixsocket:5.1.0")
 
     // Testing
-    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit5"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 configurations.all {

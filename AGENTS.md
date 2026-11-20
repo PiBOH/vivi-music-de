@@ -463,6 +463,14 @@ cloned screen, not by adding a parallel surface next to it.
   `LocalLibraryState` plus the DAO method that reads it and the invalidation
   name it emits. The same parser reads the browsers' cookie stores
   (`BrowserCookies`), so importing a browser session needs no driver either.
+  A write is a synced temporary file followed by a rename, with the previous
+  file rotated to `device-sync.json.bak`; a file that does not parse is moved to
+  `device-sync.json.corrupt-<millis>` and the backup is tried before the store
+  starts empty. `desktop/src/test` stops a write halfway and proves the previous
+  library is read back. Settings reads the import record (`libraryImport`) and
+  offers Reimporta behind a confirmation, and Backup & Restore writes one
+  `.vivide.backup` zip (manifest plus the whole `device-sync.json`, credentials
+  excluded) with a `device-sync.json.pre-restore-<millis>` copy before a restore.
 - **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
   enables the configuration cache, so the task resolves its paths, the Inno
   compiler and the release numbers while the build is configured, and its action
@@ -497,12 +505,18 @@ cloned screen, not by adding a parallel surface next to it.
   same graph, calls `PlayerViewModel.toggleFavorite`, the call the heart makes,
   and prints the favorite flag and the liked count read back from the file
   before and after; `--store-state` prints the same values without writing, so a
-  second process proves the value survived the restart.
+  second process proves the value survived the restart. `--youtube-webview-check`
+  opens the JavaFX sign-in window on music.youtube.com and writes
+  `build/weblogin.png`; it stops at Google's consent page. `--render-api=<api>`
+  overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
+  library tab without changing the saved preference; both exist for captures.
+  `:desktop:test` holds the store tests (interrupted write, partial temporary
+  file, corrupt file, missing legacy database).
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
   `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
   `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the
   class-data-sharing archive and the Bit render checks were retired with that
-  surface, and `desktop/src/test` no longer ships them. The sections of this
+  surface; `desktop/src/test` now holds only the JSON store tests. The sections of this
   file that describe those mechanisms (the headless render checks, the
   icon-minimization measurement, the class-data-sharing note) describe the
   retired surface; the desktop has no such tasks today. `desktop/build.gradle.kts`
@@ -775,6 +789,14 @@ check is part of the change, not a follow-up.
   blurred backdrop is a fixed-size layer that is scaled, not a full-window blur
   re-rasterized on every frame. No new `Modifier.blur` on content that changes
   per frame.
+- The renderer is chosen before the window exists. On Windows `RenderMode`
+  probes `D3D12CreateDevice`; with no adapter the app forces
+  `SKIKO_RENDER_API=SOFTWARE` instead of Skiko's OpenGL fallback, whose
+  `glFinish` blocked the AWT pump for seconds per frame. The Performance switch
+  persists a manual software choice, and `--render-api=` overrides one run. On
+  the 60 Hz test machine the OpenGL fallback measured one frame every 4.3 s and
+  one frame per resize gesture, while software held 62 to 70 fps through a
+  continuous resize and 64 to 65 fps idle.
 - Verify with `:desktop:compileKotlin` and the render checks of the affected
   screens. `CHANGELOG.dev.md` states what used to recompose or draw on every
   tick and what does now; a speed claim needs a measurement, and "it compiles"

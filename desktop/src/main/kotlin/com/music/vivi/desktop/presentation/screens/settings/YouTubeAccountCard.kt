@@ -44,6 +44,7 @@ fun YouTubeAccountCard(
     onFindBrowsers: () -> Unit,
     onUseProfile: (BrowserCookies.Profile) -> Unit,
     onDisconnect: () -> Unit,
+    onWebSignIn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -91,10 +92,24 @@ fun YouTubeAccountCard(
                         Text("Sign out")
                     }
                 } else {
-                    Button(onClick = onFindBrowsers, enabled = !state.isBusy) {
-                        Text("Find a signed-in browser")
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        TextButton(onClick = onWebSignIn, enabled = !state.isBusy) {
+                            Text("WebView")
+                        }
+                        Button(onClick = onFindBrowsers, enabled = !state.isBusy) {
+                            Text("Find a signed-in browser")
+                        }
                     }
                 }
+            }
+
+            if (!state.isSignedIn) {
+                Text(
+                    text = "The in-app window opens music.youtube.com. If Google refuses it, " +
+                        "use the session of a browser that is already signed in.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
             }
 
             if (state.profiles.isNotEmpty() && !state.isSignedIn) {

@@ -93,23 +93,13 @@ private data class Contributor(
 
 private val MaintainersList = listOf(
     Contributor(
-        id = "adlifarizi",
-        displayName = "@adlifarizi",
-        role = "Desktop Maintainer",
-        detail = "Maintains PixelPlayer Desktop. GitHub and Telegram: @adlifarizi.",
-        badge = "Desktop app",
-        avatarUrl = "https://github.com/adlifarizi.png",
-        githubUrl = "https://github.com/adlifarizi",
-        telegramUrl = "https://t.me/adlifarizi"
-    ),
-    Contributor(
-        id = "theovilardo",
-        displayName = "@theovilardo",
-        role = "Author / Original Creator",
-        detail = "Author and creator of the original Google Play PixelPlayer app.",
-        badge = "Original app",
-        avatarUrl = "https://github.com/theovilardo.png",
-        githubUrl = "https://github.com/theovilardo"
+        id = "piboh",
+        displayName = "@PiBOH",
+        role = "Lead developer",
+        detail = "Lead developer and maintainer of VIVI Music DE.",
+        badge = "VIVI Music DE",
+        avatarUrl = "https://github.com/PiBOH.png",
+        githubUrl = "https://github.com/PiBOH"
     )
 )
 
@@ -117,9 +107,9 @@ private val ProjectLinks = listOf(
     ProjectLink(
         id = "source",
         title = "Source code",
-        subtitle = "github.com/adlifarizi/PixelPlayerDesktop",
+        subtitle = "github.com/PiBOH/vivi-music-de",
         icon = Res.drawable.ic_github,
-        url = "https://github.com/adlifarizi/PixelPlayerDesktop"
+        url = "https://github.com/PiBOH/vivi-music-de"
     ),
     ProjectLink(
         id = "licenses",

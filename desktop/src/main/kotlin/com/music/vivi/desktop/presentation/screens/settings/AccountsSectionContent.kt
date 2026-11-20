@@ -113,7 +113,8 @@ fun AccountsSectionContent(
             state = youtubeAccountState,
             onFindBrowsers = youtubeAccount::detectProfiles,
             onUseProfile = youtubeAccount::signIn,
-            onDisconnect = youtubeAccount::signOut
+            onDisconnect = youtubeAccount::signOut,
+            onWebSignIn = youtubeAccount::signInWithWebView
         )
 
         ServerAccountCard(

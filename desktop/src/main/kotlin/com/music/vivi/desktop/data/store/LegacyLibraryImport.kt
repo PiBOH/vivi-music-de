@@ -45,7 +45,7 @@ internal object LegacyLibraryImport {
                 id = id,
                 name = table.text(row, "name").orEmpty(),
                 imageUrl = table.text(row, "image_url"),
-                customImageUri = table.text(row, "custom_image_uri")
+                customImageUri = desktopArtwork(table.text(row, "custom_image_uri"))
             )
         }
 
@@ -174,7 +174,7 @@ internal object LegacyLibraryImport {
             albumArtist = table.text(row, "album_artist"),
             path = table.text(row, "path").orEmpty(),
             contentUriString = table.text(row, "content_uri_string").orEmpty(),
-            albumArtUriString = table.text(row, "album_art_uri_string"),
+            albumArtUriString = desktopArtwork(table.text(row, "album_art_uri_string")),
             duration = table.long(row, "duration") ?: 0L,
             genre = table.text(row, "genre"),
             lyrics = table.text(row, "lyrics"),
@@ -206,7 +206,7 @@ internal object LegacyLibraryImport {
             createdAt = table.long(row, "created_at") ?: 0L,
             lastModified = table.long(row, "last_modified") ?: 0L,
             isQueueGenerated = table.long(row, "is_queue_generated") == 1L,
-            coverImageUri = table.text(row, "cover_image_uri"),
+            coverImageUri = desktopArtwork(table.text(row, "cover_image_uri")),
             coverColorArgb = table.long(row, "cover_color_argb")?.toInt(),
             coverIconName = table.text(row, "cover_icon_name"),
             coverShapeType = table.text(row, "cover_shape_type"),
@@ -216,6 +216,19 @@ internal object LegacyLibraryImport {
             coverShapeDetail4 = table.float(row, "cover_shape_detail4"),
             source = table.text(row, "source") ?: "LOCAL"
         )
+    }
+
+    /**
+     * Android content and resource URIs cannot be opened by the desktop app. Keeping
+     * one makes a cover paint as an empty tile; dropping it lets the screen draw its
+     * album or playlist icon instead.
+     */
+    private fun desktopArtwork(uri: String?): String? {
+        if (uri.isNullOrBlank()) return null
+        return uri.takeUnless {
+            it.startsWith("content://", ignoreCase = true) ||
+                it.startsWith("android.resource://", ignoreCase = true)
+        }
     }
 
     private fun EmbeddedTable.float(row: List<Any?>, column: String): Float? {

@@ -1,5 +1,12 @@
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -14,6 +21,7 @@ import androidx.compose.runtime.withFrameNanos
 import java.io.File
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -171,6 +179,16 @@ private fun isIgnorableSkikoDisposalException(throwable: Throwable?): Boolean {
 }
 
 fun main(args: Array<String> = emptyArray()) {
+    // A saved software-rendering choice must be applied before Skiko loads.
+    // The explicit --render-api flag below still wins.
+    com.music.vivi.desktop.utils.RenderMode.applyStartupOverride()
+    // Diagnostics: the packaged property is chosen per host, but a machine whose
+    // Direct3D 12 device does not exist falls back to OpenGL. This lets a run pick
+    // SOFTWARE or OPENGL without rebuilding the package.
+    args.firstOrNull { it.startsWith("--render-api=") }
+        ?.substringAfter('=')
+        ?.takeIf { it.isNotBlank() }
+        ?.let { System.setProperty("skiko.renderApi", it) }
     val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         if (isIgnorableSkikoDisposalException(throwable)) {
@@ -192,6 +210,13 @@ fun main(args: Array<String> = emptyArray()) {
     // The store check writes through the window's view model and reads the JSON
     // file back, so a persistence claim is made with a value, not a call.
     StoreWriteCheck.handle(args)
+    // Opens the JavaFX sign-in window and waits for it to close, so the Google page
+    // can be checked without touching an account.
+    if (args.contains("--youtube-webview-check")) {
+        val closed = com.music.vivi.desktop.data.youtube.YouTubeWebLogin.openForCheck()
+        closed.await(120, java.util.concurrent.TimeUnit.SECONDS)
+        exitProcess(0)
+    }
     val isBenchmark = args.contains("--benchmark-first-frame")
     // Diagnostic frame probe: "--fps-log=<file>" appends one line per second with the
     // frames the window actually produced. It is how a resize gesture is measured.
@@ -253,8 +278,15 @@ fun main(args: Array<String> = emptyArray()) {
 
     val backDispatcher = remember { DesktopBackDispatcher() }
     val defaultTabKey by playerViewModel.defaultTab.collectAsState()
-    val initialNavTarget = remember(defaultTabKey) {
-        DesktopNavDestination.entries.firstOrNull { it.name == defaultTabKey }?.toDefaultTarget() ?: DesktopNavDestination.HOME.toDefaultTarget()
+    // Visual checks start on a named tab without changing the saved preference:
+    // `--start-tab=ALBUMS` (or PLAYLISTS) opens that destination for this run only.
+    val startTabOverride = remember(args) {
+        args.firstOrNull { it.startsWith("--start-tab=") }?.substringAfter('=')?.takeIf { it.isNotBlank() }
+    }
+    val initialNavTarget = remember(defaultTabKey, startTabOverride) {
+        val wanted = startTabOverride ?: defaultTabKey
+        DesktopNavDestination.entries.firstOrNull { it.name.equals(wanted, ignoreCase = true) }?.toDefaultTarget()
+            ?: DesktopNavDestination.HOME.toDefaultTarget()
     }
     val navigator = remember { DesktopNavigator(initialNavTarget) }
 
@@ -794,6 +826,25 @@ fun main(args: Array<String> = emptyArray()) {
  */
 @Composable
 private fun FrameRateProbe(path: String) {
+    // Compose only runs the frame clock when something asks for a frame. This
+    // one-pixel pulse is composed only by the probe, so an idle window still
+    // reports its real frame rate instead of the four-second trickle of an
+    // idle composition.
+    val pulse = rememberInfiniteTransition(label = "fps-probe").animateFloat(
+        initialValue = 0.01f,
+        targetValue = 0.02f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "fps-probe-pulse"
+    )
+    Box(
+        Modifier
+            .size(1.dp)
+            .graphicsLayer { alpha = pulse.value }
+    )
+
     LaunchedEffect(path) {
         val file = File(path)
         var frames = 0

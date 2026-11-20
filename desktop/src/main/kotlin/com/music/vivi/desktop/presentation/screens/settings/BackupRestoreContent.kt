@@ -46,12 +46,17 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.music.vivi.desktop.data.backup.BackupManager
+import com.music.vivi.desktop.data.backup.FullBackup
 import com.music.vivi.desktop.data.backup.model.BackupOperationType
 import com.music.vivi.desktop.data.backup.model.BackupSection
 import com.music.vivi.desktop.data.backup.model.RestorePlan
 import com.music.vivi.desktop.data.backup.model.RestoreResult
 import com.music.vivi.desktop.utils.DirectoryPicker
+import com.music.vivi.desktop.utils.DesktopPathProvider
+import com.music.vivi.desktop.data.store.LocalLibraryStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.compose.koinInject
 import java.io.File
 import java.text.SimpleDateFormat
@@ -61,7 +66,8 @@ import java.util.Locale
 @Composable
 fun BackupRestoreContent(
     modifier: Modifier = Modifier,
-    backupManager: BackupManager = koinInject()
+    backupManager: BackupManager = koinInject(),
+    libraryStore: LocalLibraryStore = koinInject()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val colors = MaterialTheme.colorScheme
@@ -90,6 +96,8 @@ fun BackupRestoreContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         BackupInfoNoticeCard()
+
+        FullBackupCard(store = libraryStore)
 
         SettingsSubsection(title = "CREATE BACKUP") {
             val summaryText = when {
@@ -494,6 +502,127 @@ fun BackupRestoreContent(
                 TextButton(onClick = { statusMessage = null }) {
                     Text("OK")
                 }
+            }
+        )
+    }
+}
+
+@Composable
+private fun FullBackupCard(store: LocalLibraryStore) {
+    val colors = MaterialTheme.colorScheme
+    val scope = rememberCoroutineScope()
+    var busy by remember { mutableStateOf(false) }
+    var pendingRestore by remember { mutableStateOf<File?>(null) }
+    var message by remember { mutableStateOf<Pair<Boolean, String>?>(null) }
+    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+
+    SettingsSubsection(title = "FULL DEVICE BACKUP") {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = colors.surfaceContainer,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = "Library and sync data (.vivide.backup)",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "One file with the whole device-sync store: playlists, favorites, history, " +
+                        "lyrics and the sync identity. Account credentials are never included. " +
+                        "Keep it private.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(
+                        enabled = !busy,
+                        onClick = {
+                            DirectoryPicker.saveVivideBackupFile(
+                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.backup"
+                            ) { target ->
+                                busy = true
+                                message = null
+                                scope.launch {
+                                    val outcome = withContext(Dispatchers.IO) {
+                                        FullBackup.export(target, DesktopPathProvider.syncStateFile)
+                                    }
+                                    busy = false
+                                    outcome.onSuccess { manifest ->
+                                        message = true to "Exported ${target.name} on ${dateFormat.format(Date(manifest.createdAt))}."
+                                    }.onFailure { error ->
+                                        message = false to (error.message ?: "The export failed.")
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(painterResource(Res.drawable.ic_outlined_file_download), null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Export .vivide.backup")
+                    }
+                    TextButton(
+                        enabled = !busy,
+                        colors = ButtonDefaults.textButtonColors(contentColor = colors.error),
+                        onClick = {
+                            DirectoryPicker.chooseVivideBackupFile { file -> pendingRestore = file }
+                        }
+                    ) {
+                        Icon(painterResource(Res.drawable.ic_outlined_file_upload), null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Restore")
+                    }
+                }
+                message?.let { (success, text) ->
+                    Text(
+                        text = text,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (success) colors.primary else colors.error
+                    )
+                }
+            }
+        }
+    }
+
+    pendingRestore?.let { file ->
+        AlertDialog(
+            onDismissRequest = { pendingRestore = null },
+            title = { Text("Restore this full backup?") },
+            text = {
+                Text(
+                    "The current library and sync data will be replaced with ${file.name}. " +
+                        "The current file is kept next to it as device-sync.json.pre-restore-<timestamp>."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingRestore = null
+                        busy = true
+                        message = null
+                        scope.launch {
+                            val outcome = withContext(Dispatchers.IO) {
+                                FullBackup.restore(file, DesktopPathProvider.syncStateFile)
+                            }
+                            outcome.onSuccess { manifest ->
+                                store.reload()
+                                store.notifyAllTables()
+                                message = true to "Restored the backup from ${dateFormat.format(Date(manifest.createdAt))}."
+                            }.onFailure { error ->
+                                message = false to (error.message ?: "The restore failed.")
+                            }
+                            busy = false
+                        }
+                    }
+                ) { Text("Restore", color = colors.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingRestore = null }) { Text("Cancel") }
             }
         )
     }

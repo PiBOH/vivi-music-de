@@ -13,6 +13,37 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import java.io.File
+import java.io.FileOutputStream
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+
+/** Where the library came from, shown in Settings next to the reimport action. */
+@Serializable
+data class LibraryImportRecord(
+    val sourcePath: String,
+    val importedAt: Long,
+    val songs: Int,
+    val favorites: Int,
+    val playlists: Int,
+    val lyrics: Int,
+    val playbackEvents: Int
+)
+
+/**
+ * The byte writer [LocalLibraryStore] uses for its temporary file. It is a seam so a
+ * test can stop a write halfway and check that the library on disk is still the
+ * previous one.
+ */
+internal object StoreFileWriter {
+    @Volatile
+    var write: (File, ByteArray) -> Unit = { target, bytes ->
+        FileOutputStream(target).use { output ->
+            output.write(bytes)
+            output.fd.sync()
+        }
+    }
+}
 
 /** A liked song: the id and the moment it was liked (the `favorites` table). */
 @Serializable
@@ -122,11 +153,23 @@ class LocalLibraryStore(
 
     private fun read(): LocalLibraryState {
         val root = readRoot()
-        if (root.containsKey("localLibrary")) {
-            val stored = root["localLibrary"]?.let { element ->
-                runCatching { json.decodeFromJsonElement(LocalLibraryState.serializer(), element) }.getOrNull()
-            }
+        val element = root["localLibrary"]
+        if (element != null) {
+            val stored = runCatching {
+                json.decodeFromJsonElement(LocalLibraryState.serializer(), element)
+            }.getOrNull()
             if (stored != null) return stored
+
+            // The file parsed as JSON but the library shape is not one this build
+            // knows. Keep the file as evidence instead of writing a new library over
+            // it, then try the rotated backup before anything else.
+            log("the localLibrary key has an unknown shape; keeping the file as evidence")
+            quarantine("schema")
+            backupRoot()?.get("localLibrary")?.let { recovered ->
+                runCatching {
+                    json.decodeFromJsonElement(LocalLibraryState.serializer(), recovered)
+                }.getOrNull()?.let { return it }
+            }
         }
 
         // First start on this model: the key is not in the file yet, so the old
@@ -134,11 +177,69 @@ class LocalLibraryStore(
         // written into the file; from then on the key is the library.
         val imported = LegacyLibraryImport.read(legacyDatabaseFile)
         if (imported != null && !imported.isEmpty) {
-            write(imported)
+            val record = recordFor(imported)
+            write(imported, record)
             return imported
         }
         return LocalLibraryState()
     }
+
+    /** The import that produced the current library, when there was one. */
+    fun importRecord(): LibraryImportRecord? = runCatching {
+        readRoot()["libraryImport"]?.let { element ->
+            json.decodeFromJsonElement(LibraryImportRecord.serializer(), element)
+        }
+    }.getOrNull()
+
+    /**
+     * Replaces the current library with the one in the old database, as the first
+     * start did, after the atomic write has rotated the current file into `.bak`.
+     * The old database is only read: it is never modified.
+     */
+    fun reimportFromLegacy(): Result<LibraryImportRecord> {
+        val imported = LegacyLibraryImport.read(legacyDatabaseFile)
+            ?: return Result.failure(
+                IllegalStateException(
+                    if (legacyDatabaseFile.isFile) {
+                        "The old library at ${legacyDatabaseFile.absolutePath} could not be read."
+                    } else {
+                        "No old library was found at ${legacyDatabaseFile.absolutePath}."
+                    }
+                )
+            )
+        if (imported.isEmpty) {
+            return Result.failure(IllegalStateException("The old library is empty."))
+        }
+        val record = recordFor(imported)
+        synchronized(lock) {
+            write(imported, record)
+            // write() keeps the previous snapshot when the disk write fails.
+            if (cached !== imported) {
+                return Result.failure(IllegalStateException("The library could not be written to ${file.absolutePath}."))
+            }
+        }
+        notifyAllTables()
+        return Result.success(record)
+    }
+
+    /** Drops the in-memory snapshot so the next read comes from disk (full restore). */
+    fun reload() {
+        synchronized(lock) { cached = null }
+    }
+
+    fun notifyAllTables() {
+        notify("songs", "favorites", "playlists", "lyrics", "playback_events", "artists", "listenbrainz_pending")
+    }
+
+    private fun recordFor(state: LocalLibraryState) = LibraryImportRecord(
+        sourcePath = legacyDatabaseFile.absolutePath,
+        importedAt = System.currentTimeMillis(),
+        songs = state.songs.size,
+        favorites = state.favorites.size,
+        playlists = state.playlists.size,
+        lyrics = state.lyrics.size,
+        playbackEvents = state.playbackEvents.size
+    )
 
     fun save(state: LocalLibraryState) {
         synchronized(lock) {
@@ -169,31 +270,100 @@ class LocalLibraryStore(
         }
     }
 
-    private fun write(state: LocalLibraryState) {
+    private fun write(state: LocalLibraryState, record: LibraryImportRecord? = null) {
         val root = readRoot().toMutableMap()
         root["localLibrary"] = json.encodeToJsonElement(LocalLibraryState.serializer(), state)
-        runCatching {
-            file.writeText(json.encodeToString(JsonObject.serializer(), JsonObject(root)))
+        if (record != null) {
+            root["libraryImport"] = json.encodeToJsonElement(LibraryImportRecord.serializer(), record)
+        }
+        val text = json.encodeToString(JsonObject.serializer(), JsonObject(root))
+        try {
+            writeAtomically(text)
             cached = state
-        }.onFailure {
-            // A failed write keeps the in-memory state: the session is not lost,
-            // and the next successful save writes the whole file again.
-            cached = state
+        } catch (error: Exception) {
+            // The file on disk is still the previous one: keep that snapshot so the
+            // session does not advertise changes that were never persisted.
+            log("could not write ${file.absolutePath}: $error")
         }
     }
 
     /**
-     * The file as it is on disk, empty when it does not exist or cannot be
-     * parsed. Every key this store does not own is written back untouched.
+     * Writes next to the target, syncs the bytes, rotates the previous file into
+     * `.bak`, then renames the temporary file over the target. A crash at any point
+     * leaves either the old file or the new one, never a half-written library.
      */
-    private fun readRoot(): JsonObject = try {
-        if (file.exists()) {
-            json.parseToJsonElement(file.readText()).jsonObject
-        } else {
-            JsonObject(emptyMap())
+    private fun writeAtomically(text: String) {
+        val directory = file.absoluteFile.parentFile ?: throw IllegalStateException("no parent directory")
+        directory.mkdirs()
+        val temporary = File(directory, "${file.name}.tmp")
+        try {
+            StoreFileWriter.write(temporary, text.toByteArray(Charsets.UTF_8))
+            if (file.isFile && file.length() > 0L) {
+                runCatching {
+                    Files.copy(file.toPath(), backupFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                }.onFailure { log("could not rotate ${backupFile.absolutePath}: $it") }
+            }
+            try {
+                Files.move(
+                    temporary.toPath(),
+                    file.toPath(),
+                    StandardCopyOption.ATOMIC_MOVE,
+                    StandardCopyOption.REPLACE_EXISTING
+                )
+            } catch (_: AtomicMoveNotSupportedException) {
+                Files.move(temporary.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            }
+        } finally {
+            if (temporary.exists()) runCatching { temporary.delete() }
         }
-    } catch (_: Exception) {
-        JsonObject(emptyMap())
+    }
+
+    private val backupFile: File get() = File(file.absoluteFile.parentFile, "${file.name}.bak")
+
+    /**
+     * The file as it is on disk. A file that cannot be parsed is moved aside, so the
+     * next start does not keep reading it, and the rotated backup is tried in its
+     * place. Every key this store does not own is written back untouched.
+     */
+    private fun readRoot(): JsonObject {
+        if (!file.exists()) return JsonObject(emptyMap())
+        return try {
+            json.parseToJsonElement(file.readText()).jsonObject
+        } catch (error: Exception) {
+            log("${file.absolutePath} cannot be parsed: $error")
+            quarantine("unreadable")
+            backupRoot() ?: JsonObject(emptyMap())
+        }
+    }
+
+    private fun backupRoot(): JsonObject? = runCatching {
+        if (backupFile.isFile) {
+            json.parseToJsonElement(backupFile.readText()).jsonObject
+        } else {
+            null
+        }
+    }.onFailure { log("the rotated backup ${backupFile.absolutePath} cannot be parsed: $it") }
+        .getOrNull()
+
+    /** Moves the unreadable file to `device-sync.json.corrupt-<millis>`; never deletes it. */
+    private fun quarantine(reason: String) {
+        val target = File(
+            file.absoluteFile.parentFile,
+            "${file.name}.corrupt-${System.currentTimeMillis()}"
+        )
+        val moved = runCatching {
+            Files.move(file.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            true
+        }.getOrDefault(false)
+        if (moved) {
+            log("moved the $reason file to ${target.absolutePath}")
+        } else {
+            log("the $reason file could not be moved aside; it stays at ${file.absolutePath}")
+        }
+    }
+
+    private fun log(message: String) {
+        System.err.println("[store] $message")
     }
 
     override fun close() = Unit
