@@ -471,6 +471,26 @@ cloned screen, not by adding a parallel surface next to it.
   offers Reimporta behind a confirmation, and Backup & Restore writes one
   `.vivide.backup` zip (manifest plus the whole `device-sync.json`, credentials
   excluded) with a `device-sync.json.pre-restore-<millis>` copy before a restore.
+- **The YouTube session is sealed at rest.** `yt-cookie.txt` and the
+  `yt-context.txt` identity beside it are never plain text: `SessionVault` wraps
+  them with DPAPI (application entropy,
+  `CRYPTPROTECT_UI_FORBIDDEN`) on Windows and with AES-256-GCM under a key in
+  the macOS keychain (`security`) or the Linux Secret Service (`secret-tool`)
+  elsewhere, writing through a temporary file and an atomic rename, 0600 on
+  POSIX. A plaintext file from an older build is re-sealed on the first read;
+  when no keystore is reachable the file is removed and the session lives only
+  in memory for that run. Sign-out deletes both files, their `.tmp` copy and
+  the keystore key, and neither `FullBackup` nor the section `BackupWriter`
+  contains the session. `YtLog` and the sign-in debug log pass every line
+  through `SecretRedactor`, so a diagnostic that quotes a header cannot persist
+  a cookie value. `--session-vault-check` proves the sealed round trip, the
+  plaintext migration, the sign-out cleanup, the backup entries, the redaction
+  and the existing log files; `--seal-session` migrates an installation in
+  place. **Measured on 20 Nov:** `--session-vault-check` exits 0 (`RESULT: PASS`,
+  0 cookie assignment lines in `youtube.log`); the real 4260-byte cookie and
+  580-byte context were sealed in place to `VIVICOK1` (4537 and 857 bytes, 0
+  plaintext markers, no `.tmp` left) and read back; `:desktop:compileKotlin`
+  passes.
 - **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
   enables the configuration cache, so the task resolves its paths, the Inno
   compiler and the release numbers while the build is configured, and its action

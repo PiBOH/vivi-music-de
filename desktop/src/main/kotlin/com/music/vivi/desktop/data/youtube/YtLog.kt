@@ -11,6 +11,8 @@ import java.time.format.DateTimeFormatter
  * Written to `youtube.log` in the app's config directory instead of the standard
  * stream: a resolution failure is the one thing that has to be readable after the
  * fact ("which client answered what"), and the console of a packaged build is not.
+ * Every line goes through [SecretRedactor] before it reaches the file, so a
+ * diagnostic that quotes a header cannot persist a cookie value.
  */
 object YtLog {
 
@@ -22,8 +24,9 @@ object YtLog {
 
     fun log(category: String, message: String) {
         runCatching {
+            val safe = SecretRedactor.redact(message)
             if (file.length() > MAX_BYTES) file.writeText("")
-            file.appendText("[${LocalDateTime.now().format(stamp)}] [$category] $message\n", Charsets.UTF_8)
+            file.appendText("[${LocalDateTime.now().format(stamp)}] [$category] $safe\n", Charsets.UTF_8)
         }
     }
 }

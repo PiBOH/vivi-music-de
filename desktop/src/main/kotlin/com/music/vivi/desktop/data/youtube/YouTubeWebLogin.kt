@@ -150,7 +150,7 @@ object YouTubeWebLogin {
             ensureFxStarted()
             FxPlatform.runLater { createWindow(closed = closed, captureOnClose = false) }
         } catch (t: Throwable) {
-            System.err.println("[weblogin] ${t.message}")
+            System.err.println("[weblogin] ${SecretRedactor.redact(t.message.orEmpty())}")
             closed.countDown()
         }
         return closed
@@ -569,7 +569,9 @@ object YouTubeWebLogin {
     private fun logDebug(message: String) {
         runCatching {
             debugLog.parentFile?.mkdirs()
-            debugLog.appendText("[${java.time.LocalDateTime.now()}] $message\n")
+            // This log names cookies, never their values; the redactor is the
+            // barrier that keeps a future message from writing one.
+            debugLog.appendText("[${java.time.LocalDateTime.now()}] ${SecretRedactor.redact(message)}\n")
         }
     }
 }

@@ -13,7 +13,9 @@ import java.io.File
  * `innertube` signs a request with the cookie it was given: it sends the jar as
  * `Cookie` and a `SAPISIDHASH` authorization, so a session is exactly one string
  * and no OAuth dance. The session survives a restart in `yt-cookie.txt`, next to
- * the guest identity in [GuestSession].
+ * the guest identity in [GuestSession], and both files are sealed by
+ * [SessionVault] (DPAPI on Windows, the system keystore elsewhere): the cookie
+ * is a bearer credential and is never written in plaintext.
  *
  * Signing in only changes who the catalogue answers as: the search, the stream
  * resolution and the lyrics chain keep working the same way, and signing out
@@ -36,13 +38,12 @@ object YouTubeAccount {
     /** Restores the session a previous run saved. Safe to call more than once. */
     fun restore() {
         if (cookie != null) return
-        val saved = runCatching { store.takeIf { it.isFile }?.readText()?.trim() }.getOrNull()
+        val saved = SessionVault.read(store)?.trim()
         if (saved.isNullOrBlank()) return
         cookie = saved
         YouTube.cookie = saved
-        val context = runCatching {
-            contextStore.takeIf { it.isFile }?.readLines().orEmpty()
-        }.getOrDefault(emptyList())
+        // A plaintext yt-context.txt from an older build is re-sealed by the read.
+        val context = SessionVault.read(contextStore)?.lines().orEmpty()
         YouTube.dataSyncId = context.getOrNull(0)?.trim()?.ifBlank { null }
         YouTube.visitorData = context.getOrNull(1)?.trim()?.ifBlank { null }
         YouTube.useLoginForBrowse = true
@@ -62,9 +63,16 @@ object YouTubeAccount {
         YouTube.dataSyncId = dataSyncId?.trim()?.ifBlank { null }
         visitorData?.trim()?.takeIf { it.isNotBlank() }?.let { YouTube.visitorData = it }
         YouTube.useLoginForBrowse = true
-        runCatching { store.writeText(trimmed) }
         persistContext()
-        YtLog.log("account", "signed in")
+        val persisted = SessionVault.write(store, trimmed)
+        if (persisted) {
+            YtLog.log("account", "signed in; the session is sealed with ${SessionVault.protector}")
+        } else {
+            YtLog.log(
+                "account",
+                "signed in; no system keystore is available, so the session stays in memory for this run"
+            )
+        }
     }
 
     /** Back to the guest identity. */
@@ -74,19 +82,19 @@ object YouTubeAccount {
         YouTube.dataSyncId = null
         YouTube.visitorData = null
         YouTube.useLoginForBrowse = false
-        runCatching { store.delete() }
-        runCatching { contextStore.delete() }
-        YtLog.log("account", "signed out")
+        // Both files, their temporary copy and the keystore key: nothing is left
+        // that could reopen the session.
+        SessionVault.delete(store, contextStore)
+        SessionVault.forget()
+        YtLog.log("account", "signed out; the sealed session and its keystore key are gone")
     }
 
     private fun persistContext() {
         val lines = listOf(YouTube.dataSyncId.orEmpty(), YouTube.visitorData.orEmpty())
-        runCatching {
-            if (lines.all { it.isBlank() }) {
-                contextStore.delete()
-            } else {
-                contextStore.writeText(lines.joinToString("\n"))
-            }
+        if (lines.all { it.isBlank() }) {
+            SessionVault.delete(contextStore)
+        } else {
+            SessionVault.write(contextStore, lines.joinToString("\n"))
         }
     }
 

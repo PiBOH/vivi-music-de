@@ -49,6 +49,7 @@ import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.dev.BackendPlaybackVerifier
 import com.music.vivi.desktop.dev.DemoLibrarySeed
 import com.music.vivi.desktop.dev.RealAppFlowCheck
+import com.music.vivi.desktop.dev.SessionVaultCheck
 import com.music.vivi.desktop.dev.StoreWriteCheck
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.Res
@@ -211,6 +212,9 @@ fun main(args: Array<String> = emptyArray()) {
     // The store check writes through the window's view model and reads the JSON
     // file back, so a persistence claim is made with a value, not a call.
     StoreWriteCheck.handle(args)
+    // Proves the session is sealed at rest, the old plaintext is migrated, sign-out
+    // and the backup stay clean and the logs carry no cookie value.
+    SessionVaultCheck.handle(args)
     // Fills the same JSON store with the small Album/Playlist fixture used by the
     // visual checks, then exits before a window exists.
     DemoLibrarySeed.handle(args)

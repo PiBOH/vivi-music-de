@@ -19,9 +19,10 @@ import java.util.zip.ZipOutputStream
  * section backup, this is a byte snapshot, so a restore brings back playlists,
  * favorites, history and the sync identity together.
  *
- * Account cookies are not in that file (they live in `yt-cookie.txt`) and are
- * deliberately never included. The archive is a zip with a manifest, so the
- * `.vivide.backup` name is a convention rather than a new container format.
+ * Account cookies are not in that file (they live in `yt-cookie.txt`, sealed by
+ * SessionVault) and are deliberately never included. The archive is a zip with a
+ * manifest, so the `.vivide.backup` name is a convention rather than a new
+ * container format.
  */
 object FullBackup {
 
