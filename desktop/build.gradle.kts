@@ -213,6 +213,10 @@ compose.desktop {
             modules(
                 "java.naming",
                 "java.desktop",
+                // JavaFX Web's network layer loads java.net.http on the first page.
+                // Without it the packaged WebView dies with NoClassDefFoundError
+                // while the Gradle run works against the full JDK.
+                "java.net.http",
                 "jdk.unsupported",
                 "jdk.security.auth",
                 "jdk.crypto.ec",

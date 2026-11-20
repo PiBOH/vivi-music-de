@@ -874,7 +874,10 @@ macOS **both** `.dmg` and `.pkg`, Linux keeps `.deb` + `.rpm` (Fedora) +
 together because makepkg requires the hook next to the PKGBUILD, and a loose
 `*.install` in the asset list is noise). Do not drop a format to save size — the payload is trimmed
   instead. The JavaFX WebView jars (`javafx-web`, `icudtl.dat`) are required by
-the working sign-in WebView and are **never** trimmed for size.
+the working sign-in WebView and are **never** trimmed for size. The jlink
+module list includes `java.net.http`, which JavaFX Web loads on the first page;
+without it the packaged window fails with `NoClassDefFoundError` while a Gradle
+run, on the full JDK, still works.
 
 ### Class-data sharing (the startup archive)
 
