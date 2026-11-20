@@ -620,13 +620,16 @@ calls `TrackDialogInput()` first (from `LocalInputFocus.kt`), which keeps the
 window shortcuts from firing while a field inside it has focus: 31 of the 38
 dialogs already do, and a text field inside a dialog without it is a defect.
 
-**5. Icons and tooltips.** Every glyph is a vector drawable in
+**5. Icons and tooltips.** Action glyphs are vector drawables in
 `desktop/src/main/composeResources/drawable/`, named
 `ic_<style>_<material_symbol_name>.xml` (`ic_rounded_play_arrow.xml`,
-`ic_automirrored_rounded_queue_music.xml`, `ic_app_logo.xml`), referenced as
-`Res.drawable.<name>` with `painterResource`. There is no `Icons.Default.*` call
-in this module: a new icon is copied from Material Symbols as an XML drawable
-and named the same way, then referenced by that name. The meaning map is the
+`ic_automirrored_rounded_queue_music.xml`, `ic_rounded_group.xml`), referenced
+as `Res.drawable.<name>` with `painterResource`. The brand mark is the one
+raster exception: `vivi_app_logo.png` is the official 1024 px icon cut to a
+transparent 512 px circle and drawn through `ViviLogo`, never tinted. There is
+no `Icons.Default.*` call in this module: a new action icon is copied from
+Material Symbols as an XML drawable and named the same way, then referenced by
+that name. The meaning map is the
 one written above (queue `queue_music`, playlist `playlist_play`, add to
 playlist `playlist_add`, menu `more_vert`, settings `settings`, library
 `library_music`), and the right-hand queue panel's own toggle button draws
@@ -676,9 +679,11 @@ keys. The brand lives in exactly these places: `version.txt` through
 `BuildConfig.APP_NAME`/`APP_VERSION_NAME`, the `Window`/tray titles and tooltip
 in `Main.kt`, `packageName = "VIVIMusic"` in `desktop/build.gradle.kts`, the
 installer metadata in `installer/`, `src/main/resources/icons/`
-(`icon.ico`/`icns`/`png`) and `composeResources/drawable/ic_app_logo.xml`. A
-version number on a screen is read from `BuildConfig.APP_VERSION_NAME`, never
-typed. Known drift to fix when that code is touched: the tray menu's first item
+(`icon.ico`/`icns`/`png`) and `composeResources/drawable/vivi_app_logo.png`
+through `ViviLogo`. The About screen's maintainers section ends with a
+Contributors card that opens the official contributors graph and stacks up to
+four human avatars. A version number on a screen is read from
+`BuildConfig.APP_VERSION_NAME`, never typed. Known drift to fix when that code is touched: the tray menu's first item
 still says `Open PixelPlayer`, and the window title is a literal instead of
 `BuildConfig.APP_NAME`.
 

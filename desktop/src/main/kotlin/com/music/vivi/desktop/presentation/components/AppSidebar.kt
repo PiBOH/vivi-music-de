@@ -69,7 +69,6 @@ import com.music.vivi.desktop.data.model.QuickAccessItem
 import com.music.vivi.desktop.data.model.QuickAccessType
 import com.music.vivi.desktop.data.network.deezer.DeezerClient
 import com.music.vivi.desktop.generated.resources.Res
-import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.ic_artist
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_playlist_play
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_show_chart
@@ -132,11 +131,9 @@ fun AppSidebar(
                     modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_app_logo),
-                        contentDescription = BuildConfig.APP_NAME,
-                        tint = colors.primary,
-                        modifier = Modifier.size(24.dp)
+                    ViviLogo(
+                        modifier = Modifier.size(24.dp),
+                        contentDescription = BuildConfig.APP_NAME
                     )
                     AnimatedVisibility(
                         visible = !isCompact,

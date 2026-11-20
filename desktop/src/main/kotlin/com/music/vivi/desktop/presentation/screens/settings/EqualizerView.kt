@@ -84,6 +84,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -115,6 +117,7 @@ fun EqualizerContent(
 
     var showSaveDialog by remember { mutableStateOf(false) }
     var showManageDialog by remember { mutableStateOf(false) }
+    val presetScrollState = rememberScrollState()
 
     val allPresets = remember(customPresets) { EqualizerPreset.ALL_PRESETS + customPresets }
     val currentPreset = remember(equalizerPresetName, customPresets, bandLevels, preamp) {
@@ -243,7 +246,25 @@ fun EqualizerContent(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
+                                .pointerInput(presetScrollState) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            val event = awaitPointerEvent(PointerEventPass.Initial)
+                                            if (event.type != PointerEventType.Scroll) continue
+                                            val change = event.changes.firstOrNull {
+                                                it.scrollDelta.x != 0f || it.scrollDelta.y != 0f
+                                            } ?: continue
+                                            val delta = if (change.scrollDelta.x != 0f) {
+                                                change.scrollDelta.x
+                                            } else {
+                                                change.scrollDelta.y
+                                            }
+                                            val consumed = presetScrollState.dispatchRawDelta(delta * 64f)
+                                            if (consumed != 0f) change.consume()
+                                        }
+                                    }
+                                }
+                                .horizontalScroll(presetScrollState),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {

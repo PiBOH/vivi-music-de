@@ -3,6 +3,7 @@ package com.music.vivi.desktop.presentation.screens.settings
 import java.net.HttpURLConnection
 import java.net.URI
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.DrawableResource
@@ -53,7 +56,6 @@ import org.jetbrains.skia.Image as SkiaImage
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.domain.model.UpdateCheckResult
 import com.music.vivi.desktop.generated.resources.Res
-import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_open_in_new
 import com.music.vivi.desktop.generated.resources.ic_github
 import com.music.vivi.desktop.generated.resources.ic_outlined_cloud_download
@@ -61,8 +63,10 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
 import com.music.vivi.desktop.generated.resources.ic_rounded_balance
 import com.music.vivi.desktop.generated.resources.ic_rounded_check_circle
 import com.music.vivi.desktop.generated.resources.ic_rounded_chevron_right
+import com.music.vivi.desktop.generated.resources.ic_rounded_group
 import com.music.vivi.desktop.generated.resources.ic_rounded_palette
 import com.music.vivi.desktop.presentation.components.ExpressiveCircularProgressIndicator
+import com.music.vivi.desktop.presentation.components.ViviLogo
 import com.music.vivi.desktop.generated.resources.ic_rounded_public
 import com.music.vivi.desktop.generated.resources.ic_rounded_refresh
 import com.music.vivi.desktop.generated.resources.ic_rounded_system_update
@@ -102,6 +106,12 @@ private val MaintainersList = listOf(
         githubUrl = "https://github.com/PiBOH"
     )
 )
+
+private const val ContributorsUrl = "https://github.com/PiBOH/vivi-music-de/graphs/contributors"
+
+// Only human contributors are shown. The repository currently has one; the
+// stack supports up to four and grows without a layout change when more arrive.
+private val ContributorsList = MaintainersList
 
 private val ProjectLinks = listOf(
     ProjectLink(
@@ -190,19 +200,10 @@ fun AboutSectionContent(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Surface(
-                        shape = CircleShape,
-                        color = colors.primaryContainer
-                    ) {
-                        Icon(
-                            painter = painterResource(Res.drawable.ic_app_logo),
-                            contentDescription = null,
-                            tint = colors.onPrimaryContainer,
-                            modifier = Modifier
-                                .padding(14.dp)
-                                .size(36.dp)
-                        )
-                    }
+                    ViviLogo(
+                        modifier = Modifier.size(64.dp),
+                        contentDescription = BuildConfig.APP_NAME
+                    )
 
                     Spacer(modifier = Modifier.width(16.dp))
 
@@ -509,15 +510,21 @@ fun AboutSectionContent(
         SettingsSubsection(title = "MAINTAINERS & AUTHORS") {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                MaintainersList.forEachIndexed { index, contributor ->
-                    ContributorCard(
-                        contributor = contributor,
-                        shape = getGroupShape(index, MaintainersList.size),
-                        onOpenUrl = BrowserUtils::openBrowser
-                    )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    MaintainersList.forEachIndexed { index, contributor ->
+                        ContributorCard(
+                            contributor = contributor,
+                            shape = getGroupShape(index, MaintainersList.size),
+                            onOpenUrl = BrowserUtils::openBrowser
+                        )
+                    }
                 }
+                ContributorsCard(onOpenUrl = BrowserUtils::openBrowser)
             }
         }
     }
@@ -531,13 +538,6 @@ private fun ContributorCard(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    var avatarBitmap by remember(contributor.avatarUrl) { mutableStateOf(avatarMemoryCache[contributor.avatarUrl]) }
-
-    LaunchedEffect(contributor.avatarUrl) {
-        if (avatarBitmap == null) {
-            avatarBitmap = fetchAvatarBitmap(contributor.avatarUrl)
-        }
-    }
 
     Surface(
         shape = shape,
@@ -554,33 +554,10 @@ private fun ContributorCard(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = CircleShape,
-                color = colors.surfaceContainerHigh
-            ) {
-                if (avatarBitmap != null) {
-                    Image(
-                        bitmap = avatarBitmap!!,
-                        contentDescription = contributor.displayName,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    val initial = contributor.displayName.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = initial,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.primary
-                        )
-                    }
-                }
-            }
+            ContributorAvatar(
+                contributor = contributor,
+                modifier = Modifier.size(48.dp)
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
@@ -650,6 +627,144 @@ private fun ContributorCard(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContributorsCard(
+    onOpenUrl: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = colors.surfaceContainer,
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onOpenUrl(ContributorsUrl) }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = colors.primaryContainer
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.ic_rounded_group),
+                    contentDescription = null,
+                    tint = colors.onPrimaryContainer,
+                    modifier = Modifier
+                        .padding(10.dp)
+                        .size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = "Contributors",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.onSurface
+                )
+                Text(
+                    text = "The people who build and test ${BuildConfig.APP_NAME}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            ContributorAvatarStack(ContributorsList)
+
+            Spacer(modifier = Modifier.width(4.dp))
+
+            Icon(
+                painter = painterResource(Res.drawable.ic_rounded_chevron_right),
+                contentDescription = null,
+                tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContributorAvatarStack(contributors: List<Contributor>) {
+    val shown = contributors.take(4)
+    if (shown.isEmpty()) return
+
+    val step = 18
+    Box(
+        modifier = Modifier
+            .width((28 + step * (shown.size - 1)).dp)
+            .height(28.dp)
+    ) {
+        shown.forEachIndexed { index, contributor ->
+            ContributorAvatar(
+                contributor = contributor,
+                modifier = Modifier
+                    .offset(x = (step * index).dp)
+                    .size(28.dp)
+                    .zIndex((shown.size - index).toFloat())
+            )
+        }
+    }
+}
+
+@Composable
+private fun ContributorAvatar(
+    contributor: Contributor,
+    modifier: Modifier = Modifier
+) {
+    val colors = MaterialTheme.colorScheme
+    var avatarBitmap by remember(contributor.avatarUrl) { mutableStateOf(avatarMemoryCache[contributor.avatarUrl]) }
+
+    LaunchedEffect(contributor.avatarUrl) {
+        if (avatarBitmap == null) {
+            avatarBitmap = fetchAvatarBitmap(contributor.avatarUrl)
+        }
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = CircleShape,
+        color = colors.surfaceContainerHigh,
+        border = BorderStroke(2.dp, colors.surfaceContainer)
+    ) {
+        if (avatarBitmap != null) {
+            Image(
+                bitmap = avatarBitmap!!,
+                contentDescription = contributor.displayName,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            val initial = contributor.displayName.removePrefix("@").firstOrNull()?.uppercase() ?: "?"
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = initial,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = colors.primary
+                )
             }
         }
     }

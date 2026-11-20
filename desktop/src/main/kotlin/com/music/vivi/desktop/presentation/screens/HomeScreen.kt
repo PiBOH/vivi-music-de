@@ -1,7 +1,6 @@
 package com.music.vivi.desktop.presentation.screens
 
 import com.music.vivi.desktop.BuildConfig
-import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
 import com.music.vivi.desktop.generated.resources.ic_rounded_folder
@@ -61,6 +60,7 @@ import com.music.vivi.desktop.presentation.components.CollagePattern
 import com.music.vivi.desktop.presentation.components.DailyMixSection
 import com.music.vivi.desktop.presentation.components.RecentlyPlayedSection
 import com.music.vivi.desktop.presentation.components.StatsOverviewCard
+import com.music.vivi.desktop.presentation.components.ViviLogo
 import com.music.vivi.desktop.utils.shapes.RoundedStarShape
 
 @Composable
@@ -551,12 +551,7 @@ private fun HomeEmptyState(
                                     .background(colors.primaryContainer.copy(alpha = 0.5f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(
-                                    painter = painterResource(Res.drawable.ic_app_logo),
-                                    contentDescription = null,
-                                    tint = colors.primary,
-                                    modifier = Modifier.size(64.dp)
-                                )
+                                ViviLogo(modifier = Modifier.size(64.dp))
                             }
                         }
                     }

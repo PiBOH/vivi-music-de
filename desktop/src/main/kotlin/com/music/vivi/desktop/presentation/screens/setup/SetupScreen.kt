@@ -1,7 +1,6 @@
 package com.music.vivi.desktop.presentation.screens.setup
 
 import com.music.vivi.desktop.BuildConfig
-import com.music.vivi.desktop.generated.resources.ic_app_logo
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_back
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_forward
@@ -89,6 +88,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.music.vivi.desktop.presentation.components.ViviLogo
 import com.music.vivi.desktop.presentation.screens.settings.countAudioFilesDeep
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 import com.music.vivi.desktop.ui.theme.RoundedSans
@@ -168,12 +168,7 @@ fun SetupScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(Res.drawable.ic_app_logo),
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    ViviLogo(modifier = Modifier.size(18.dp))
                     Text(
                         text = BuildConfig.APP_NAME,
                         style = MaterialTheme.typography.titleSmall,
@@ -459,14 +454,7 @@ private fun WelcomeStepContent() {
                         color = colors.primaryContainer,
                         shadowElevation = 4.dp
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(Res.drawable.ic_app_logo),
-                                contentDescription = null,
-                                tint = colors.onPrimaryContainer,
-                                modifier = Modifier.size(42.dp)
-                            )
-                        }
+                        ViviLogo(modifier = Modifier.fillMaxSize())
                     }
 
                     SetupSineWaveLine(
