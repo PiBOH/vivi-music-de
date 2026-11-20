@@ -93,12 +93,13 @@ object DirectoryPicker {
     }
 
     fun chooseBackupFile(
-        title: String = "Select .pxpl Backup File",
+        title: String = "Select a .vivide.bkp backup file",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
+            // .pxpl stays readable so a backup made before the rename imports.
             val file = FileKit.openFilePicker(
-                type = FileKitType.File("pxpl"),
+                type = FileKitType.File(listOf("vivide.bkp", "pxpl")),
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
@@ -108,24 +109,25 @@ object DirectoryPicker {
     }
 
     fun saveBackupFile(
-        defaultFileName: String = "VIVIMusicDE_Backup.pxpl",
+        defaultFileName: String = "VIVIMusicDE_Backup.vivide.bkp",
         initialDir: File? = null,
         title: String = "Export Backup File",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
-            val baseName = defaultFileName.removeSuffix(".pxpl")
+            val baseName = defaultFileName.removeSuffix(".vivide.bkp").removeSuffix(".pxpl")
             val file = FileKit.openFileSaver(
                 suggestedName = baseName,
-                defaultExtension = "pxpl",
+                defaultExtension = "vivide.bkp",
                 directory = initialDir?.let { PlatformFile(it) },
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
-                val finalFile = if (file.file.name.endsWith(".pxpl", ignoreCase = true)) {
+                val finalFile = if (file.file.name.endsWith(".vivide.bkp", ignoreCase = true)) {
                     file.file
                 } else {
-                    File(file.file.parentFile, "${file.file.name}.pxpl")
+                    val stem = file.file.name.removeSuffix(".pxpl")
+                    File(file.file.parentFile, "$stem.vivide.bkp")
                 }
                 onSelected(finalFile)
             }
@@ -133,12 +135,14 @@ object DirectoryPicker {
     }
 
     fun chooseVivideBackupFile(
-        title: String = "Select a .vivide.backup file",
+        title: String = "Select a .vivide.bkp file",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
+            // The old .vivide.backup name is still accepted: the archive itself
+            // is unchanged, only the extension it is saved with moved.
             val file = FileKit.openFilePicker(
-                type = FileKitType.File(listOf("vivide.backup", "backup")),
+                type = FileKitType.File(listOf("vivide.bkp", "vivide.backup")),
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
@@ -148,23 +152,25 @@ object DirectoryPicker {
     }
 
     fun saveVivideBackupFile(
-        defaultFileName: String = "VIVIMusicDE.vivide.backup",
+        defaultFileName: String = "VIVIMusicDE.vivide.bkp",
         initialDir: File? = null,
         title: String = "Export full device backup",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
+            val baseName = defaultFileName.removeSuffix(".vivide.bkp").removeSuffix(".vivide.backup")
             val file = FileKit.openFileSaver(
-                suggestedName = defaultFileName.removeSuffix(".vivide.backup"),
-                defaultExtension = "vivide.backup",
+                suggestedName = baseName,
+                defaultExtension = "vivide.bkp",
                 directory = initialDir?.let { PlatformFile(it) },
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
-                val finalFile = if (file.file.name.endsWith(".vivide.backup", ignoreCase = true)) {
+                val finalFile = if (file.file.name.endsWith(".vivide.bkp", ignoreCase = true)) {
                     file.file
                 } else {
-                    File(file.file.parentFile, "${file.file.name}.vivide.backup")
+                    val stem = file.file.name.removeSuffix(".vivide.backup")
+                    File(file.file.parentFile, "$stem.vivide.bkp")
                 }
                 onSelected(finalFile)
             }

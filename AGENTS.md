@@ -469,8 +469,11 @@ cloned screen, not by adding a parallel surface next to it.
   starts empty. `desktop/src/test` stops a write halfway and proves the previous
   library is read back. Settings reads the import record (`libraryImport`) and
   offers Reimporta behind a confirmation, and Backup & Restore writes one
-  `.vivide.backup` zip (manifest plus the whole `device-sync.json`, credentials
+  `.vivide.bkp` zip (manifest plus the whole `device-sync.json`, credentials
   excluded) with a `device-sync.json.pre-restore-<millis>` copy before a restore.
+  The full-backup picker still reads a `.vivide.backup` written by an earlier
+  build, and the section picker still reads a `.pxpl`, because the archive is
+  read by its entries, never by the file name.
 - **The YouTube session is sealed at rest.** `yt-cookie.txt` and the
   `yt-context.txt` identity beside it are never plain text: `SessionVault` wraps
   them with DPAPI (application entropy,
@@ -546,7 +549,8 @@ cloned screen, not by adding a parallel surface next to it.
   runs the installed `--benchmark-first-frame` with `user.home` and
   `USERPROFILE` on a temporary home. `uninstall` runs `unins000.exe` on the
   same profile and requires the program and the App Paths key gone while only
-  the newest `.vivide.backup` and `device-sync.json` survive. `restore` copies
+  the newest `.vivide.bkp` (or a legacy `.vivide.backup`) and `device-sync.json`
+  survive. `restore` copies
   those two files into a fresh temporary home and starts the app again, which
   proves the kept restore point is usable. The uninstall key, App Paths and the
   Start Menu folder are exported/copied before the install and restored in a
@@ -574,10 +578,10 @@ cloned screen, not by adding a parallel surface next to it.
   `/VERYSILENT` now (`UninstallSilent`), because that box blocked an unattended
   uninstall. **Measured on 20 Nov with
   `VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
-  `1C390793F63DD7CDD37F14E67F23B59D2D8F84D7CE2B16DABD64B46DA46E095F`):**
+  `40422FBFD187F5E06F13FAEC09D22263FBE3E83C0C5E973DBB3543D9B4A7D80A`):**
   `RESULT: PASS`, with `packaged-webview` loading Accedi - Account Google in
-  7.3 s (a 22 423-byte frame), `install` 19 s and all 289 files identical to
-  the image, `startup` `TIME_TO_FIRST_FRAME: 4114ms`, `uninstall` 1.6 s with
+  7.3 s (a 22 423-byte frame), `install` 18.8 s and all 289 files identical to
+  the image, `startup` `TIME_TO_FIRST_FRAME: 4088ms`, `uninstall` 1.8 s with
   the two kept files, `restore` starting on them in 4.9 s, and
   `host-registration` restoring the real `C:\Program Files\VIVIMusic` path.
   The repair was tested by killing a run after `install` and after

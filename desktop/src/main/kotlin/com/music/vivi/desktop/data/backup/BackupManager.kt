@@ -60,7 +60,7 @@ class BackupManager(
             )
 
             reportProgress(BackupOperationType.EXPORT, ++step, totalSteps,
-                "Packaging backup", "Creating .pxpl archive.")
+                "Packaging backup", "Creating .vivide.bkp archive.")
 
             backupWriter.write(
                 targetFile = targetFile,

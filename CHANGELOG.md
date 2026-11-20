@@ -12,10 +12,11 @@
 - [DE] **The engine reports what it really opened.**
 - [DE] **The desktop module is PixelPlayerDesktop's app.**
 - [DE] **A visual check can fill the JSON library with a fixed Album/Playlist fixture.**
-- [DE] **A full-device backup is one `.vivide.backup` file.**
+- [DE] **A full-device backup is one `.vivide.bkp` file, and older names still import.**
 - [DE] **Settings shows where the library came from and can import it again.**
 
 ### 🔧 Changed
+- [DE] **The sidebar mark is the 1024 px icon and the name no longer gets cut.**
 - [DE] **A silent uninstall closes without a message box.**
 - [DE] **The YouTube session is sealed at rest and the logs cannot hold a cookie value.**
 - [DE] **The sign-in window is the 1.55.0 one again, with the complete cookie capture.**

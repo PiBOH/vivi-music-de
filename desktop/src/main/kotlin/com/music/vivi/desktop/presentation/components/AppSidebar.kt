@@ -33,6 +33,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.onClick
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
@@ -142,16 +144,24 @@ fun AppSidebar(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Spacer(modifier = Modifier.width(10.dp))
-                            // 200 dp is narrower than the name at this size, so the
-                            // pill is a cut text: hovering says the whole of it.
+                            // The expanded pill has to carry the whole name on one
+                            // line: autoSize steps the type down instead of cutting
+                            // it, and the tooltip still says the complete name.
                             AppTooltip(BuildConfig.APP_NAME) {
-                                Text(
+                                BasicText(
                                     text = BuildConfig.APP_NAME,
-                                    style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.5.sp),
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.onSurface,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontSize = 17.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.onSurface
+                                    ),
                                     maxLines = 1,
-                                    softWrap = false
+                                    softWrap = false,
+                                    autoSize = TextAutoSize.StepBased(
+                                        minFontSize = 11.sp,
+                                        maxFontSize = 17.5.sp,
+                                        stepSize = 0.5.sp
+                                    )
                                 )
                             }
                         }

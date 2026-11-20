@@ -197,7 +197,7 @@ fun BackupRestoreContent(
                         Button(
                             onClick = {
                                 DirectoryPicker.saveBackupFile(
-                                    defaultFileName = "VIVIMusicDE_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.pxpl"
+                                    defaultFileName = "VIVIMusicDE_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.bkp"
                                 ) { targetFile ->
                                     coroutineScope.launch {
                                         isProcessing = true
@@ -228,7 +228,7 @@ fun BackupRestoreContent(
                                 tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Export .pxpl File")
+                            Text("Export .vivide.bkp File")
                         }
                     }
                 }
@@ -294,7 +294,7 @@ fun BackupRestoreContent(
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = "Restore from .pxpl File",
+                                        text = "Restore from .vivide.bkp File",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = colors.onSurface
@@ -325,7 +325,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .pxpl File")
+                                Text("Select .vivide.bkp File")
                             }
                         }
                     } else {
@@ -353,7 +353,7 @@ fun BackupRestoreContent(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Restore from .pxpl File",
+                                    text = "Restore from .vivide.bkp File",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onSurface
@@ -382,7 +382,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .pxpl File")
+                                Text("Select .vivide.bkp File")
                             }
                         }
                     }
@@ -527,7 +527,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Library and sync data (.vivide.backup)",
+                    text = "Library and sync data (.vivide.bkp)",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -544,7 +544,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                         enabled = !busy,
                         onClick = {
                             DirectoryPicker.saveVivideBackupFile(
-                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.backup"
+                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.bkp"
                             ) { target ->
                                 busy = true
                                 message = null
@@ -564,7 +564,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                     ) {
                         Icon(painterResource(Res.drawable.ic_outlined_file_download), null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Export .vivide.backup")
+                        Text("Export .vivide.bkp")
                     }
                     TextButton(
                         enabled = !busy,
@@ -649,7 +649,7 @@ private fun BackupInfoNoticeCard() {
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Desktop Backup & Restore (.pxpl)",
+                    text = "Desktop Backup & Restore (.vivide.bkp)",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSecondaryContainer

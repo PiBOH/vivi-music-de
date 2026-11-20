@@ -13,8 +13,9 @@ import org.jetbrains.compose.resources.painterResource
 /**
  * The official VIVI Music DE mark.
  *
- * The raster source is the repository's 1024 px icon, cut to a transparent
- * circle at 512 px so it sits on any surface without a white square behind it.
+ * The raster source is the repository's official 1024 px icon, which already
+ * carries a transparent circle around the mark, so it sits on any surface
+ * without a white square behind it and keeps its detail at small sizes.
  * A caller controls the size; the logo is never tinted, because its blue-violet
  * ring is part of the brand.
  */

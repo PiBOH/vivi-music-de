@@ -17,7 +17,7 @@
       6. the installed app starting (--benchmark-first-frame) on a temporary
          user profile;
       7. the uninstaller, which must remove the program and keep only the
-         newest .vivide.backup and device-sync.json;
+         newest .vivide.bkp (or a legacy .vivide.backup) and device-sync.json;
       8. the kept restore point, by starting the app again on it.
 
     The test never touches the real installation or the real profile: the
@@ -653,7 +653,7 @@ function Get-RestorePointState {
     return [pscustomobject]@{
         Root = $vivi
         Store = (Join-Path $vivi 'device-sync.json')
-        NewestBackup = (Join-Path $vivi 'backups\auto_backup_20991231_235959.vivide.backup')
+        NewestBackup = (Join-Path $vivi 'backups\auto_backup_20991231_235959.vivide.bkp')
         OldBackup = (Join-Path $vivi 'backups\auto_backup_20200101_000000.vivide.backup')
         AudioCache = (Join-Path $vivi 'audio')
         LogCache = (Join-Path $vivi 'logs')
@@ -802,7 +802,7 @@ try {
             Assert-True (-not (Test-Path -LiteralPath $point.AudioCache)) 'a cache directory survived the uninstall'
             Assert-True (-not (Test-Path -LiteralPath $point.LogCache)) 'the logs directory survived the uninstall'
             $kept = @(Get-ChildItem -LiteralPath $point.Root -Recurse -File)
-            return ("program removed, restore point kept: $($kept.Count) file(s), newest .vivide.backup + device-sync.json")
+            return ("program removed, restore point kept: $($kept.Count) file(s), newest .vivide.bkp + device-sync.json")
         } | Out-Null
         Save-RecoveryRecord 'uninstalled'
 
