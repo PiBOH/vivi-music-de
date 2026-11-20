@@ -13,22 +13,18 @@ three-song collage and one empty playlist.
 ## How the two libraries were populated
 
 PixelPlayerDesktop reads a Room database, not the VIVI JSON store. Its reference
-library was six 1-second WAV files with ID3 tags and folder covers, scanned by
-PixelPlayer itself, plus three playlist rows written into its own
-`pixelplayer.db`. The images are the same files under
+library was six 1-second WAV files with ID3 tags and folder covers, read by
+PixelPlayer, plus three playlist rows written into its own `pixelplayer.db`.
+The artwork cache and the playlist row use the same JPEG bytes as
 `docs/ui-parity/album-playlist/fixtures/covers/`.
 
 VIVI Music DE uses `LocalLibraryStore` and `~/.vivimusic/device-sync.json`.
 `--seed-demo-library=<dir>` writes the fixture through the same `save` call a
-user change uses. For the screenshots the store and settings were redirected to
-`build/demo-run/` with `VIVI_SYNC_STATE_FILE` and `VIVI_SETTINGS_FILE`, so the
-real library was never replaced and the local scanner had no music folders to
-add. The seed also keeps a `device-sync.json.demo-backup-<millis>` copy when it
-runs against a normal store.
-
-The first attempt used the normal store and the scanner added a real local song
-("The Spectre", Alan Walker) to the six fixture songs. That is why the run uses
-the two overrides: it makes the frame exactly three albums, not four.
+user change uses. The flag refuses to run without `VIVI_SYNC_STATE_FILE`, so the
+default store is outside its write path. For the screenshots the store and
+settings were redirected to `build/demo-run/` with `VIVI_SYNC_STATE_FILE` and
+`VIVI_SETTINGS_FILE`: the store holds only the fixture and the local scanner
+has no music folders to add, which keeps the frame at exactly three albums.
 
 ## Screenshots
 
@@ -99,15 +95,15 @@ normalising only the package/import prefix (`com.kayoi.pixelplayerdesktop` to
 `AlbumDetailScreen.kt`, `PlaylistDetailScreen.kt`, `LibraryActionRow.kt`,
 `LibraryEmptyState.kt` and `EnhancedSongListItem.kt`.
 
-No image, icon, placeholder or default cover had to be copied or adapted: the
-clone already contains the reference bytes. The only visible differences in the
-two frames are the product branding in the sidebar (the VIVI logo and name) and
-the extra YouTube Music entry, which are intentional shell features, not Album
-or Playlist assets.
+No Album or Playlist image, icon, placeholder or default cover had to be copied
+or adapted: the clone already contains the reference bytes. The only visible
+differences in the two frames are the product branding in the sidebar (the VIVI
+logo and name) and the extra YouTube Music entry, which are intentional shell
+features, not Album or Playlist assets.
 
 ## Why PixelPlayerDesktop did not start before
 
-Its project resource folder shipped `libmpv-2.dll` but not the Vulkan loader the
+Its project resource folder had `libmpv-2.dll` but not the Vulkan loader the
 DLL needs. JNA then tried `mpv`, `libmpv-2` and the `.dylib` fallbacks and
 reported `UnsatisfiedLinkError`. Copying
 `desktop/app-resources/windows/mpv/vulkan-1.dll` from VIVI beside
@@ -115,8 +111,9 @@ PixelPlayerDesktop's `libmpv-2.dll` in `src/main/resources-packaged/windows/mpv`
 and in `build/compose/tmp/prepareAppResources/mpv` made `./gradlew run` launch
 the window. The reference screenshots in this folder come from that build.
 
-The portable PixelPlayerDesktop package was also made runnable the same way and
-produced the same frame, so the fix is the DLL, not the portable wrapper.
+The portable PixelPlayerDesktop package was also made runnable the same way. Its
+Album and Playlist PNGs are byte-identical to the Gradle build's, so the fix is
+the DLL, not the portable wrapper.
 
 ## Still open
 
@@ -124,5 +121,7 @@ produced the same frame, so the fix is the DLL, not the portable wrapper.
   a static frame. Their drawables are included in the 154-file hash comparison
   and their composable bodies are identical, but there is no screenshot of the
   hover state.
+- The fixture has metadata and covers only: `Song.path` points at
+  `demo-library/...` and no audio file exists, so its rows are not playable.
 - The comparison covers Album and Playlist. The rest of the shell is out of
   scope for this check.

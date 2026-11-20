@@ -8,8 +8,6 @@ import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.data.store.StoredFavorite
 import com.music.vivi.desktop.utils.DesktopPathProvider
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import kotlin.system.exitProcess
 
 /**
@@ -18,10 +16,12 @@ import kotlin.system.exitProcess
  * [LocalLibraryStore.save] every user change uses, so the screens read exactly
  * what a real library would give them.
  *
- * Usage: `VIVIMusic.exe --seed-demo-library=<directory>`, where the directory
- * holds `covers/random-access-memories.jpg`, `covers/after-hours.jpg` and
- * `covers/late-night-drive.jpg`. The current store is copied to
- * `device-sync.json.demo-backup-<millis>` before it is replaced.
+ * Usage: `VIVI_SYNC_STATE_FILE=<fixture>` with
+ * `VIVIMusic.exe --seed-demo-library=<directory>`, where the directory holds
+ * `covers/random-access-memories.jpg`, `covers/after-hours.jpg` and
+ * `covers/late-night-drive.jpg`. The flag refuses to run without
+ * `VIVI_SYNC_STATE_FILE`, so an accidental call cannot replace the default
+ * store.
  */
 object DemoLibrarySeed {
 
@@ -36,6 +36,9 @@ object DemoLibrarySeed {
     }
 
     private fun seed(fixtureRoot: File): Int {
+        if (System.getenv("VIVI_SYNC_STATE_FILE").isNullOrBlank()) {
+            return fail("set VIVI_SYNC_STATE_FILE to the fixture store")
+        }
         val root = fixtureRoot.absoluteFile
         val covers = File(root, "covers")
         val randomAccess = cover(covers, "random-access-memories.jpg")
@@ -104,16 +107,6 @@ object DemoLibrarySeed {
         )
 
         val storeFile = DesktopPathProvider.syncStateFile
-        runCatching {
-            if (storeFile.isFile) {
-                Files.copy(
-                    storeFile.toPath(),
-                    File(storeFile.parentFile, "${storeFile.name}.demo-backup-$now").toPath(),
-                    StandardCopyOption.REPLACE_EXISTING
-                )
-            }
-        }.onFailure { println("[demo] could not back up ${storeFile.absolutePath}: $it") }
-
         val store = LocalLibraryStore(storeFile, DesktopPathProvider.databaseFile)
         store.save(
             LocalLibraryState(

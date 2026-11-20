@@ -511,15 +511,14 @@ cloned screen, not by adding a parallel surface next to it.
   overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
   library tab without changing the saved preference; both exist for captures.
   `--seed-demo-library=<dir>` writes the Album/Playlist fixture through
-  `LocalLibraryStore.save` and exits, and `VIVI_SYNC_STATE_FILE` /
-  `VIVI_SETTINGS_FILE` point the store and the settings at another file, so a
-  capture frame holds exactly the fixture and the local scanner adds nothing.
-  The fixture covers and the measured one-for-one table are in
-  `docs/ui-parity/album-playlist/COMPARISON.md`; both views were captured at
-  1936 x 1096, and all 154 drawable XML files are byte-identical between
-  PixelPlayerDesktop and this clone. To launch PixelPlayerDesktop for a new
-  reference frame, `vulkan-1.dll` must sit beside `libmpv-2.dll`; its repository
-  ships only the latter and JNA otherwise reports `UnsatisfiedLinkError`.
+  `LocalLibraryStore.save` and exits; it refuses to run without
+  `VIVI_SYNC_STATE_FILE`, and `VIVI_SETTINGS_FILE` points at a settings file
+  with no music folders, so the local scanner adds nothing. The fixture covers
+  are under `docs/ui-parity/album-playlist/fixtures/covers/`; the table and
+  frames are in `docs/ui-parity/album-playlist/COMPARISON.md`; all 154 drawable
+  XML files are byte-identical between PixelPlayerDesktop and this clone.
+  PixelPlayerDesktop needs `vulkan-1.dll` beside `libmpv-2.dll` or JNA reports
+  `UnsatisfiedLinkError`.
   `:desktop:test` holds the store tests (interrupted write, partial temporary
   file, corrupt file, missing legacy database).
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
@@ -539,7 +538,7 @@ screen is put together, and which visual decisions are already made. It
 describes `desktop/src/main/kotlin/com/music/vivi/desktop` as it stands today.
 The counts below are from that tree and are there to answer "does this codebase
 do it this way?" without a search: 0 `stringResource` calls (the module has no
-string resources), 0 `Icons.*` references against 594 `Res.drawable.*`, 155
+string resources), 0 `Icons.*` references against 594 `Res.drawable.*`, 154
 vector drawables, 29 `@Immutable`/`@Stable` annotations across 16 files, 50
 `graphicsLayer`, 34 `derivedStateOf`, 73 `LazyColumn`, 23 `contentType`, 107
 `Dispatchers.IO`, 16 `Dispatchers.Default`, 66 `AppTooltip`, 0 `Modifier.blur`.
