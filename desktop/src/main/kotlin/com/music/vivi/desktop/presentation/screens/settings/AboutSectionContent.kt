@@ -89,7 +89,6 @@ private data class Contributor(
     val displayName: String,
     val role: String,
     val detail: String,
-    val badge: String,
     val avatarUrl: String,
     val githubUrl: String? = null,
     val telegramUrl: String? = null
@@ -101,7 +100,6 @@ private val MaintainersList = listOf(
         displayName = "@PiBOH",
         role = "Lead developer",
         detail = "Lead developer and maintainer of VIVI Music DE.",
-        badge = "VIVI Music DE",
         avatarUrl = "https://github.com/PiBOH.png",
         githubUrl = "https://github.com/PiBOH"
     )
@@ -585,19 +583,6 @@ private fun ContributorCard(
                     color = colors.onSurfaceVariant,
                     lineHeight = 20.sp
                 )
-
-                Surface(
-                    shape = CircleShape,
-                    color = colors.secondaryContainer,
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Text(
-                        text = contributor.badge,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.onSecondaryContainer
-                    )
-                }
             }
 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
