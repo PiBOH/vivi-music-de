@@ -47,6 +47,7 @@ import org.jetbrains.compose.resources.painterResource as composePainterResource
 
 import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.dev.BackendPlaybackVerifier
+import com.music.vivi.desktop.dev.DemoLibrarySeed
 import com.music.vivi.desktop.dev.RealAppFlowCheck
 import com.music.vivi.desktop.dev.StoreWriteCheck
 import com.music.vivi.desktop.BuildConfig
@@ -210,6 +211,9 @@ fun main(args: Array<String> = emptyArray()) {
     // The store check writes through the window's view model and reads the JSON
     // file back, so a persistence claim is made with a value, not a call.
     StoreWriteCheck.handle(args)
+    // Fills the same JSON store with the small Album/Playlist fixture used by the
+    // visual checks, then exits before a window exists.
+    DemoLibrarySeed.handle(args)
     // Opens the JavaFX sign-in window and waits for it to close, so the Google page
     // can be checked without touching an account.
     if (args.contains("--youtube-webview-check")) {

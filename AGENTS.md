@@ -510,6 +510,16 @@ cloned screen, not by adding a parallel surface next to it.
   `build/weblogin.png`; it stops at Google's consent page. `--render-api=<api>`
   overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
   library tab without changing the saved preference; both exist for captures.
+  `--seed-demo-library=<dir>` writes the Album/Playlist fixture through
+  `LocalLibraryStore.save` and exits, and `VIVI_SYNC_STATE_FILE` /
+  `VIVI_SETTINGS_FILE` point the store and the settings at another file, so a
+  capture frame holds exactly the fixture and the local scanner adds nothing.
+  The fixture covers and the measured one-for-one table are in
+  `docs/ui-parity/album-playlist/COMPARISON.md`; both views were captured at
+  1936 x 1096, and all 154 drawable XML files are byte-identical between
+  PixelPlayerDesktop and this clone. To launch PixelPlayerDesktop for a new
+  reference frame, `vulkan-1.dll` must sit beside `libmpv-2.dll`; its repository
+  ships only the latter and JNA otherwise reports `UnsatisfiedLinkError`.
   `:desktop:test` holds the store tests (interrupted write, partial temporary
   file, corrupt file, missing legacy database).
 - **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,

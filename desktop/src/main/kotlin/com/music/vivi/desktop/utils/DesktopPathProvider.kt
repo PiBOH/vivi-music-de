@@ -81,13 +81,22 @@ object DesktopPathProvider {
      * home, and the whole point of the store is to read the file that is there.
      */
     val syncStateFile: File by lazy {
-        File(userHome, ".vivimusic/device-sync.json").apply {
+        // A visual check can point the store at a fixture file without touching the
+        // library the app normally uses. It is the same LocalLibraryStore and the
+        // same JSON shape, so the screens read a real store, just another path.
+        val override = System.getenv("VIVI_SYNC_STATE_FILE")?.takeIf { it.isNotBlank() }
+        val file = override?.let(::File) ?: File(userHome, ".vivimusic/device-sync.json")
+        file.apply {
             parentFile?.mkdirs()
         }
     }
 
     val settingsFile: File by lazy {
-        File(configDir, "settings.json")
+        // Same test seam as syncStateFile: a visual check can use a settings file
+        // whose music folders list is empty, so the local scanner adds nothing to
+        // the fixture.
+        val override = System.getenv("VIVI_SETTINGS_FILE")?.takeIf { it.isNotBlank() }
+        override?.let(::File) ?: File(configDir, "settings.json")
     }
 
     val defaultMusicDirectories: List<String> by lazy {
