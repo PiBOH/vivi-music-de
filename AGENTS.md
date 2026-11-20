@@ -491,6 +491,32 @@ cloned screen, not by adding a parallel surface next to it.
   580-byte context were sealed in place to `VIVICOK1` (4537 and 857 bytes, 0
   plaintext markers, no `.tmp` left) and read back; `:desktop:compileKotlin`
   passes.
+- **YouTube Music accounts switch without a restart.** The sealed list
+  `yt-accounts.json` (`YouTubeAccountBook`) holds every identity with its
+  cookie, `dataSyncId`, `visitorData` and the name, email, handle and avatar
+  YouTube Music reports; the active one is mirrored into `yt-cookie.txt` and
+  `yt-context.txt`, which stay the files startup reads. `YouTubeAccount.switchTo`
+  replaces `YouTube.cookie` and rewrites those files in the running process, so
+  the next search, stream resolution or account request uses the new identity;
+  the state holder bumps `sessionRevision` and `MainAppScaffold` re-submits the
+  open query, so an open catalogue follows the switch too. The Accounts card
+  shows the active avatar and name with a session status (Signed out, Checking
+  session..., Session active, Session expired, Session check failed), lists every
+  saved account with Switch and Remove (the active one is marked with a check),
+  and adds an account from the in-app Google window or a signed-in browser. A
+  rotated cookie with the same email updates the existing entry instead of
+  adding a duplicate; removing the active account falls back to the most
+  recently used one, and only when none is left does the sign-out delete the
+  files and call `SessionVault.forget()`. `--youtube-accounts-check` proves the
+  list, switch, merge, fallback and seal in a temporary directory;
+  `--youtube-account-verify` prints the real installation's identities (id
+  prefix, name, whether an email is set) and asks YouTube Music who the active
+  session belongs to. **Measured on 20 Nov:** `--youtube-accounts-check` exits 0
+  with `RESULT: PASS`; `--youtube-account-verify` printed
+  `verify: ACTIVE (name set, email=set)` and `signedIn=true saved=1`; the sealed
+  real `yt-accounts.json` starts with `VIVICOK1` and holds 0 cookie markers;
+  `--benchmark-first-frame` printed `TIME_TO_FIRST_FRAME: 4811ms`;
+  `:desktop:compileKotlin` passes. The card was not visually inspected.
 - **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
   enables the configuration cache, so the task resolves its paths, the Inno
   compiler and the release numbers while the build is configured, and its action

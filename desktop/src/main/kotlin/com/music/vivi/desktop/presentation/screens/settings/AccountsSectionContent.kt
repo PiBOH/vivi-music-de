@@ -114,7 +114,10 @@ fun AccountsSectionContent(
             onFindBrowsers = youtubeAccount::detectProfiles,
             onUseProfile = youtubeAccount::signIn,
             onDisconnect = youtubeAccount::signOut,
-            onWebSignIn = youtubeAccount::signInWithWebView
+            onWebSignIn = youtubeAccount::signInWithWebView,
+            onSwitchAccount = youtubeAccount::switchTo,
+            onRemoveAccount = youtubeAccount::removeAccount,
+            onRefreshSession = youtubeAccount::refresh
         )
 
         ServerAccountCard(

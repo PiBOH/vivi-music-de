@@ -197,6 +197,15 @@ fun MainAppScaffold(
         }
     }
 
+    // Switching the YouTube Music account is a hot swap: the open catalogue
+    // re-asks with the new cookie instead of waiting for a restart or a retype.
+    val youtubeAccountState by viewModel.youtubeAccountStateHolder.state.collectAsState()
+    LaunchedEffect(youtubeAccountState.sessionRevision) {
+        if (youtubeAccountState.sessionRevision > 0 && searchQuery.isNotBlank()) {
+            viewModel.youtubeMusicStateHolder.submit()
+        }
+    }
+
     var isExpandedPlayerOpen by remember { mutableStateOf(false) }
     var initialExpandedTab by remember { mutableStateOf(ExpandedTab.LYRICS) }
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }

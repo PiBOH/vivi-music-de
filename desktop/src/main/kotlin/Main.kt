@@ -51,6 +51,7 @@ import com.music.vivi.desktop.dev.DemoLibrarySeed
 import com.music.vivi.desktop.dev.RealAppFlowCheck
 import com.music.vivi.desktop.dev.SessionVaultCheck
 import com.music.vivi.desktop.dev.StoreWriteCheck
+import com.music.vivi.desktop.dev.YouTubeAccountsCheck
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_tray
@@ -215,6 +216,9 @@ fun main(args: Array<String> = emptyArray()) {
     // Proves the session is sealed at rest, the old plaintext is migrated, sign-out
     // and the backup stay clean and the logs carry no cookie value.
     SessionVaultCheck.handle(args)
+    // Proves the saved-account list, the switch and the fallback on a temporary
+    // directory, so the account this machine uses is never touched.
+    YouTubeAccountsCheck.handle(args)
     // Fills the same JSON store with the small Album/Playlist fixture used by the
     // visual checks, then exits before a window exists.
     DemoLibrarySeed.handle(args)
