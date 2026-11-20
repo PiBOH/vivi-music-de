@@ -8,7 +8,9 @@ Clone: VIVI Music DE, branch `vivi-music-de`, launched from `:desktop:run`.
 Both windows were 1936 x 1096 and were captured at the same tab. The library is
 identical in content: three albums, three playlists, two albums with a cover,
 one album without art, one playlist with an image cover, one playlist with a
-three-song collage and one empty playlist.
+three-song collage and one empty playlist. The empty frames use no songs and no
+music folders, and the hover frames use the populated fixture with the pointer
+on the first playlist row.
 
 ## How the two libraries were populated
 
@@ -38,6 +40,14 @@ has no music folders to add, which keeps the frame at exactly three albums.
 | VIVI Music DE, Playlists | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists.png` |
 | Playlist rows and covers, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/playlist-covers-pixel.png` |
 | Playlist rows and covers, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/playlist-covers-vivi.png` |
+| Empty Albums, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-albums-empty.png` |
+| Empty Albums, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-albums-empty.png` |
+| Empty Playlists, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-playlists-empty.png` |
+| Empty Playlists, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-empty.png` |
+| Playlist hover, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-playlists-hover.png` |
+| Playlist hover, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-hover.png` |
+| Play button close-up, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/playlist-hover-pixel.png` |
+| Play button close-up, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/playlist-hover-vivi.png` |
 
 ## Album view, element by element
 
@@ -76,6 +86,51 @@ has no music folders to add, which keeps the frame at exactly three albums.
 | Playlist icon choices | `ic_rounded_music_note`, `ic_rounded_headphones`, `ic_rounded_album`, `ic_rounded_mic_external_on`, `ic_rounded_speaker`, `ic_rounded_favorite`, `ic_rounded_piano`, `ic_automirrored_rounded_queue_music` | same eight names | Same XML for every mapping |
 | Playlist detail actions | add, delete, drag, edit, more, music note, play, pin, remove circle, shuffle, upload file | same names | Same XML |
 
+## Empty states
+
+The empty run used no songs, no playlists and an empty `musicDirectories` list.
+PixelPlayer's database was copied to a temporary backup, its library tables were
+emptied, and the database and settings were restored after the captures. VIVI
+used `build/empty-run` through `VIVI_SYNC_STATE_FILE` and `VIVI_SETTINGS_FILE`.
+
+| Visible element | PixelPlayerDesktop | VIVI Music DE | Result |
+|---|---|---|---|
+| Album empty icon | `ic_rounded_album`, 54 dp, 45% `onSurfaceVariant` | same drawable, size and tint | Same XML and geometry |
+| Album empty title | "No albums in library" | same string | Same `LibraryEmptyState` body |
+| Album empty subtitle | "Add music directories in Settings to scan" | same string | Same body |
+| Album count chip | "0 albums" | same string | Same `LibraryActionRow` |
+| Playlist empty icon | `ic_automirrored_rounded_playlist_play`, 54 dp, 40% `onSurfaceVariant` | same drawable, size and tint | Same XML and geometry |
+| Playlist empty title | "No playlists created yet" | same string | Same `PlaylistsTab` body |
+| Create Playlist button | filled `Button`, `ic_rounded_add` 18 dp | same button and drawable | Same XML and role |
+| Import M3U button | `FilledTonalButton`, `ic_rounded_upload_file` 18 dp | same button and drawable | Same XML and role |
+| Header actions | New, Import, "0 playlists", sort | same controls | Same body |
+| Sidebar | PixelPlayer branding | VIVI branding and YouTube Music entry | Intentional shell difference, no Album or Playlist asset |
+
+The Album and Playlist empty frames match in icon, title, subtitle, button order
+and button roles. The only shifts are the VIVI branding and the extra YouTube
+Music row in the sidebar.
+
+## Playlist row hover
+
+The pointer was placed on the first row ("Collage Mix", 3 songs) and the frame
+was taken after the hover state settled. The OS screenshot does not draw the
+pointer itself; the visible evidence is the 38 dp Play button that exists only
+while the row is hovered and the playlist has at least one song.
+
+| Visible element | PixelPlayerDesktop | VIVI Music DE | Result |
+|---|---|---|---|
+| Hover-only Play button | `ic_rounded_play_arrow`, 20 dp in a 38 dp `primary` circle | same drawable and geometry | Same XML and body; present in both frames |
+| Play button condition | `isHovered && playlistSongs.isNotEmpty()` | same condition | Same `PlaylistListItem` body |
+| Overflow button | `ic_rounded_more_vert`, 18 dp in a 36 dp transparent target | same drawable and geometry | Same XML and body; visible in both frames |
+| Row hover fill | `surfaceContainerHigh` over `surfaceContainerLow` | same two roles | Same code; the rendered tone follows each app's current palette |
+| Tooltip names | "Play playlist", "More options" | same strings | Same body |
+
+The play control and the overflow button sit in the same trailing position in
+both frames. The Pixel frame's card fill reads darker than the VIVI frame's
+because the two apps resolve the current dynamic scheme differently; the
+control, its 38 dp target and its icon are identical. The 0-song "Empty Queue"
+row has no Play button by design, so the hover frame uses the 3-song row.
+
 ## Whole resource set and source bodies
 
 A SHA-256 comparison of both
@@ -97,9 +152,9 @@ normalising only the package/import prefix (`com.kayoi.pixelplayerdesktop` to
 
 No Album or Playlist image, icon, placeholder or default cover had to be copied
 or adapted: the clone already contains the reference bytes. The only visible
-differences in the two frames are the product branding in the sidebar (the VIVI
-logo and name) and the extra YouTube Music entry, which are intentional shell
-features, not Album or Playlist assets.
+differences in the populated Album and Playlist frames are the product branding
+in the sidebar (the VIVI logo and name) and the extra YouTube Music entry, which
+are intentional shell features, not Album or Playlist assets.
 
 ## Why PixelPlayerDesktop did not start before
 
@@ -117,10 +172,6 @@ the DLL, not the portable wrapper.
 
 ## Still open
 
-- Hover-only controls (the row play button and the row menus) are not visible in
-  a static frame. Their drawables are included in the 154-file hash comparison
-  and their composable bodies are identical, but there is no screenshot of the
-  hover state.
 - The fixture has metadata and covers only: `Song.path` points at
   `demo-library/...` and no audio file exists, so its rows are not playable.
 - The comparison covers Album and Playlist. The rest of the shell is out of
