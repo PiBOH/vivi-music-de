@@ -3,6 +3,7 @@
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
+- [DE] **A killed release check repairs the host registration on its next run.**
 - [DE] **A release is verified by one script, from the packaged WebView to the uninstaller and back.**
 - [DE] **The YouTube Music account switch lives in Accounts, and it is a hot swap.**
 - [DE] **The whole flow now runs through the app's own view models, and a check proves it.**
@@ -15,6 +16,7 @@
 - [DE] **Settings shows where the library came from and can import it again.**
 
 ### 🔧 Changed
+- [DE] **A silent uninstall closes without a message box.**
 - [DE] **The YouTube session is sealed at rest and the logs cannot hold a cookie value.**
 - [DE] **The sign-in window is the 1.55.0 one again, with the complete cookie capture.**
 - [DE] **A clean checkout packages an app that plays.**

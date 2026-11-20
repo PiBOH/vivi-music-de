@@ -1046,6 +1046,14 @@ begin
       language; the two paths need no translating. }
     KeptPaths := GetEnv('USERPROFILE') + '\.vivimusic\backups' + #13#10 +
                  GetEnv('USERPROFILE') + '\.vivimusic\device-sync.json';
+    { A silent uninstall must not wait for a click: the release check runs the
+      uninstaller with /VERYSILENT, and this box used to block it. The kept
+      paths still reach the uninstall log, which is where a silent run reads
+      them. }
+    if UninstallSilent then begin
+      AddUninstallLine('Kept: ' + KeptPaths);
+      Exit;
+    end;
     if UninstallCleanupOk then
       MsgBox(
         RemovedAllText() + #13#10 + #13#10 +

@@ -26,6 +26,13 @@
     (uninstall key, App Paths, Start Menu folder) is snapshotted before the
     install and restored afterwards, also when a stage fails.
 
+    The snapshot is also written to build\release-verification-host before the
+    install. If the script is stopped between the install and that restore, the
+    next run finds the record, removes the temporary installation, imports the
+    real uninstall entry and App Paths value back and restores the Start Menu
+    folder before doing anything else. The record is deleted only after the
+    repair has been verified.
+
     The installer stage needs an elevated shell. Without one the script asks
     Windows for elevation and runs itself again, or stops with an explanation
     when -NoElevate is given.
@@ -55,6 +62,12 @@
     Never ask for elevation. The installer stage then fails in a non-elevated
     shell instead of restarting the script.
 
+.PARAMETER CrashAfter
+    Verification aid: stop the run right after the named stage with exit code
+    99, skipping the cleanup and the host restore (exactly like a kill during
+    that stage). The next run must repair the host registration on its own.
+    Used by the recovery test; not a release step.
+
 .PARAMETER ReportPath
     Base path of the report, without an extension. Default:
     build\release-verification-<version>
@@ -75,6 +88,7 @@ param(
     [switch]$SkipInstaller,
     [switch]$KeepTemp,
     [switch]$NoElevate,
+    [string]$CrashAfter,
     [string]$ReportPath
 )
 
@@ -109,6 +123,12 @@ $Installer = [IO.Path]::GetFullPath($Installer)
 $AppImage = [IO.Path]::GetFullPath($AppImage)
 $ReportPath = [IO.Path]::GetFullPath($ReportPath)
 
+# The recovery record lives in the repository's build folder, not in the
+# temporary work folder: it has to survive the run that wrote it, so the next
+# run can repair the host even when the first one was killed mid-install.
+$recoveryRoot = Join-Path $repoRoot 'build\release-verification-host'
+$recoveryManifest = Join-Path $recoveryRoot 'manifest.json'
+
 # ---------------------------------------------------------------------------
 # Elevation: the setup writes machine-wide registration, so it needs admin
 # ---------------------------------------------------------------------------
@@ -116,11 +136,11 @@ $ReportPath = [IO.Path]::GetFullPath($ReportPath)
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
     [Security.Principal.WindowsBuiltInRole]::Administrator)
 
-if (-not $isAdmin -and -not $SkipInstaller) {
+if (-not $isAdmin -and ((-not $SkipInstaller) -or (Test-Path -LiteralPath $recoveryManifest))) {
     if ($NoElevate) {
-        throw 'The installer stage needs an elevated shell. Start PowerShell as administrator, or drop -NoElevate so the script can ask Windows for elevation.'
+        throw 'The installer stage, and the repair of an interrupted run, need an elevated shell. Start PowerShell as administrator, or drop -NoElevate so the script can ask Windows for elevation.'
     }
-    Write-Host 'The installer stage needs administrator rights. Asking Windows for elevation...' -ForegroundColor Yellow
+    Write-Host 'Administrator rights are needed (install test or host repair). Asking Windows for elevation...' -ForegroundColor Yellow
     $forward = @(
         '-NoProfile',
         '-ExecutionPolicy', 'Bypass',
@@ -133,7 +153,13 @@ if (-not $isAdmin -and -not $SkipInstaller) {
         '-ReportPath', ('"' + $ReportPath + '"')
     )
     if ($SkipWebView) { $forward += '-SkipWebView' }
+    if ($SkipInstaller) { $forward += '-SkipInstaller' }
     if ($KeepTemp) { $forward += '-KeepTemp' }
+    if ($CrashAfter) { $forward += @('-CrashAfter', $CrashAfter) }
+
+    # A report from an earlier run must not be read as this run's answer when
+    # the elevated child is killed before writing one.
+    Remove-Item -LiteralPath "$ReportPath.txt", "$ReportPath.json" -Force -ErrorAction SilentlyContinue
 
     $powershell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $child = Start-Process -FilePath $powershell -Verb RunAs -Wait -PassThru -ArgumentList ($forward -join ' ')
@@ -146,6 +172,9 @@ if (-not $isAdmin -and -not $SkipInstaller) {
         if ($reportText -match '^RESULT: PASS$') { $code = 0 }
     } elseif ($child -ne $null -and $child.ExitCode -ne $null) {
         $code = $child.ExitCode
+    }
+    if ((Test-Path -LiteralPath $recoveryManifest) -and -not (Test-Path -LiteralPath "$ReportPath.txt")) {
+        Write-Host 'The run stopped before writing its report. The next run repairs the host registration by itself.' -ForegroundColor Yellow
     }
     exit $code
 }
@@ -194,13 +223,19 @@ function Invoke-Stage {
             stage = $Name; ok = $true; seconds = $seconds; detail = [string]$detail
         }
         Write-Host ("PASS {0} ({1}s): {2}" -f $Name, $seconds, $detail) -ForegroundColor Green
+        if ($CrashAfter -and $CrashAfter -eq $Name) {
+            Save-RecoveryRecord "stopped-after-$Name"
+            Write-Host "INTERRUPT TEST: stopping after '$Name' without cleanup or host restore" -ForegroundColor Magenta
+            [Environment]::Exit(99)
+        }
     } catch {
         $watch.Stop()
         $seconds = [math]::Round($watch.Elapsed.TotalSeconds, 1)
+        $failure = $_.Exception.Message + ' [' + $_.Exception.GetType().FullName + ']'
         $script:results += [pscustomobject]@{
-            stage = $Name; ok = $false; seconds = $seconds; detail = $_.Exception.Message
+            stage = $Name; ok = $false; seconds = $seconds; detail = $failure
         }
-        Write-Host ("FAIL {0} ({1}s): {2}" -f $Name, $seconds, $_.Exception.Message) -ForegroundColor Red
+        Write-Host ("FAIL {0} ({1}s): {2}" -f $Name, $seconds, $failure) -ForegroundColor Red
         throw
     }
 }
@@ -210,66 +245,256 @@ $homeDir = Join-Path $work 'home'
 $restoredHome = Join-Path $work 'home-restored'
 $installDir = Join-Path $work 'install'
 $logDir = Join-Path $work 'logs'
-$snapshotDir = Join-Path $work 'host-snapshot'
-New-Item -ItemType Directory -Force -Path $work, $homeDir, $restoredHome, $installDir, $logDir, $snapshotDir | Out-Null
+New-Item -ItemType Directory -Force -Path $work, $homeDir, $restoredHome, $installDir, $logDir | Out-Null
 
 $installerLog = Join-Path $logDir 'installer.log'
 $uninstallLog = Join-Path $logDir 'uninstall.log'
 $appPathsKey = 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\VIVIMusic.exe'
+$appPathsPs = ConvertTo-RegPath $appPathsKey
 $startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\VIVI Music DE'
 
-# ---------------------------------------------------------------------------
-# Host registration snapshot: the exact setup is installed on this machine
-# too, so its App Paths key, its uninstall entry and its Start Menu folder
-# would otherwise be replaced by the temporary test installation.
-# ---------------------------------------------------------------------------
+# The host registration as it was before this run. The same values are written
+# to $recoveryManifest, which is what lets the next run repair the machine when
+# this one is killed between the install and the restore.
+$script:keyState = @()
+$script:snapshotActive = $false
+$script:appPathsBefore = $null
+$script:startMenuExisted = $false
+$script:realInstallDir = $null
 
-$regKeys = @(
-    'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{com.vivi.vivimusic.desktop}_is1',
-    'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{com.vivi.vivimusic.desktop}_is1',
-    $appPathsKey
-)
-$keyState = @()
-for ($i = 0; $i -lt $regKeys.Count; $i++) {
-    $key = $regKeys[$i]
-    $backup = Join-Path $snapshotDir "key-$i.reg"
-    $existed = Test-Path -LiteralPath (ConvertTo-RegPath $key)
-    if ($existed) {
-        $code = Invoke-Reg ('export "' + $key + '" "' + $backup + '" /y')
-        if ($code -ne 0) { throw "Could not export $key before the test" }
+function Get-RealInstallDir {
+    if (Test-Path -LiteralPath $appPathsPs) {
+        $exe = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
+        if ($exe) {
+            $dir = Split-Path -Parent ([string]$exe)
+            if (Test-Path -LiteralPath (Join-Path $dir 'VIVIMusic.exe')) { return $dir }
+        }
     }
-    $keyState += [pscustomobject]@{ Key = $key; Existed = $existed; File = $backup }
-}
-$appPathsPs = ConvertTo-RegPath $appPathsKey
-$appPathsBefore = $null
-if (Test-Path -LiteralPath $appPathsPs) {
-    $value = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
-    if ($value) { $appPathsBefore = [string]$value }
-}
-$startMenuExisted = Test-Path -LiteralPath $startMenu
-$startMenuBackup = Join-Path $snapshotDir 'start-menu'
-if ($startMenuExisted) {
-    Copy-Item -LiteralPath $startMenu -Destination $startMenuBackup -Recurse -Force
+    $default = Join-Path $env:ProgramFiles 'VIVIMusic'
+    if (Test-Path -LiteralPath (Join-Path $default 'VIVIMusic.exe')) { return $default }
+    return $null
 }
 
-function Restore-HostRegistration {
-    foreach ($entry in $keyState) {
-        if ($entry.Existed) {
-            Invoke-Reg ('import "' + $entry.File + '"') | Out-Null
+# Inno names the key after AppId without braces (com.vivi.vivimusic.desktop_is1),
+# and an older build may have used another AppId, so the real entry is found by
+# the install location it points at instead of by a guessed key name.
+function Get-UninstallKeysFor {
+    param([string]$InstallLocation)
+    $found = @()
+    if (-not $InstallLocation) { return $found }
+    $wanted = $InstallLocation.TrimEnd('\')
+    $roots = @(
+        @{ Ps = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; Reg = 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' },
+        @{ Ps = 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; Reg = 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall' },
+        @{ Ps = 'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'; Reg = 'HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall' }
+    )
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root.Ps)) { continue }
+        Get-ChildItem -LiteralPath $root.Ps -ErrorAction SilentlyContinue | ForEach-Object {
+            $props = Get-ItemProperty -LiteralPath $_.PSPath -ErrorAction SilentlyContinue
+            if ($props.InstallLocation) {
+                $location = ([string]$props.InstallLocation).TrimEnd('\')
+                if ($location -ieq $wanted) {
+                    $found += [pscustomobject]@{ Key = $root.Reg + '\' + $_.PSChildName; Name = $_.PSChildName }
+                }
+            }
+        }
+    }
+    return $found
+}
+
+function New-HostSnapshot {
+    if (Test-Path -LiteralPath $recoveryRoot) {
+        throw "a recovery record is already pending at $recoveryRoot; run the script once so it can repair the host first"
+    }
+    $script:realInstallDir = Get-RealInstallDir
+    $script:appPathsBefore = $null
+    if (Test-Path -LiteralPath $appPathsPs) {
+        $value = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
+        if ($value) { $script:appPathsBefore = [string]$value }
+    }
+
+    $keys = @($appPathsKey)
+    if ($script:realInstallDir) {
+        $keys += @(Get-UninstallKeysFor -InstallLocation $script:realInstallDir | ForEach-Object { $_.Key })
+    }
+    $keys = @($keys | Select-Object -Unique)
+
+    New-Item -ItemType Directory -Force -Path $recoveryRoot | Out-Null
+    $script:keyState = @()
+    for ($i = 0; $i -lt $keys.Count; $i++) {
+        $key = $keys[$i]
+        $backup = Join-Path $recoveryRoot "key-$i.reg"
+        $existed = Test-Path -LiteralPath (ConvertTo-RegPath $key)
+        if ($existed) {
+            $code = Invoke-Reg ('export "' + $key + '" "' + $backup + '" /y')
+            if ($code -ne 0) {
+                Remove-Item -LiteralPath $recoveryRoot -Recurse -Force -ErrorAction SilentlyContinue
+                throw "Could not export $key before the test"
+            }
+        }
+        $script:keyState += [pscustomobject]@{ Key = $key; Existed = $existed; File = $backup }
+    }
+
+    $script:startMenuExisted = Test-Path -LiteralPath $startMenu
+    if ($script:startMenuExisted) {
+        Copy-Item -LiteralPath $startMenu -Destination (Join-Path $recoveryRoot 'start-menu') -Recurse -Force
+    }
+    $script:snapshotActive = $true
+    Save-RecoveryRecord 'prepared'
+}
+
+function Save-RecoveryRecord {
+    param([string]$State)
+    if (-not $script:snapshotActive) { return }
+    $record = [pscustomobject]@{
+        version = 1
+        state = $State
+        startedAt = $startedAt
+        pid = $PID
+        installer = $Installer
+        installDir = $installDir
+        homeDir = $homeDir
+        workDir = $work
+        appPathsBefore = $script:appPathsBefore
+        realInstallDir = $script:realInstallDir
+        keys = @($script:keyState | ForEach-Object {
+            [pscustomobject]@{ key = $_.Key; existed = $_.Existed; file = [IO.Path]::GetFileName($_.File) }
+        })
+        startMenu = [pscustomobject]@{ path = $startMenu; existed = $script:startMenuExisted; backup = 'start-menu' }
+    }
+    $json = $record | ConvertTo-Json -Depth 6
+    # No BOM: the next run reads this file with ConvertFrom-Json.
+    [IO.File]::WriteAllText($recoveryManifest, $json, (New-Object System.Text.UTF8Encoding($false)))
+}
+
+function Restore-Record {
+    param([pscustomobject]$Record, [string]$SnapshotRoot)
+
+    # A temporary installation the interrupted run left behind is removed with
+    # the sandbox profile it recorded, so the real user data is never read.
+    $tempInstall = [string]$Record.installDir
+    $leftover = Join-Path $tempInstall 'unins000.exe'
+    if ($tempInstall -and (Test-Path -LiteralPath $leftover)) {
+        $sandbox = [string]$Record.homeDir
+        if (-not $sandbox -or -not (Test-Path -LiteralPath $sandbox)) {
+            $sandbox = Join-Path ([IO.Path]::GetTempPath()) ('vivi-recovery-home-' + $PID)
+            New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
+        }
+        $temp = [IO.Path]::GetTempPath()
+        Invoke-Child -FilePath $leftover `
+            -Arguments ('/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG="' + (Join-Path $temp ('vivi-recovery-' + $PID + '.log')) + '"') `
+            -StandardOut (Join-Path $temp 'vivi-recovery.out.txt') `
+            -StandardError (Join-Path $temp 'vivi-recovery.err.txt') `
+            -Environment @{ 'USERPROFILE' = $sandbox; 'HOME' = $sandbox } `
+            -TimeoutSeconds 300 | Out-Null
+        Wait-UninstallerExit -TimeoutSeconds 180
+        $deadline = (Get-Date).AddSeconds(180)
+        while ((Test-Path -LiteralPath $leftover) -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 500 }
+    }
+
+    foreach ($entry in @($Record.keys)) {
+        if ($entry.existed) {
+            $backup = Join-Path $SnapshotRoot ([string]$entry.file)
+            if (Test-Path -LiteralPath $backup) { Invoke-Reg ('import "' + $backup + '"') | Out-Null }
         } else {
-            Invoke-Reg ('delete "' + $entry.Key + '" /f') | Out-Null
+            Invoke-Reg ('delete "' + [string]$entry.key + '" /f') | Out-Null
         }
     }
-    if ($startMenuExisted) {
-        if (Test-Path -LiteralPath $startMenu) {
-            Remove-Item -LiteralPath $startMenu -Recurse -Force -ErrorAction SilentlyContinue
+
+    # A temporary entry the uninstaller did not reach is not part of the host.
+    if ($Record.installDir) {
+        foreach ($stale in @(Get-UninstallKeysFor -InstallLocation ([string]$Record.installDir))) {
+            $owned = @($Record.keys | Where-Object { $_.key -eq $stale.Key })
+            if ($owned.Count -eq 0) { Invoke-Reg ('delete "' + $stale.Key + '" /f') | Out-Null }
         }
-        if (Test-Path -LiteralPath $startMenuBackup) {
-            Copy-Item -LiteralPath $startMenuBackup -Destination $startMenu -Recurse -Force -ErrorAction SilentlyContinue
-        }
-    } elseif (Test-Path -LiteralPath $startMenu) {
-        Remove-Item -LiteralPath $startMenu -Recurse -Force -ErrorAction SilentlyContinue
     }
+
+    $menu = [string]$Record.startMenu.path
+    $menuBackup = Join-Path $SnapshotRoot ([string]$Record.startMenu.backup)
+    if ($Record.startMenu.existed) {
+        if (Test-Path -LiteralPath $menu) {
+            Remove-Item -LiteralPath $menu -Recurse -Force -ErrorAction SilentlyContinue
+        }
+        if (Test-Path -LiteralPath $menuBackup) {
+            Copy-Item -LiteralPath $menuBackup -Destination $menu -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    } elseif ($menu -and (Test-Path -LiteralPath $menu)) {
+        Remove-Item -LiteralPath $menu -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Restore-InMemorySnapshot {
+    if (-not $script:snapshotActive) { return }
+    Restore-Record -SnapshotRoot $recoveryRoot -Record ([pscustomobject]@{
+        installDir = $installDir
+        homeDir = $homeDir
+        keys = @($script:keyState | ForEach-Object {
+            [pscustomobject]@{ key = $_.Key; existed = $_.Existed; file = [IO.Path]::GetFileName($_.File) }
+        })
+        startMenu = [pscustomobject]@{ path = $startMenu; existed = $script:startMenuExisted; backup = 'start-menu' }
+    })
+}
+
+function Remove-RecoveryRecord {
+    if (Test-Path -LiteralPath $recoveryRoot) {
+        Remove-Item -LiteralPath $recoveryRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Assert-HostRegistration {
+    if ($script:appPathsBefore) {
+        Assert-True (Test-Path -LiteralPath $appPathsPs) 'the App Paths key was not restored'
+        $value = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
+        Assert-True ($value -eq $script:appPathsBefore) "App Paths reads '$value' instead of '$($script:appPathsBefore)'"
+    } else {
+        Assert-True (-not (Test-Path -LiteralPath $appPathsPs)) 'an App Paths key was left behind'
+    }
+    foreach ($entry in $script:keyState) {
+        $exists = Test-Path -LiteralPath (ConvertTo-RegPath $entry.Key)
+        Assert-True ($exists -eq [bool]$entry.Existed) ("registry key {0} exists={1}, expected {2}" -f $entry.Key, $exists, [bool]$entry.Existed)
+    }
+    Assert-True ((Test-Path -LiteralPath $startMenu) -eq [bool]$script:startMenuExisted) 'the Start Menu folder is not as it was'
+    return 'App Paths, uninstall entry and Start Menu are as they were'
+}
+
+function Invoke-PendingRecovery {
+    if (-not (Test-Path -LiteralPath $recoveryManifest)) { return $null }
+    $raw = (Get-Content -LiteralPath $recoveryManifest -Raw).TrimStart([char]0xFEFF)
+    $record = $raw | ConvertFrom-Json
+    if ($record.pid) {
+        $running = Get-Process -Id ([int]$record.pid) -ErrorAction SilentlyContinue
+        if ($running) {
+            throw "the run that wrote $recoveryManifest (pid $($record.pid)) is still alive; wait for it to finish"
+        }
+    }
+
+    Restore-Record -Record $record -SnapshotRoot $recoveryRoot
+
+    $script:keyState = @($record.keys | ForEach-Object {
+        [pscustomobject]@{
+            Key = [string]$_.key
+            Existed = [bool]$_.existed
+            File = (Join-Path $recoveryRoot ([string]$_.file))
+        }
+    })
+    $script:appPathsBefore = $record.appPathsBefore
+    $script:startMenuExisted = [bool]$record.startMenu.existed
+    $detail = Assert-HostRegistration
+    Remove-RecoveryRecord
+
+    # The interrupted run's own work folder is left behind only by the kill;
+    # its installation is gone by now, so the folder is safe to drop.
+    $oldWork = [string]$record.workDir
+    if ($oldWork) {
+        $tempRoot = [IO.Path]::GetTempPath()
+        if ($oldWork.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -and
+            (Split-Path -Leaf $oldWork) -like 'vivi-release-*') {
+            Remove-Item -LiteralPath $oldWork -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    return ("previous run stopped at '{0}'; host repaired: {1}" -f $record.state, $detail)
 }
 
 # ---------------------------------------------------------------------------
@@ -320,6 +545,24 @@ function Invoke-Child {
     if ($StandardOut) { [IO.File]::WriteAllText($StandardOut, $stdoutText) }
     if ($StandardError) { [IO.File]::WriteAllText($StandardError, $stderrText) }
     return $process.ExitCode
+}
+
+# Inno's uninstaller relaunches itself from a temporary copy and the original
+# process returns at once, so waiting for that process only waits for the
+# launcher. The release check waits for the copy to be gone before it reads the
+# sandbox profile the uninstaller is still deleting.
+function Wait-UninstallerExit {
+    param([int]$TimeoutSeconds = 300)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        $running = @(Get-Process -Name 'unins000' -ErrorAction SilentlyContinue)
+        if ($running.Count -eq 0) {
+            Start-Sleep -Milliseconds 750
+            return
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    throw "an uninstaller was still running after $TimeoutSeconds s"
 }
 
 function Get-TreeMap {
@@ -434,6 +677,14 @@ function New-SandboxProfile {
 
 $exitCode = 0
 try {
+    # A previous run may have been killed between the install and its finally:
+    # repair the host before this run installs anything of its own.
+    if (Test-Path -LiteralPath $recoveryManifest) {
+        Invoke-Stage 'recovery' {
+            return (Invoke-PendingRecovery)
+        } | Out-Null
+    }
+
     if (-not $SkipInstaller) {
         Invoke-Stage 'installer-metadata' {
             Assert-True (Test-Path -LiteralPath $Installer) "the setup was not found: $Installer"
@@ -466,6 +717,7 @@ try {
 
     if (-not $SkipInstaller) {
         $point = New-SandboxProfile -ProfileHome $homeDir
+        New-HostSnapshot
 
         Invoke-Stage 'install' {
             $arguments = '/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /NOICONS /LANG=english /DIR="' +
@@ -499,6 +751,7 @@ try {
             Assert-True ($registeredExe -eq $installedExe) "App Paths points at '$registeredExe' instead of the temporary install"
             return ("temporary install, $($installedMap.Count) files identical to the image, App Paths registered")
         } | Out-Null
+        Save-RecoveryRecord 'installed'
 
         Invoke-Stage 'startup' {
             $exe = Join-Path $installDir 'VIVIMusic.exe'
@@ -522,6 +775,7 @@ try {
             Assert-True (Test-Path -LiteralPath $point.Store) 'the sandbox profile is not the one the app used'
             return "installed app painted its first frame in $ms ms"
         } | Out-Null
+        Save-RecoveryRecord 'uninstalling'
 
         Invoke-Stage 'uninstall' {
             $uninstaller = Join-Path $installDir 'unins000.exe'
@@ -532,6 +786,7 @@ try {
                 -Environment @{ 'USERPROFILE' = $homeDir; 'HOME' = $homeDir } `
                 -TimeoutSeconds 300
             Assert-True ($code -eq 0) "the uninstaller exited $code; log: $uninstallLog"
+            Wait-UninstallerExit -TimeoutSeconds 180
 
             $deadline = (Get-Date).AddSeconds(180)
             while ((Test-Path -LiteralPath (Join-Path $installDir 'unins000.exe')) -and (Get-Date) -lt $deadline) {
@@ -549,6 +804,7 @@ try {
             $kept = @(Get-ChildItem -LiteralPath $point.Root -Recurse -File)
             return ("program removed, restore point kept: $($kept.Count) file(s), newest .vivide.backup + device-sync.json")
         } | Out-Null
+        Save-RecoveryRecord 'uninstalled'
 
         Invoke-Stage 'restore' {
             $restored = Get-RestorePointState -ProfileHome $restoredHome
@@ -594,6 +850,7 @@ try {
                 -StandardError (Join-Path $logDir 'cleanup.err.txt') `
                 -Environment @{ 'USERPROFILE' = $homeDir; 'HOME' = $homeDir } `
                 -TimeoutSeconds 300 | Out-Null
+            Wait-UninstallerExit -TimeoutSeconds 180
             $deadline = (Get-Date).AddSeconds(180)
             while ((Test-Path -LiteralPath $leftoverUninstaller) -and (Get-Date) -lt $deadline) {
                 Start-Sleep -Milliseconds 500
@@ -604,31 +861,26 @@ try {
     }
 
     try {
-        Restore-HostRegistration
-        $registrationOk = $true
-        $registrationDetail = 'host registration restored'
-        if ($appPathsBefore) {
-            $appPathsAfter = $null
-            if (Test-Path -LiteralPath $appPathsPs) {
-                $appPathsAfter = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
+        if ($script:snapshotActive -or $script:keyState.Count -gt 0) {
+            Restore-InMemorySnapshot
+            $registrationDetail = Assert-HostRegistration
+            $script:results += [pscustomobject]@{
+                stage = 'host-registration'; ok = $true; seconds = 0; detail = $registrationDetail
             }
-            if ($appPathsAfter -ne $appPathsBefore) {
-                $registrationOk = $false
-                $registrationDetail = "App Paths reads '$appPathsAfter' instead of '$appPathsBefore'"
+            # The record is deleted only once the repair has been verified, so
+            # a failed restore leaves the next run something to retry from.
+            Remove-RecoveryRecord
+        } else {
+            $script:results += [pscustomobject]@{
+                stage = 'host-registration'; ok = $true; seconds = 0; detail = 'not touched by this run'
             }
-        }
-        if (-not $registrationOk) { $exitCode = 1 }
-        $script:results += [pscustomobject]@{
-            stage = 'host-registration'
-            ok = $registrationOk
-            seconds = 0
-            detail = $registrationDetail
         }
     } catch {
         $exitCode = 1
         $script:results += [pscustomobject]@{
             stage = 'host-registration'; ok = $false; seconds = 0; detail = $_.Exception.Message
         }
+        Write-Warning "The host registration could not be repaired: $($_.Exception.Message). The record in $recoveryRoot is kept; the next run retries."
     }
 
     $result = 'PASS'

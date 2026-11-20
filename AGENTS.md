@@ -556,14 +556,34 @@ cloned screen, not by adding a parallel surface next to it.
   `-NoElevate` is given. `-SkipInstaller` checks the image and the WebView only
   (no admin, nothing installed); `-KeepTemp` keeps the logs, the frames and the
   installed tree. The report is `build/release-verification-<version>.txt` and
-  `.json`. **Measured on 20 Nov with
+  `.json`. A durable record in `build\release-verification-host` (a manifest
+  plus the registry exports and a Start Menu copy) is written before the
+  install and deleted only after the restore has been verified. If the script
+  is killed between the install and its `finally`, the next run finds the
+  record, removes the temporary installation with the sandbox profile it
+  recorded, imports the real uninstall entry and App Paths value back, deletes
+  a temporary uninstall entry the uninstaller did not reach, restores the Start
+  Menu folder, verifies all three and only then deletes the record; it reports
+  that as `recovery PASS` before any other stage, and it needs the same
+  elevation. The real uninstall entry is found by the install location it
+  points at, not by a guessed key name: Inno writes
+  `com.vivi.vivimusic.desktop_is1` without the braces an earlier version of
+  this check looked for. `-CrashAfter <stage>` stops a run with exit code 99
+  right after that stage, skipping the cleanup, which is how the repair is
+  tested. The setup's own uninstaller also skips its closing message box under
+  `/VERYSILENT` now (`UninstallSilent`), because that box blocked an unattended
+  uninstall. **Measured on 20 Nov with
   `VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
-  `60569C63ECE0B9955B94A94B2C98E3444354E5CF4611AADFCEC24AF5A868E459`):**
+  `1C390793F63DD7CDD37F14E67F23B59D2D8F84D7CE2B16DABD64B46DA46E095F`):**
   `RESULT: PASS`, with `packaged-webview` loading Accedi - Account Google in
-  6.8 s (a 22 423-byte frame), `install` 19.6 s and all 289 files identical to
-  the image, `startup` `TIME_TO_FIRST_FRAME: 4194ms`, `uninstall` 1.4 s with
-  the two kept files, `restore` starting on them in 5.1 s, and
+  7.3 s (a 22 423-byte frame), `install` 19 s and all 289 files identical to
+  the image, `startup` `TIME_TO_FIRST_FRAME: 4114ms`, `uninstall` 1.6 s with
+  the two kept files, `restore` starting on them in 4.9 s, and
   `host-registration` restoring the real `C:\Program Files\VIVIMusic` path.
+  The repair was tested by killing a run after `install` and after
+  `uninstall`: both times the next run printed `recovery PASS` (4.2 s and
+  2.6 s) and left App Paths, the uninstall entry and the Start Menu as they
+  were.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in
