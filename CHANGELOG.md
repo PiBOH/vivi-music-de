@@ -3,33 +3,34 @@
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
-- [DE] **YouTube Music has its account switch in the app.** The Accounts card shows the active identity with its avatar and a live session status (Signed out, Checking session..., Session active, Session expired, Session check failed), lists every saved account and switches with one click: the cookie `innertube` signs with is replaced and persisted in the running process, and an open catalogue re-asks its query, so no restart is needed. An account is added from the in-app Google window or a signed-in browser; removing the active one falls back to the most recently used, and the last sign-out still deletes the sealed files and the keystore key. **Measured:** `--youtube-accounts-check` exits 0 (list, switch, rotated-cookie merge, fallback, empty list, sealed `VIVICOK1` file with no cookie value); `--youtube-account-verify` reports `ACTIVE` with the real session and one saved account; `--benchmark-first-frame` paints in 4811 ms; `:desktop:compileKotlin` passes.
-- [DE] **A visual check can fill the JSON library with a fixed Album/Playlist fixture.** `--seed-demo-library=<dir>` writes three albums, three playlists and six songs through `LocalLibraryStore.save`, refuses to run without `VIVI_SYNC_STATE_FILE`, and `VIVI_SETTINGS_FILE` points at a settings file with no music folders. **Measured:** without the variable the seed exited 1 before opening the store and the real store stayed byte-identical; with it the seed printed six songs, three albums and three playlists and `RESULT: PASS`, and wrote only `build/demo-run/`; `:desktop:compileKotlin` and `:desktop:test` pass.
-- [DE] **The sign-in window is the 1.55.0 one again, with the complete cookie capture.**
-- [DE] **A full-device backup is one `.vivide.backup` file.** Backup & Restore exports the whole `device-sync.json` (library and 1.55.0 sync identity) with a manifest and restores it after keeping `device-sync.json.pre-restore-<millis>`. Account cookies live in `yt-cookie.txt` and are never included. **Measured:** `:desktop:compileKotlin` passes.
-- [DE] **Settings shows where the library came from and can import it again.** The Music Management section reads the `libraryImport` record written by the store (source path, time, songs, playlists, favorites) and offers Reimporta behind a confirmation; the old database is only read and the current file is rotated first. **Measured:** `:desktop:compileKotlin` and `:desktop:test` pass.
+- [DE] **A release is verified by one script, from the packaged WebView to the uninstaller and back.**
+- [DE] **The YouTube Music account switch lives in Accounts, and it is a hot swap.**
 - [DE] **The whole flow now runs through the app's own view models, and a check proves it.**
 - [DE] **The evidence frames are the app's own screens.**
 - [DE] **The backend chain now has a runnable proof on the packaged binary.**
 - [DE] **The engine reports what it really opened.**
 - [DE] **The desktop module is PixelPlayerDesktop's app.**
+- [DE] **A visual check can fill the JSON library with a fixed Album/Playlist fixture.**
+- [DE] **A full-device backup is one `.vivide.backup` file.**
+- [DE] **Settings shows where the library came from and can import it again.**
 
 ### 🔧 Changed
-- [DE] **The YouTube Music session is sealed at rest and the logs hold no cookie value.** `yt-cookie.txt` and `yt-context.txt` are DPAPI-wrapped on Windows (AES-256-GCM under the macOS keychain or the Linux Secret Service elsewhere), a plaintext file from an older build is re-sealed on the first read, sign-out removes both files and the keystore key, and the backup still holds only the library. `YtLog` and the sign-in log pass every line through a redactor. **Measured:** `--session-vault-check` exits 0 (sealed round trip, plaintext migration, cleanup, backup entries, redaction, 0 cookie lines in `youtube.log`); the existing 4260-byte plaintext cookie and 580-byte context were sealed in place (`VIVICOK1`, 4537 and 857 bytes, 0 plaintext markers); `:desktop:compileKotlin` passes.
-- [DE] **Album and Playlist match PixelPlayerDesktop file by file.** The reference was launched from its own Gradle build after adding the missing `vulkan-1.dll` beside `libmpv-2.dll`, with the same three albums and three playlists. All 154 drawable XML files are byte-identical, the 13 Album/Playlist composable bodies differ only by package/import, and no image, icon, placeholder or empty state needed a correction. **Measured:** the 1936 x 1096 frames `pixelplayer-albums.png`, `vivi-music-albums.png`, `pixelplayer-playlists.png` and `vivi-music-playlists.png` under `docs/ui-parity/album-playlist/screenshots/`, and the one-for-one tables in `docs/ui-parity/album-playlist/COMPARISON.md`.
-- [DE] **The store survives an interrupted write.** `LocalLibraryStore` writes a temporary file, syncs it, rotates the previous file to `device-sync.json.bak`, then renames the temporary file over the target; a file that cannot be parsed is moved to `device-sync.json.corrupt-<millis>` and the backup is tried before the library starts empty. Every failure is logged, and the new `:desktop:test` suite stops a write halfway and reads the previous library back. **Measured:** the interrupted-write, partial-temp, corrupt-file and missing-legacy tests pass.
-- [DE] **The installed WebView loads its page.** The jlink runtime now includes `java.net.http`, which JavaFX Web loads on its first request; without it the packaged sign-in window died with `NoClassDefFoundError` while the Gradle run worked against the full JDK. **Measured:** the rebuilt setup's app opened `https://consent.youtube.com/...`, printed `[weblogin] loaded ...` and the frame `build/weblogin-packaged.png` shows Google's consent page.
-- [DE] **A GPU without Direct3D 12 no longer falls into the slow OpenGL path.** The startup probe in `RenderMode` calls `D3D12CreateDevice`; when there is no device, the app starts with the software renderer instead of Skiko's OpenGL fallback. The Performance switch in Playback persists a manual software choice for the next start. **Measured on this machine (Intel HD 4000, 60 Hz): OpenGL produced 1 frame every 4.3 s and 1 frame per resize gesture, while the software renderer held 62 to 70 fps during a 12 s resize loop and 64 to 65 fps idle.**
-- [DE] **The desktop has no database.** Library, liked songs, playlists, the lyrics cache, playback events, the ListenBrainz queue and artist images persist in `~/.vivimusic/device-sync.json` under the 1.55.0 model instead of an embedded database; the old `vivimusicde.db` is imported once at the first start and kept on disk, and the browser-cookie import no longer needs a driver.
-- [DE] **Upgrading removes the database driver an older install left behind.** The setup deletes the files of the previous build that this one no longer ships, so the installed package contains no SQLite jar even when it was installed over an earlier version.
-- [DE] **Android content URIs are not kept as cover paths.** An imported `content://` or `android.resource://` cover cannot be opened by the desktop app and painted as an empty tile; the import now drops it so Album and Playlist draw their placeholder icon instead.
-- [DE] **About credits only the VIVI Music DE lead developer.** The two PixelPlayer contributors and the PixelPlayer source link were removed from the visible maintainers list; the GPL and third-party licence texts are untouched. **Measured:** `:desktop:compileKotlin` passes.
-- [DE] **Every brand string comes from `BuildConfig.APP_NAME`.** The window title, tray, sidebar, welcome screens, shortcuts dialog, mini window, About screen, the Linux media identity and the audio client name read the one constant instead of a literal per file.
-- [DE] **The window resizes without freezing.** Vsync stays on (turned off, a resize measured one frame every 4.3 s against a steady 60 fps) and the shell debounces `WM_SIZE` by 180 ms; `--fps-log` writes the produced frame rate to a file, so the claim is measured rather than felt.
+- [DE] **The YouTube session is sealed at rest and the logs cannot hold a cookie value.**
+- [DE] **The sign-in window is the 1.55.0 one again, with the complete cookie capture.**
 - [DE] **A clean checkout packages an app that plays.**
 - [DE] **The libmpv binaries sit outside the repository.**
 - [DE] **The navigation-event back channel is gone.**
 - [DE] **`ExpressiveCircularProgressIndicator` keeps its signature but not `gapSize`.**
+- [DE] **Album and Playlist match PixelPlayerDesktop file by file.**
+- [DE] **The store survives an interrupted write.**
+- [DE] **The installed WebView loads its page.**
+- [DE] **A GPU without Direct3D 12 no longer falls into the slow OpenGL path.**
+- [DE] **The desktop has no database.**
+- [DE] **Upgrading removes the database driver an older install left behind.**
+- [DE] **Android content URIs are not kept as cover paths.**
+- [DE] **About credits only the VIVI Music DE lead developer.**
+- [DE] **Every brand string comes from `BuildConfig.APP_NAME`.**
+- [DE] **The window resizes without freezing.**
 
 ### 🛑 Removed
 - [DE] **The Bit UI and its machinery.**

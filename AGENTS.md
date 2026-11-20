@@ -529,6 +529,41 @@ cloned screen, not by adding a parallel surface next to it.
   install left behind is gone after an upgrade: a file that is not in the new
   image but sits in the target folder survives an in-place install otherwise,
   and the installed package is verified by listing `app/` for it.
+- **A release is verified by one script, not by a session.**
+  `scripts/verify-release.ps1` reads `version.txt`, then checks the setup's own
+  version resource (ProductName, CompanyName, ProductVersion) and its SHA-256.
+  `image-payload` lists the jpackage image: `VIVIMusic.exe`, the jlink runtime,
+  the `innertube` and `lyricsProvider` jars, `javafx-web` with its
+  `jfxwebkit.dll`, the loose `icudtl.dat`, `libmpv-2.dll` and `vulkan-1.dll`,
+  and fails on any `sqlite` jar. `packaged-webview` runs
+  `VIVIMusic.exe --webview-self-test` from the image: that harness opens the
+  sign-in page in the packaged JavaFX engine, waits for `SUCCEEDED`, reads
+  `document.readyState`, the title and the body length, writes a PNG and exits
+  0 only when the page painted text, so a runtime that lost `java.net.http`
+  fails here. `install` runs the exact setup with `/VERYSILENT
+  /SUPPRESSMSGBOXES /NORESTART /SP- /NOICONS /DIR=<temp>` and compares the
+  installed tree with the app image file by file (name and size). `startup`
+  runs the installed `--benchmark-first-frame` with `user.home` and
+  `USERPROFILE` on a temporary home. `uninstall` runs `unins000.exe` on the
+  same profile and requires the program and the App Paths key gone while only
+  the newest `.vivide.backup` and `device-sync.json` survive. `restore` copies
+  those two files into a fresh temporary home and starts the app again, which
+  proves the kept restore point is usable. The uninstall key, App Paths and the
+  Start Menu folder are exported/copied before the install and restored in a
+  `finally`, so the real installation on the machine is never left
+  unregistered, even when a stage fails. The installer stages need an elevated
+  shell; without one the script relaunches itself through UAC unless
+  `-NoElevate` is given. `-SkipInstaller` checks the image and the WebView only
+  (no admin, nothing installed); `-KeepTemp` keeps the logs, the frames and the
+  installed tree. The report is `build/release-verification-<version>.txt` and
+  `.json`. **Measured on 20 Nov with
+  `VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
+  `60569C63ECE0B9955B94A94B2C98E3444354E5CF4611AADFCEC24AF5A868E459`):**
+  `RESULT: PASS`, with `packaged-webview` loading Accedi - Account Google in
+  6.8 s (a 22 423-byte frame), `install` 19.6 s and all 289 files identical to
+  the image, `startup` `TIME_TO_FIRST_FRAME: 4194ms`, `uninstall` 1.4 s with
+  the two kept files, `restore` starting on them in 5.1 s, and
+  `host-registration` restoring the real `C:\Program Files\VIVIMusic` path.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in
@@ -553,7 +588,10 @@ cloned screen, not by adding a parallel surface next to it.
   before and after; `--store-state` prints the same values without writing, so a
   second process proves the value survived the restart. `--youtube-webview-check`
   opens the JavaFX sign-in window on Google's sign-in page and waits for it to
-  close; the window uses the 1.55.0 capture flow (software renderer, `LOGIN_INFO`
+  close; `--webview-self-test` is its unattended form (same page, same engine,
+  exits 0 only when the page painted text, optional `--webview-timeout=` and
+  `--webview-snapshot=`) and is what `scripts/verify-release.ps1` runs from the
+  packaged image. The window uses the 1.55.0 capture flow (software renderer, `LOGIN_INFO`
   polling on www.youtube.com, full cookie header and the ytcfg ids). `--render-api=<api>`
   overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
   library tab without changing the saved preference; both exist for captures.

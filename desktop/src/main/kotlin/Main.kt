@@ -222,6 +222,9 @@ fun main(args: Array<String> = emptyArray()) {
     // Fills the same JSON store with the small Album/Playlist fixture used by the
     // visual checks, then exits before a window exists.
     DemoLibrarySeed.handle(args)
+    // The unattended WebView proof a release runs: opens the same engine on the
+    // same page, reads the document back and exits 0 only when it painted text.
+    com.music.vivi.desktop.dev.WebViewSelfTest.handle(args)
     // Opens the JavaFX sign-in window and waits for it to close, so the Google page
     // can be checked without touching an account.
     if (args.contains("--youtube-webview-check")) {
