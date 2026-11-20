@@ -22,8 +22,10 @@ import java.io.File
 object YouTubeAccount {
 
     private const val STORE_NAME = "yt-cookie.txt"
+    private const val CONTEXT_NAME = "yt-context.txt"
 
     private val store: File by lazy { File(DesktopPathProvider.configDir, STORE_NAME) }
+    private val contextStore: File by lazy { File(DesktopPathProvider.configDir, CONTEXT_NAME) }
 
     @Volatile
     var cookie: String? = null
@@ -38,16 +40,30 @@ object YouTubeAccount {
         if (saved.isNullOrBlank()) return
         cookie = saved
         YouTube.cookie = saved
+        val context = runCatching {
+            contextStore.takeIf { it.isFile }?.readLines().orEmpty()
+        }.getOrDefault(emptyList())
+        YouTube.dataSyncId = context.getOrNull(0)?.trim()?.ifBlank { null }
+        YouTube.visitorData = context.getOrNull(1)?.trim()?.ifBlank { null }
+        YouTube.useLoginForBrowse = true
         YtLog.log("account", "restored the saved session")
     }
 
-    /** Acts as the account the cookie belongs to, and remembers it for the next start. */
-    fun adopt(value: String) {
+    /**
+     * Acts as the account the cookie belongs to, and remembers it for the next
+     * start. The WebView also hands over the page's DATASYNC_ID and visitor id,
+     * which put innertube requests in the account's context.
+     */
+    fun adopt(value: String, dataSyncId: String? = null, visitorData: String? = null) {
         val trimmed = value.trim()
         if (trimmed.isBlank()) return
         cookie = trimmed
         YouTube.cookie = trimmed
+        YouTube.dataSyncId = dataSyncId?.trim()?.ifBlank { null }
+        visitorData?.trim()?.takeIf { it.isNotBlank() }?.let { YouTube.visitorData = it }
+        YouTube.useLoginForBrowse = true
         runCatching { store.writeText(trimmed) }
+        persistContext()
         YtLog.log("account", "signed in")
     }
 
@@ -55,8 +71,23 @@ object YouTubeAccount {
     fun signOut() {
         cookie = null
         YouTube.cookie = null
+        YouTube.dataSyncId = null
+        YouTube.visitorData = null
+        YouTube.useLoginForBrowse = false
         runCatching { store.delete() }
+        runCatching { contextStore.delete() }
         YtLog.log("account", "signed out")
+    }
+
+    private fun persistContext() {
+        val lines = listOf(YouTube.dataSyncId.orEmpty(), YouTube.visitorData.orEmpty())
+        runCatching {
+            if (lines.all { it.isBlank() }) {
+                contextStore.delete()
+            } else {
+                contextStore.writeText(lines.joinToString("\n"))
+            }
+        }
     }
 
     /** Who the session belongs to, as YouTube Music reports it. */

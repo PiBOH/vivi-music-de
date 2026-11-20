@@ -105,7 +105,7 @@ fun YouTubeAccountCard(
 
             if (!state.isSignedIn) {
                 Text(
-                    text = "The in-app window opens music.youtube.com. If Google refuses it, " +
+                    text = "The in-app window opens Google's sign-in page. If Google refuses it, " +
                         "use the session of a browser that is already signed in.",
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant

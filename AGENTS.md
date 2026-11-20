@@ -506,8 +506,9 @@ cloned screen, not by adding a parallel surface next to it.
   and prints the favorite flag and the liked count read back from the file
   before and after; `--store-state` prints the same values without writing, so a
   second process proves the value survived the restart. `--youtube-webview-check`
-  opens the JavaFX sign-in window on music.youtube.com and writes
-  `build/weblogin.png`; it stops at Google's consent page. `--render-api=<api>`
+  opens the JavaFX sign-in window on Google's sign-in page and waits for it to
+  close; the window uses the 1.55.0 capture flow (software renderer, `LOGIN_INFO`
+  polling on www.youtube.com, full cookie header and the ytcfg ids). `--render-api=<api>`
   overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
   library tab without changing the saved preference; both exist for captures.
   `--seed-demo-library=<dir>` writes the Album/Playlist fixture through

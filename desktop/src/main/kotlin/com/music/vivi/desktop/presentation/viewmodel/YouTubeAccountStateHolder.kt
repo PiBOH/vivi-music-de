@@ -82,8 +82,8 @@ class YouTubeAccountStateHolder(
             it.copy(isBusy = true, message = "Complete the sign-in in the YouTube Music window.")
         }
         YouTubeWebLogin.open { result ->
-            result.onSuccess { cookie ->
-                YouTubeAccount.adopt(cookie)
+            result.onSuccess { session ->
+                YouTubeAccount.adopt(session.cookie, session.dataSyncId, session.visitorData)
                 _state.update {
                     it.copy(isSignedIn = true, isBusy = false, profiles = emptyList(), message = null)
                 }
