@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -41,6 +40,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
@@ -62,7 +62,7 @@ import com.music.vivi.desktop.utils.BrowserUtils
  * update; the copy bundled in the jar is only the offline fallback.
  */
 @Serializable
-data class ContributorEntry(
+private data class ContributorEntry(
     val username: String = "",
     val description: String = "",
     val name: String? = null,
@@ -87,7 +87,7 @@ private val ContributorGroupKeys = ContributorGroupOrder.map { it.first }.toSet(
 
 private val contributorsJson = Json { ignoreUnknownKeys = true }
 
-private val contributorAvatarCache = mutableMapOf<String, ImageBitmap>()
+private val contributorAvatarCache = ConcurrentHashMap<String, ImageBitmap>()
 
 /**
  * Reads the copy bundled in the jar, used while the repository cannot be
@@ -95,9 +95,9 @@ private val contributorAvatarCache = mutableMapOf<String, ImageBitmap>()
  * turns into an empty or duplicated card.
  */
 private fun loadBundledContributors(): List<ContributorEntry> = runCatching {
-    val stream = ContributorsFile::class.java.getResourceAsStream("/contributorsde.json")
-        ?: return emptyList()
-    stream.use { parseContributors(it.readBytes().decodeToString()) }
+    ContributorsFile::class.java.getResourceAsStream("/contributorsde.json")
+        ?.use { parseContributors(it.readBytes().decodeToString()) }
+        .orEmpty()
 }.getOrDefault(emptyList())
 
 /** The live list from the `vivi-music-de` branch; empty when offline. */
@@ -121,7 +121,7 @@ private fun fetchContributorsFromGitHub(): List<ContributorEntry> = runCatching 
 /**
  * Decodes the file and keeps one card per person: entries without a handle are
  * skipped and the first card for a handle wins, so the same person listed twice
- * (for example in both the bundled and the live file) appears once.
+ * in the file appears once.
  */
 private fun parseContributors(text: String): List<ContributorEntry> =
     runCatching { contributorsJson.decodeFromString<ContributorsFile>(text).contributors }
@@ -141,16 +141,15 @@ private fun groupContributors(
     val byGroup = contributors.groupBy { entry ->
         entry.group?.trim()?.lowercase()?.takeIf { it in ContributorGroupKeys } ?: "contributor"
     }
-    return ContributorGroupOrder
-        .map { (key, heading) -> heading to byGroup[key].orEmpty() }
-        .filter { it.second.isNotEmpty() }
+    return ContributorGroupOrder.mapNotNull { (key, heading) ->
+        byGroup[key]?.takeIf { it.isNotEmpty() }?.let { heading to it }
+    }
 }
 
 /**
- * Cached GitHub avatar for a contributor profile URL. Shared with the
- * maintainer card in About so the same picture is downloaded once.
+ * Cached GitHub avatar, so reopening a card does not download the picture again.
  */
-internal suspend fun fetchContributorAvatar(url: String): ImageBitmap? {
+private suspend fun fetchContributorAvatar(url: String): ImageBitmap? {
     contributorAvatarCache[url]?.let { return it }
     return withContext(Dispatchers.IO) {
         runCatching {
@@ -296,8 +295,8 @@ private fun ContributorEntryCard(
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.Top
         ) {
-            ContributorEntryAvatar(
-                username = username,
+            ContributorAvatar(
+                avatarUrl = "https://github.com/$username.png?size=128",
                 fallbackName = realName ?: username,
                 modifier = Modifier.size(56.dp)
             )
@@ -353,14 +352,14 @@ private fun ContributorEntryCard(
     }
 }
 
+/** The GitHub picture of a person, with the initial as the loading/offline fallback. */
 @Composable
-internal fun ContributorEntryAvatar(
-    username: String,
+internal fun ContributorAvatar(
+    avatarUrl: String,
     fallbackName: String,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    val avatarUrl = "https://github.com/$username.png?size=128"
     var avatarBitmap by remember(avatarUrl) { mutableStateOf<ImageBitmap?>(null) }
 
     LaunchedEffect(avatarUrl) {
@@ -375,9 +374,10 @@ internal fun ContributorEntryAvatar(
         color = colors.surfaceContainerHigh,
         border = BorderStroke(2.dp, colors.surfaceContainer)
     ) {
-        if (avatarBitmap != null) {
+        val bitmap = avatarBitmap
+        if (bitmap != null) {
             Image(
-                bitmap = avatarBitmap!!,
+                bitmap = bitmap,
                 contentDescription = fallbackName,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop

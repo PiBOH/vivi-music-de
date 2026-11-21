@@ -24,6 +24,11 @@ class BackupManager(
     private val validationPipeline: ValidationPipeline,
     private val handlers: Map<BackupSection, BackupModuleHandler>
 ) {
+    companion object {
+        /** The section backup's extension; the full backup uses [FullBackup.EXTENSION]. */
+        const val EXTENSION = "vivide.sections"
+    }
+
     private val _progressFlow = MutableStateFlow<BackupTransferProgressUpdate?>(null)
     val progressFlow: StateFlow<BackupTransferProgressUpdate?> = _progressFlow.asStateFlow()
 
@@ -60,7 +65,7 @@ class BackupManager(
             )
 
             reportProgress(BackupOperationType.EXPORT, ++step, totalSteps,
-                "Packaging backup", "Creating .vivide.sections archive.")
+                "Packaging backup", "Creating .$EXTENSION archive.")
 
             backupWriter.write(
                 targetFile = targetFile,

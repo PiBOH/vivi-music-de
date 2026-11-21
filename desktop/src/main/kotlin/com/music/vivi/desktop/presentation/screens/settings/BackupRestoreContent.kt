@@ -197,7 +197,7 @@ fun BackupRestoreContent(
                         Button(
                             onClick = {
                                 DirectoryPicker.saveBackupFile(
-                                    defaultFileName = "VIVIMusicDE_Sections_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.sections"
+                                    defaultFileName = "VIVIMusicDE_Sections_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${BackupManager.EXTENSION}"
                                 ) { targetFile ->
                                     coroutineScope.launch {
                                         isProcessing = true
@@ -228,7 +228,7 @@ fun BackupRestoreContent(
                                 tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Export .vivide.sections File")
+                            Text("Export .${BackupManager.EXTENSION} File")
                         }
                     }
                 }
@@ -294,7 +294,7 @@ fun BackupRestoreContent(
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = "Restore from .vivide.sections File",
+                                        text = "Restore from .${BackupManager.EXTENSION} File",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = colors.onSurface
@@ -325,7 +325,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .vivide.sections File")
+                                Text("Select .${BackupManager.EXTENSION} File")
                             }
                         }
                     } else {
@@ -353,7 +353,7 @@ fun BackupRestoreContent(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Restore from .vivide.sections File",
+                                    text = "Restore from .${BackupManager.EXTENSION} File",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onSurface
@@ -382,7 +382,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .vivide.sections File")
+                                Text("Select .${BackupManager.EXTENSION} File")
                             }
                         }
                     }
@@ -527,7 +527,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Text(
-                    text = "Library and sync data (.vivide.bkp)",
+                    text = "Library and sync data (.${FullBackup.EXTENSION})",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSurface
@@ -544,7 +544,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                         enabled = !busy,
                         onClick = {
                             DirectoryPicker.saveVivideBackupFile(
-                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.bkp"
+                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${FullBackup.EXTENSION}"
                             ) { target ->
                                 busy = true
                                 message = null
@@ -564,7 +564,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                     ) {
                         Icon(painterResource(Res.drawable.ic_outlined_file_download), null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(8.dp))
-                        Text("Export .vivide.bkp")
+                        Text("Export .${FullBackup.EXTENSION}")
                     }
                     TextButton(
                         enabled = !busy,
@@ -655,7 +655,7 @@ private fun BackupInfoNoticeCard() {
                     color = colors.onSecondaryContainer
                 )
                 Text(
-                    text = "Section backups are saved as .vivide.sections; the full device backup as .vivide.bkp. " +
+                    text = "Section backups are saved as .${BackupManager.EXTENSION}; the full device backup as .${FullBackup.EXTENSION}. " +
                         "Export and restore playlists, favorites, lyrics, equalizer presets, and settings across your PCs.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSecondaryContainer.copy(alpha = 0.9f)

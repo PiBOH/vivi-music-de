@@ -12,6 +12,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import com.music.vivi.desktop.data.backup.BackupManager
+import com.music.vivi.desktop.data.backup.FullBackup
 
 object DirectoryPicker {
     private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -92,88 +94,83 @@ object DirectoryPicker {
         }
     }
 
+    /** .pxpl stays readable so a section backup made before the rename imports. */
     fun chooseBackupFile(
-        title: String = "Select a .vivide.sections backup file",
+        title: String = "Select a .${BackupManager.EXTENSION} backup file",
         onSelected: (File) -> Unit
-    ) {
-        scope.launch {
-            // .pxpl stays readable so a section backup made before the rename imports.
-            val file = FileKit.openFilePicker(
-                type = FileKitType.File(listOf("vivide.sections", "pxpl")),
-                dialogSettings = FileKitDialogSettings(title = title)
-            )
-            if (file != null) {
-                onSelected(file.file)
-            }
-        }
-    }
+    ) = pickBackupFile(title, listOf(BackupManager.EXTENSION, "pxpl"), onSelected)
 
     fun saveBackupFile(
-        defaultFileName: String = "VIVIMusicDE_Sections.vivide.sections",
+        defaultFileName: String = "VIVIMusicDE_Sections.${BackupManager.EXTENSION}",
         initialDir: File? = null,
         title: String = "Export Section Backup",
         onSelected: (File) -> Unit
-    ) {
-        scope.launch {
-            val baseName = defaultFileName.removeSuffix(".vivide.sections").removeSuffix(".pxpl")
-            val file = FileKit.openFileSaver(
-                suggestedName = baseName,
-                defaultExtension = "vivide.sections",
-                directory = initialDir?.let { PlatformFile(it) },
-                dialogSettings = FileKitDialogSettings(title = title)
-            )
-            if (file != null) {
-                val finalFile = if (file.file.name.endsWith(".vivide.sections", ignoreCase = true)) {
-                    file.file
-                } else {
-                    val stem = file.file.name.removeSuffix(".pxpl")
-                    File(file.file.parentFile, "$stem.vivide.sections")
-                }
-                onSelected(finalFile)
-            }
-        }
-    }
+    ) = saveBackupFileAs(
+        defaultFileName = defaultFileName,
+        extension = BackupManager.EXTENSION,
+        legacySuffixes = listOf(".pxpl"),
+        initialDir = initialDir,
+        title = title,
+        onSelected = onSelected
+    )
 
+    /** The old .vivide.backup name is still accepted; only the extension moved. */
     fun chooseVivideBackupFile(
-        title: String = "Select a .vivide.bkp file",
+        title: String = "Select a .${FullBackup.EXTENSION} file",
         onSelected: (File) -> Unit
-    ) {
-        scope.launch {
-            // The old .vivide.backup name is still accepted: the archive itself
-            // is unchanged, only the extension it is saved with moved.
-            val file = FileKit.openFilePicker(
-                type = FileKitType.File(listOf("vivide.bkp", "vivide.backup")),
-                dialogSettings = FileKitDialogSettings(title = title)
-            )
-            if (file != null) {
-                onSelected(file.file)
-            }
-        }
-    }
+    ) = pickBackupFile(title, listOf(FullBackup.EXTENSION, "vivide.backup"), onSelected)
 
     fun saveVivideBackupFile(
-        defaultFileName: String = "VIVIMusicDE.vivide.bkp",
+        defaultFileName: String = "VIVIMusicDE.${FullBackup.EXTENSION}",
         initialDir: File? = null,
         title: String = "Export full device backup",
         onSelected: (File) -> Unit
+    ) = saveBackupFileAs(
+        defaultFileName = defaultFileName,
+        extension = FullBackup.EXTENSION,
+        legacySuffixes = listOf(".vivide.backup"),
+        initialDir = initialDir,
+        title = title,
+        onSelected = onSelected
+    )
+
+    private fun pickBackupFile(
+        title: String,
+        extensions: List<String>,
+        onSelected: (File) -> Unit
     ) {
         scope.launch {
-            val baseName = defaultFileName.removeSuffix(".vivide.bkp").removeSuffix(".vivide.backup")
+            FileKit.openFilePicker(
+                type = FileKitType.File(extensions),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )?.let { onSelected(it.file) }
+        }
+    }
+
+    private fun saveBackupFileAs(
+        defaultFileName: String,
+        extension: String,
+        legacySuffixes: List<String>,
+        initialDir: File?,
+        title: String,
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val targetSuffix = ".$extension"
             val file = FileKit.openFileSaver(
-                suggestedName = baseName,
-                defaultExtension = "vivide.bkp",
+                suggestedName = defaultFileName.removeSuffix(targetSuffix),
+                defaultExtension = extension,
                 directory = initialDir?.let { PlatformFile(it) },
                 dialogSettings = FileKitDialogSettings(title = title)
-            )
-            if (file != null) {
-                val finalFile = if (file.file.name.endsWith(".vivide.bkp", ignoreCase = true)) {
-                    file.file
-                } else {
-                    val stem = file.file.name.removeSuffix(".vivide.backup")
-                    File(file.file.parentFile, "$stem.vivide.bkp")
-                }
-                onSelected(finalFile)
+            ) ?: return@launch
+            val name = file.file.name
+            val finalFile = if (name.endsWith(targetSuffix, ignoreCase = true)) {
+                file.file
+            } else {
+                val stem = legacySuffixes.fold(name) { acc, suffix -> acc.removeSuffix(suffix) }
+                File(file.file.parentFile, "$stem$targetSuffix")
             }
+            onSelected(finalFile)
         }
     }
 
