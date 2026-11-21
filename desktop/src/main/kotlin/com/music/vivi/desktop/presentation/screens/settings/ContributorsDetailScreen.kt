@@ -76,6 +76,15 @@ private data class ContributorsFile(val contributors: List<ContributorEntry> = e
 private const val CONTRIBUTORS_RAW_URL =
     "https://raw.githubusercontent.com/PiBOH/vivi-music-de/vivi-music-de/contributorsde.json"
 
+/** The headings the screen shows, in this order, matching the JSON `group` values. */
+private val ContributorGroupOrder = listOf(
+    "developer" to "DEVELOPERS",
+    "supporter" to "SUPPORTERS",
+    "contributor" to "CONTRIBUTORS"
+)
+
+private val ContributorGroupKeys = ContributorGroupOrder.map { it.first }.toSet()
+
 private val contributorsJson = Json { ignoreUnknownKeys = true }
 
 private val contributorAvatarCache = mutableMapOf<String, ImageBitmap>()
@@ -119,6 +128,23 @@ private fun parseContributors(text: String): List<ContributorEntry> =
         .getOrDefault(emptyList())
         .filter { it.username.isNotBlank() }
         .distinctBy { it.username.trim().lowercase() }
+
+/**
+ * Splits the list by the JSON `group` field, in the order the screen shows the
+ * headings. A missing or unknown group is shown under CONTRIBUTORS so nobody
+ * disappears from the screen, and the order inside each group stays the one in
+ * the file.
+ */
+private fun groupContributors(
+    contributors: List<ContributorEntry>
+): List<Pair<String, List<ContributorEntry>>> {
+    val byGroup = contributors.groupBy { entry ->
+        entry.group?.trim()?.lowercase()?.takeIf { it in ContributorGroupKeys } ?: "contributor"
+    }
+    return ContributorGroupOrder
+        .map { (key, heading) -> heading to byGroup[key].orEmpty() }
+        .filter { it.second.isNotEmpty() }
+}
 
 /**
  * Cached GitHub avatar for a contributor profile URL. Shared with the
@@ -167,6 +193,8 @@ fun ContributorsDetailScreen(
         true
     }
 
+    val groups = remember(contributors) { groupContributors(contributors) }
+
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val horizontalPadding = if (maxWidth < 540.dp) 16.dp else 28.dp
 
@@ -187,7 +215,7 @@ fun ContributorsDetailScreen(
                     top = 6.dp,
                     bottom = 24.dp
                 ),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 if (contributors.isEmpty() && loadedFromGitHub) {
                     item {
@@ -219,15 +247,25 @@ fun ContributorsDetailScreen(
                     }
                 }
 
-                items(
-                    items = contributors,
-                    key = { it.username.trim().lowercase() },
-                    contentType = { "contributor" }
-                ) { contributor ->
-                    ContributorEntryCard(
-                        contributor = contributor,
-                        onOpenUrl = BrowserUtils::openBrowser
-                    )
+                groups.forEach { (heading, people) ->
+                    item(
+                        key = "group-$heading",
+                        contentType = { "group" }
+                    ) {
+                        SettingsSubsection(title = heading) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                people.forEach { contributor ->
+                                    ContributorEntryCard(
+                                        contributor = contributor,
+                                        onOpenUrl = BrowserUtils::openBrowser
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
