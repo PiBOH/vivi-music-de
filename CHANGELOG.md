@@ -17,6 +17,7 @@
 - [DE] **Settings shows where the library came from and can import it again.**
 
 ### 🔧 Changed
+- [DE] **Section backups have their own `.vivide.sections` extension.**
 - [DE] **The sidebar mark is the 1024 px icon and the name no longer gets cut.**
 - [DE] **A silent uninstall closes without a message box.**
 - [DE] **The YouTube session is sealed at rest and the logs cannot hold a cookie value.**

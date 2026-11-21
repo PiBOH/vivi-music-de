@@ -658,9 +658,10 @@ end;
 // (`backups\*.vivide.bkp`, and `.vivide.backup` from builds before the rename)
 // and every cache (downloaded updates, audio, video/canvas, lyrics, logs,
 // extracted helper libraries and artwork). On uninstall exactly two things
-// survive: the NEWEST backup - a full restore point with settings and
+// survive: the NEWEST full backup - a restore point with settings and
 // playlists - and device-sync.json. Every other file, older backups included,
-// and every cache are deleted.
+// and every cache are deleted. Section exports (`*.vivide.sections`, and the
+// legacy `*.pxpl`) are not restore points and are removed with the rest.
 
 { "prefix_YYYYMMDD_HHMMSS.vivide.bkp" (or .vivide.backup) -> "YYYYMMDD_HHMMSS".
   The timestamp is always the last 15 characters before the extension, so

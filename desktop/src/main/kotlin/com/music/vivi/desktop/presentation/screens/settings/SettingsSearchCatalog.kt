@@ -313,9 +313,9 @@ object SettingsSearchCatalog {
         // --- BACKUP & RESTORE ---
         SettingSearchItem(
             title = "Backup & Restore",
-            description = "Export and restore playlists, favorites, lyrics, and settings with .vivide.bkp files",
+            description = "Export and restore playlists, favorites, lyrics, and settings with .vivide.sections and .vivide.bkp files",
             section = SettingsSection.BACKUP,
-            keywords = listOf("backup", "restore", "export", "import", "vivide.bkp", "data", "playlists", "favorites", "migration"),
+            keywords = listOf("backup", "restore", "export", "import", "vivide.sections", "vivide.bkp", "pxpl", "data", "playlists", "favorites", "migration"),
             icon = Res.drawable.ic_rounded_settings_backup_restore
         )
     )

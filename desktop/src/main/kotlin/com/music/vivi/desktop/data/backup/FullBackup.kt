@@ -23,7 +23,9 @@ import java.util.zip.ZipOutputStream
  * SessionVault) and are deliberately never included. The archive is a zip with a
  * manifest, so the `.vivide.bkp` name is a convention rather than a new
  * container format; a `.vivide.backup` written by an earlier build restores
- * unchanged, because only the entries are read, never the file name.
+ * unchanged, because only the entries are read, never the file name. Section
+ * backups carry their own `.vivide.sections` extension, so a picker or an
+ * uninstaller can tell the two kinds apart without opening them.
  */
 object FullBackup {
 

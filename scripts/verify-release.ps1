@@ -17,7 +17,8 @@
       6. the installed app starting (--benchmark-first-frame) on a temporary
          user profile;
       7. the uninstaller, which must remove the program and keep only the
-         newest .vivide.bkp (or a legacy .vivide.backup) and device-sync.json;
+         newest full backup (.vivide.bkp, or a legacy .vivide.backup) and
+         device-sync.json, while a newer .vivide.sections export is removed;
       8. the kept restore point, by starting the app again on it.
 
     The test never touches the real installation or the real profile: the
@@ -655,6 +656,7 @@ function Get-RestorePointState {
         Store = (Join-Path $vivi 'device-sync.json')
         NewestBackup = (Join-Path $vivi 'backups\auto_backup_20991231_235959.vivide.bkp')
         OldBackup = (Join-Path $vivi 'backups\auto_backup_20200101_000000.vivide.backup')
+        SectionBackup = (Join-Path $vivi 'backups\auto_backup_99991231_235959.vivide.sections')
         AudioCache = (Join-Path $vivi 'audio')
         LogCache = (Join-Path $vivi 'logs')
     }
@@ -667,6 +669,7 @@ function New-SandboxProfile {
     [IO.File]::WriteAllText($point.Store, '{"marker":"vivi-release-verification","localLibrary":{"songs":[]}}')
     [IO.File]::WriteAllText($point.OldBackup, 'old-backup')
     [IO.File]::WriteAllText($point.NewestBackup, 'newest-backup')
+    [IO.File]::WriteAllText($point.SectionBackup, 'section-backup')
     [IO.File]::WriteAllText((Join-Path $point.AudioCache 'cache.bin'), 'audio-cache')
     return $point
 }
@@ -799,10 +802,11 @@ try {
             Assert-True (Test-Path -LiteralPath $point.Store) 'the uninstaller removed device-sync.json'
             Assert-True (Test-Path -LiteralPath $point.NewestBackup) 'the newest backup did not survive the uninstall'
             Assert-True (-not (Test-Path -LiteralPath $point.OldBackup)) 'an older backup survived the uninstall'
+            Assert-True (-not (Test-Path -LiteralPath $point.SectionBackup)) 'a section export was kept instead of the full restore point'
             Assert-True (-not (Test-Path -LiteralPath $point.AudioCache)) 'a cache directory survived the uninstall'
             Assert-True (-not (Test-Path -LiteralPath $point.LogCache)) 'the logs directory survived the uninstall'
             $kept = @(Get-ChildItem -LiteralPath $point.Root -Recurse -File)
-            return ("program removed, restore point kept: $($kept.Count) file(s), newest .vivide.bkp + device-sync.json")
+            return ("program removed, restore point kept: $($kept.Count) file(s), newest .vivide.bkp + device-sync.json; newer .vivide.sections removed")
         } | Out-Null
         Save-RecoveryRecord 'uninstalled'
 

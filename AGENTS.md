@@ -468,12 +468,15 @@ cloned screen, not by adding a parallel surface next to it.
   `device-sync.json.corrupt-<millis>` and the backup is tried before the store
   starts empty. `desktop/src/test` stops a write halfway and proves the previous
   library is read back. Settings reads the import record (`libraryImport`) and
-  offers Reimporta behind a confirmation, and Backup & Restore writes one
-  `.vivide.bkp` zip (manifest plus the whole `device-sync.json`, credentials
-  excluded) with a `device-sync.json.pre-restore-<millis>` copy before a restore.
-  The full-backup picker still reads a `.vivide.backup` written by an earlier
-  build, and the section picker still reads a `.pxpl`, because the archive is
-  read by its entries, never by the file name.
+  offers Reimporta behind a confirmation, and Backup & Restore writes two kinds:
+  a full-device `.vivide.bkp` zip (manifest plus the whole `device-sync.json`,
+  credentials excluded) with a `device-sync.json.pre-restore-<millis>` copy
+  before a restore, and a section export with its own `.vivide.sections`
+  extension. The names are how a picker and the uninstaller tell the two apart:
+  the full-backup picker reads `.vivide.bkp` and still imports a
+  `.vivide.backup` from an earlier build, the section picker reads
+  `.vivide.sections` and still imports a `.pxpl`, and neither relies on the
+  file name to read the archive itself.
 - **The YouTube session is sealed at rest.** `yt-cookie.txt` and the
   `yt-context.txt` identity beside it are never plain text: `SessionVault` wraps
   them with DPAPI (application entropy,
@@ -549,8 +552,9 @@ cloned screen, not by adding a parallel surface next to it.
   runs the installed `--benchmark-first-frame` with `user.home` and
   `USERPROFILE` on a temporary home. `uninstall` runs `unins000.exe` on the
   same profile and requires the program and the App Paths key gone while only
-  the newest `.vivide.bkp` (or a legacy `.vivide.backup`) and `device-sync.json`
-  survive. `restore` copies
+  the newest full backup (`.vivide.bkp`, or a legacy `.vivide.backup`) and
+  `device-sync.json` survive, while a newer `.vivide.sections` export is
+  deleted. `restore` copies
   those two files into a fresh temporary home and starts the app again, which
   proves the kept restore point is usable. The uninstall key, App Paths and the
   Start Menu folder are exported/copied before the install and restored in a

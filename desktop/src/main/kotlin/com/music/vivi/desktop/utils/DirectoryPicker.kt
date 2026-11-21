@@ -93,13 +93,13 @@ object DirectoryPicker {
     }
 
     fun chooseBackupFile(
-        title: String = "Select a .vivide.bkp backup file",
+        title: String = "Select a .vivide.sections backup file",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
-            // .pxpl stays readable so a backup made before the rename imports.
+            // .pxpl stays readable so a section backup made before the rename imports.
             val file = FileKit.openFilePicker(
-                type = FileKitType.File(listOf("vivide.bkp", "pxpl")),
+                type = FileKitType.File(listOf("vivide.sections", "pxpl")),
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
@@ -109,25 +109,25 @@ object DirectoryPicker {
     }
 
     fun saveBackupFile(
-        defaultFileName: String = "VIVIMusicDE_Backup.vivide.bkp",
+        defaultFileName: String = "VIVIMusicDE_Sections.vivide.sections",
         initialDir: File? = null,
-        title: String = "Export Backup File",
+        title: String = "Export Section Backup",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
-            val baseName = defaultFileName.removeSuffix(".vivide.bkp").removeSuffix(".pxpl")
+            val baseName = defaultFileName.removeSuffix(".vivide.sections").removeSuffix(".pxpl")
             val file = FileKit.openFileSaver(
                 suggestedName = baseName,
-                defaultExtension = "vivide.bkp",
+                defaultExtension = "vivide.sections",
                 directory = initialDir?.let { PlatformFile(it) },
                 dialogSettings = FileKitDialogSettings(title = title)
             )
             if (file != null) {
-                val finalFile = if (file.file.name.endsWith(".vivide.bkp", ignoreCase = true)) {
+                val finalFile = if (file.file.name.endsWith(".vivide.sections", ignoreCase = true)) {
                     file.file
                 } else {
                     val stem = file.file.name.removeSuffix(".pxpl")
-                    File(file.file.parentFile, "$stem.vivide.bkp")
+                    File(file.file.parentFile, "$stem.vivide.sections")
                 }
                 onSelected(finalFile)
             }

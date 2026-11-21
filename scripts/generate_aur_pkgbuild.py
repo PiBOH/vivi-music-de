@@ -81,14 +81,15 @@ def main():
     # behavior as the Windows uninstaller. pacman runs post_remove() from the
     # package's .install file.
     install_script = """post_remove() {{
-    # VIVI Music DE uninstall cleanup: keep only the newest .vivide.backup and
-    # device-sync.json, wipe every other file and cache.
+    # VIVI Music DE uninstall cleanup: keep only the newest full backup
+    # (.vivide.bkp, or a legacy .vivide.backup) and device-sync.json, wipe every
+    # other file and cache. A .vivide.sections export is not a restore point.
     for h in /home/*; do
         [ -d "$h/.vivimusic" ] || continue
         vivi="$h/.vivimusic"
         keep=""
         if [ -d "$vivi/backups" ]; then
-            keep="$(ls -1t "$vivi/backups"/*.vivide.backup 2>/dev/null | head -n 1)"
+            keep="$(ls -1t "$vivi/backups"/*.vivide.bkp "$vivi/backups"/*.vivide.backup 2>/dev/null | head -n 1)"
         fi
         for entry in "$vivi"/* "$vivi"/.[!.]*; do
             [ -e "$entry" ] || continue

@@ -197,7 +197,7 @@ fun BackupRestoreContent(
                         Button(
                             onClick = {
                                 DirectoryPicker.saveBackupFile(
-                                    defaultFileName = "VIVIMusicDE_Backup_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.bkp"
+                                    defaultFileName = "VIVIMusicDE_Sections_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.vivide.sections"
                                 ) { targetFile ->
                                     coroutineScope.launch {
                                         isProcessing = true
@@ -228,7 +228,7 @@ fun BackupRestoreContent(
                                 tint = if (canExport) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                             )
                             Spacer(Modifier.width(8.dp))
-                            Text("Export .vivide.bkp File")
+                            Text("Export .vivide.sections File")
                         }
                     }
                 }
@@ -294,7 +294,7 @@ fun BackupRestoreContent(
                                     verticalArrangement = Arrangement.spacedBy(2.dp)
                                 ) {
                                     Text(
-                                        text = "Restore from .vivide.bkp File",
+                                        text = "Restore from .vivide.sections File",
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = colors.onSurface
@@ -325,7 +325,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .vivide.bkp File")
+                                Text("Select .vivide.sections File")
                             }
                         }
                     } else {
@@ -353,7 +353,7 @@ fun BackupRestoreContent(
                                 verticalArrangement = Arrangement.spacedBy(2.dp)
                             ) {
                                 Text(
-                                    text = "Restore from .vivide.bkp File",
+                                    text = "Restore from .vivide.sections File",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = colors.onSurface
@@ -382,7 +382,7 @@ fun BackupRestoreContent(
                                     tint = if (!isProcessing) colors.onPrimary else colors.onSurfaceVariant.copy(alpha = 0.38f)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Select .vivide.bkp File")
+                                Text("Select .vivide.sections File")
                             }
                         }
                     }
@@ -649,13 +649,14 @@ private fun BackupInfoNoticeCard() {
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Desktop Backup & Restore (.vivide.bkp)",
+                    text = "Desktop Backup & Restore",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = colors.onSecondaryContainer
                 )
                 Text(
-                    text = "Export and restore playlists, favorites, lyrics, equalizer presets, and settings across your PCs.",
+                    text = "Section backups are saved as .vivide.sections; the full device backup as .vivide.bkp. " +
+                        "Export and restore playlists, favorites, lyrics, equalizer presets, and settings across your PCs.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSecondaryContainer.copy(alpha = 0.9f)
                 )
