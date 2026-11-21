@@ -278,12 +278,16 @@ private fun ContributorEntryCard(
                     fontWeight = FontWeight.SemiBold,
                     color = colors.onSurface
                 )
-                Text(
-                    text = "@$username",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Medium,
-                    color = colors.primary
-                )
+                // The handle is the title when there is no real name, so it is
+                // only repeated under a name.
+                if (realName != null) {
+                    Text(
+                        text = "@$username",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = colors.primary
+                    )
+                }
                 if (contributor.description.isNotBlank()) {
                     Text(
                         text = contributor.description,
