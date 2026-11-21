@@ -16,6 +16,7 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_delete
 import com.music.vivi.desktop.generated.resources.ic_rounded_delete_forever
 import com.music.vivi.desktop.generated.resources.ic_rounded_fullscreen
 import com.music.vivi.desktop.generated.resources.ic_rounded_graphic_eq
+import com.music.vivi.desktop.generated.resources.ic_rounded_group
 import com.music.vivi.desktop.generated.resources.ic_rounded_info
 import com.music.vivi.desktop.generated.resources.ic_rounded_layers
 import com.music.vivi.desktop.generated.resources.ic_rounded_music_note
@@ -299,6 +300,14 @@ object SettingsSearchCatalog {
             section = SettingsSection.ABOUT,
             keywords = listOf("about", "version", "update", "github", "license", "credits"),
             icon = Res.drawable.ic_rounded_info
+        ),
+        SettingSearchItem(
+            title = "Contributors",
+            description = "The people who build, test and support the app, with a card and GitHub link each",
+            section = SettingsSection.ABOUT,
+            subDetail = LibrarySubDetail.CONTRIBUTORS,
+            keywords = listOf("contributors", "credits", "people", "team", "supporters", "testers"),
+            icon = Res.drawable.ic_rounded_group
         ),
 
         // --- BACKUP & RESTORE ---

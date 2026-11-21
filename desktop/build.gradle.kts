@@ -163,13 +163,6 @@ kotlin {
     sourceSets.getByName("main").kotlin.srcDir(generateBuildConfig)
 }
 
-// Ship the release metadata and the changelog on the classpath so About can read them offline.
-tasks.processResources {
-    from(project.file("version.txt"))
-    from(project.file("CHANGELOG.md"))
-    from(project.file("LICENSE"))
-}
-
 tasks.test {
     useJUnitPlatform()
 }
@@ -440,4 +433,14 @@ tasks.register("windowsInstaller") {
 compose.resources {
     packageOfResClass = "com.music.vivi.desktop.generated.resources"
     generateResClass = always
+}
+
+// Ship the release metadata and the changelog on the classpath so About can read them offline.
+// contributorsde.json is the offline fallback of the Contributors screen.
+// rootProject.file is required: project.file resolves inside desktop/, where these files do not exist.
+tasks.processResources {
+    from(rootProject.file("version.txt"))
+    from(rootProject.file("CHANGELOG.md"))
+    from(rootProject.file("LICENSE"))
+    from(rootProject.file("contributorsde.json"))
 }

@@ -112,6 +112,7 @@ fun SettingsCategoryDetail(
     onOpenDuplicatesDetail: () -> Unit,
     onOpenPaletteStyleDetail: () -> Unit,
     onOpenLicensesDetail: () -> Unit = {},
+    onOpenContributorsDetail: () -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1265,7 +1266,8 @@ fun SettingsCategoryDetail(
                 item {
                     AboutSectionContent(
                         viewModel = viewModel,
-                        onOpenLicenses = onOpenLicensesDetail
+                        onOpenLicenses = onOpenLicensesDetail,
+                        onOpenContributors = onOpenContributorsDetail
                     )
                 }
             }

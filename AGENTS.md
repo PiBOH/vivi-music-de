@@ -789,9 +789,12 @@ in `Main.kt`, `packageName = "VIVIMusic"` in `desktop/build.gradle.kts`, the
 installer metadata in `installer/`, `src/main/resources/icons/`
 (`icon.ico`/`icns`/`png`) and `composeResources/drawable/vivi_app_logo.png`
 through `ViviLogo`. The About screen's maintainers section ends with a
-Contributors card that opens the official contributors graph and stacks up to
-four human avatars. A version number on a screen is read from
-`BuildConfig.APP_VERSION_NAME`, never typed. Known drift to fix when that code is touched: the tray menu's first item
+Contributors card that opens the dedicated Contributors screen: one card per
+person, read live from `contributorsde.json` on the `vivi-music-de` branch
+every time the screen opens, with the copy bundled on the classpath
+(`processResources`) as the offline fallback and a repeated handle drawn once.
+A version number on a screen is read from `BuildConfig.APP_VERSION_NAME`,
+never typed. Known drift to fix when that code is touched: the tray menu's first item
 still says `Open PixelPlayer`, and the window title is a literal instead of
 `BuildConfig.APP_NAME`.
 

@@ -3,6 +3,7 @@
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
+- [DE] **About opens a dedicated Contributors screen, with one card per person.**
 - [DE] **A killed release check repairs the host registration on its next run.**
 - [DE] **A release is verified by one script, from the packaged WebView to the uninstaller and back.**
 - [DE] **The YouTube Music account switch lives in Accounts, and it is a hot swap.**

@@ -1,8 +1,5 @@
 package com.music.vivi.desktop.presentation.screens.settings
 
-import java.net.HttpURLConnection
-import java.net.URI
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -16,8 +13,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,18 +35,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.skia.Image as SkiaImage
 
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.domain.model.UpdateCheckResult
@@ -105,12 +95,6 @@ private val MaintainersList = listOf(
     )
 )
 
-private const val ContributorsUrl = "https://github.com/PiBOH/vivi-music-de/graphs/contributors"
-
-// Only human contributors are shown. The repository currently has one; the
-// stack supports up to four and grows without a layout change when more arrive.
-private val ContributorsList = MaintainersList
-
 private val ProjectLinks = listOf(
     ProjectLink(
         id = "source",
@@ -128,31 +112,12 @@ private val ProjectLinks = listOf(
     )
 )
 
-private val avatarMemoryCache = mutableMapOf<String, ImageBitmap>()
-
-private suspend fun fetchAvatarBitmap(url: String): ImageBitmap? {
-    avatarMemoryCache[url]?.let { return it }
-    return withContext(Dispatchers.IO) {
-        runCatching {
-            val uri = URI(url)
-            val connection = uri.toURL().openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connectTimeout = 4000
-            connection.readTimeout = 4000
-            connection.setRequestProperty("User-Agent", "VIVIMusicDE")
-            val bytes = connection.inputStream.use { it.readBytes() }
-            val bitmap = SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap()
-            avatarMemoryCache[url] = bitmap
-            bitmap
-        }.getOrNull()
-    }
-}
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AboutSectionContent(
     viewModel: PlayerViewModel? = null,
     onOpenLicenses: () -> Unit = {},
+    onOpenContributors: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -522,7 +487,7 @@ fun AboutSectionContent(
                         )
                     }
                 }
-                ContributorsCard(onOpenUrl = BrowserUtils::openBrowser)
+                ContributorsCard(onOpen = onOpenContributors)
             }
         }
     }
@@ -619,7 +584,7 @@ private fun ContributorCard(
 
 @Composable
 private fun ContributorsCard(
-    onOpenUrl: (String) -> Unit,
+    onOpen: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
@@ -629,7 +594,7 @@ private fun ContributorsCard(
         color = colors.surfaceContainer,
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onOpenUrl(ContributorsUrl) }
+            .clickable { onOpen() }
     ) {
         Row(
             modifier = Modifier
@@ -674,8 +639,6 @@ private fun ContributorsCard(
                 )
             }
 
-            ContributorAvatarStack(ContributorsList)
-
             Spacer(modifier = Modifier.width(4.dp))
 
             Icon(
@@ -689,39 +652,16 @@ private fun ContributorsCard(
 }
 
 @Composable
-private fun ContributorAvatarStack(contributors: List<Contributor>) {
-    val shown = contributors.take(4)
-    if (shown.isEmpty()) return
-
-    val step = 18
-    Box(
-        modifier = Modifier
-            .width((28 + step * (shown.size - 1)).dp)
-            .height(28.dp)
-    ) {
-        shown.forEachIndexed { index, contributor ->
-            ContributorAvatar(
-                contributor = contributor,
-                modifier = Modifier
-                    .offset(x = (step * index).dp)
-                    .size(28.dp)
-                    .zIndex((shown.size - index).toFloat())
-            )
-        }
-    }
-}
-
-@Composable
 private fun ContributorAvatar(
     contributor: Contributor,
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
-    var avatarBitmap by remember(contributor.avatarUrl) { mutableStateOf(avatarMemoryCache[contributor.avatarUrl]) }
+    var avatarBitmap by remember(contributor.avatarUrl) { mutableStateOf<ImageBitmap?>(null) }
 
     LaunchedEffect(contributor.avatarUrl) {
         if (avatarBitmap == null) {
-            avatarBitmap = fetchAvatarBitmap(contributor.avatarUrl)
+            avatarBitmap = fetchContributorAvatar(contributor.avatarUrl)
         }
     }
 

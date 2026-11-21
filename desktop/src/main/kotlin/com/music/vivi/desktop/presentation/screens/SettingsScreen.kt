@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.music.vivi.desktop.presentation.screens.settings.ArtistSettingsDetailScreen
+import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.LicensesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.MusicFoldersDetailScreen
@@ -32,7 +33,8 @@ enum class LibrarySubDetail {
     ARTISTS,
     DUPLICATES,
     PALETTE_STYLE,
-    LICENSES
+    LICENSES,
+    CONTRIBUTORS
 }
 
 @Composable
@@ -133,6 +135,11 @@ fun SettingsScreen(
                     onBack = onBack
                 )
             }
+            subDetail == LibrarySubDetail.CONTRIBUTORS -> {
+                ContributorsDetailScreen(
+                    onBack = onBack
+                )
+            }
             else -> {
                 SettingsCategoryDetail(
                     section = section,
@@ -147,6 +154,7 @@ fun SettingsScreen(
                     onOpenDuplicatesDetail = { onNavigate(section, LibrarySubDetail.DUPLICATES) },
                     onOpenPaletteStyleDetail = { onNavigate(section, LibrarySubDetail.PALETTE_STYLE) },
                     onOpenLicensesDetail = { onNavigate(section, LibrarySubDetail.LICENSES) },
+                    onOpenContributorsDetail = { onNavigate(section, LibrarySubDetail.CONTRIBUTORS) },
                     onBack = onBack
                 )
             }
