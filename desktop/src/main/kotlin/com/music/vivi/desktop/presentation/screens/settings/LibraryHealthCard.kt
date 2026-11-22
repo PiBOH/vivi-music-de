@@ -136,36 +136,50 @@ private fun HealthSummary(
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant
         )
+        val missingPreviews = report.missingFiles.take(3).map { it.label }
+        val artworkPreviews = report.brokenArtwork.take(3).map { it.label }
+        val orphanPreviews = report.orphanPlaylistEntries.take(3).map {
+            "${it.playlistName} (${it.missingSongIds.size})"
+        }
+        val duplicatePreviews = report.duplicateGroups.take(3).map {
+            "${it.title} - ${it.artist} (${it.songs.size} copies)"
+        }
+
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             HealthGroupRow(
-                label = "Missing song files",
                 count = report.missingFiles.size,
-                previews = report.missingFiles.take(3).map { it.label },
+                headline = "Missing song files: ${report.missingFiles.size}",
+                previews = missingPreviews,
+                hiddenText = healthMoreText(report.missingFiles.size, missingPreviews.size),
                 group = LibraryHealthGroup.MISSING_FILES,
                 onOpen = onOpenDetail
             )
             HealthGroupRow(
-                label = "Broken covers",
                 count = report.brokenArtwork.size,
-                previews = report.brokenArtwork.take(3).map { it.label },
+                headline = "Broken covers: ${report.brokenArtwork.size}",
+                previews = artworkPreviews,
+                hiddenText = healthMoreText(report.brokenArtwork.size, artworkPreviews.size),
                 group = LibraryHealthGroup.BROKEN_ARTWORK,
                 onOpen = onOpenDetail
             )
             HealthGroupRow(
-                label = "Playlist entries without a song",
                 count = report.orphanEntryCount,
-                previews = report.orphanPlaylistEntries.take(3).map {
-                    "${it.playlistName} (${it.missingSongIds.size})"
-                },
+                headline = orphanEntriesHeadline(report),
+                previews = orphanPreviews,
+                hiddenText = healthMoreText(
+                    total = report.orphanPlaylistEntries.size,
+                    shown = orphanPreviews.size,
+                    singular = "playlist",
+                    plural = "playlists"
+                ),
                 group = LibraryHealthGroup.ORPHAN_ENTRIES,
                 onOpen = onOpenDetail
             )
             HealthGroupRow(
-                label = "Duplicate groups",
                 count = report.duplicateGroups.size,
-                previews = report.duplicateGroups.take(3).map {
-                    "${it.title} - ${it.artist} (${it.songs.size} copies)"
-                },
+                headline = "Duplicate groups: ${report.duplicateGroups.size}",
+                previews = duplicatePreviews,
+                hiddenText = healthMoreText(report.duplicateGroups.size, duplicatePreviews.size),
                 group = LibraryHealthGroup.DUPLICATES,
                 onOpen = onOpenDetail
             )
@@ -173,11 +187,39 @@ private fun HealthSummary(
     }
 }
 
+/**
+ * The line that closes a preview list. [total] and [shown] count the same kind
+ * of item; [singular] and [plural] name it when the row previews playlists
+ * rather than the entries themselves.
+ */
+internal fun healthMoreText(
+    total: Int,
+    shown: Int,
+    singular: String = "",
+    plural: String = ""
+): String? {
+    val remaining = (total - shown).coerceAtLeast(0)
+    if (remaining == 0) return null
+    val unit = when {
+        singular.isBlank() -> ""
+        remaining == 1 -> " $singular"
+        else -> " ${plural.ifBlank { singular }}"
+    }
+    return "... and $remaining more$unit"
+}
+
+internal fun orphanEntriesHeadline(report: LibraryHealthReport): String {
+    val playlists = report.orphanPlaylistEntries.size
+    return "Playlist entries without a song: ${report.orphanEntryCount} in $playlists " +
+        (if (playlists == 1) "playlist" else "playlists")
+}
+
 @Composable
 private fun HealthGroupRow(
-    label: String,
     count: Int,
+    headline: String,
     previews: List<String>,
+    hiddenText: String?,
     group: LibraryHealthGroup,
     onOpen: (LibraryHealthGroup) -> Unit
 ) {
@@ -201,7 +243,7 @@ private fun HealthGroupRow(
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 Text(
-                    text = "$label: $count",
+                    text = headline,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.onSurface
@@ -215,9 +257,9 @@ private fun HealthGroupRow(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                if (count > previews.size) {
+                hiddenText?.let { more ->
                     Text(
-                        text = "... and ${count - previews.size} more",
+                        text = more,
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -225,7 +267,7 @@ private fun HealthGroupRow(
             }
             Icon(
                 painter = painterResource(Res.drawable.ic_rounded_chevron_right),
-                contentDescription = "Open $label",
+                contentDescription = "Open $headline",
                 tint = colors.onSurfaceVariant.copy(alpha = 0.7f),
                 modifier = Modifier.size(20.dp)
             )

@@ -5,6 +5,7 @@
 - [DE] **Library health issues are reviewed and repaired from their own screen, with a preview and Undo.**
 
 ### 🔧 Changed
+- [DE] **The library health card counts the hidden playlist rows correctly.**
 - [DE] **The new settings cards and the update dialog were rendered and corrected.**
 
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
