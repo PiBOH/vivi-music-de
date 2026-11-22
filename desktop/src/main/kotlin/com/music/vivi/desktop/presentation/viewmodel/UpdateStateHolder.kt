@@ -1,5 +1,7 @@
 package com.music.vivi.desktop.presentation.viewmodel
 
+import java.awt.Desktop
+import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
 import kotlinx.coroutines.CoroutineScope
@@ -12,17 +14,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 import com.music.vivi.desktop.BuildConfig
+import com.music.vivi.desktop.data.backup.AutoBackupScheduler
 import com.music.vivi.desktop.data.network.github.GitHubReleaseClient
 import com.music.vivi.desktop.domain.model.AppReleaseInfo
+import com.music.vivi.desktop.domain.model.ReleaseAsset
 import com.music.vivi.desktop.domain.model.SemanticVersion
 import com.music.vivi.desktop.domain.model.UpdateCheckResult
+import com.music.vivi.desktop.domain.model.UpdateDownloadState
 import com.music.vivi.desktop.domain.repository.SettingsRepository
 import com.music.vivi.desktop.utils.BrowserUtils
+import com.music.vivi.desktop.utils.DesktopPathProvider
 
 class UpdateStateHolder(
     private val releaseClient: GitHubReleaseClient,
     private val settingsRepository: SettingsRepository,
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
+    private val autoBackupScheduler: AutoBackupScheduler? = null
 ) {
     private val startupCheckTriggered = AtomicBoolean(false)
 
@@ -34,6 +41,9 @@ class UpdateStateHolder(
 
     private val _availableRelease = MutableStateFlow<AppReleaseInfo?>(null)
     val availableRelease: StateFlow<AppReleaseInfo?> = _availableRelease.asStateFlow()
+
+    private val _downloadState = MutableStateFlow<UpdateDownloadState>(UpdateDownloadState.Idle)
+    val downloadState: StateFlow<UpdateDownloadState> = _downloadState.asStateFlow()
 
     val checkUpdatesOnStartup: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.checkUpdatesOnStartup }
@@ -110,6 +120,93 @@ class UpdateStateHolder(
 
     fun openReleasePage(url: String) {
         BrowserUtils.openBrowser(url)
+    }
+
+    /**
+     * Downloads this system's installer and refuses it when the published
+     * SHA-256 does not match. A release without a digest is not downloaded at
+     * all: an unverifiable setup is not an update path.
+     */
+    fun downloadUpdate() {
+        if (_downloadState.value is UpdateDownloadState.Downloading) return
+        val release = _availableRelease.value ?: return
+        val asset = release.assetForCurrentPlatform()
+        if (asset == null) {
+            _downloadState.value = UpdateDownloadState.Failed(
+                "The ${release.versionName} release has no installer for this system."
+            )
+            return
+        }
+        val checksumAsset = release.assets.firstOrNull {
+            it.name.equals("${asset.name}.sha256", ignoreCase = true)
+        }
+        coroutineScope.launch {
+            val expected = asset.sha256 ?: checksumAsset
+                ?.let { releaseClient.fetchText(it.downloadUrl).getOrNull() }
+                ?.lineSequence()
+                ?.firstOrNull()
+                ?.trim()
+                ?.substringBefore(' ')
+                ?.lowercase()
+                ?.takeIf { it.length == 64 }
+            if (expected == null) {
+                _downloadState.value = UpdateDownloadState.Failed(
+                    "The release does not publish a SHA-256 for ${asset.name}, so the download was not started."
+                )
+                return@launch
+            }
+            _downloadState.value = UpdateDownloadState.Downloading(0L, asset.size)
+            val settings = settingsRepository.getSettings()
+            if (settings.backupBeforeUpdate) {
+                autoBackupScheduler?.backupNow()
+            }
+            val target = File(DesktopPathProvider.cacheDir, "updates/${asset.name}")
+            val outcome = releaseClient.download(asset, target) { received, total ->
+                _downloadState.value = UpdateDownloadState.Downloading(received, total)
+            }
+            outcome.onSuccess { file ->
+                val actual = runCatching { releaseClient.sha256(file) }.getOrNull()
+                if (actual == null) {
+                    file.delete()
+                    _downloadState.value = UpdateDownloadState.Failed("The downloaded file could not be hashed.")
+                } else if (!actual.equals(expected, ignoreCase = true)) {
+                    file.delete()
+                    _downloadState.value = UpdateDownloadState.Failed(
+                        "The downloaded file does not match the published SHA-256. It was deleted."
+                    )
+                } else {
+                    _downloadState.value = UpdateDownloadState.Ready(file, actual)
+                }
+            }.onFailure { error ->
+                _downloadState.value = UpdateDownloadState.Failed(error.message ?: "The download failed.")
+            }
+        }
+    }
+
+    /** Opens the verified installer with the system's default handler. */
+    fun installUpdate() {
+        val ready = _downloadState.value as? UpdateDownloadState.Ready ?: return
+        runCatching {
+            if (!Desktop.isDesktopSupported()) error("This system cannot open the installer.")
+            Desktop.getDesktop().open(ready.file)
+        }.onFailure { error ->
+            _downloadState.value = UpdateDownloadState.Failed(error.message ?: "The installer could not be opened.")
+        }
+    }
+
+    fun resetDownloadState() {
+        _downloadState.value = UpdateDownloadState.Idle
+    }
+
+    private fun AppReleaseInfo.assetForCurrentPlatform(): ReleaseAsset? {
+        val os = System.getProperty("os.name").lowercase()
+        val suffix = when {
+            os.contains("win") -> "-setup.exe"
+            os.contains("mac") -> ".dmg"
+            else -> ".AppImage"
+        }
+        return assets.firstOrNull { it.name.endsWith(suffix, ignoreCase = true) }
+            ?: assets.firstOrNull { it.name.endsWith("-setup.exe", ignoreCase = true) }
     }
 
     fun setCheckUpdatesOnStartup(enabled: Boolean) {

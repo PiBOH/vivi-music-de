@@ -1409,6 +1409,10 @@ object YouTube {
         innerTube.addToPlaylist(WEB_REMIX, playlistId, videoId)
     }
 
+    /** The same call, without the HTTP response in the signature (desktop consumers). */
+    suspend fun addToPlaylistUnit(playlistId: String, videoId: String): Result<Unit> =
+        addToPlaylist(playlistId, videoId).map { }
+
     suspend fun addPlaylistToPlaylist(playlistId: String, addPlaylistId: String) = runCatching {
         innerTube.addPlaylistToPlaylist(WEB_REMIX, playlistId, addPlaylistId)
     }
@@ -1429,6 +1433,9 @@ object YouTube {
         innerTube.renamePlaylist(WEB_REMIX, playlistId, name)
     }
 
+    suspend fun renamePlaylistUnit(playlistId: String, name: String): Result<Unit> =
+        renamePlaylist(playlistId, name).map { }
+
     suspend fun uploadCustomThumbnailLink(playlistId: String, image: ByteArray) = runCatching {
         val uploadUrl = innerTube.getUploadCustomThumbnailLink(WEB_REMIX, image.size).headers["x-guploader-uploadid"]
         val blobReq = innerTube.uploadCustomThumbnail(
@@ -1447,6 +1454,9 @@ object YouTube {
     suspend fun deletePlaylist(playlistId: String) = runCatching {
         innerTube.deletePlaylist(WEB_REMIX, playlistId)
     }
+
+    suspend fun deletePlaylistUnit(playlistId: String): Result<Unit> =
+        deletePlaylist(playlistId).map { }
 
     suspend fun player(videoId: String, playlistId: String? = null, client: YouTubeClient, signatureTimestamp: Int? = null, poToken: String? = null): Result<PlayerResponse> = runCatching {
         innerTube.player(client, videoId, playlistId, signatureTimestamp, poToken).body<PlayerResponse>()

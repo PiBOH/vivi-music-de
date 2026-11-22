@@ -37,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,6 +67,14 @@ fun AddToPlaylistDialog(
     val colors = MaterialTheme.colorScheme
     var searchQuery by remember { mutableStateOf("") }
     var showCreateDialog by remember { mutableStateOf(false) }
+    var showRemotePlaylists by remember { mutableStateOf(false) }
+    val videoIds = remember(songs) {
+        songs.mapNotNull { song ->
+            song.path.removePrefix("ytmusic://").takeIf {
+                song.path.startsWith("ytmusic://") && it.isNotBlank()
+            }
+        }
+    }
 
     val filteredPlaylists = remember(playlists, searchQuery) {
         if (searchQuery.isBlank()) {
@@ -73,6 +82,13 @@ fun AddToPlaylistDialog(
         } else {
             playlists.filter { it.name.contains(searchQuery, ignoreCase = true) }
         }
+    }
+
+    if (showRemotePlaylists) {
+        RemotePlaylistsDialog(
+            videoIds = videoIds,
+            onDismiss = { showRemotePlaylists = false }
+        )
     }
 
     if (showCreateDialog) {
@@ -163,6 +179,15 @@ fun AddToPlaylistDialog(
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold
                     )
+                }
+
+                if (videoIds.isNotEmpty()) {
+                    TextButton(
+                        onClick = { showRemotePlaylists = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add to YouTube Music playlist")
+                    }
                 }
 
                 if (playlists.size > 4) {

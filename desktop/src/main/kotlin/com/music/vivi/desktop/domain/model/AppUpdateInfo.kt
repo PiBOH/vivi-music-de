@@ -1,13 +1,31 @@
 package com.music.vivi.desktop.domain.model
 
+import java.io.File
+
+data class ReleaseAsset(
+    val name: String,
+    val downloadUrl: String,
+    val size: Long = 0L,
+    /** The published SHA-256, or null when GitHub has no digest for the asset. */
+    val sha256: String? = null
+)
+
 data class AppReleaseInfo(
     val versionTag: String,
     val versionName: String,
     val releaseNotes: String,
     val htmlUrl: String,
     val publishedAt: String? = null,
-    val isPrerelease: Boolean = false
+    val isPrerelease: Boolean = false,
+    val assets: List<ReleaseAsset> = emptyList()
 )
+
+sealed interface UpdateDownloadState {
+    data object Idle : UpdateDownloadState
+    data class Downloading(val received: Long, val total: Long) : UpdateDownloadState
+    data class Ready(val file: File, val sha256: String) : UpdateDownloadState
+    data class Failed(val message: String) : UpdateDownloadState
+}
 
 sealed interface UpdateCheckResult {
     data object Idle : UpdateCheckResult

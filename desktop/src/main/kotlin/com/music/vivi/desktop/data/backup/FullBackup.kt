@@ -21,15 +21,15 @@ import java.util.zip.ZipOutputStream
  *
  * Account cookies are not in that file (they live in `yt-cookie.txt`, sealed by
  * SessionVault) and are deliberately never included. The archive is a zip with a
- * manifest, so the `.vivide.bkp` name is a convention rather than a new
- * container format; a `.vivide.backup` written by an earlier build restores
- * unchanged, because only the entries are read, never the file name. Section
- * backups carry their own `.vivide.sections` extension, so a picker or an
- * uninstaller can tell the two kinds apart without opening them.
+ * manifest, so the `.vivide.lbkp` name is a convention rather than a new
+ * container format; a `.vivide.bkp` or `.vivide.backup` written by an earlier
+ * build restores unchanged, because only the entries are read, never the file
+ * name. Section backups carry their own `.vivide.sbkp` extension, so a picker
+ * or an uninstaller can tell the two kinds apart without opening them.
  */
 object FullBackup {
 
-    const val EXTENSION = "vivide.bkp"
+    const val EXTENSION = "vivide.lbkp"
     private const val MANIFEST_ENTRY = "manifest.json"
     private const val STORE_ENTRY = "device-sync.json"
     private const val MAX_ENTRY_BYTES = 64L * 1024 * 1024

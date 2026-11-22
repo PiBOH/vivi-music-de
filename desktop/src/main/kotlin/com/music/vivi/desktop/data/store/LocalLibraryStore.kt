@@ -92,8 +92,18 @@ data class LocalLibraryState(
     val playbackEvents: List<PlaybackEvent> = emptyList(),
     val pendingListens: List<ListenBrainzPendingListen> = emptyList(),
     val artists: List<StoredArtist> = emptyList(),
+    /**
+     * The order the Accounts card draws the account's playlists in. YouTube
+     * Music exposes no order for the library list, so this is local to the
+     * device and changes only what the card shows.
+     */
+    val youTubePlaylistOrder: List<String> = emptyList(),
     val nextEventId: Long = 1L,
-    val nextListenId: Long = 1L
+    val nextListenId: Long = 1L,
+    /** The last track that was playing, so the next start can resume it paused. */
+    val resumeSong: Song? = null,
+    val resumePositionMs: Long = 0L,
+    val resumeUpdatedAt: Long = 0L
 ) {
     val isEmpty: Boolean
         get() = songs.isEmpty() && favorites.isEmpty() && playlists.isEmpty() &&

@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,7 +17,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.music.vivi.desktop.presentation.screens.settings.ArtistSettingsDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailScreen
+import com.music.vivi.desktop.data.library.LibraryHealthGroup
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
+import com.music.vivi.desktop.presentation.screens.settings.LibraryHealthDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.LicensesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.MusicFoldersDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.PaletteStyleDetailScreen
@@ -31,6 +34,7 @@ enum class LibrarySubDetail {
     NONE,
     FOLDERS,
     ARTISTS,
+    HEALTH,
     DUPLICATES,
     PALETTE_STYLE,
     LICENSES,
@@ -53,6 +57,14 @@ fun SettingsScreen(
     onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var healthFocus by remember { mutableStateOf<LibraryHealthGroup?>(null) }
+
+    // The card selects the group it opens; leaving Library Health clears the
+    // selection so a later visit from search starts on the group list.
+    LaunchedEffect(activeSection, activeSubDetail) {
+        if (activeSubDetail != LibrarySubDetail.HEALTH) healthFocus = null
+    }
+
     if (searchQuery.isNotBlank()) {
         val searchResults = remember(searchQuery) {
             SettingsSearchCatalog.search(searchQuery)
@@ -117,6 +129,14 @@ fun SettingsScreen(
                     onRescanLibrary = onRescanLibrary
                 )
             }
+            section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.HEALTH -> {
+                LibraryHealthDetailScreen(
+                    viewModel = viewModel,
+                    onBack = onBack,
+                    onOpenDuplicates = { onNavigate(SettingsSection.LIBRARY, LibrarySubDetail.DUPLICATES) },
+                    initialGroup = healthFocus
+                )
+            }
             section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.DUPLICATES -> {
                 DuplicatesDetailScreen(
                     viewModel = viewModel,
@@ -151,6 +171,10 @@ fun SettingsScreen(
                     onRescanLibrary = onRescanLibrary,
                     onOpenFoldersDetail = { onNavigate(section, LibrarySubDetail.FOLDERS) },
                     onOpenArtistsDetail = { onNavigate(section, LibrarySubDetail.ARTISTS) },
+                    onOpenHealthDetail = { group ->
+                        healthFocus = group
+                        onNavigate(section, LibrarySubDetail.HEALTH)
+                    },
                     onOpenDuplicatesDetail = { onNavigate(section, LibrarySubDetail.DUPLICATES) },
                     onOpenPaletteStyleDetail = { onNavigate(section, LibrarySubDetail.PALETTE_STYLE) },
                     onOpenLicensesDetail = { onNavigate(section, LibrarySubDetail.LICENSES) },

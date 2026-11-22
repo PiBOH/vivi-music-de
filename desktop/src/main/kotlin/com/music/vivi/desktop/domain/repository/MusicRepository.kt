@@ -33,6 +33,10 @@ interface MusicRepository {
     suspend fun deleteSongsInDirectory(directoryPath: String)
     suspend fun clearLibrary()
 
+    /** Remembers the last playing track and its position for the next start. */
+    suspend fun savePlaybackResumePoint(song: Song, positionMs: Long)
+    suspend fun getPlaybackResumePoint(): Pair<Song, Long>?
+
     fun getAllAlbumsFlow(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1, minDurationMs: Long = 0L): Flow<List<Album>>
     suspend fun getAllAlbums(sortOption: SortOption = SortOption.AlbumTitleAZ, minTracks: Int = 1, minDurationMs: Long = 0L): List<Album>
     suspend fun getAlbumById(id: Long, minDurationMs: Long = 0L): Album?

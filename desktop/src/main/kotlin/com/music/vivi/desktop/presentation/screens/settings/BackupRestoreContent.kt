@@ -99,6 +99,12 @@ fun BackupRestoreContent(
 
         FullBackupCard(store = libraryStore)
 
+        AutoBackupCard()
+
+        SyncStatusCard()
+
+        DiagnosticsCard()
+
         SettingsSubsection(title = "CREATE BACKUP") {
             val summaryText = when {
                 exportSections.isEmpty() -> "No sections selected"

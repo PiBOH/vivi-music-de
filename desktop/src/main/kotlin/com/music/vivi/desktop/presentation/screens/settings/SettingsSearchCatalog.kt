@@ -5,6 +5,7 @@ import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.ic_lyrics
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_queue_music
+import com.music.vivi.desktop.generated.resources.ic_outlined_error_outline
 import com.music.vivi.desktop.generated.resources.ic_outlined_folder
 import com.music.vivi.desktop.generated.resources.ic_outlined_person
 import com.music.vivi.desktop.generated.resources.ic_outlined_sync
@@ -57,6 +58,14 @@ object SettingsSearchCatalog {
             subDetail = LibrarySubDetail.ARTISTS,
             keywords = listOf("artist", "delimiters", "feat", "featuring", "split", "separator"),
             icon = Res.drawable.ic_outlined_person
+        ),
+        SettingSearchItem(
+            title = "Library Health",
+            description = "Find and repair missing song files, broken covers, orphan playlist entries and duplicates",
+            section = SettingsSection.LIBRARY,
+            subDetail = LibrarySubDetail.HEALTH,
+            keywords = listOf("health", "repair", "missing", "orphan", "broken", "cover", "relink", "duplicate"),
+            icon = Res.drawable.ic_outlined_error_outline
         ),
         SettingSearchItem(
             title = "Duplicate Tracks",
@@ -313,9 +322,9 @@ object SettingsSearchCatalog {
         // --- BACKUP & RESTORE ---
         SettingSearchItem(
             title = "Backup & Restore",
-            description = "Export and restore playlists, favorites, lyrics, and settings with .vivide.sections and .vivide.bkp files",
+            description = "Export and restore playlists, favorites, lyrics, and settings with .vivide.sbkp and .vivide.lbkp files",
             section = SettingsSection.BACKUP,
-            keywords = listOf("backup", "restore", "export", "import", "vivide.sections", "vivide.bkp", "pxpl", "data", "playlists", "favorites", "migration"),
+            keywords = listOf("backup", "restore", "export", "import", "vivide.sbkp", "vivide.lbkp", "vivide.sections", "vivide.bkp", "pxpl", "data", "playlists", "favorites", "migration"),
             icon = Res.drawable.ic_rounded_settings_backup_restore
         )
     )

@@ -158,7 +158,7 @@ object SessionVaultCheck {
             val library = File(directory, "device-sync.json").apply {
                 writeText("""{"localLibrary":{"songs":[],"playlists":[]}}""")
             }
-            val backup = File(directory, "check.vivide.bkp")
+            val backup = File(directory, "check.vivide.lbkp")
             val manifest = FullBackup.export(backup, library).getOrThrow()
             val entries = readZipEntries(backup)
             expect(

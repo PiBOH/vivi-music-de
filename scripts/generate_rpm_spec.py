@@ -147,10 +147,10 @@ gtk-update-icon-cache -q -t -f %{{_datadir}}/icons/hicolor >/dev/null 2>&1 || :
 update-desktop-database -q >/dev/null 2>&1 || :
 gtk-update-icon-cache -q -t -f %{{_datadir}}/icons/hicolor >/dev/null 2>&1 || :
 # $1 == 0 means the package is being erased (not upgraded), so this is where the
-# user data is cleaned: keep exactly ONE full backup (the newest .vivide.bkp or
-# legacy .vivide.backup) plus device-sync.json, and delete every cache (updates,
-# audio, video/canvas, lyrics, logs, …) for every user; a .vivide.sections
-# export is not a restore point. Runs as root, hence the /home/* loop.
+# user data is cleaned: keep exactly ONE full backup (the newest .vivide.lbkp,
+# .vivide.bkp or legacy .vivide.backup) plus device-sync.json, and delete every
+# cache (updates, audio, video/canvas, lyrics, logs, …) for every user; a
+# .vivide.sbkp export is not a restore point. Runs as root, hence the /home/* loop.
 if [ "$1" = "0" ]; then
 {cleanup}
 fi

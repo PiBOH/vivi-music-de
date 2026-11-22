@@ -91,6 +91,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.music.vivi.desktop.data.preferences.AlbumArtColorAccuracy
 import com.music.vivi.desktop.data.preferences.AlbumArtPaletteStyle
+import com.music.vivi.desktop.data.library.LibraryHealthGroup
 import com.music.vivi.desktop.data.preferences.LyricsSourcePreference
 import com.music.vivi.desktop.data.scanner.ScanProgress
 import com.music.vivi.desktop.presentation.components.AudioDeviceSelectorDialog
@@ -109,6 +110,7 @@ fun SettingsCategoryDetail(
     onRescanLibrary: () -> Unit,
     onOpenFoldersDetail: () -> Unit,
     onOpenArtistsDetail: () -> Unit,
+    onOpenHealthDetail: (LibraryHealthGroup) -> Unit = {},
     onOpenDuplicatesDetail: () -> Unit,
     onOpenPaletteStyleDetail: () -> Unit,
     onOpenLicensesDetail: () -> Unit = {},
@@ -180,6 +182,8 @@ fun SettingsCategoryDetail(
                 }
 
                 item { LegacyLibraryCard() }
+
+                item { LibraryHealthCard(onOpenDetail = onOpenHealthDetail) }
 
                 item {
                     val minSongDuration by viewModel.minSongDurationMs.collectAsState()

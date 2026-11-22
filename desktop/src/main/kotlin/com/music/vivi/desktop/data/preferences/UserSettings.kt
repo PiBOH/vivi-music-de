@@ -76,6 +76,9 @@ data class UserSettings(
     val jellyfinAccessToken: String? = null,
     val jellyfinUserId: String? = null,
     val jellyfinEnabled: Boolean = false,
+    val autoBackupEnabled: Boolean = true,
+    val backupBeforeUpdate: Boolean = true,
+    val lastAutoBackupAt: Long = 0L,
     val checkUpdatesOnStartup: Boolean = true,
     val lastDismissedUpdateVersion: String? = null,
     val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS

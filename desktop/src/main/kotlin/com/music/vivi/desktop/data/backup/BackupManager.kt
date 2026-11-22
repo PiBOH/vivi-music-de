@@ -26,7 +26,7 @@ class BackupManager(
 ) {
     companion object {
         /** The section backup's extension; the full backup uses [FullBackup.EXTENSION]. */
-        const val EXTENSION = "vivide.sections"
+        const val EXTENSION = "vivide.sbkp"
     }
 
     private val _progressFlow = MutableStateFlow<BackupTransferProgressUpdate?>(null)

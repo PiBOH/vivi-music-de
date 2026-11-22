@@ -388,6 +388,18 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(equalizerViewMode = mode) }
     }
 
+    override suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        updateSettings { it.copy(autoBackupEnabled = enabled) }
+    }
+
+    override suspend fun setBackupBeforeUpdate(enabled: Boolean) {
+        updateSettings { it.copy(backupBeforeUpdate = enabled) }
+    }
+
+    override suspend fun setLastAutoBackupAt(millis: Long) {
+        updateSettings { it.copy(lastAutoBackupAt = millis) }
+    }
+
     override suspend fun setCheckUpdatesOnStartup(enabled: Boolean) {
         updateSettings { it.copy(checkUpdatesOnStartup = enabled) }
     }

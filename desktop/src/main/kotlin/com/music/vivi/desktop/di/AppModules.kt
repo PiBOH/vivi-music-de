@@ -5,7 +5,9 @@ import com.music.vivi.desktop.data.database.ListenBrainzDao
 import com.music.vivi.desktop.data.database.LocalPlaylistDao
 import com.music.vivi.desktop.data.database.LyricsDao
 import com.music.vivi.desktop.data.database.MusicDao
+import com.music.vivi.desktop.data.library.LibraryHealthChecker
 import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.backup.AutoBackupScheduler
 import com.music.vivi.desktop.data.backup.BackupManager
 import com.music.vivi.desktop.data.backup.format.BackupFormatDetector
 import com.music.vivi.desktop.data.backup.format.BackupReader
@@ -42,6 +44,7 @@ import com.music.vivi.desktop.data.network.RemoteArtworkResolver
 import com.music.vivi.desktop.data.player.PlaybackUriResolver
 import com.music.vivi.desktop.data.youtube.YouTubeLyrics
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
+import com.music.vivi.desktop.data.youtube.YouTubePlaylistsRepository
 import com.music.vivi.desktop.presentation.viewmodel.YouTubeAccountStateHolder
 import com.music.vivi.desktop.presentation.viewmodel.YouTubeMusicStateHolder
 import com.music.vivi.desktop.data.player.QueueManager
@@ -77,6 +80,7 @@ import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 val coreModule: Module = module {
@@ -221,9 +225,20 @@ val stateModule: Module = module {
         UpdateStateHolder(
             releaseClient = get(),
             settingsRepository = get(),
+            coroutineScope = get(),
+            autoBackupScheduler = get()
+        )
+    }
+    single {
+        AutoBackupScheduler(
+            storeFile = DesktopPathProvider.syncStateFile,
+            backupDirectory = File(DesktopPathProvider.syncStateFile.absoluteFile.parentFile, "backups"),
+            settingsRepository = get(),
             coroutineScope = get()
         )
     }
+    single { LibraryHealthChecker(store = get()) }
+    single { YouTubePlaylistsRepository(store = get()) }
     single {
         MediaSessionBridge(
             playbackStateHolder = get(),

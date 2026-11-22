@@ -66,6 +66,24 @@ class MusicRepositoryImpl(
         return musicDao.hasSongs()
     }
 
+    override suspend fun savePlaybackResumePoint(song: Song, positionMs: Long) {
+        store.update("playback_resume") { state ->
+            state.copy(
+                resumeSong = song,
+                resumePositionMs = positionMs.coerceAtLeast(0L),
+                resumeUpdatedAt = System.currentTimeMillis()
+            )
+        }
+    }
+
+    override suspend fun getPlaybackResumePoint(): Pair<Song, Long>? {
+        val state = store.load()
+        val song = state.resumeSong ?: return null
+        if (state.resumeUpdatedAt <= 0L) return null
+        if (System.currentTimeMillis() - state.resumeUpdatedAt > 30L * 24L * 60L * 60L * 1000L) return null
+        return song to state.resumePositionMs
+    }
+
     override suspend fun getSongById(id: String): Song? {
         return musicDao.getSongById(id)
     }

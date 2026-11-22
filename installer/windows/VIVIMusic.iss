@@ -650,20 +650,22 @@ begin
 end;
 
 // ---------------------------------------------------------------------------
-// Uninstall cleanup: keep the newest *.vivide.bkp (or a legacy
-// *.vivide.backup) and device-sync.json, delete everything else
+// Uninstall cleanup: keep the newest *.vivide.lbkp (or a legacy
+// *.vivide.bkp / *.vivide.backup) and device-sync.json, delete everything else
 // ---------------------------------------------------------------------------
 // The app keeps its user data under `%USERPROFILE%\.vivimusic`: settings
 // (device-sync.json), playlists, imported fonts, the backup history
-// (`backups\*.vivide.bkp`, and `.vivide.backup` from builds before the rename)
+// (`backups\*.vivide.lbkp`, plus `.vivide.bkp` and `.vivide.backup` from older builds)
 // and every cache (downloaded updates, audio, video/canvas, lyrics, logs,
 // extracted helper libraries and artwork). On uninstall exactly two things
 // survive: the NEWEST full backup - a restore point with settings and
 // playlists - and device-sync.json. Every other file, older backups included,
-// and every cache are deleted. Section exports (`*.vivide.sections`, and the
-// legacy `*.pxpl`) are not restore points and are removed with the rest.
+// and every cache are deleted. Section exports (`*.vivide.sbkp`, the older
+// `*.vivide.sections`, and the legacy `*.pxpl`) are not restore points and are
+// removed with the rest.
 
-{ "prefix_YYYYMMDD_HHMMSS.vivide.bkp" (or .vivide.backup) -> "YYYYMMDD_HHMMSS".
+{ "prefix_YYYYMMDD_HHMMSS.vivide.lbkp" (or a legacy .vivide.bkp /
+  .vivide.backup) -> "YYYYMMDD_HHMMSS".
   The timestamp is always the last 15 characters before the extension, so
   comparing those strings is chronological even when the prefixes differ
   (auto_backup_* vs vivimusic-de_*). }
@@ -673,13 +675,17 @@ var
   ExtLen: Integer;
 begin
   ExtLen := 0;
-  if Length(FileName) > 11 then begin
+  if Length(FileName) > 12 then begin
+    if CompareText(Copy(FileName, Length(FileName) - 11, 12), '.vivide.lbkp') = 0 then
+      ExtLen := 12;
+  end;
+  if (ExtLen = 0) and (Length(FileName) > 11) then begin
     if CompareText(Copy(FileName, Length(FileName) - 10, 11), '.vivide.bkp') = 0 then
-      ExtLen := 11
-    else if Length(FileName) > 14 then begin
-      if CompareText(Copy(FileName, Length(FileName) - 13, 14), '.vivide.backup') = 0 then
-        ExtLen := 14;
-    end;
+      ExtLen := 11;
+  end;
+  if (ExtLen = 0) and (Length(FileName) > 14) then begin
+    if CompareText(Copy(FileName, Length(FileName) - 13, 14), '.vivide.backup') = 0 then
+      ExtLen := 14;
   end;
   if ExtLen = 0 then begin
     Result := '';
@@ -705,11 +711,24 @@ begin
 
   BackupsDir := ViviDir + '\backups';
 
-  { Keep the newest backup: the largest timestamp wins across both the new
-    extension and the legacy one, so an older .vivide.backup is not kept over
-    a newer .vivide.bkp. }
+  { Keep the newest backup: the largest timestamp wins across the new
+    extension and the legacy ones, so an older .vivide.backup is not kept
+    over a newer .vivide.lbkp. }
   KeepBackup := '';
   KeepKey := '';
+  if FindFirst(BackupsDir + '\*.vivide.lbkp', FindRec) then begin
+    try
+      repeat
+        Key := BackupTimestamp(FindRec.Name);
+        if (Key <> '') and (Key > KeepKey) then begin
+          KeepKey := Key;
+          KeepBackup := FindRec.Name;
+        end;
+      until not FindNext(FindRec);
+    finally
+      FindClose(FindRec);
+    end;
+  end;
   if FindFirst(BackupsDir + '\*.vivide.bkp', FindRec) then begin
     try
       repeat
@@ -737,7 +756,7 @@ begin
     end;
   end;
   if KeepBackup = '' then
-    AddUninstallLine('No .vivide.bkp or .vivide.backup found - nothing to keep.')
+    AddUninstallLine('No .vivide.lbkp, .vivide.bkp or .vivide.backup found - nothing to keep.')
   else
     AddUninstallLine('Keeping the newest backup: ' + KeepBackup);
 
@@ -765,7 +784,8 @@ begin
     end;
   end;
 
-  { Inside backups/, only the newest .vivide.bkp (or legacy .vivide.backup) survives. }
+  { Inside backups/, only the newest .vivide.lbkp (or a legacy .vivide.bkp /
+    .vivide.backup) survives. }
   if FindFirst(BackupsDir + '\*', FindRec) then begin
     try
       repeat

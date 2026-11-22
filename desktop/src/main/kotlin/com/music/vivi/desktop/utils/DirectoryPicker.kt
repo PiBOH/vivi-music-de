@@ -79,6 +79,27 @@ object DirectoryPicker {
         }
     }
 
+    /** The audio extensions the scanner recognizes, for relinking a missing song. */
+    fun chooseAudioFile(
+        title: String = "Select Audio File",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val file = FileKit.openFilePicker(
+                type = FileKitType.File(
+                    listOf(
+                        "mp3", "flac", "ogg", "opus", "m4a", "wav", "aac", "wma",
+                        "alac", "aiff", "aif", "ape", "wv", "tta", "dsf", "dff"
+                    )
+                ),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )
+            if (file != null) {
+                onSelected(file.file)
+            }
+        }
+    }
+
     fun chooseImageFile(
         title: String = "Select Album Artwork",
         onSelected: (File) -> Unit
@@ -94,11 +115,11 @@ object DirectoryPicker {
         }
     }
 
-    /** .pxpl stays readable so a section backup made before the rename imports. */
+    /** .vivide.sections and .pxpl stay readable so a section backup made before the rename imports. */
     fun chooseBackupFile(
         title: String = "Select a .${BackupManager.EXTENSION} backup file",
         onSelected: (File) -> Unit
-    ) = pickBackupFile(title, listOf(BackupManager.EXTENSION, "pxpl"), onSelected)
+    ) = pickBackupFile(title, listOf(BackupManager.EXTENSION, "vivide.sections", "pxpl"), onSelected)
 
     fun saveBackupFile(
         defaultFileName: String = "VIVIMusicDE_Sections.${BackupManager.EXTENSION}",
@@ -108,17 +129,32 @@ object DirectoryPicker {
     ) = saveBackupFileAs(
         defaultFileName = defaultFileName,
         extension = BackupManager.EXTENSION,
-        legacySuffixes = listOf(".pxpl"),
+        legacySuffixes = listOf(".vivide.sections", ".pxpl"),
         initialDir = initialDir,
         title = title,
         onSelected = onSelected
     )
 
-    /** The old .vivide.backup name is still accepted; only the extension moved. */
+    /** A diagnostic package is a plain zip: no legacy suffix to strip. */
+    fun saveDiagnosticsFile(
+        defaultFileName: String = "VIVIMusicDE_Diagnostics.zip",
+        initialDir: File? = null,
+        title: String = "Export diagnostic package",
+        onSelected: (File) -> Unit
+    ) = saveBackupFileAs(
+        defaultFileName = defaultFileName,
+        extension = "zip",
+        legacySuffixes = emptyList(),
+        initialDir = initialDir,
+        title = title,
+        onSelected = onSelected
+    )
+
+    /** The old .vivide.bkp and .vivide.backup names are still accepted; only the extension moved. */
     fun chooseVivideBackupFile(
         title: String = "Select a .${FullBackup.EXTENSION} file",
         onSelected: (File) -> Unit
-    ) = pickBackupFile(title, listOf(FullBackup.EXTENSION, "vivide.backup"), onSelected)
+    ) = pickBackupFile(title, listOf(FullBackup.EXTENSION, "vivide.bkp", "vivide.backup"), onSelected)
 
     fun saveVivideBackupFile(
         defaultFileName: String = "VIVIMusicDE.${FullBackup.EXTENSION}",
@@ -128,7 +164,7 @@ object DirectoryPicker {
     ) = saveBackupFileAs(
         defaultFileName = defaultFileName,
         extension = FullBackup.EXTENSION,
-        legacySuffixes = listOf(".vivide.backup"),
+        legacySuffixes = listOf(".vivide.bkp", ".vivide.backup"),
         initialDir = initialDir,
         title = title,
         onSelected = onSelected

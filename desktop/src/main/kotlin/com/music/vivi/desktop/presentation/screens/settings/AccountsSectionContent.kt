@@ -120,6 +120,8 @@ fun AccountsSectionContent(
             onRefreshSession = youtubeAccount::refresh
         )
 
+        YouTubePlaylistsCard()
+
         ServerAccountCard(
             title = "Subsonic / Navidrome",
             subtitle = if (isNavidromeLoggedIn) {

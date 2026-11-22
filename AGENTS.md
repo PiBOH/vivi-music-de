@@ -469,14 +469,49 @@ cloned screen, not by adding a parallel surface next to it.
   starts empty. `desktop/src/test` stops a write halfway and proves the previous
   library is read back. Settings reads the import record (`libraryImport`) and
   offers Reimporta behind a confirmation, and Backup & Restore writes two kinds:
-  a full-device `.vivide.bkp` zip (manifest plus the whole `device-sync.json`,
+  a full-device `.vivide.lbkp` zip (manifest plus the whole `device-sync.json`,
   credentials excluded) with a `device-sync.json.pre-restore-<millis>` copy
-  before a restore, and a section export with its own `.vivide.sections`
+  before a restore, and a section export with its own `.vivide.sbkp`
   extension. The names are how a picker and the uninstaller tell the two apart:
-  the full-backup picker reads `.vivide.bkp` and still imports a
-  `.vivide.backup` from an earlier build, the section picker reads
-  `.vivide.sections` and still imports a `.pxpl`, and neither relies on the
-  file name to read the archive itself.
+  the full-backup picker reads `.vivide.lbkp` and still imports a `.vivide.bkp`
+  or `.vivide.backup` from an earlier build, the section picker reads
+  `.vivide.sbkp` and still imports a `.vivide.sections` or `.pxpl` file, and
+  neither relies on the file name to read the archive itself.
+- **Housekeeping the desktop does by itself.** `SingleInstanceGuard` takes an
+  OS lock on `.vivimusic.lock` beside the store before the window is built, so
+  two builds cannot write one library; a process that loses the lock exits 0.
+  The library also stores the resume point (`resumeSong`, `resumePositionMs`,
+  `resumeUpdatedAt`); the player restores that track paused and seeks to the
+  position. `AutoBackupScheduler` writes a weekly full backup through the same
+  exporter (`auto_backup_<millis>.vivide.lbkp`, five kept) and backs up before
+  an update downloads, with `autoBackupEnabled`, `backupBeforeUpdate` and
+  `lastAutoBackupAt` in `settings.json`. Settings exports a diagnostic zip
+  (`system.txt`, redacted `settings.json`, store summary, backup listing and
+  the newest logs) and scans the library for missing files, broken covers,
+  orphan playlist entries and duplicate groups; the health card's groups open
+  `LibraryHealthDetailScreen`, where a missing file is relinked through the
+  audio picker, orphan entries are removed only for the selected playlists
+  after a preview, duplicates open the existing Duplicate Songs screen, and
+  every change has an Undo bar that restores the previous path or playlist
+  order. A scan and a repair never delete a song file on their own, and a
+  reference that became valid again is kept. The updater downloads the
+  asset that matches the OS, checks its SHA-256 against GitHub's asset digest
+  or the `.sha256` published beside the installer, and only then offers the
+  install; the automatic release workflow writes those checksums. It reads
+  the official `PiBOH/vivi-music-de` release list (`/releases?per_page=20`,
+  prereleases included), not `/releases/latest`, because every desktop build
+  is a prerelease and the latest endpoint has no stable release to return.
+
+  The new settings cards are rendered by `--cards-render-check`, which starts
+  the app's Koin graph, composes `YouTubePlaylistsCard`, `AutoBackupCard`,
+  `SyncStatusCard`, `DiagnosticsCard` and `LibraryHealthCard` in an
+  `ImageComposeScene` and writes the frames under `build/cards/`; it also
+  composes `AppUpdateDialog` with Idle, Ready and Failed states. The account
+  list has a visible scrollbar and marks read-only playlists, and the update
+  dialog gives Download, Install and Try again their own icons with the full
+  SHA-256 behind a tooltip. Use `VIVI_CARDS_OUTPUT` and a temporary
+  `VIVI_SYNC_STATE_FILE`/`VIVI_SETTINGS_FILE` when the render must not touch
+  the real store or start a playback restore.
 - **The YouTube session is sealed at rest.** `yt-cookie.txt` and the
   `yt-context.txt` identity beside it are never plain text: `SessionVault` wraps
   them with DPAPI (application entropy,
@@ -552,9 +587,9 @@ cloned screen, not by adding a parallel surface next to it.
   runs the installed `--benchmark-first-frame` with `user.home` and
   `USERPROFILE` on a temporary home. `uninstall` runs `unins000.exe` on the
   same profile and requires the program and the App Paths key gone while only
-  the newest full backup (`.vivide.bkp`, or a legacy `.vivide.backup`) and
-  `device-sync.json` survive, while a newer `.vivide.sections` export is
-  deleted. `restore` copies
+  the newest full backup (`.vivide.lbkp`, or a legacy `.vivide.bkp` /
+  `.vivide.backup`) and `device-sync.json` survive, while a newer
+  `.vivide.sbkp` export is deleted. `restore` copies
   those two files into a fresh temporary home and starts the app again, which
   proves the kept restore point is usable. The uninstall key, App Paths and the
   Start Menu folder are exported/copied before the install and restored in a
@@ -610,6 +645,18 @@ cloned screen, not by adding a parallel surface next to it.
   YouTube Music) and `build/app-lyrics-screen.png` (the expanded player's
   lyrics). A stub view model cannot pass it, so a playback claim is made with
   this check when the question is whether the app itself plays.
+  `--youtube-playlists-check` exercises the account playlist card against
+  the signed-in session: it lists the account's playlists, creates a
+  timestamped temporary one, renames it, adds the first YouTube Music
+  result, checks the playlist page contains it, deletes it and checks it is
+  gone. It only touches that playlist and deletes it in a `finally`. The card
+  itself also selects several playlists, adds the playing track to all of them,
+  deletes them with a snapshot-based Undo, undoes a rename and drags the rows
+  into a device-local order saved in `LocalLibraryState.youTubePlaylistOrder`;
+  the live check still covers the single-playlist path only.
+  **Measured on 21 Nov:** `RESULT: PASS` on the signed-in account with 10
+  playlists (8 editable, 2 read-only), including the added
+  `4D7u5KF7SP8` and the final absence.
   `--verify-store-write` proves the JSON store takes a real write: it starts the
   same graph, calls `PlayerViewModel.toggleFavorite`, the call the heart makes,
   and prints the favorite flag and the liked count read back from the file

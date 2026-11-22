@@ -74,8 +74,9 @@ Open **Settings → Apps → Installed apps**, find **VIVI Music**, and choose
 > automatically after 7 days.
 >
 **On uninstall, only two things survive**: the **newest full backup**
-(`.vivide.bkp`, or a legacy `.vivide.backup`; a section export with
-`.vivide.sections` or `.pxpl` is not a restore point) and
+(`.vivide.lbkp`, or a legacy `.vivide.bkp` / `.vivide.backup`; a section
+export with `.vivide.sbkp`, `.vivide.sections` or `.pxpl` is not a restore
+point) and
 `%USERPROFILE%\.vivimusic\device-sync.json`. Everything else in
 `~/.vivimusic` is deleted — downloaded updates, audio, video/canvas and lyrics
 caches, logs, imported fonts, playlists.json and every older backup.
@@ -136,7 +137,8 @@ If your system blocks AppImages (no FUSE), extract and run it instead:
 
 - **.deb**: uninstall normally with `sudo apt remove vivimusic` / `sudo dpkg -r`.
   The package's `postrm` hook keeps only the newest full backup
-  (`~/.vivimusic/backups/*.vivide.bkp` or a legacy `*.vivide.backup`, a restore
+  (`~/.vivimusic/backups/*.vivide.lbkp`, or a legacy `*.vivide.bkp` /
+  `*.vivide.backup`, a restore
   point with settings and playlists) plus `~/.vivimusic/device-sync.json`,
   and deletes everything else
   (`~/.vivimusic/updates`, audio, video/canvas and lyrics caches, logs, fonts,
@@ -203,7 +205,8 @@ Two formats are published (Intel and Apple Silicon builds separately).
 
 Drag `VIVI Music.app` from **Applications** to the Trash, then clean your user
 data the same way Windows/Linux do — keep only the newest full backup
-(`.vivide.bkp`, or a legacy `.vivide.backup`; settings + playlists) and
+(`.vivide.lbkp`, or a legacy `.vivide.bkp` / `.vivide.backup`; settings +
+playlists) and
 `device-sync.json`, and delete everything else:
 
 ```bash
@@ -211,9 +214,11 @@ sh scripts/uninstall-cleanup.sh        # from this repo (or the release assets)
 ```
 
 What remains: `~/.vivimusic/device-sync.json` and the newest full backup in
-`~/.vivimusic/backups/*.vivide.bkp` (or a legacy `*.vivide.backup`); all caches
+`~/.vivimusic/backups/*.vivide.lbkp` (or a legacy `*.vivide.bkp` /
+`*.vivide.backup`); all caches
 (updates, audio, video/canvas, lyrics, logs), fonts, playlists.json and older
-backups are removed, including every `.vivide.sections` export.
+backups are removed, including every `.vivide.sbkp` or `.vivide.sections`
+export.
 
 ---
 

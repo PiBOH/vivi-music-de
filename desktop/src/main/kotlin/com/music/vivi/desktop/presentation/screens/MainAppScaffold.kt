@@ -902,7 +902,11 @@ fun MainAppScaffold(
                     },
                     onOpenRelease = { url ->
                         holder.openReleasePage(url)
-                    }
+                    },
+                    downloadState = holder?.downloadState?.collectAsState()?.value
+                        ?: com.music.vivi.desktop.domain.model.UpdateDownloadState.Idle,
+                    onDownload = { holder?.downloadUpdate() },
+                    onInstall = { holder?.installUpdate() }
                 )
             }
         }

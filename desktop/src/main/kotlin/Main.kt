@@ -219,6 +219,10 @@ fun main(args: Array<String> = emptyArray()) {
     // Proves the saved-account list, the switch and the fallback on a temporary
     // directory, so the account this machine uses is never touched.
     YouTubeAccountsCheck.handle(args)
+    // Exercises create, rename, add and delete on a temporary account playlist.
+    com.music.vivi.desktop.dev.YouTubePlaylistsCheck.handle(args)
+    // Renders the new settings cards and the update dialog without a window.
+    com.music.vivi.desktop.dev.CardsRenderCheck.handle(args)
     // Fills the same JSON store with the small Album/Playlist fixture used by the
     // visual checks, then exits before a window exists.
     DemoLibrarySeed.handle(args)
@@ -230,6 +234,12 @@ fun main(args: Array<String> = emptyArray()) {
     if (args.contains("--youtube-webview-check")) {
         val closed = com.music.vivi.desktop.data.youtube.YouTubeWebLogin.openForCheck()
         closed.await(120, java.util.concurrent.TimeUnit.SECONDS)
+        exitProcess(0)
+    }
+    // One process per store: a second window would rewrite the same
+    // device-sync.json from another in-memory snapshot.
+    if (!com.music.vivi.desktop.utils.SingleInstanceGuard.acquire()) {
+        System.err.println("VIVI Music DE is already running.")
         exitProcess(0)
     }
     val isBenchmark = args.contains("--benchmark-first-frame")
@@ -260,6 +270,8 @@ fun main(args: Array<String> = emptyArray()) {
 
     val playerViewModel = remember { koin.get<PlayerViewModel>() }
     val audioEngine = remember { koin.get<AudioEngine>() }
+    val autoBackupScheduler = remember { koin.get<com.music.vivi.desktop.data.backup.AutoBackupScheduler>() }
+    LaunchedEffect(Unit) { autoBackupScheduler.start() }
     val initialSetupDone by playerViewModel.initialSetupDone.collectAsState()
     val isDarkTheme by playerViewModel.isDarkMode.collectAsState()
     val uiScale by playerViewModel.uiScale.collectAsState()

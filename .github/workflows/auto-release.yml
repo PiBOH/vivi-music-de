@@ -234,6 +234,15 @@ jobs:
           rm -rf "$AUR_DIR"
           # The install guide ships with every release.
           cp INSTALL-GUIDE.md artifacts/
+          # A checksum next to every installer: the desktop updater verifies the
+          # download against this file when GitHub's asset digest is absent.
+          for file in artifacts/VIVIMusic-*; do
+            case "$file" in
+              *.sha256|*.md|*.tar.gz) continue ;;
+            esac
+            [ -f "$file" ] || continue
+            (cd artifacts && sha256sum "$(basename "$file")" > "$(basename "$file").sha256")
+          done
           ls -la artifacts
 
       - name: Create GitHub release

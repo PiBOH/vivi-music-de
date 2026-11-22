@@ -58,6 +58,46 @@ class PlaybackStateHolder(
      * resolving at the call site would block the click handler for the length of
      * that request. Local files resolve immediately and take the same path.
      */
+    init {
+        coroutineScope.launch { restoreLastPlayback() }
+        coroutineScope.launch {
+            while (isActive) {
+                delay(10_000)
+                persistResumePoint()
+            }
+        }
+    }
+
+    /**
+     * Loads the last track paused at its saved position. It never starts playing:
+     * the transport is left to the user, only the queue and the seek are restored.
+     */
+    private suspend fun restoreLastPlayback() {
+        val resume = runCatching { musicRepository.getPlaybackResumePoint() }.getOrNull() ?: return
+        if (queueManager.currentSong.value != null) return
+        val (song, position) = resume
+        queueManager.setQueue(listOf(song), 0)
+        playResolved(song)
+        // Wait for the engine to actually open the track, then pause it: a fixed
+        // delay would leave a YouTube stream playing when resolution is slow.
+        var waited = 0
+        while (waited < 10_000 && audioEngine.playbackState.value != PlaybackState.PLAYING) {
+            delay(200)
+            waited += 200
+        }
+        audioEngine.pause()
+        if (position > 0L) audioEngine.seekTo(position)
+    }
+
+    private fun persistResumePoint() {
+        val song = queueManager.currentSong.value ?: return
+        val position = audioEngine.currentPositionMs.value
+        if (position <= 0L) return
+        coroutineScope.launch {
+            runCatching { musicRepository.savePlaybackResumePoint(song, position) }
+        }
+    }
+
     private fun playResolved(song: Song, onReady: ((PlaybackTarget) -> Unit)? = null) {
         coroutineScope.launch {
             val target = runCatching { playbackUriResolver?.resolveTarget(song) }.getOrNull()
@@ -761,6 +801,7 @@ class PlaybackStateHolder(
     fun togglePlayPause() {
         if (audioEngine.playbackState.value == PlaybackState.PLAYING) {
             audioEngine.pause()
+            persistResumePoint()
         } else {
             val currSong = queueManager.currentSong.value ?: return
             // A cached resolution returns the same URL the engine already holds, so

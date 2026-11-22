@@ -54,7 +54,7 @@ class BackupFileValidator(
         }
 
         if (format == BackupFormatDetector.Format.UNKNOWN) {
-            errors.add(ValidationError("INVALID_FORMAT", "Unrecognized backup file format. Expected a .vivide.sections or .pxpl archive.", severity = Severity.ERROR))
+            errors.add(ValidationError("INVALID_FORMAT", "Unrecognized backup file format. Expected a .vivide.sbkp or .pxpl archive.", severity = Severity.ERROR))
             return BackupValidationResult.Invalid(errors)
         }
 

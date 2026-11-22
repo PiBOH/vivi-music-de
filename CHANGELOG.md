@@ -1,8 +1,23 @@
 ## [Unreleased]
 
+### ✨ Added
+- [DE] **The account playlist card selects several playlists, acts on them together and undoes a delete or a rename.**
+- [DE] **Library health issues are reviewed and repaired from their own screen, with a preview and Undo.**
+
+### 🔧 Changed
+- [DE] **The new settings cards and the update dialog were rendered and corrected.**
+
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added
+- [DE] **The account's YouTube Music playlists are managed from Accounts.**
+- [DE] **A second copy of the app cannot open the same library.**
+- [DE] **The last track and its position come back on the next start, paused.**
+- [DE] **Backups run by themselves once a week, and before an update.**
+- [DE] **Sync state is shown for what it is.**
+- [DE] **A diagnostic bundle can be exported from Settings.**
+- [DE] **Library health is one scan the user can run.**
+- [DE] **An update is downloaded and checked before it can be installed.**
 - [DE] **About opens a dedicated Contributors screen, with one card per person.**
 - [DE] **A killed release check repairs the host registration on its next run.**
 - [DE] **A release is verified by one script, from the packaged WebView to the uninstaller and back.**
@@ -13,11 +28,12 @@
 - [DE] **The engine reports what it really opened.**
 - [DE] **The desktop module is PixelPlayerDesktop's app.**
 - [DE] **A visual check can fill the JSON library with a fixed Album/Playlist fixture.**
-- [DE] **A full-device backup is one `.vivide.bkp` file, and older names still import.**
+- [DE] **A full-device backup is one `.vivide.lbkp` file, and older names still import.**
 - [DE] **Settings shows where the library came from and can import it again.**
 
 ### 🔧 Changed
-- [DE] **Section backups have their own `.vivide.sections` extension.**
+- [DE] **The updater no longer just opens the release page.**
+- [DE] **Section backups have their own `.vivide.sbkp` extension.**
 - [DE] **The sidebar mark is the 1024 px icon and the name no longer gets cut.**
 - [DE] **A silent uninstall closes without a message box.**
 - [DE] **The YouTube session is sealed at rest and the logs cannot hold a cookie value.**
