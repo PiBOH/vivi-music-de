@@ -56,10 +56,13 @@ class YouTubePlaylistOrderTest {
             File(directory, "device-sync.json"),
             File(directory, "vivimusicde.db")
         )
-        val repository = YouTubePlaylistsRepository(store = store)
+        val repository = YouTubePlaylistsRepository(store = store, accountId = { "test-account" })
 
         repository.saveOrder(listOf("b", "a"))
 
-        assertEquals(listOf("b", "a"), store.load().youTubePlaylistOrder)
+        assertEquals(
+            listOf("b", "a"),
+            store.load().youTubePlaylistOrders["test-account"]
+        )
     }
 }

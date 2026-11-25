@@ -13,11 +13,14 @@ import java.security.MessageDigest
 import java.util.Base64
 import java.util.UUID
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.gagravarr.opus.OpusFile
 import org.gagravarr.opus.OpusTags
@@ -41,7 +44,14 @@ import com.music.vivi.desktop.utils.isDirectoryOrParentExcluded
 sealed interface ScanProgress {
     data object Idle : ScanProgress
     data class Scanning(val currentFile: String, val scannedCount: Int, val totalDiscovered: Int) : ScanProgress
-    data class Completed(val totalScanned: Int, val addedOrUpdated: Int, val durationMs: Long) : ScanProgress
+    data class Completed(
+        val totalScanned: Int,
+        val addedOrUpdated: Int,
+        val durationMs: Long,
+        /** False when a failed directory walk made pruning unsafe this pass. */
+        val pruned: Boolean = true,
+        val skippedDirectories: Int = 0
+    ) : ScanProgress
     data class Error(val message: String) : ScanProgress
 }
 private const val PROGRESS_UPDATE_INTERVAL_MS = 100L
@@ -77,6 +87,9 @@ class DesktopMusicScanner(
     private val _scanProgress = MutableStateFlow<ScanProgress>(ScanProgress.Idle)
     val scanProgress: StateFlow<ScanProgress> = _scanProgress.asStateFlow()
 
+    /** One full scan at a time: a second one waits instead of interleaving progress. */
+    private val scanMutex = Mutex()
+
     suspend fun scanDirectories(
         directories: List<String>,
         excludedDirectories: List<String> = emptyList(),
@@ -87,13 +100,38 @@ class DesktopMusicScanner(
         pruneMissing: Boolean = true,
         forceRescan: Boolean = false
     ): ScanProgress = withContext(ioDispatcher) {
+        scanMutex.withLock {
+            scanDirectoriesImpl(
+                directories = directories,
+                excludedDirectories = excludedDirectories,
+                artistDelimiters = artistDelimiters,
+                wordDelimiters = wordDelimiters,
+                extractArtistFromTitle = extractArtistFromTitle,
+                autoScanLrcFiles = autoScanLrcFiles,
+                pruneMissing = pruneMissing,
+                forceRescan = forceRescan
+            )
+        }
+    }
+
+    private suspend fun scanDirectoriesImpl(
+        directories: List<String>,
+        excludedDirectories: List<String>,
+        artistDelimiters: List<String>,
+        wordDelimiters: List<String>,
+        extractArtistFromTitle: Boolean,
+        autoScanLrcFiles: Boolean,
+        pruneMissing: Boolean,
+        forceRescan: Boolean
+    ): ScanProgress {
         val startTime = System.currentTimeMillis()
-        try {
+        return try {
             val normalizedExcluded = excludedDirectories.map { File(it).absolutePath }
 
             // 1. Discover all audio files across directories
             val discoveredFiles = mutableListOf<File>()
             val scannedDirectories = mutableListOf<String>()
+            val failedDirectories = mutableListOf<String>()
             for (dirPath in directories) {
                 try {
                     val dir = File(dirPath)
@@ -102,6 +140,7 @@ class DesktopMusicScanner(
                         val isRootExcluded = isDirectoryOrParentExcluded(rootDirAbs, normalizedExcluded)
                         if (isRootExcluded) continue
 
+                        var walkFailed = false
                         Files.walkFileTree(dir.toPath(), object : SimpleFileVisitor<Path>() {
                             override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
                                 return try {
@@ -109,6 +148,7 @@ class DesktopMusicScanner(
                                     val isExcluded = isDirectoryOrParentExcluded(currentDirAbs, normalizedExcluded)
                                     if (isExcluded) FileVisitResult.SKIP_SUBTREE else FileVisitResult.CONTINUE
                                 } catch (_: Exception) {
+                                    walkFailed = true
                                     FileVisitResult.SKIP_SUBTREE
                                 }
                             }
@@ -125,18 +165,27 @@ class DesktopMusicScanner(
                             }
 
                             override fun visitFileFailed(file: Path, exc: IOException): FileVisitResult {
-                                // Gracefully skip inaccessible or malformed files/directories
+                                // Gracefully skip inaccessible or malformed files/directories,
+                                // but remember that this root was not fully seen.
+                                walkFailed = true
                                 return FileVisitResult.CONTINUE
                             }
 
                             override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+                                if (exc != null) walkFailed = true
                                 return FileVisitResult.CONTINUE
                             }
                         })
-                        scannedDirectories.add(rootDirAbs)
+                        // Pruning is only safe for a root that was walked completely:
+                        // a subtree this pass could not read must not lose its songs.
+                        if (walkFailed) failedDirectories.add(rootDirAbs) else scannedDirectories.add(rootDirAbs)
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
-                    // Safely ignore failures accessing a specific directory
+                    // Safely ignore failures accessing a specific directory, and keep
+                    // its songs by leaving the root out of the pruning scope.
+                    failedDirectories.add(File(dirPath).absolutePath)
                 }
             }
 
@@ -206,10 +255,14 @@ class DesktopMusicScanner(
             val completed = ScanProgress.Completed(
                 totalScanned = totalDiscovered,
                 addedOrUpdated = songsToUpsert.size,
-                durationMs = duration
+                durationMs = duration,
+                pruned = pruneMissing && scannedDirectories.isNotEmpty(),
+                skippedDirectories = failedDirectories.size
             )
             _scanProgress.value = completed
             completed
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             val error = ScanProgress.Error(e.message ?: "Unknown scanning error")
             _scanProgress.value = error

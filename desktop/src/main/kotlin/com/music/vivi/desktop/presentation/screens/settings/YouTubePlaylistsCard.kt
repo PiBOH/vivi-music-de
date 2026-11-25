@@ -49,10 +49,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.music.vivi.desktop.data.store.StoredPlaylistUndo
+import com.music.vivi.desktop.data.youtube.AccountPlaylistHealth
+import com.music.vivi.desktop.data.youtube.AccountPlaylistPack
+import com.music.vivi.desktop.data.youtube.AccountPlaylistPacks
 import com.music.vivi.desktop.data.youtube.AccountPlaylistSnapshot
+import com.music.vivi.desktop.data.youtube.AddOutcome
 import com.music.vivi.desktop.data.youtube.RemotePlaylist
+import com.music.vivi.desktop.data.youtube.YouTubeAccount
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
 import com.music.vivi.desktop.data.youtube.YouTubePlaylistsRepository
+import com.music.vivi.desktop.data.youtube.toStoredSnapshot
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_playlist_add
 import com.music.vivi.desktop.generated.resources.ic_rounded_add
@@ -62,7 +69,10 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_refresh
 import com.music.vivi.desktop.presentation.components.subcomps.AppTooltip
 import com.music.vivi.desktop.presentation.components.TrackDialogInput
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
+import com.music.vivi.desktop.utils.DirectoryPicker
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import sh.calvin.reorderable.ReorderableItem
@@ -71,7 +81,64 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 private sealed interface PlaylistUndo {
     data class Renamed(val playlistId: String, val previousTitle: String) : PlaylistUndo
     data class Deleted(val snapshots: List<AccountPlaylistSnapshot>) : PlaylistUndo
+    data class Added(
+        val playlistIds: List<String>,
+        val videoId: String,
+        val trackTitle: String
+    ) : PlaylistUndo
 }
+
+private fun PlaylistUndo.toStored(message: String): StoredPlaylistUndo = when (this) {
+    is PlaylistUndo.Renamed -> StoredPlaylistUndo(
+        kind = StoredPlaylistUndo.RENAMED,
+        playlistId = playlistId,
+        previousTitle = previousTitle,
+        message = message
+    )
+
+    is PlaylistUndo.Deleted -> StoredPlaylistUndo(
+        kind = StoredPlaylistUndo.DELETED,
+        snapshots = snapshots.map { it.toStoredSnapshot() },
+        message = message
+    )
+
+    is PlaylistUndo.Added -> StoredPlaylistUndo(
+        kind = StoredPlaylistUndo.ADDED,
+        addedPlaylistIds = playlistIds,
+        videoId = videoId,
+        trackTitle = trackTitle,
+        message = message
+    )
+}
+
+private fun StoredPlaylistUndo.toCardUndo(): PlaylistUndo? = when (kind) {
+    StoredPlaylistUndo.RENAMED -> {
+        val id = playlistId
+        val previous = previousTitle
+        if (id.isNullOrBlank() || previous == null) null else PlaylistUndo.Renamed(id, previous)
+    }
+
+    StoredPlaylistUndo.DELETED -> {
+        val snapshots = snapshots.map { AccountPlaylistSnapshot(it.title, it.videoIds) }
+        if (snapshots.isEmpty()) null else PlaylistUndo.Deleted(snapshots)
+    }
+
+    StoredPlaylistUndo.ADDED -> {
+        if (addedPlaylistIds.isEmpty() || videoId.isNullOrBlank()) {
+            null
+        } else {
+            PlaylistUndo.Added(addedPlaylistIds, videoId, trackTitle.orEmpty())
+        }
+    }
+
+    else -> null
+}
+
+private fun playlistCount(count: Int): String =
+    "$count ${if (count == 1) "playlist" else "playlists"}"
+
+private fun trackCount(count: Int): String =
+    "$count ${if (count == 1) "track" else "tracks"}"
 
 /**
  * The account's own YouTube Music playlists.
@@ -82,8 +149,10 @@ private sealed interface PlaylistUndo {
  *
  * Selection handles several playlists at once; Delete snapshots each playlist
  * before removing it so Undo can recreate it, and Rename keeps the old name for
- * its own Undo. YouTube exposes no order for the library list, so drag and drop
- * saves the card's order in the local store.
+ * its own Undo. The Undo token is written to the store, so it survives leaving
+ * the screen or restarting, and a restore that failed halfway keeps only the
+ * playlists that still need a retry. YouTube exposes no order for the library
+ * list, so drag and drop saves the card's order for the active account.
  */
 @Composable
 fun YouTubePlaylistsCard(
@@ -108,8 +177,14 @@ fun YouTubePlaylistsCard(
     var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
     var undo by remember { mutableStateOf<PlaylistUndo?>(null) }
     var undoMessage by remember { mutableStateOf("") }
+    var health by remember { mutableStateOf<AccountPlaylistHealth?>(null) }
+    var healthBusy by remember { mutableStateOf(false) }
+    var importPack by remember { mutableStateOf<AccountPlaylistPack?>(null) }
+    var importName by remember { mutableStateOf("") }
 
     val videoId = remember(currentSong) { currentSong?.let(musicRepository::videoIdOf) }
+    // Switching account must reload the list and the Undo bar of the new account.
+    val activeAccountId = YouTubeAccount.activeAccountId()
     val listState = rememberLazyListState()
     val reorderableState = rememberReorderableLazyListState(
         lazyListState = listState,
@@ -120,7 +195,18 @@ fun YouTubePlaylistsCard(
         }
     )
 
-    LaunchedEffect(refreshToken) {
+    LaunchedEffect(activeAccountId) {
+        undo = null
+        undoMessage = ""
+        repository.pendingUndo()?.let { stored ->
+            stored.toCardUndo()?.let { change ->
+                undo = change
+                undoMessage = stored.message
+            }
+        }
+    }
+
+    LaunchedEffect(activeAccountId, refreshToken) {
         loading = true
         error = null
         repository.load()
@@ -157,6 +243,18 @@ fun YouTubePlaylistsCard(
         selectedIds = emptySet()
     }
 
+    suspend fun rememberUndo(change: PlaylistUndo, text: String) {
+        undo = change
+        undoMessage = text
+        repository.rememberUndo(change.toStored(text))
+    }
+
+    suspend fun forgetUndo() {
+        undo = null
+        undoMessage = ""
+        repository.clearUndo()
+    }
+
     fun addCurrentTo(targets: List<RemotePlaylist>, singleLabel: String? = null) {
         val video = videoId ?: return
         val trackTitle = currentSong?.title.orEmpty()
@@ -167,17 +265,49 @@ fun YouTubePlaylistsCard(
         }
         scope.launch {
             busyAction = true
-            undo = null
+            forgetUndo()
             var added = 0
+            var already = 0
             var failed = 0
+            val addedIds = mutableListOf<String>()
             for (playlist in editable) {
-                if (repository.addSong(playlist.id, video).isSuccess) added++ else failed++
+                when (repository.addSongIfAbsent(playlist.id, video)) {
+                    AddOutcome.ADDED -> {
+                        added++
+                        addedIds += playlist.id
+                    }
+
+                    AddOutcome.ALREADY_PRESENT -> already++
+                    AddOutcome.FAILED -> failed++
+                }
             }
             message = when {
-                singleLabel != null && failed == 0 -> "Added \"$trackTitle\" to $singleLabel."
-                failed == 0 -> "Added the track to $added ${if (added == 1) "playlist" else "playlists"}."
-                added == 0 -> "The track could not be added."
-                else -> "Added to $added ${if (added == 1) "playlist" else "playlists"}, $failed failed."
+                singleLabel != null && added == 1 ->
+                    "Added \"$trackTitle\" to $singleLabel."
+                singleLabel != null && already == 1 ->
+                    "\"$trackTitle\" is already in $singleLabel."
+                singleLabel != null ->
+                    "The track could not be added to $singleLabel."
+                added == 0 && already > 0 && failed == 0 ->
+                    "The track is already in ${playlistCount(already)}."
+                added == 0 && already > 0 ->
+                    "Already in ${playlistCount(already)}, $failed failed."
+                added == 0 ->
+                    "The track could not be added."
+                failed == 0 && already == 0 ->
+                    "Added the track to ${playlistCount(added)}."
+                failed == 0 ->
+                    "Added to ${playlistCount(added)}, already in ${playlistCount(already)}."
+                already == 0 ->
+                    "Added to ${playlistCount(added)}, $failed failed."
+                else ->
+                    "Added to ${playlistCount(added)}, already in ${playlistCount(already)}, $failed failed."
+            }
+            if (addedIds.isNotEmpty()) {
+                rememberUndo(
+                    PlaylistUndo.Added(addedIds, video, trackTitle),
+                    "Added \"$trackTitle\" to ${playlistCount(addedIds.size)}."
+                )
             }
             busyAction = false
             if (singleLabel == null) exitSelection()
@@ -190,8 +320,7 @@ fun YouTubePlaylistsCard(
         if (targets.isEmpty()) return
         scope.launch {
             busyAction = true
-            undo = null
-            undoMessage = ""
+            forgetUndo()
             val snapshots = mutableListOf<AccountPlaylistSnapshot>()
             var failed = 0
             var skipped = 0
@@ -208,13 +337,15 @@ fun YouTubePlaylistsCard(
                 }
             }
             message = buildString {
-                append("Deleted ${snapshots.size} ${if (snapshots.size == 1) "playlist" else "playlists"}.")
+                append("Deleted ${playlistCount(snapshots.size)}.")
                 if (failed > 0) append(" $failed could not be deleted.")
                 if (skipped > 0) append(" $skipped skipped because their tracks could not be read.")
             }
             if (snapshots.isNotEmpty()) {
-                undo = PlaylistUndo.Deleted(snapshots)
-                undoMessage = "Deleted ${snapshots.size} ${if (snapshots.size == 1) "playlist" else "playlists"}."
+                rememberUndo(
+                    PlaylistUndo.Deleted(snapshots),
+                    "Deleted ${playlistCount(snapshots.size)}."
+                )
             }
             busyAction = false
             exitSelection()
@@ -230,15 +361,17 @@ fun YouTubePlaylistsCard(
         }
         scope.launch {
             busyAction = true
-            undo = null
+            forgetUndo()
             val outcome = repository.rename(playlist.id, name)
             message = outcome.fold(
                 onSuccess = { "Renamed in the account." },
                 onFailure = { it.message ?: "The playlist could not be renamed." }
             )
             if (outcome.isSuccess) {
-                undo = PlaylistUndo.Renamed(playlist.id, playlist.title)
-                undoMessage = "Renamed \"${playlist.title}\" to \"$name\"."
+                rememberUndo(
+                    PlaylistUndo.Renamed(playlist.id, playlist.title),
+                    "Renamed \"${playlist.title}\" to \"$name\"."
+                )
             }
             busyAction = false
             refreshToken++
@@ -251,35 +384,161 @@ fun YouTubePlaylistsCard(
             when (change) {
                 is PlaylistUndo.Renamed -> {
                     val outcome = repository.rename(change.playlistId, change.previousTitle)
-                    message = outcome.fold(
-                        onSuccess = { "The old name is back." },
-                        onFailure = { it.message ?: "The name could not be restored." }
-                    )
+                    if (outcome.isSuccess) {
+                        message = "The old name is back."
+                        forgetUndo()
+                    } else {
+                        // The persisted token stays as it is, so Undo can be pressed again.
+                        message = outcome.exceptionOrNull()?.message
+                            ?: "The name could not be restored."
+                    }
                 }
 
                 is PlaylistUndo.Deleted -> {
                     var restored = 0
-                    var failed = 0
                     var tracksRestored = 0
+                    val failedSnapshots = mutableListOf<AccountPlaylistSnapshot>()
                     for (snapshot in change.snapshots) {
                         val outcome = repository.restore(snapshot)
                         if (outcome.isSuccess) {
                             restored++
                             tracksRestored += outcome.getOrThrow().restoredTracks
                         } else {
-                            failed++
+                            failedSnapshots += snapshot
                         }
                     }
-                    message = when {
-                        failed == 0 -> "Restored $restored ${if (restored == 1) "playlist" else "playlists"} " +
-                            "with $tracksRestored ${if (tracksRestored == 1) "track" else "tracks"}."
-                        restored == 0 -> "The playlists could not be restored."
-                        else -> "Restored $restored, $failed could not be restored."
+                    when {
+                        failedSnapshots.isEmpty() -> {
+                            message = "Restored ${playlistCount(restored)} " +
+                                "with ${trackCount(tracksRestored)}."
+                            forgetUndo()
+                        }
+
+                        restored == 0 -> {
+                            message = "The playlists could not be restored."
+                        }
+
+                        else -> {
+                            message = "Restored $restored, ${failedSnapshots.size} still to retry."
+                            val retry = PlaylistUndo.Deleted(failedSnapshots)
+                            rememberUndo(
+                                retry,
+                                "Deleted ${playlistCount(failedSnapshots.size)}, still to restore."
+                            )
+                        }
+                    }
+                }
+
+                is PlaylistUndo.Added -> {
+                    val failedIds = change.playlistIds.filter { id ->
+                        repository.removeSong(id, change.videoId).isFailure
+                    }
+                    when {
+                        failedIds.isEmpty() -> {
+                            message = "Removed \"${change.trackTitle}\" from " +
+                                "${playlistCount(change.playlistIds.size)}."
+                            forgetUndo()
+                        }
+
+                        failedIds.size == change.playlistIds.size -> {
+                            message = "The track could not be removed from any playlist."
+                        }
+
+                        else -> {
+                            val removed = change.playlistIds.size - failedIds.size
+                            message = "Removed from ${playlistCount(removed)}, " +
+                                "${failedIds.size} still to retry."
+                            rememberUndo(
+                                PlaylistUndo.Added(failedIds, change.videoId, change.trackTitle),
+                                "Added \"${change.trackTitle}\" to " +
+                                    "${playlistCount(failedIds.size)}, still to undo."
+                            )
+                        }
                     }
                 }
             }
-            undo = null
-            undoMessage = ""
+            busyAction = false
+            refreshToken++
+        }
+    }
+
+    fun checkHealth() {
+        scope.launch {
+            healthBusy = true
+            health = null
+            repository.checkHealth()
+                .onSuccess { health = it }
+                .onFailure { message = it.message ?: "The account playlists could not be checked." }
+            healthBusy = false
+        }
+    }
+
+    fun exportSelection(targets: List<RemotePlaylist>) {
+        val editable = targets.filter { it.isEditable }
+        if (editable.isEmpty()) {
+            message = "Select at least one editable playlist."
+            return
+        }
+        DirectoryPicker.savePlaylistPackFile { file ->
+            scope.launch {
+                busyAction = true
+                repository.exportPack(editable.map { it.id })
+                    .onSuccess { pack ->
+                        runCatching {
+                            withContext(Dispatchers.IO) {
+                                file.writeText(AccountPlaylistPacks.encode(pack), Charsets.UTF_8)
+                            }
+                        }.onSuccess {
+                            message = "Exported ${playlistCount(pack.playlists.size)} " +
+                                "with ${trackCount(pack.playlists.sumOf { it.videoIds.size })} to ${file.name}."
+                        }.onFailure {
+                            message = "The file could not be written: ${it.message}"
+                        }
+                    }
+                    .onFailure { message = it.message ?: "The playlists could not be read." }
+                busyAction = false
+            }
+        }
+    }
+
+    fun chooseImport() {
+        DirectoryPicker.choosePlaylistPackFile { file ->
+            scope.launch {
+                busyAction = true
+                val parsed = withContext(Dispatchers.IO) {
+                    runCatching {
+                        AccountPlaylistPacks.decode(file.readText(Charsets.UTF_8)).getOrThrow()
+                    }
+                }
+                parsed.onSuccess {
+                    importPack = it
+                    importName = file.name
+                }.onFailure {
+                    message = it.message ?: "The file could not be read."
+                }
+                busyAction = false
+            }
+        }
+    }
+
+    fun copyImported() {
+        val pack = importPack ?: return
+        importPack = null
+        scope.launch {
+            busyAction = true
+            val outcome = repository.copyPack(pack)
+            message = outcome.fold(
+                onSuccess = { copied ->
+                    buildString {
+                        append("Copied ${playlistCount(copied.created)} ")
+                        append("with ${trackCount(copied.restoredTracks)}.")
+                        if (copied.failedTracks > 0) {
+                            append(" ${copied.failedTracks} tracks were refused.")
+                        }
+                    }
+                },
+                onFailure = { it.message ?: "The playlists could not be copied." }
+            )
             busyAction = false
             refreshToken++
         }
@@ -324,6 +583,12 @@ fun YouTubePlaylistsCard(
                                 onClick = { selectionMode = true }
                             ) { Text("Select") }
                         }
+                    }
+                    AppTooltip("Check names, empty lists and repeated tracks") {
+                        TextButton(
+                            enabled = !loading && !busyAction && !healthBusy,
+                            onClick = { checkHealth() }
+                        ) { Text(if (healthBusy) "Checking..." else "Health") }
                     }
                     AppTooltip("Refresh account playlists") {
                         TextButton(onClick = { refreshToken++ }, enabled = !loading && !busyAction) {
@@ -390,6 +655,10 @@ fun YouTubePlaylistsCard(
                                 }
                                 TextButton(
                                     enabled = selectedEditable > 0 && !busyAction,
+                                    onClick = { exportSelection(selectedPlaylists) }
+                                ) { Text("Export") }
+                                TextButton(
+                                    enabled = selectedEditable > 0 && !busyAction,
                                     colors = ButtonDefaults.textButtonColors(contentColor = colors.error),
                                     onClick = {
                                         deleting = selectedPlaylists.filter { it.isEditable }
@@ -397,13 +666,21 @@ fun YouTubePlaylistsCard(
                                 ) { Text("Delete") }
                             }
                             Text(
-                                text = "Adding uses the playing YouTube track. Read-only playlists " +
-                                    "cannot be selected.",
+                                text = "Adding uses the playing YouTube track; a track already in a " +
+                                    "playlist is reported, not added twice. Read-only playlists cannot " +
+                                    "be selected.",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.onSurfaceVariant
                             )
                         }
                     }
+                }
+
+                health?.let { report ->
+                    AccountPlaylistHealthPanel(
+                        report = report,
+                        onDismiss = { health = null }
+                    )
                 }
 
                 when {
@@ -566,8 +843,8 @@ fun YouTubePlaylistsCard(
 
                 if (playlists.isNotEmpty() && !loading) {
                     Text(
-                        text = "Drag the handle to set the order on this device. YouTube Music " +
-                            "has no account-level playlist order.",
+                        text = "Drag the handle to set the order for this account on this device. " +
+                            "YouTube Music has no account-level playlist order.",
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant
                     )
@@ -599,8 +876,7 @@ fun YouTubePlaylistsCard(
                                 IconButton(
                                     enabled = !busyAction,
                                     onClick = {
-                                        undo = null
-                                        undoMessage = ""
+                                        scope.launch { forgetUndo() }
                                     },
                                     modifier = Modifier.size(32.dp)
                                 ) {
@@ -624,7 +900,10 @@ fun YouTubePlaylistsCard(
                     )
                 }
 
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Button(
                         enabled = !busyAction,
                         onClick = { showCreate = true }
@@ -637,6 +916,10 @@ fun YouTubePlaylistsCard(
                         Spacer(Modifier.width(8.dp))
                         Text("New account playlist")
                     }
+                    TextButton(
+                        enabled = !busyAction,
+                        onClick = { chooseImport() }
+                    ) { Text("Copy from file") }
                 }
             }
         }
@@ -652,7 +935,7 @@ fun YouTubePlaylistsCard(
                 showCreate = false
                 scope.launch {
                     busyAction = true
-                    undo = null
+                    forgetUndo()
                     val outcome = repository.create(name)
                     message = outcome.fold(
                         onSuccess = { "Created in the account." },
@@ -706,7 +989,8 @@ fun YouTubePlaylistsCard(
                     }
                     Text(
                         text = "They are removed from YouTube Music. Undo recreates each one " +
-                            "with its name and tracks; the cover, description and privacy are not restored.",
+                            "with its name and tracks; the cover, description and privacy are not " +
+                            "restored. The Undo stays available after a restart.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant
                     )
@@ -724,6 +1008,112 @@ fun YouTubePlaylistsCard(
                 TextButton(onClick = { deleting = emptyList() }) { Text("Cancel") }
             }
         )
+    }
+
+    importPack?.let { pack ->
+        AlertDialog(
+            onDismissRequest = { importPack = null },
+            title = { Text("Copy account playlists?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "From $importName",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${playlistCount(pack.playlists.size)} with " +
+                            "${trackCount(pack.playlists.sumOf { it.videoIds.size })}.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    pack.playlists.take(8).forEach { playlist ->
+                        Text(
+                            text = "\u2022 ${playlist.title} (${playlist.videoIds.size} tracks)",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (pack.playlists.size > 8) {
+                        Text(
+                            text = "... and ${pack.playlists.size - 8} more",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                    Text(
+                        text = "They are created in the signed-in account. A name already in " +
+                            "the account gets an \"(imported)\" suffix, and nothing is merged " +
+                            "into an existing playlist.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { copyImported() }) { Text("Copy") }
+            },
+            dismissButton = {
+                TextButton(onClick = { importPack = null }) { Text("Cancel") }
+            }
+        )
+    }
+}
+
+@Composable
+private fun AccountPlaylistHealthPanel(
+    report: AccountPlaylistHealth,
+    onDismiss: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = colors.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Account playlist health",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface
+            )
+            Text(
+                text = "${playlistCount(report.playlistCount)} · " +
+                    "${report.editableCount} editable · ${report.readOnlyCount} read-only · " +
+                    "${trackCount(report.trackCount)} read",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant
+            )
+            if (report.isClean) {
+                Text(
+                    text = "No issue was found in the account playlists.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.primary
+                )
+            } else {
+                report.issues.take(6).forEach { issue ->
+                    Text(
+                        text = "\u2022 ${issue.title}: ${issue.detail}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurface,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                if (report.issues.size > 6) {
+                    Text(
+                        text = "... and ${report.issues.size - 6} more",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.onSurfaceVariant
+                    )
+                }
+            }
+            TextButton(onClick = onDismiss) { Text("Dismiss") }
+        }
     }
 }
 

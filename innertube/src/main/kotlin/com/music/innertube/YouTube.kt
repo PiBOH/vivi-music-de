@@ -1421,6 +1421,13 @@ object YouTube {
         innerTube.removeFromPlaylist(WEB_REMIX, playlistId, videoId, setVideoId)
     }
 
+    /** The same call without the HTTP response in the signature (desktop consumers). */
+    suspend fun removeFromPlaylistUnit(
+        playlistId: String,
+        videoId: String,
+        setVideoId: String
+    ): Result<Unit> = removeFromPlaylist(playlistId, videoId, setVideoId).map { }
+
     suspend fun moveSongPlaylist(playlistId: String, setVideoId: String, successorSetVideoId: String?) = runCatching {
         innerTube.moveSongPlaylist(WEB_REMIX, playlistId, setVideoId, successorSetVideoId)
     }

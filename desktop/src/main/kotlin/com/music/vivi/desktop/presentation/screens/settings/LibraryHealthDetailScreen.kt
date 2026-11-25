@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ import com.music.vivi.desktop.data.library.LibraryHealthReport
 import com.music.vivi.desktop.data.library.LibraryHealthUndo
 import com.music.vivi.desktop.data.library.MissingFileIssue
 import com.music.vivi.desktop.data.library.OrphanPlaylistIssue
+import com.music.vivi.desktop.data.library.RelinkCandidate
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_outlined_clear_all
 import com.music.vivi.desktop.generated.resources.ic_outlined_content_copy
@@ -98,8 +100,12 @@ fun LibraryHealthDetailScreen(
     var selectedGroup by remember { mutableStateOf(initialGroup) }
     var orphanSelection by remember { mutableStateOf<Set<String>>(emptySet()) }
     var pendingPreview by remember { mutableStateOf<RepairPreview?>(null) }
+    var relinkPreview by remember { mutableStateOf<List<RelinkCandidate>>(emptyList()) }
+    var autoNote by remember { mutableStateOf<String?>(null) }
     var undo by remember { mutableStateOf<LibraryHealthUndo?>(null) }
     var undoMessage by remember { mutableStateOf("") }
+    val musicDirectories by viewModel.musicDirectories.collectAsState()
+    val excludedDirectories by viewModel.excludedDirectories.collectAsState()
 
     LaunchedEffect(scanRequest) {
         busy = true
@@ -137,6 +143,26 @@ fun LibraryHealthDetailScreen(
         DirectoryPicker.chooseAudioFile(title = "Locate ${issue.label}") { file ->
             if (file.isFile) {
                 pendingPreview = RepairPreview.Relink(issue, file)
+            }
+        }
+    }
+
+    fun autoRelink() {
+        scope.launch {
+            busy = true
+            autoNote = null
+            val candidates = withContext(Dispatchers.IO) {
+                checker.findRelinkCandidates(musicDirectories, excludedDirectories)
+            }
+            busy = false
+            if (candidates.isEmpty()) {
+                autoNote = if (musicDirectories.isEmpty()) {
+                    "Add a music folder in Music Management first."
+                } else {
+                    "No unique file was found for the missing songs; use Locate file for those."
+                }
+            } else {
+                relinkPreview = candidates
             }
         }
     }
@@ -270,7 +296,9 @@ fun LibraryHealthDetailScreen(
                                     LibraryHealthGroup.MISSING_FILES -> MissingFilesSection(
                                         issues = current.missingFiles,
                                         enabled = !busy,
-                                        onLocate = ::locate
+                                        autoNote = autoNote,
+                                        onLocate = ::locate,
+                                        onAutoRelink = ::autoRelink
                                     )
                                     LibraryHealthGroup.BROKEN_ARTWORK -> BrokenArtworkSection(
                                         issues = current.brokenArtwork
@@ -323,6 +351,59 @@ fun LibraryHealthDetailScreen(
             preview = preview,
             onDismiss = { pendingPreview = null },
             onConfirm = { confirmPreview(preview) }
+        )
+    }
+
+    if (relinkPreview.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { relinkPreview = emptyList() },
+            title = { Text("Relink ${relinkPreview.size} songs?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Each song keeps its id, likes and playlist entries. Only the " +
+                            "stored path changes; no file is moved or deleted.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    relinkPreview.take(10).forEach { candidate ->
+                        Text(
+                            text = "\u2022 ${candidate.issue.label} \u2192 ${candidate.newFile.name}",
+                            style = MaterialTheme.typography.bodySmall,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                    if (relinkPreview.size > 10) {
+                        Text(
+                            text = "... and ${relinkPreview.size - 10} more",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val preview = relinkPreview
+                    relinkPreview = emptyList()
+                    scope.launch {
+                        busy = true
+                        val result = withContext(Dispatchers.IO) { checker.relinkSongs(preview) }
+                        if (result.changed > 0) {
+                            undo = result.undo
+                            undoMessage = "Relinked ${result.changed} " +
+                                (if (result.changed == 1) "song" else "songs")
+                            scanRequest++
+                        } else {
+                            busy = false
+                        }
+                    }
+                }) { Text("Relink") }
+            },
+            dismissButton = {
+                TextButton(onClick = { relinkPreview = emptyList() }) { Text("Cancel") }
+            }
         )
     }
 }
@@ -404,7 +485,9 @@ private fun HealthGroupCard(
 private fun MissingFilesSection(
     issues: List<MissingFileIssue>,
     enabled: Boolean,
-    onLocate: (MissingFileIssue) -> Unit
+    autoNote: String?,
+    onLocate: (MissingFileIssue) -> Unit,
+    onAutoRelink: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -413,6 +496,27 @@ private fun MissingFilesSection(
             text = "Choose the file that replaced each missing one. The song keeps its id, likes " +
                 "and playlist entries; the old path and the files on disk are left alone."
         )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            OutlinedButton(
+                enabled = enabled && issues.isNotEmpty(),
+                onClick = onAutoRelink
+            ) { Text("Relink automatically") }
+            Text(
+                text = "Only a unique match in the music folders is used; the rest stays manual.",
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant
+            )
+        }
+        autoNote?.let { note ->
+            Text(
+                text = note,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant
+            )
+        }
         if (issues.isEmpty()) {
             SectionEmpty("No missing files in this group.")
             return@Column

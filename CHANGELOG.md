@@ -1,10 +1,17 @@
 ## [Unreleased]
 
 ### ✨ Added
+- [DE] **The account playlist order is kept per account, not once for the device.**
+- [DE] **The account playlist Undo survives the screen and a restart, and a partial restore can be retried.**
+- [DE] **Bulk add skips tracks already in the playlist and Undo removes the copies it made.**
+- [DE] **Missing files can be relinked in one step when the match is unique.**
+- [DE] **The account playlists have their own health check.**
+- [DE] **Account playlists can be exported to a file and copied into another account.**
 - [DE] **The account playlist card selects several playlists, acts on them together and undoes a delete or a rename.**
 - [DE] **Library health issues are reviewed and repaired from their own screen, with a preview and Undo.**
 
 ### 🔧 Changed
+- [DE] **A library scan only prunes folders it actually walked, and one full scan runs at a time.**
 - [DE] **The library health card counts the hidden playlist rows correctly.**
 - [DE] **The new settings cards and the update dialog were rendered and corrected.**
 

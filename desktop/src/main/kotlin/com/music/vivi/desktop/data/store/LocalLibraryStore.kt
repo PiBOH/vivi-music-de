@@ -66,6 +66,42 @@ data class StoredLyrics(
     val lastUpdated: Long = 0L
 )
 
+/** One playlist in a persisted Undo token: the name and the tracks in order. */
+@Serializable
+data class StoredPlaylistSnapshot(
+    val title: String,
+    val videoIds: List<String> = emptyList()
+)
+
+/**
+ * The last account-playlist change Undo can still reverse.
+ *
+ * It is written beside the library so the bar survives closing Settings or
+ * restarting the app, and so a restore that failed halfway can be retried with
+ * the playlists that are left instead of losing the whole token.
+ */
+@Serializable
+data class StoredPlaylistUndo(
+    /** One of [RENAMED], [DELETED] or [ADDED]. */
+    val kind: String,
+    /** The account the change belongs to, so another account never sees this bar. */
+    val accountId: String? = null,
+    val playlistId: String? = null,
+    val previousTitle: String? = null,
+    val addedPlaylistIds: List<String> = emptyList(),
+    val videoId: String? = null,
+    val trackTitle: String? = null,
+    val snapshots: List<StoredPlaylistSnapshot> = emptyList(),
+    val message: String = "",
+    val createdAt: Long = 0L
+) {
+    companion object {
+        const val RENAMED = "renamed"
+        const val DELETED = "deleted"
+        const val ADDED = "added"
+    }
+}
+
 /** An artist row: the name plus the artwork the user pinned to it (the `artists` table). */
 @Serializable
 data class StoredArtist(
@@ -93,11 +129,20 @@ data class LocalLibraryState(
     val pendingListens: List<ListenBrainzPendingListen> = emptyList(),
     val artists: List<StoredArtist> = emptyList(),
     /**
-     * The order the Accounts card draws the account's playlists in. YouTube
-     * Music exposes no order for the library list, so this is local to the
-     * device and changes only what the card shows.
+     * The order the Accounts card drew before orders were kept per account.
+     * It is still read as the first account's order so a file written by an
+     * older build keeps its order; once [youTubePlaylistOrders] has an entry
+     * for that account, the map wins.
      */
     val youTubePlaylistOrder: List<String> = emptyList(),
+    /**
+     * The order each signed-in YouTube Music account's card draws, keyed by the
+     * account id from `yt-accounts.json`. YouTube Music exposes no account-level
+     * order, so the order is local to the device and to that account.
+     */
+    val youTubePlaylistOrders: Map<String, List<String>> = emptyMap(),
+    /** The last account-playlist change Undo can reverse; survives a restart. */
+    val youTubePlaylistUndo: StoredPlaylistUndo? = null,
     val nextEventId: Long = 1L,
     val nextListenId: Long = 1L,
     /** The last track that was playing, so the next start can resume it paused. */

@@ -2,7 +2,10 @@ package com.music.vivi.desktop.data.youtube
 
 import com.music.innertube.YouTube
 import com.music.innertube.models.PlaylistItem
+import com.music.vivi.desktop.data.store.LocalLibraryState
 import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.store.StoredPlaylistSnapshot
+import com.music.vivi.desktop.data.store.StoredPlaylistUndo
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +15,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 data class RemotePlaylist(
     val id: String,
@@ -21,10 +26,11 @@ data class RemotePlaylist(
     val isEditable: Boolean
 )
 
-/** Everything needed to put a deleted account playlist back, in its order. */
+/** Everything needed to put an account playlist back, in its order. */
+@Serializable
 data class AccountPlaylistSnapshot(
     val title: String,
-    val videoIds: List<String>
+    val videoIds: List<String> = emptyList()
 )
 
 data class RestoreOutcome(
@@ -32,6 +38,122 @@ data class RestoreOutcome(
     val restoredTracks: Int,
     val failedTracks: Int
 )
+
+/** One row of a playlist page, with the token a removal needs. */
+data class PlaylistTrack(
+    val videoId: String,
+    val setVideoId: String?
+)
+
+/** What happened when the playing track was offered to one playlist. */
+enum class AddOutcome {
+    ADDED,
+    ALREADY_PRESENT,
+    FAILED
+}
+
+/** One file that can be moved to another account: names and tracks, nothing else. */
+@Serializable
+data class AccountPlaylistPack(
+    val format: String = "vivi-account-playlists",
+    val version: Int = 1,
+    val exportedAt: Long = 0L,
+    val source: String? = null,
+    val playlists: List<AccountPlaylistSnapshot> = emptyList()
+) {
+    companion object {
+        const val FORMAT = "vivi-account-playlists"
+        const val VERSION = 1
+    }
+}
+
+data class CopyOutcome(
+    val created: Int,
+    val restoredTracks: Int,
+    val failedTracks: Int
+)
+
+/** One account-playlist problem the health check reports. */
+enum class AccountPlaylistIssueKind {
+    READ_ONLY,
+    DUPLICATE_TITLE,
+    EMPTY,
+    DUPLICATE_TRACKS,
+    UNREADABLE
+}
+
+data class AccountPlaylistIssue(
+    val playlistId: String,
+    val title: String,
+    val kind: AccountPlaylistIssueKind,
+    val detail: String
+)
+
+data class AccountPlaylistHealth(
+    val playlistCount: Int,
+    val editableCount: Int,
+    val readOnlyCount: Int,
+    val trackCount: Int,
+    val issues: List<AccountPlaylistIssue>
+) {
+    val isClean: Boolean
+        get() = issues.isEmpty()
+}
+
+/** Writes and reads the JSON file used to move playlists between accounts. */
+object AccountPlaylistPacks {
+
+    private val json = Json {
+        prettyPrint = true
+        ignoreUnknownKeys = true
+        encodeDefaults = true
+    }
+
+    fun encode(pack: AccountPlaylistPack): String =
+        json.encodeToString(AccountPlaylistPack.serializer(), pack)
+
+    fun decode(text: String): Result<AccountPlaylistPack> = runCatching {
+        val pack = json.decodeFromString(AccountPlaylistPack.serializer(), text)
+        require(pack.format == AccountPlaylistPack.FORMAT) {
+            "This is not a VIVI account playlist file."
+        }
+        require(pack.version <= AccountPlaylistPack.VERSION) {
+            "This file was written by a newer VIVI Music."
+        }
+        pack
+    }
+}
+
+/** The key the order and the undo of a signed-out session are stored under. */
+internal const val GUEST_PLAYLIST_ACCOUNT = "guest"
+
+internal fun playlistAccountKey(accountId: String?): String =
+    accountId?.takeIf { it.isNotBlank() } ?: GUEST_PLAYLIST_ACCOUNT
+
+/**
+ * The order one account's card draws.
+ *
+ * The map is asked first. A file written before the orders were per account
+ * only has the old single list, so that list is used as the first account's
+ * order until the map is written; once any account saves an order the old list
+ * is no longer applied to a different account.
+ */
+internal fun storedPlaylistOrder(state: LocalLibraryState, accountId: String?): List<String> {
+    val key = playlistAccountKey(accountId)
+    state.youTubePlaylistOrders[key]?.let { return it }
+    return if (state.youTubePlaylistOrders.isEmpty()) state.youTubePlaylistOrder else emptyList()
+}
+
+/** The state with one account's order replaced; the old single list is left readable. */
+internal fun withPlaylistOrder(
+    state: LocalLibraryState,
+    accountId: String?,
+    playlistIds: List<String>
+): LocalLibraryState {
+    val key = playlistAccountKey(accountId)
+    if (state.youTubePlaylistOrders[key] == playlistIds) return state
+    return state.copy(youTubePlaylistOrders = state.youTubePlaylistOrders + (key to playlistIds))
+}
 
 /**
  * The order the card draws the account playlists in.
@@ -51,6 +173,95 @@ internal fun applyStoredPlaylistOrder(
     return playlists.sortedBy { rank[it.id] ?: Int.MAX_VALUE }
 }
 
+/** A title the target account does not already use, so an import never merges by accident. */
+internal fun uniquePlaylistTitle(title: String, existing: Collection<String>): String {
+    val base = title.trim().ifBlank { "Imported playlist" }
+    val taken = existing.mapTo(HashSet()) { it.trim().lowercase() }
+    if (base.lowercase() !in taken) return base
+    var index = 1
+    while (true) {
+        val candidate = if (index == 1) "$base (imported)" else "$base (imported $index)"
+        if (candidate.lowercase() !in taken) return candidate
+        index++
+    }
+}
+
+/**
+ * The problems in the account's own playlists, from the list and the tracks
+ * that were read for it. A playlist whose page failed is [unreadable] and is
+ * not called empty, because the page did not prove it.
+ */
+internal fun accountPlaylistHealth(
+    playlists: List<RemotePlaylist>,
+    tracksByPlaylist: Map<String, List<PlaylistTrack>>,
+    unreadable: Set<String> = emptySet()
+): AccountPlaylistHealth {
+    val issues = mutableListOf<AccountPlaylistIssue>()
+    val seenTitles = HashMap<String, Int>()
+
+    for (playlist in playlists) {
+        if (!playlist.isEditable) {
+            issues += AccountPlaylistIssue(
+                playlistId = playlist.id,
+                title = playlist.title,
+                kind = AccountPlaylistIssueKind.READ_ONLY,
+                detail = "Read-only: it cannot be renamed or deleted here."
+            )
+        }
+
+        val key = playlist.title.trim().lowercase()
+        if (key.isNotBlank()) {
+            val seen = seenTitles[key] ?: 0
+            if (seen > 0) {
+                issues += AccountPlaylistIssue(
+                    playlistId = playlist.id,
+                    title = playlist.title,
+                    kind = AccountPlaylistIssueKind.DUPLICATE_TITLE,
+                    detail = "Another playlist has this name."
+                )
+            }
+            seenTitles[key] = seen + 1
+        }
+
+        if (playlist.id in unreadable) {
+            issues += AccountPlaylistIssue(
+                playlistId = playlist.id,
+                title = playlist.title,
+                kind = AccountPlaylistIssueKind.UNREADABLE,
+                detail = "Its tracks could not be read; try the check again."
+            )
+            continue
+        }
+
+        val tracks = tracksByPlaylist[playlist.id] ?: continue
+        if (tracks.isEmpty()) {
+            issues += AccountPlaylistIssue(
+                playlistId = playlist.id,
+                title = playlist.title,
+                kind = AccountPlaylistIssueKind.EMPTY,
+                detail = "It has no tracks."
+            )
+        }
+        val repeated = tracks.groupingBy { it.videoId }.eachCount().values.count { it > 1 }
+        if (repeated > 0) {
+            issues += AccountPlaylistIssue(
+                playlistId = playlist.id,
+                title = playlist.title,
+                kind = AccountPlaylistIssueKind.DUPLICATE_TRACKS,
+                detail = "$repeated ${if (repeated == 1) "track is" else "tracks are"} in it more than once."
+            )
+        }
+    }
+
+    return AccountPlaylistHealth(
+        playlistCount = playlists.size,
+        editableCount = playlists.count { it.isEditable },
+        readOnlyCount = playlists.count { !it.isEditable },
+        trackCount = tracksByPlaylist.values.sumOf { it.size },
+        issues = issues
+    )
+}
+
 /**
  * The playlists that live in the signed-in YouTube Music account.
  *
@@ -68,28 +279,16 @@ internal fun applyStoredPlaylistOrder(
  */
 class YouTubePlaylistsRepository(
     private val store: LocalLibraryStore? = null,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    /** The account whose order, undo and health are read; a seam for tests. */
+    private val accountId: () -> String? = { YouTubeAccount.activeAccountId() }
 ) {
 
     private val editability = ConcurrentHashMap<String, Boolean>()
 
     suspend fun load(): Result<List<RemotePlaylist>> = withContext(ioDispatcher) {
         runCatching {
-            val page = YouTube.library("FEmusic_liked_playlists").getOrThrow()
-            val items = page.items
-                .filterIsInstance<PlaylistItem>()
-                .map { item ->
-                    RemotePlaylist(
-                        id = item.id.removePrefix("VL"),
-                        title = item.title,
-                        songCountText = item.songCountText,
-                        thumbnail = item.thumbnail,
-                        isEditable = item.isEditable
-                    )
-                }
-                .filter { it.id.isNotBlank() }
-                .distinctBy { it.id }
-
+            val items = readLibraryItems()
             val gate = Semaphore(4)
             val resolved = coroutineScope {
                 items.map { playlist ->
@@ -98,8 +297,28 @@ class YouTubePlaylistsRepository(
                     }
                 }.awaitAll()
             }
-            applyStoredPlaylistOrder(resolved, store?.load()?.youTubePlaylistOrder.orEmpty())
+            applyStoredPlaylistOrder(
+                resolved,
+                store?.let { storedPlaylistOrder(it.load(), accountId()) }.orEmpty()
+            )
         }
+    }
+
+    private suspend fun readLibraryItems(): List<RemotePlaylist> {
+        val page = YouTube.library("FEmusic_liked_playlists").getOrThrow()
+        return page.items
+            .filterIsInstance<PlaylistItem>()
+            .map { item ->
+                RemotePlaylist(
+                    id = item.id.removePrefix("VL"),
+                    title = item.title,
+                    songCountText = item.songCountText,
+                    thumbnail = item.thumbnail,
+                    isEditable = item.isEditable
+                )
+            }
+            .filter { it.id.isNotBlank() }
+            .distinctBy { it.id }
     }
 
     private suspend fun resolveEditable(
@@ -143,15 +362,61 @@ class YouTubePlaylistsRepository(
         YouTube.addToPlaylistUnit(playlistId, videoId)
     }
 
-    /** Saves the order the card draws, so a drag survives leaving the screen. */
+    /**
+     * Adds the track only when the playlist does not already hold it, so the
+     * card can say "already there" instead of adding a second copy and calling
+     * it a success.
+     */
+    suspend fun addSongIfAbsent(playlistId: String, videoId: String): AddOutcome =
+        withContext(ioDispatcher) {
+            if (videoId.isBlank()) return@withContext AddOutcome.FAILED
+            val tracks = readTracks(playlistId).getOrElse { return@withContext AddOutcome.FAILED }
+            if (tracks.any { it.videoId == videoId }) {
+                return@withContext AddOutcome.ALREADY_PRESENT
+            }
+            if (YouTube.addToPlaylistUnit(playlistId, videoId).isSuccess) {
+                AddOutcome.ADDED
+            } else {
+                AddOutcome.FAILED
+            }
+        }
+
+    /** Reads every page of a playlist, keeping the token a removal needs. */
+    suspend fun tracks(playlistId: String): Result<List<PlaylistTrack>> =
+        withContext(ioDispatcher) { readTracks(playlistId) }
+
+    private suspend fun readTracks(playlistId: String): Result<List<PlaylistTrack>> = runCatching {
+        val first = YouTube.playlist(playlistId).getOrThrow()
+        val tracks = first.songs.mapTo(mutableListOf()) {
+            PlaylistTrack(videoId = it.id, setVideoId = it.setVideoId)
+        }
+        var continuation = first.songsContinuation
+        while (continuation != null) {
+            val next = YouTube.playlistContinuation(continuation).getOrThrow()
+            tracks += next.songs.map { PlaylistTrack(videoId = it.id, setVideoId = it.setVideoId) }
+            continuation = next.continuation
+        }
+        tracks
+    }
+
+    /** Removes one track from a playlist by resolving its `setVideoId` first. */
+    suspend fun removeSong(playlistId: String, videoId: String): Result<Unit> =
+        withContext(ioDispatcher) {
+            runCatching {
+                val tracks = readTracks(playlistId).getOrThrow()
+                val target = tracks.lastOrNull {
+                    it.videoId == videoId && !it.setVideoId.isNullOrBlank()
+                } ?: error("The track is not in that playlist, so it cannot be removed.")
+                YouTube.removeFromPlaylistUnit(playlistId, videoId, target.setVideoId!!).getOrThrow()
+            }
+        }
+
+    /** Saves one account's order, so a drag survives leaving the screen. */
     suspend fun saveOrder(playlistIds: List<String>) = withContext(ioDispatcher) {
         val library = store ?: return@withContext
+        val account = accountId()
         library.update("youtube_playlists") { state ->
-            if (state.youTubePlaylistOrder == playlistIds) {
-                state
-            } else {
-                state.copy(youTubePlaylistOrder = playlistIds)
-            }
+            withPlaylistOrder(state, account, playlistIds)
         }
     }
 
@@ -163,7 +428,7 @@ class YouTubePlaylistsRepository(
     suspend fun snapshot(playlistId: String): Result<AccountPlaylistSnapshot> = withContext(ioDispatcher) {
         runCatching {
             val first = YouTube.playlist(playlistId).getOrThrow()
-            val videoIds = first.songs.mapTo(mutableListOf()) { it.id }
+            val videoIds = readTracksFromFirstPage(first).toMutableList()
             var continuation = first.songsContinuation
             while (continuation != null) {
                 val next = YouTube.playlistContinuation(continuation).getOrThrow()
@@ -174,26 +439,123 @@ class YouTubePlaylistsRepository(
         }
     }
 
+    private fun readTracksFromFirstPage(page: com.music.innertube.pages.PlaylistPage): List<String> =
+        page.songs.map { it.id }
+
     /**
      * Recreates a deleted playlist with its name and its tracks in order. The
      * cover and the description are not part of the snapshot, so they are not
      * restored; a track that YouTube refuses is counted, not fatal.
      */
     suspend fun restore(snapshot: AccountPlaylistSnapshot): Result<RestoreOutcome> =
-        withContext(ioDispatcher) {
-            runCatching {
-                val playlistId = YouTube.createPlaylist(snapshot.title).removePrefix("VL")
-                var restored = 0
-                var failed = 0
-                for (videoId in snapshot.videoIds) {
-                    if (YouTube.addToPlaylistUnit(playlistId, videoId).isSuccess) {
-                        restored++
-                    } else {
-                        failed++
-                    }
-                }
-                editability[playlistId] = true
-                RestoreOutcome(playlistId, restored, failed)
+        withContext(ioDispatcher) { createWithTracks(snapshot) }
+
+    private suspend fun createWithTracks(snapshot: AccountPlaylistSnapshot): Result<RestoreOutcome> = runCatching {
+        val playlistId = YouTube.createPlaylist(snapshot.title).removePrefix("VL")
+        var restored = 0
+        var failed = 0
+        for (videoId in snapshot.videoIds) {
+            if (YouTube.addToPlaylistUnit(playlistId, videoId).isSuccess) {
+                restored++
+            } else {
+                failed++
             }
         }
+        editability[playlistId] = true
+        RestoreOutcome(playlistId, restored, failed)
+    }
+
+    /** The Undo bar for this account, when one was left by an earlier session. */
+    suspend fun pendingUndo(): StoredPlaylistUndo? = withContext(ioDispatcher) {
+        val stored = store?.load()?.youTubePlaylistUndo ?: return@withContext null
+        if (stored.accountId == playlistAccountKey(accountId())) stored else null
+    }
+
+    /** Writes the Undo bar for this account, scoped to it and stamped once. */
+    suspend fun rememberUndo(undo: StoredPlaylistUndo) = withContext(ioDispatcher) {
+        val library = store ?: return@withContext
+        val scoped = undo.copy(
+            accountId = playlistAccountKey(accountId()),
+            createdAt = undo.createdAt.takeIf { it > 0L } ?: System.currentTimeMillis()
+        )
+        library.update("youtube_playlists") { state ->
+            if (state.youTubePlaylistUndo == scoped) state else state.copy(youTubePlaylistUndo = scoped)
+        }
+    }
+
+    suspend fun clearUndo() = withContext(ioDispatcher) {
+        val library = store ?: return@withContext
+        library.update("youtube_playlists") { state ->
+            if (state.youTubePlaylistUndo == null) state else state.copy(youTubePlaylistUndo = null)
+        }
+    }
+
+    /** Writes the selected playlists, names and tracks only, to one portable file. */
+    suspend fun exportPack(playlistIds: List<String>): Result<AccountPlaylistPack> =
+        withContext(ioDispatcher) {
+            runCatching {
+                val snapshots = playlistIds.distinct().map { id -> snapshot(id).getOrThrow() }
+                AccountPlaylistPack(
+                    exportedAt = System.currentTimeMillis(),
+                    source = YouTubeAccount.activeSummary()?.name,
+                    playlists = snapshots
+                )
+            }
+        }
+
+    /**
+     * Copies every playlist in [pack] into the signed-in account. A name the
+     * account already uses gets a suffix, and nothing is merged into an
+     * existing playlist.
+     */
+    suspend fun copyPack(pack: AccountPlaylistPack): Result<CopyOutcome> = withContext(ioDispatcher) {
+        runCatching {
+            require(pack.playlists.isNotEmpty()) { "The file has no playlists." }
+            val existing = readLibraryItems().mapTo(mutableListOf()) { it.title }
+            var created = 0
+            var restoredTracks = 0
+            var failedTracks = 0
+            for (snapshot in pack.playlists) {
+                val title = uniquePlaylistTitle(snapshot.title, existing)
+                val outcome = createWithTracks(
+                    AccountPlaylistSnapshot(title = title, videoIds = snapshot.videoIds)
+                ).getOrThrow()
+                existing += title
+                created++
+                restoredTracks += outcome.restoredTracks
+                failedTracks += outcome.failedTracks
+            }
+            CopyOutcome(created, restoredTracks, failedTracks)
+        }
+    }
+
+    /**
+     * Reads every playlist and checks names, editability, empty lists and
+     * repeated tracks. It is an explicit action: nothing here changes YouTube.
+     */
+    suspend fun checkHealth(): Result<AccountPlaylistHealth> = withContext(ioDispatcher) {
+        runCatching {
+            val playlists = load().getOrThrow()
+            val gate = Semaphore(4)
+            val reads = coroutineScope {
+                playlists.map { playlist ->
+                    async {
+                        playlist.id to gate.withPermit { readTracks(playlist.id) }
+                    }
+                }.awaitAll()
+            }
+            val tracksByPlaylist = HashMap<String, List<PlaylistTrack>>()
+            val unreadable = HashSet<String>()
+            for ((id, result) in reads) {
+                result.onSuccess { tracksByPlaylist[id] = it }
+                    .onFailure { unreadable += id }
+            }
+            accountPlaylistHealth(playlists, tracksByPlaylist, unreadable)
+        }
+    }
+
 }
+
+/** The shape the Undo bar persists for one snapshot. */
+internal fun AccountPlaylistSnapshot.toStoredSnapshot(): StoredPlaylistSnapshot =
+    StoredPlaylistSnapshot(title = title, videoIds = videoIds)

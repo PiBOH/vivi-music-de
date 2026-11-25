@@ -100,6 +100,41 @@ object DirectoryPicker {
         }
     }
 
+    /** The portable JSON file the Accounts card uses to move playlists between accounts. */
+    fun choosePlaylistPackFile(
+        title: String = "Select a VIVI account playlist file",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            FileKit.openFilePicker(
+                type = FileKitType.File(listOf("json")),
+                dialogSettings = FileKitDialogSettings(title = title)
+            )?.let { onSelected(it.file) }
+        }
+    }
+
+    fun savePlaylistPackFile(
+        defaultFileName: String = "vivimusic-account-playlists.json",
+        initialDir: File? = null,
+        title: String = "Export account playlists",
+        onSelected: (File) -> Unit
+    ) {
+        scope.launch {
+            val file = FileKit.openFileSaver(
+                suggestedName = defaultFileName.removeSuffix(".json"),
+                defaultExtension = "json",
+                directory = initialDir?.let { PlatformFile(it) },
+                dialogSettings = FileKitDialogSettings(title = title)
+            ) ?: return@launch
+            val finalFile = if (file.file.name.endsWith(".json", ignoreCase = true)) {
+                file.file
+            } else {
+                File(file.file.parentFile, "${file.file.name}.json")
+            }
+            onSelected(finalFile)
+        }
+    }
+
     fun chooseImageFile(
         title: String = "Select Album Artwork",
         onSelected: (File) -> Unit

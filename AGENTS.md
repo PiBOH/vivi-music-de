@@ -650,10 +650,27 @@ cloned screen, not by adding a parallel surface next to it.
   timestamped temporary one, renames it, adds the first YouTube Music
   result, checks the playlist page contains it, deletes it and checks it is
   gone. It only touches that playlist and deletes it in a `finally`. The card
-  itself also selects several playlists, adds the playing track to all of them,
-  deletes them with a snapshot-based Undo, undoes a rename and drags the rows
-  into a device-local order saved in `LocalLibraryState.youTubePlaylistOrder`;
-  the live check still covers the single-playlist path only.
+  itself also selects several playlists, adds the playing track to all of them
+  (skipping a track the playlist already holds), deletes them with a
+  snapshot-based Undo, undoes a rename and drags the rows into a per-account
+  order saved in `LocalLibraryState.youTubePlaylistOrders`; the old
+  `youTubePlaylistOrder` is still read as the first account's order. The Undo
+  token is persisted in `LocalLibraryState.youTubePlaylistUndo` and scoped to
+  the account, so it survives a restart and a partial restore keeps only the
+  playlists that still need a retry. The same card has a read-only Health check
+  (read-only lists, duplicate titles, empty lists, repeated tracks, unreadable
+  pages) and an export/copy path: Export writes a versioned
+  `vivi-account-playlists` JSON with names and ordered video ids, and Copy from
+  file recreates those playlists in the signed-in account without merging. The
+  live check still covers the single-playlist path only.
+
+  The library health screen also relinks missing files automatically when the
+  match is unique: `findRelinkCandidates` matches an exact file name first and
+  then a normalized title plus artist, skips excluded folders and any file
+  another song already points at, and `relinkSongs` applies the batch in one
+  write with a `LibraryHealthUndo.SongPaths` token. A full library scan only
+  prunes a root it walked completely (`DesktopMusicScanner` keeps a failed root
+  out of `deleteSongsNotInPaths`) and one full scan runs at a time.
   **Measured on 21 Nov:** `RESULT: PASS` on the signed-in account with 10
   playlists (8 editable, 2 read-only), including the added
   `4D7u5KF7SP8` and the final absence.

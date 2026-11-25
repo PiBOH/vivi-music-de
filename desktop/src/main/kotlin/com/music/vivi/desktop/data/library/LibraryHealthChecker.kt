@@ -5,6 +5,8 @@ import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.utils.DuplicateFinder
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
+import java.text.Normalizer
 
 /** The four groups the health card and its detail screen list. */
 enum class LibraryHealthGroup {
@@ -18,6 +20,12 @@ data class MissingFileIssue(
     val songId: String,
     val label: String,
     val path: String
+)
+
+/** A missing song and the existing file that can take its place. */
+data class RelinkCandidate(
+    val issue: MissingFileIssue,
+    val newFile: File
 )
 
 data class BrokenArtworkIssue(
@@ -65,6 +73,9 @@ sealed interface LibraryHealthUndo {
         val previousPath: String,
         val previousContentUri: String
     ) : LibraryHealthUndo
+
+    /** Several relinks made by the automatic action, reversed in one step. */
+    data class SongPaths(val songs: List<SongPath>) : LibraryHealthUndo
 }
 
 data class HealthRepairResult(
@@ -161,6 +172,112 @@ class LibraryHealthChecker(
         return HealthRepairResult(removed, LibraryHealthUndo.Playlists(snapshots))
     }
 
+    /**
+     * Finds one existing file for each missing song, inside the configured
+     * music folders. A file that another song already points at is never
+     * taken, and a song is only offered when exactly one file matches its old
+     * name or its title and artist; everything else stays a manual choice.
+     */
+    fun findRelinkCandidates(
+        musicDirectories: Collection<String>,
+        excludedDirectories: Collection<String> = emptyList()
+    ): List<RelinkCandidate> {
+        val state = store.load()
+        val missing = state.songs
+            .filter { it.isLocalFile() && !File(it.path).isFile }
+            .sortedBy { it.displayLabel() }
+        if (missing.isEmpty()) return emptyList()
+
+        val usedPaths = state.songs.mapNotNull { song ->
+            File(song.path).takeIf { it.isFile }?.absolutePath
+        }.toHashSet()
+        val files = collectAudioFiles(musicDirectories, excludedDirectories)
+        val byName = files.groupBy { it.name.lowercase() }
+        val byNormalizedName = files.groupBy { normalizeForRelink(it.nameWithoutExtension) }
+        val taken = HashSet<String>()
+        val candidates = mutableListOf<RelinkCandidate>()
+
+        for (song in missing) {
+            val oldName = File(song.path).name.lowercase()
+            var matches = byName[oldName].orEmpty()
+                .filter { it.absolutePath !in usedPaths && it.absolutePath !in taken }
+            if (matches.size != 1) {
+                val title = normalizeForRelink(song.title)
+                val artist = normalizeForRelink(song.displayArtist)
+                matches = if (title.isBlank()) {
+                    emptyList()
+                } else {
+                    byNormalizedName.entries
+                        .filter { (normalized, _) ->
+                            normalized.contains(title) &&
+                                (artist.isBlank() || normalized.contains(artist))
+                        }
+                        .flatMap { it.value }
+                        .filter { it.absolutePath !in usedPaths && it.absolutePath !in taken }
+                        .distinctBy { it.absolutePath }
+                }
+            }
+            if (matches.size != 1) continue
+            val match = matches.single()
+            taken += match.absolutePath
+            candidates += RelinkCandidate(
+                issue = MissingFileIssue(
+                    songId = song.id,
+                    label = song.displayLabel(),
+                    path = song.path
+                ),
+                newFile = match
+            )
+        }
+        return candidates
+    }
+
+    /**
+     * Applies the candidates in one write. A song whose old path exists again,
+     * or whose file disappeared after the preview, is skipped.
+     */
+    fun relinkSongs(candidates: Collection<RelinkCandidate>): HealthRepairResult {
+        if (candidates.isEmpty()) return HealthRepairResult(0, null)
+        val songsById = store.load().songs.associateBy { it.id }
+        data class Planned(
+            val songId: String,
+            val newFile: File,
+            val undo: LibraryHealthUndo.SongPath
+        )
+
+        val planned = candidates.distinctBy { it.issue.songId }.mapNotNull { candidate ->
+            val song = songsById[candidate.issue.songId] ?: return@mapNotNull null
+            if (!candidate.newFile.isFile) return@mapNotNull null
+            if (File(song.path).isFile) return@mapNotNull null
+            Planned(
+                songId = song.id,
+                newFile = candidate.newFile,
+                undo = LibraryHealthUndo.SongPath(
+                    songId = song.id,
+                    previousPath = song.path,
+                    previousContentUri = song.contentUriString
+                )
+            )
+        }
+        if (planned.isEmpty()) return HealthRepairResult(0, null)
+        val byId = planned.associateBy { it.songId }
+        store.update("songs") { state ->
+            state.copy(
+                songs = state.songs.map { song ->
+                    val plan = byId[song.id] ?: return@map song
+                    song.copy(
+                        path = plan.newFile.absolutePath,
+                        contentUriString = plan.newFile.toURI().toString()
+                    )
+                }
+            )
+        }
+        return HealthRepairResult(
+            changed = planned.size,
+            undo = LibraryHealthUndo.SongPaths(planned.map { it.undo })
+        )
+    }
+
     /** Points [songId] at [newFile] without copying, moving or deleting anything. */
     fun relinkSong(songId: String, newFile: File): HealthRepairResult {
         if (!newFile.isFile) return HealthRepairResult(0, null)
@@ -223,8 +340,60 @@ class LibraryHealthChecker(
                     }
                 )
             }
+
+            is LibraryHealthUndo.SongPaths -> {
+                if (change.songs.isEmpty()) return
+                val byId = change.songs.associateBy { it.songId }
+                store.update("songs") { state ->
+                    state.copy(
+                        songs = state.songs.map { song ->
+                            val snapshot = byId[song.id] ?: return@map song
+                            song.copy(
+                                path = snapshot.previousPath,
+                                contentUriString = snapshot.previousContentUri
+                            )
+                        }
+                    )
+                }
+            }
         }
     }
+
+    private fun collectAudioFiles(
+        musicDirectories: Collection<String>,
+        excludedDirectories: Collection<String>
+    ): List<File> {
+        val extensions = setOf("mp3", "flac", "ogg", "opus", "m4a", "wav", "aac", "wma")
+        val excludedRoots = excludedDirectories.map {
+            File(it).absolutePath.trimEnd(File.separatorChar)
+        }
+        val files = mutableListOf<File>()
+        for (directory in musicDirectories.distinct()) {
+            val root = File(directory)
+            if (!root.isDirectory) continue
+            runCatching {
+                Files.walk(root.toPath()).use { stream ->
+                    stream.filter { Files.isRegularFile(it) }
+                        .map { it.toFile() }
+                        .filter { it.extension.lowercase() in extensions }
+                        .filter { file ->
+                            excludedRoots.none { excluded ->
+                                file.absolutePath == excluded ||
+                                    file.absolutePath.startsWith("$excluded${File.separator}")
+                            }
+                        }
+                        .forEach { files += it }
+                }
+            }
+        }
+        return files.sortedBy { it.absolutePath }
+    }
+
+    private fun normalizeForRelink(text: String): String =
+        Normalizer.normalize(text.lowercase(), Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+            .replace(Regex("[^a-z0-9]+"), " ")
+            .trim()
 
     private fun Song.isLocalFile(): Boolean =
         navidromeId == null && jellyfinId == null &&
