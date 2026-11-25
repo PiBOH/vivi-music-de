@@ -1,9 +1,9 @@
 <div align="center">
   <a href="https://github.com/PiBOH/vivi-music-de">
-    <img src="desktop/icons/logo_vmde.png" alt="VIVI Music DE Logo" width="150"/>
+    <img src="https://github.com/PiBOH/vivi-music-de/blob/vivi-music-de/images%2Ficons%2Ficon.png" alt="Axolotl Music Logo" width="150"/>
   </a>
   <br>
-  <h1>VIVI Music DE</h1>
+  <h1>Axolotl Music </h1>
   <h3>More Than Just Music — Your Ultimate Audio Experience, on Desktop</h3>
 
   <p>
@@ -19,7 +19,7 @@
     <a href="https://piboh.github.io/vivi-music-de/">
       <img src="https://img.shields.io/badge/Website-VIVI%20Music%20DE-ED5564?style=for-the-badge" alt="Website">
     </a>
-    <a href="https://t.me/vivimusicde">
+    <a href="https://t.me/axolotlmusic">
       <img src="https://img.shields.io/badge/Telegram-Join%20Community-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram">
     </a>
   </p>
@@ -222,7 +222,7 @@
         <h3>💬 Community &amp; Support</h3>
         <p>Connect with other music lovers, suggest new features, report bugs, and stay updated with the latest releases!</p>
         <br>
-        <a href="https://t.me/vivimusicde">
+        <a href="https://t.me/axolotlmusic">
           <img src="https://img.shields.io/badge/Telegram-Join%20Community-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram">
         </a>
         <br><br>
