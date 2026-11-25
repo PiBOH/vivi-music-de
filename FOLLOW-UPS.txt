@@ -1,433 +1,828 @@
-VIVI MUSIC DE — FOLLOW-UP 1, 2, 3, 4, 5, 6, 11
+VIVI MUSIC DE - FOLLOW-UP 1, 2, 3, 4, 5, 6, 11
 Ultimo aggiornamento: 25 novembre 2026
-Stato: implementati, compilati e testati. Commit di questo lavoro:
-  git log --oneline --grep="account playlist follow-ups"
-Versione invariata: 6.0.8.11_DE-1.56.0-beta1 (nessun push, nessuna release).
+Branch: vivi-music-de
+Versione invariata: 6.0.8.11_DE-1.56.0-beta1
+Stato: implementati, compilati e testati. Nessun push, nessuna release.
+Commit di riferimento al 25 Nov 2026: dd4a9b5
+  feat(desktop): make account playlist actions resilient and portable
+I comandi di questo file si eseguono da Git Bash nella root del repository.
 
+QUESTO FILE E IL PUNTO DI INGRESSO
 ===============================================================================
+
+Questo e' FOLLOW-UPS.txt nella root del repository. Una nuova sessione che
+deve riprendere, verificare o rifare uno di questi follow-up parte da qui.
+E' testo semplice: si legge con un editor, si cerca con grep e non dipende
+dalla memoria di una conversazione precedente.
+
+Per trovare subito le sezioni:
+  grep -n "^FOLLOW-UP" FOLLOW-UPS.txt
+
+Per trovare i comandi:
+  grep -n "^  \./gradlew\|^  python\|^  git " FOLLOW-UPS.txt
+
+Per trovare i file citati:
+  grep -n "^  desktop/\|^desktop/\|^  innertube/" FOLLOW-UPS.txt
+
+Ogni sezione contiene, nello stesso ordine:
+  COSA FA
+  DOVE STA IL CODICE
+  COME SI USA DALLA UI
+  COME FUNZIONA
+  COME VERIFICARE
+  COMANDI ESATTI
+  LIMITI NOTI
+
+INDICE
+===============================================================================
+
+  FOLLOW-UP 1  - Ordine delle playlist per account
+  FOLLOW-UP 2  - Undo persistente e ritentabile
+  FOLLOW-UP 3  - Aggiunta in blocco senza duplicati, con Undo
+  FOLLOW-UP 4  - Auto-relink dei file mancanti
+  FOLLOW-UP 5  - Salute delle playlist account
+  FOLLOW-UP 6  - Scansione affidabile
+  FOLLOW-UP 11 - Export / copia delle playlist tra account
+  FOLLOW-UP ANCORA APERTI 7, 8, 9, 10, 12
+  COMANDI GENERALI VERIFICATI
+  DOVE GUARDARE I RISULTATI
+  NOTE DI AUDIT (25 NOV 2026)
+
+
 COME RIPRENDERE IN UNA NUOVA SESSIONE
 ===============================================================================
 
 1. Leggi AGENTS.md §3 (branch, commit, documentazione) e questo file.
-2. Controlla lo stato:
+2. Controlla lo stato del repository:
      git status --short
      git log --oneline -5
-3. Cerca i simboli prima di modificare (non fidarti della memoria); usa rg se
-   c'e', altrimenti grep -rn:
+     git log --oneline -- FOLLOW-UPS.txt
+   Il commit che ha introdotto il grosso di questi follow-up si trova con:
+     git log --oneline --grep="account playlist actions"
+3. Cerca i simboli prima di modificare; non fidarti della memoria.
+   Con ripgrep:
      rg "youTubePlaylistOrders|StoredPlaylistUndo" desktop/src
      rg "findRelinkCandidates|relinkSongs" desktop/src
      rg "accountPlaylistHealth|AccountPlaylistPack" desktop/src
      rg "scanMutex|failedDirectories|skippedDirectories" desktop/src
-   equivalente senza rg:
+   Senza ripgrep, la stessa cosa con grep:
      grep -rn "youTubePlaylistOrders\|StoredPlaylistUndo" desktop/src
-4. Compila e testa:
+4. Compila e testa tutto il modulo desktop:
      ./gradlew :desktop:compileKotlin :desktop:test --console=plain
    Atteso: BUILD SUCCESSFUL, 29 test, 0 failure.
-5. Solo se tocchi la card o la schermata salute:
-     ./gradlew :desktop:cards-render-check --console=plain
-   (headless, non sostituisce un click reale)
-6. Dopo ogni modifica, nell'ordine:
+   I 29 test sono in 6 classi:
+     YouTubePlaylistFollowUpTest        7
+     LibraryHealthAutoRelinkTest        4
+     YouTubePlaylistOrderTest           4
+     LibraryHealthCheckerTest           5
+     LibraryHealthCardSummaryTest       5
+     LocalLibraryStoreTest              4
+5. Se devi toccare la card Account o la schermata Library Health, leggi anche
+   la sezione "Card headless" in COMANDI GENERALI VERIFICATI: non esiste un
+   task Gradle per quel controllo, si usa il flag dell'exe.
+   Il flag e' dichiarato in
+     desktop/src/main/kotlin/com/music/vivi/desktop/dev/CardsRenderCheck.kt
+       object CardsRenderCheck { const val FLAG = "--cards-render-check"; ... }
+   e instradato da desktop/src/main/kotlin/Main.kt.
+6. Dopo ogni modifica al programma, nell'ordine:
      - CHANGELOG.dev.md: bullet [DE] in inglese sotto [Unreleased]
      - python scripts/split_changelog.py     (rigenera CHANGELOG.md)
      - TODO.md e AGENTS.md
-     - commit in inglese, senza prefisso "v", senza co-autore
-7. Installer:
-     ./gradlew :desktop:windowsInstaller --console=plain
-   Output: build/installer/VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe
-   Exe app (non autonomo): desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe
+   Questo file e' documentazione: si aggiorna quando cambia il comportamento
+   descritto, non ad ogni build.
+7. Commit: Conventional Commits, messaggio in inglese, nessun co-autore.
+   I commit di solo codice desktop devono seguire la regola `v` di AGENTS.md
+   (`v<versione completa>: ...`); un commit di sola documentazione no.
+   Il commit di questo file non ha bisogno del prefisso `v`.
+8. Non fare push, non creare release e non toccare altri branch per questo
+   lavoro, salvo richiesta esplicita dell'owner.
 
-File toccati in questo passaggio:
+
+FOLLOW-UP 1 - ORDINE DELLE PLAYLIST PER ACCOUNT
+===============================================================================
+
+COSA FA
+  L'ordine scelto trascinando le righe della card "YOUTUBE MUSIC PLAYLISTS"
+  vale per l'account YouTube Music attivo, non per tutto il dispositivo.
+  Cambiando account la lista si ricarica e ogni account vede il proprio
+  ordine, anche dopo un riavvio.
+
+DOVE STA IL CODICE
   desktop/src/main/kotlin/com/music/vivi/desktop/data/store/LocalLibraryStore.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/data/library/LibraryHealthChecker.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/LibraryHealthDetailScreen.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/data/scanner/DesktopMusicScanner.kt
-  desktop/src/main/kotlin/com/music/vivi/desktop/utils/DirectoryPicker.kt
-  innertube/src/main/kotlin/com/music/innertube/YouTube.kt        (removeFromPlaylistUnit)
-  desktop/src/test/kotlin/.../data/youtube/YouTubePlaylistFollowUpTest.kt   (nuovo)
-  desktop/src/test/kotlin/.../data/library/LibraryHealthAutoRelinkTest.kt    (nuovo)
-  desktop/src/test/kotlin/.../data/youtube/YouTubePlaylistOrderTest.kt       (aggiornato)
-
-===============================================================================
-FOLLOW-UP 1 — ORDINE DELLE PLAYLIST PER ACCOUNT
-===============================================================================
-
-Cosa fa
-  L'ordine scelto trascinando le righe della card Accounts vale per l'account
-  attivo, non piu' per tutto il dispositivo. Cambiando account si ricarica la
-  lista e quell'account vede il proprio ordine.
-
-Dove
-  LocalLibraryStore.kt
     LocalLibraryState.youTubePlaylistOrders: Map<String, List<String>>
-    LocalLibraryState.youTubePlaylistOrder  (legacy, ancora leggibile)
-  YouTubePlaylistsRepository.kt
-    storedPlaylistOrder(state, accountId)
-    withPlaylistOrder(state, accountId, playlistIds)
-    applyStoredPlaylistOrder(playlists, storedOrder)   (invariata)
-    saveOrder(playlistIds)
-    playlistAccountKey(accountId) e GUEST_PLAYLIST_ACCOUNT = "guest"
-  YouTubePlaylistsCard.kt
-    LaunchedEffect(activeAccountId, refreshToken) ricarica lista e Undo.
+      La mappa accountId -> ordine salvato.
+    LocalLibraryState.youTubePlaylistOrder: List<String>
+      La vecchia lista singola, ancora leggibile per la migrazione.
 
-Come funziona
-  - La chiave e' l'id di yt-accounts.json passato da accountId(); nei test e'
-    una lambda, nell'app e' YouTubeAccount.activeAccountId().
-  - Al primo drag withPlaylistOrder scrive la mappa. La vecchia lista singola
-    resta come fallback SOLO finche' la mappa e' vuota: un file di una build
-    precedente non perde l'ordine.
-  - Gli id non piu' presenti nell'account vengono ignorati; i nuovi restano
-    dopo quelli salvati, nell'ordine in cui la libreria li ha caricati.
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
+    internal const val GUEST_PLAYLIST_ACCOUNT = "guest"
+    internal fun playlistAccountKey(accountId: String?): String
+    internal fun storedPlaylistOrder(state: LocalLibraryState, accountId: String?): List<String>
+    internal fun withPlaylistOrder(
+        state: LocalLibraryState,
+        accountId: String?,
+        playlistIds: List<String>
+    ): LocalLibraryState
+    internal fun applyStoredPlaylistOrder(
+        playlists: List<RemotePlaylist>,
+        storedOrder: List<String>
+    ): List<RemotePlaylist>
+    suspend fun saveOrder(playlistIds: List<String>)
+      Scrive la mappa con update("youtube_playlists").
+
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
+    val activeAccountId = YouTubeAccount.activeAccountId()
+    LaunchedEffect(activeAccountId) { ... pendingUndo() ... }
+      Ricarica la barra Undo quando cambia account.
+    LaunchedEffect(activeAccountId, refreshToken) { repository.load() ... }
+      Ricarica la lista quando cambia account o dopo un'azione.
+    LaunchedEffect(reorderableState.isAnyItemDragging) { ... saveOrder(...) }
+      Salva l'ordine quando il trascinamento finisce.
+    AppTooltip("Drag to reorder") { ... }
+      Il manico di trascinamento, visibile solo fuori dalla modalita' Select.
+
+COME SI USA DALLA UI
+  1. Settings -> Accounts (la sezione che contiene la card account).
+  2. Nella card "YOUTUBE MUSIC PLAYLISTS", fuori dalla modalita' Select,
+     trascina una riga dal manico a sinistra del titolo.
+  3. L'ordine viene salvato quando rilasci.
+  4. Cambia account dalla card Accounts qui sopra: la lista si ricarica con
+     l'ordine dell'account nuovo.
+  5. Riavvia l'app: l'ultimo ordine salvato per quell'account e' ancora li'.
+
+COME FUNZIONA
+  - La chiave e' l'id dell'account in yt-accounts.json, passato da
+    YouTubeAccount.activeAccountId(); nei test e' una lambda.
+  - Al primo drag withPlaylistOrder scrive youTubePlaylistOrders. La vecchia
+    lista singola youTubePlaylistOrder resta come fallback SOLO finche' la
+    mappa e' vuota: un file scritto da una build precedente non perde l'ordine.
+  - Quando la mappa ha almeno una entry, un account senza entry non eredita
+    l'ordine di un altro: parte dall'ordine caricato da YouTube.
+  - applyStoredPlaylistOrder mette prima gli id presenti nell'ordine salvato,
+    in quell'ordine; gli id nuovi restano dopo, nell'ordine in cui la libreria
+    li ha caricati. Gli id spariti vengono ignorati.
   - Una sessione sloggata usa la chiave "guest".
 
-Come verificare
-  Test automatici:
+COME VERIFICARE
+  Test automatici (gia' eseguiti, 0 failure):
     YouTubePlaylistOrderTest.theCardOrderIsWrittenToTheStore
     YouTubePlaylistFollowUpTest.eachAccountKeepsItsOwnOrder
     YouTubePlaylistFollowUpTest.theOldSingleOrderIsStillReadUntilTheMapIsWritten
-  Manuale (serve un account reale):
+
+  Manuale (servono due account reali):
     1. Accedi con l'account A, trascina due playlist, esci da Settings.
-    2. Accedi con B: l'ordine deve essere quello caricato da YouTube.
+    2. Accedi con B: l'ordine deve essere quello caricato da YouTube, non
+       quello di A.
     3. Trascina in B con un ordine diverso, torna ad A: A deve avere il suo.
     4. Riavvia l'app e ripeti il punto 3.
 
-Limiti / aperti
-  - YouTube non espone un ordine account: l'ordine e' solo locale.
-  - Se la mappa non esiste ancora, il vecchio ordine viene applicato al primo
-    account che apre la card. E' la migrazione voluta, non un bug.
-  - Il drag reale e il cambio account non sono stati provati in questa passata.
+COMANDI ESATTI
+  ./gradlew :desktop:test --tests "*YouTubePlaylistOrderTest" --tests "*YouTubePlaylistFollowUpTest" --console=plain
 
+LIMITI NOTI
+  - YouTube non espone un ordine account: l'ordine e' solo locale al
+    dispositivo.
+  - La migrazione dal vecchio ordine singolo e' voluta; non e' un bug.
+  - Il drag reale e il cambio account non sono stati provati in questa
+    passata: i test coprono lo store e la funzione di ordinamento, non il
+    gesto nella finestra.
+
+
+FOLLOW-UP 2 - UNDO PERSISTENTE E RITENTABILE
 ===============================================================================
-FOLLOW-UP 2 — UNDO PERSISTENTE E RITENTABILE
-===============================================================================
 
-Cosa fa
-  L'eliminazione, la rinomina e l'aggiunta in blocco lasciano una barra Undo
-  che sopravvive alla chiusura di Settings e al riavvio. Se un ripristino
-  riesce solo in parte, il token resta con i soli elementi falliti e Undo si
-  puo' premere di nuovo.
+COSA FA
+  Eliminazione, rinomina e aggiunta in blocco lasciano una barra Undo che
+  sopravvive alla chiusura di Settings e al riavvio. Se un ripristino riesce
+  solo in parte, il token resta con i soli elementi falliti e Undo si puo'
+  premere di nuovo.
 
-Dove
-  LocalLibraryStore.kt
-    @Serializable StoredPlaylistSnapshot(title, videoIds)
-    @Serializable StoredPlaylistUndo(kind, accountId, playlistId,
-        previousTitle, addedPlaylistIds, videoId, trackTitle, snapshots,
-        message, createdAt)
-    kind = "renamed" | "deleted" | "added"
+DOVE STA IL CODICE
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/store/LocalLibraryStore.kt
+    @Serializable data class StoredPlaylistSnapshot(
+        val title: String,
+        val videoIds: List<String> = emptyList()
+    )
+    @Serializable data class StoredPlaylistUndo(
+        val kind: String,                         // "renamed" | "deleted" | "added"
+        val accountId: String? = null,
+        val playlistId: String? = null,
+        val previousTitle: String? = null,
+        val addedPlaylistIds: List<String> = emptyList(),
+        val videoId: String? = null,
+        val trackTitle: String? = null,
+        val snapshots: List<StoredPlaylistSnapshot> = emptyList(),
+        val message: String = "",
+        val createdAt: Long = 0L
+    )
     LocalLibraryState.youTubePlaylistUndo: StoredPlaylistUndo?
-  YouTubePlaylistsRepository.kt
-    pendingUndo()  -> solo se accountId corrisponde a quello attivo
-    rememberUndo(undo) -> aggiunge accountId e createdAt
-    clearUndo()
-  YouTubePlaylistsCard.kt
-    PlaylistUndo.toStored(message) / StoredPlaylistUndo.toCardUndo()
-    rememberUndo(change, text), forgetUndo()
-    performUndo(change)
-    LaunchedEffect(activeAccountId) ricarica la barra all'avvio/cambio account.
+      Lo slot unico persistito.
 
-Come funziona
-  - Rinomina fallita: il token resta invariato, si puo' ritentare.
-  - Eliminazione parziale: si tiene solo List<AccountPlaylistSnapshot> dei
-    falliti; i riusciti non vengono ricreati una seconda volta.
-  - Aggiunta parziale: si tengono solo gli id delle playlist da cui la
-    rimozione e' fallita.
-  - Un'azione nuova sostituisce il token precedente (slot singolo).
-  - La barra e' per account: A non vede l'Undo di B.
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
+    suspend fun pendingUndo(): StoredPlaylistUndo?
+      Restituisce il token solo se accountId corrisponde a quello attivo.
+    suspend fun rememberUndo(undo: StoredPlaylistUndo)
+      Aggiunge accountId e createdAt, poi scrive lo slot.
+    suspend fun clearUndo()
+    suspend fun snapshot(playlistId): Result<AccountPlaylistSnapshot>
+      Legge tutte le pagine prima di eliminare.
+    suspend fun restore(snapshot): Result<RestoreOutcome>
 
-Come verificare
-  Test automatici:
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
+    private fun PlaylistUndo.toStored(message): StoredPlaylistUndo
+    private fun StoredPlaylistUndo.toCardUndo(): PlaylistUndo?
+    suspend fun rememberUndo(change: PlaylistUndo, text: String)
+    suspend fun forgetUndo()
+    fun performUndo(change: PlaylistUndo)
+    LaunchedEffect(activeAccountId) ricarica la barra all'avvio e al cambio account.
+    La barra disegna undoMessage, il pulsante "Undo" e il pulsante di chiusura
+    con AppTooltip("Dismiss undo").
+
+COME SI USA DALLA UI
+  1. Elimina una o piu' playlist selezionate, oppure rinomina una playlist,
+     oppure aggiungi il brano corrente in blocco.
+  2. Nella card compare una barra con il messaggio dell'azione e il pulsante
+     "Undo".
+  3. "Undo" ripristina; la X ("Dismiss undo") scarta il token.
+  4. Chiudi e riapri l'app: la barra dell'ultima azione di quell'account e'
+     ancora presente.
+  5. Cambia account: la barra dell'account A non appare in B.
+
+COME FUNZIONA
+  - All'inizio di addCurrentTo, deletePlaylists, renamePlaylist e della
+    creazione di una playlist viene chiamato forgetUndo(): una nuova azione
+    sostituisce il token precedente (slot singolo).
+  - Undo di una rinomina: se rename fallisce, il token NON viene cancellato;
+    il messaggio riporta l'errore e Undo si puo' ripremere.
+  - Undo di un'eliminazione: restore() ricrea nome e tracce. Se alcune
+    playlist falliscono, il token persistito contiene solo i loro snapshot;
+    le riuscite non vengono ricreate una seconda volta.
+  - Undo di un'aggiunta: removeSong() viene chiamato solo per le playlist in
+    addedPlaylistIds. Se alcune rimozioni falliscono, il token persistito
+    contiene solo quei loro id.
+  - Se falliscono tutte, il token resta invariato (in memoria e su disco) e
+    si puo' ritentare.
+  - La barra e' per account; createdAt non fa scadere nulla.
+
+COME VERIFICARE
+  Test automatico:
     YouTubePlaylistFollowUpTest.undoSurvivesARestartAndBelongsToOneAccount
+      Apre lo store da due repository con account diversi, scrive un token per
+      A, verifica che B non lo veda e che un nuovo repository di A lo legga
+      dal file.
+
   Manuale (account reale):
     1. Elimina una playlist con tracce, chiudi e riapri l'app.
     2. La barra "Deleted 1 playlist." deve essere ancora presente.
     3. Premi Undo: la playlist deve tornare con nome e tracce.
     4. Per la ritentabilita': disconnetti la rete durante Undo, verifica che
        il messaggio dica che resta da ritentare e riprova online.
+    5. Per lo slot singolo: dopo un Undo riuscito la barra sparisce; dopo una
+       nuova eliminazione ne appare una sola, con il messaggio nuovo.
 
-Limiti / aperti
-  - Un solo Undo alla volta; l'expiry non e' automatica.
-  - Il ripristino non copre copertina, descrizione e privacy.
-  - Il percorso live di ripristino parziale non e' stato eseguito.
+COMANDI ESATTI
+  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" --console=plain
 
+LIMITI NOTI
+  - Un solo Undo alla volta; non c'e' scadenza automatica.
+  - Il ripristino non copre copertina, descrizione e privacy: YouTube non le
+    restituisce nel token.
+  - Una playlist ricreata con alcune tracce rifiutate conta come riuscita:
+    restore() restituisce successo anche se failedTracks > 0, quindi quelle
+    tracce non vengono ritentate da Undo.
+  - Il percorso live di ripristino parziale non e' stato eseguito su un
+    account reale.
+
+
+FOLLOW-UP 3 - AGGIUNTA IN BLOCCO SENZA DUPLICATI, CON UNDO
 ===============================================================================
-FOLLOW-UP 3 — AGGIUNTA IN BLOCCO SENZA DUPLICATI, CON UNDO
-===============================================================================
 
-Cosa fa
+COSA FA
   "Add current track" sulla selezione dice quante playlist hanno ricevuto il
   brano, quante lo avevano gia' e quante hanno fallito. Non crea doppioni.
   L'Undo toglie il brano solo dalle playlist a cui e' stato appena aggiunto.
 
-Dove
-  innertube/YouTube.kt
-    removeFromPlaylistUnit(playlistId, videoId, setVideoId): Result<Unit>
-  YouTubePlaylistsRepository.kt
-    enum AddOutcome { ADDED, ALREADY_PRESENT, FAILED }
-    data class PlaylistTrack(videoId, setVideoId)
-    addSongIfAbsent(playlistId, videoId): AddOutcome
-    tracks(playlistId): Result<List<PlaylistTrack>>
-    removeSong(playlistId, videoId): Result<Unit>
-  YouTubePlaylistsCard.kt
-    addCurrentTo(...) usa addSongIfAbsent e crea PlaylistUndo.Added
-    performUndo -> Added rimuove con removeSong
+DOVE STA IL CODICE
+  innertube/src/main/kotlin/com/music/innertube/YouTube.kt
+    fun removeFromPlaylistUnit(
+        playlistId: String,
+        videoId: String,
+        setVideoId: String
+    ): Result<Unit>
 
-Come funziona
-  - addSongIfAbsent legge TUTTE le pagine della playlist, quindi riconosce
-    anche un brano oltre la prima pagina.
-  - Se il videoId e' gia' presente -> ALREADY_PRESENT, nessuna chiamata di
-    add.
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
+    enum class AddOutcome { ADDED, ALREADY_PRESENT, FAILED }
+    data class PlaylistTrack(val videoId: String, val setVideoId: String?)
+    suspend fun addSongIfAbsent(playlistId, videoId): AddOutcome
+    suspend fun tracks(playlistId): Result<List<PlaylistTrack>>
+    private suspend fun readTracks(playlistId): Result<List<PlaylistTrack>>
+    suspend fun removeSong(playlistId, videoId): Result<Unit>
+
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
+    fun addCurrentTo(targets: List<RemotePlaylist>, singleLabel: String? = null)
+    fun performUndo(change: PlaylistUndo)  // ramo Added
+
+COME SI USA DALLA UI
+  1. Metti in riproduzione un brano di YouTube Music. Un file locale non ha
+     un videoId, quindi il pulsante resta disabilitato.
+  2. Settings -> Accounts -> card "YOUTUBE MUSIC PLAYLISTS" -> "Select".
+  3. Spunta una o piu' playlist editabili (le read-only non hanno la
+     checkbox attiva).
+  4. Premi "Add current track".
+  5. Per una sola playlist puoi usare il pulsante "Add" sulla sua riga.
+  6. Dopo l'aggiunta la selezione si chiude e compare la barra Undo.
+
+COME FUNZIONA
+  - addSongIfAbsent legge TUTTE le pagine della playlist (readTracks segue
+    songsContinuation), quindi riconosce anche un brano oltre la prima pagina.
+  - Se il videoId e' gia' presente restituisce ALREADY_PRESENT e non chiama
+    addToPlaylistUnit.
+  - Messaggi del bulk:
+      Added the track to N playlists.
+      Added to N playlists, already in M playlists.
+      Added to N playlists, M failed.
+      Added to N playlists, already in M playlists, K failed.
+      The track is already in M playlists.
+      Already in M playlists, K failed.
+      The track could not be added.
+  - Messaggi della singola riga:
+      Added "<titolo>" to <playlist>.
+      "<titolo>" is already in <playlist>.
+      The track could not be added to <playlist>.
+  - L'Undo usa addedPlaylistIds, cioe' solo le playlist in cui il brano e'
+    stato effettivamente aggiunto in questa passata.
   - removeSong cerca l'ultima riga con quel videoId e un setVideoId non vuoto,
     poi chiama removeFromPlaylistUnit. Se il brano e' stato rimosso a mano nel
-    frattempo, la rimozione fallisce e il token resta per un retry.
-  - Un singolo "Add" su una riga mostra "already in ..." invece di un falso
-    successo.
+    frattempo, la rimozione fallisce e il token resta per un retry (vedi
+    FOLLOW-UP 2).
 
-Come verificare
-  Test: la parte di rete non e' unit-testata; compilano e passano i test puri
-  dei follow-up 1/2/5. Serve un account reale:
+COME VERIFICARE
+  Test automatici: la parte di rete non e' unit-testata; i test puri dei
+  follow-up 1/2/5 compilano e passano. Non esiste un test del bulk.
+
+  Manuale (account reale):
     1. Scegli una playlist che contiene gia' "Get Lucky" e una che non lo ha.
-    2. Seleziona entrambe, Add current track.
+    2. Seleziona entrambe, premi "Add current track".
     3. Atteso: "Added to 1 playlist, already in 1 playlist."
-    4. Undo: il brano deve sparire solo dalla playlist a cui era stato aggiunto.
-  Il vecchio --youtube-playlists-check copre solo il percorso a playlist
-  singola, non il bulk.
+    4. Undo: il brano deve sparire solo dalla playlist a cui era stato
+       aggiunto; l'altra non deve essere toccata.
+    5. Ripeti con una sola playlist dalla riga: atteso il messaggio
+       "\"<titolo>\" is already in <playlist>." per quella che lo conteneva.
 
-Limiti / aperti
+  Il vecchio harness live copre solo il percorso a playlist singola:
+    ./desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --youtube-playlists-check
+
+COMANDI ESATTI
+  ./gradlew :desktop:compileKotlin --console=plain
+  ./desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --youtube-playlists-check
+
+LIMITI NOTI
   - addSongIfAbsent legge tutte le pagine prima di aggiungere: corretto ma
     lento su playlist molto lunghe.
-  - Non c'e' un controllo "stesso titolo/artista" oltre al videoId: due video
-    diversi dello stesso brano restano due righe (comportamento di YouTube).
+  - Il confronto e' solo per videoId: due video diversi dello stesso brano
+    restano due righe, come su YouTube.
   - Il bulk reale e il suo Undo non sono stati eseguiti in questa passata.
 
-===============================================================================
-FOLLOW-UP 4 — AUTO-RELINK DEI FILE MANCANTI
+
+FOLLOW-UP 4 - AUTO-RELINK DEI FILE MANCANTI
 ===============================================================================
 
-Cosa fa
+COSA FA
   Nella schermata Library Health > Missing song files, "Relink automatically"
   cerca un file esistente per ogni brano mancante e propone un'anteprima.
   Confermando, aggiorna solo i path; Undo li riporta indietro tutti insieme.
 
-Dove
-  LibraryHealthChecker.kt
-    data class RelinkCandidate(issue: MissingFileIssue, newFile: File)
-    findRelinkCandidates(musicDirectories, excludedDirectories)
-    relinkSongs(candidates)
-    LibraryHealthUndo.SongPaths(songs: List<SongPath>)
-    undo(...) gestisce SongPaths
-  LibraryHealthDetailScreen.kt
-    pulsante "Relink automatically", stato relinkPreview, dialogo di conferma
-    Music folders da viewModel.musicDirectories, escluse da excludedDirectories
+DOVE STA IL CODICE
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/library/LibraryHealthChecker.kt
+    data class RelinkCandidate(
+        val issue: MissingFileIssue,
+        val newFile: File
+    )
+    fun findRelinkCandidates(
+        musicDirectories: Collection<String>,
+        excludedDirectories: Collection<String> = emptyList()
+    ): List<RelinkCandidate>
+    fun relinkSongs(candidates: Collection<RelinkCandidate>): HealthRepairResult
+    sealed interface LibraryHealthUndo
+      data class SongPath(songId, previousPath, previousContentUri)
+      data class SongPaths(val songs: List<SongPath>)
+    fun undo(change: LibraryHealthUndo)   // gestisce SongPaths in un solo update
+    private fun collectAudioFiles(...)
+    private fun normalizeForRelink(text: String): String
 
-Come funziona
-  1. Elenca i brani locali il cui File(path).isFile e' falso.
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/LibraryHealthDetailScreen.kt
+    fun autoRelink()
+    var relinkPreview: List<RelinkCandidate>
+    private fun MissingFilesSection(...)
+      pulsante "Relink automatically"
+    AlertDialog "Relink N songs?", conferma "Relink", annulla "Cancel"
+    musicDirectories da viewModel.musicDirectories
+    excludedDirectories da viewModel.excludedDirectories
+
+COME SI USA DALLA UI
+  1. Settings -> Music Management -> card "LIBRARY HEALTH".
+  2. Premi "Check library" e attendi il report.
+  3. Apri il gruppo "Missing song files".
+  4. Premi "Relink automatically".
+  5. Se ci sono candidati, l'anteprima "Relink N songs?" elenca
+     "<brano> -> <nuovo file>"; premi "Relink".
+  6. La barra Undo in fondo riporta indietro tutti i path in un colpo.
+  7. Se non ci sono candidati, il messaggio dice di usare "Locate file" per
+     i brani rimasti.
+
+COME FUNZIONA
+  1. Considera solo i brani locali mancanti: File(path).isFile falso, con
+     navidromeId/jellyfinId nulli e path non ytmusic:// o http(s).
   2. Cammina le cartelle musicali configurate, saltando quelle escluse.
-  3. Prima prova il nome file esatto (case-insensitive).
-  4. Se non c'e' un solo match, prova il nome normalizzato: minuscole, accenti
-     rimossi, solo lettere/numeri, e richiede che contenga sia il titolo sia
-     l'artista del brano.
+     Estensioni considerate: mp3, flac, ogg, opus, m4a, wav, aac, wma.
+  3. Prima prova il nome file esatto, case-insensitive.
+  4. Se non ottiene ESATTAMENTE un match, prova il nome normalizzato del file:
+     minuscole, accenti rimossi, solo lettere/numeri. Il nome normalizzato
+     deve CONTENERE il titolo normalizzato e, se l'artista non e' vuoto, anche
+     l'artista normalizzato. Non e' un confronto di uguaglianza.
   5. Scarta i file gia' puntati da un brano valido e quelli gia' usati in
      questa passata.
-  6. Offre il brano solo se resta ESATTAMENTE un candidato; due file ambigui
+  6. Offre il brano solo se resta esattamente un candidato; due file ambigui
      restano manuali.
-  7. relinkSongs scrive in un solo update; un brano il cui vecchio path e'
-     tornato valido, o il cui file e' sparito dopo l'anteprima, viene saltato.
+  7. relinkSongs scrive in un solo update. Salta un brano il cui vecchio path
+     e' tornato valido, il cui nuovo file e' sparito dopo l'anteprima, o che
+     compare due volte nei candidati.
+  8. Ogni brano mantiene id, like e riferimenti nelle playlist: cambia solo
+     path (e contentUriString).
 
-Come verificare
-  Test automatici (4):
+COME VERIFICARE
+  Test automatici (4, gia' eseguiti, 0 failure):
     LibraryHealthAutoRelinkTest.aUniqueFileNameIsRelinkedAndUndoRestoresTheOldPath
     LibraryHealthAutoRelinkTest.aDifferentNameIsMatchedByTitleAndArtist
     LibraryHealthAutoRelinkTest.aFileAnotherSongAlreadyUsesIsNotTaken
     LibraryHealthAutoRelinkTest.twoFilesWithTheSameNameStayManual
+
   Manuale:
-    1. Rinomina o sposta un file dentro una cartella musicale configurata.
-    2. Library Health -> Check library -> Missing song files.
-    3. "Relink automatically": l'anteprima deve mostrare il nuovo nome.
-    4. Conferma, poi Undo: il path torna quello vecchio.
-    5. Con due file omonimi in sottocartelle diverse il brano deve restare
-       manuale.
+    1. Aggiungi una cartella musicale in Music Management e scansiona.
+    2. Rinomina o sposta un file dentro quella cartella.
+    3. Settings -> Music Management -> Library Health -> Check library ->
+       Missing song files.
+    4. "Relink automatically": l'anteprima deve mostrare il nuovo nome.
+    5. Conferma "Relink", poi Undo: il path torna quello vecchio.
+    6. Metti due file omonimi in sottocartelle diverse: il brano deve restare
+       manuale e il messaggio deve rimandare a "Locate file".
 
-Limiti / aperti
-  - Solo le cartelle configurate; non cerca in tutto il disco.
-  - Nessun match per durata, hash o tag interno: solo nome/titolo/artista.
-  - L'anteprima e il pulsante non sono stati cliccati nella finestra.
+COMANDI ESATTI
+  ./gradlew :desktop:test --tests "*LibraryHealthAutoRelinkTest" --console=plain
 
+LIMITI NOTI
+  - Cerca solo nelle cartelle musicali configurate, non in tutto il disco.
+  - Nessun match per durata, hash o tag interno: solo nome, titolo e artista.
+  - Una cartella che Files.walk non riesce a leggere viene saltata in
+    silenzio: i suoi file non entrano nei candidati.
+  - Il pulsante e l'anteprima non sono stati cliccati nella finestra in questa
+    passata.
+
+
+FOLLOW-UP 5 - SALUTE DELLE PLAYLIST ACCOUNT
 ===============================================================================
-FOLLOW-UP 5 — SALUTE DELLE PLAYLIST ACCOUNT
-===============================================================================
 
-Cosa fa
+COSA FA
   Il pulsante "Health" nella card legge le playlist dell'account e mostra un
   pannello con: quante playlist, quante editabili, quante read-only, quante
   tracce lette e i problemi trovati. Non modifica nulla su YouTube.
 
-Dove
-  YouTubePlaylistsRepository.kt
-    enum AccountPlaylistIssueKind {
-      READ_ONLY, DUPLICATE_TITLE, EMPTY, DUPLICATE_TRACKS, UNREADABLE
+DOVE STA IL CODICE
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
+    enum class AccountPlaylistIssueKind {
+        READ_ONLY,
+        DUPLICATE_TITLE,
+        EMPTY,
+        DUPLICATE_TRACKS,
+        UNREADABLE
     }
     data class AccountPlaylistIssue(playlistId, title, kind, detail)
-    data class AccountPlaylistHealth(playlistCount, editableCount,
-        readOnlyCount, trackCount, issues) con isClean
-    accountPlaylistHealth(playlists, tracksByPlaylist, unreadable)
-    checkHealth(): Result<AccountPlaylistHealth>
-  YouTubePlaylistsCard.kt
-    stato health/healthBusy, AccountPlaylistHealthPanel(...)
+    data class AccountPlaylistHealth(
+        playlistCount,
+        editableCount,
+        readOnlyCount,
+        trackCount,
+        issues
+    ) {
+        val isClean: Boolean get() = issues.isEmpty()
+    }
+    internal fun accountPlaylistHealth(
+        playlists: List<RemotePlaylist>,
+        tracksByPlaylist: Map<String, List<PlaylistTrack>>,
+        unreadable: Set<String> = emptySet()
+    ): AccountPlaylistHealth
+    suspend fun checkHealth(): Result<AccountPlaylistHealth>
 
-Come funziona
-  - READ_ONLY: la playlist non e' modificabile da qui (informativo).
-  - DUPLICATE_TITLE: confronto case-insensitive; segnala dalla seconda in poi.
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
+    fun checkHealth()
+    var health: AccountPlaylistHealth?
+    var healthBusy: Boolean
+    TextButton "Health" / "Checking..."
+    private fun AccountPlaylistHealthPanel(report, onDismiss)
+      titolo "Account playlist health"
+      conteggi "N playlists · E editable · R read-only · T tracks read"
+      primi 6 problemi, poi "... and N more"
+      "Dismiss"
+
+COME SI USA DALLA UI
+  1. Settings -> Accounts -> card "YOUTUBE MUSIC PLAYLISTS".
+  2. Premi "Health". Mentre legge, il pulsante dice "Checking...".
+  3. Il pannello "Account playlist health" mostra i conteggi e i problemi.
+  4. "Dismiss" chiude il pannello; non cambia nulla nell'account.
+
+COME FUNZIONA
+  - checkHealth chiama load() per la lista e l'editabilita' (le pagine sono
+    risolte 4 alla volta), poi legge tutte le pagine di ogni playlist, sempre
+    4 alla volta.
+  - READ_ONLY: la playlist non e' modificabile da qui. E' informativo e viene
+    riportato per ogni playlist read-only.
+  - DUPLICATE_TITLE: confronto case-insensitive e con trim; segnala dalla
+    seconda playlist con lo stesso nome in poi.
   - EMPTY: la pagina e' stata letta e non ha tracce.
-  - DUPLICATE_TRACKS: lo stesso videoId compare piu' di una volta nella
-    playlist; il detail dice quante righe sono ripetute.
-  - UNREADABLE: la pagina non si e' letta; NON viene chiamata "vuota" perche'
-    non e' una prova.
-  - checkHealth usa load() per l'editabilita' e legge tutte le pagine di ogni
-    playlist, 4 alla volta.
-  - Il pannello mostra i primi 6 problemi e "... and N more".
+  - DUPLICATE_TRACKS: lo stesso videoId compare piu' di una volta. Il detail
+    dice quanti videoId DISTINTI sono ripetuti, non quante righe in eccesso.
+  - UNREADABLE: la pagina di quella playlist non si e' letta. Non viene
+    chiamata "vuota", perche' una lettura fallita non prova nulla.
+  - Se load() fallisce del tutto, checkHealth restituisce failure e la card
+    mostra il messaggio; non mostra un pannello "pulito".
+  - La lista dei problemi e' limitata a 6 righe nel pannello; il report
+    interno li contiene tutti.
 
-Come verificare
-  Test automatici (2):
+COME VERIFICARE
+  Test automatici (2, gia' eseguiti, 0 failure):
     YouTubePlaylistFollowUpTest.healthReportsReadOnlyDuplicatesEmptiesAndRepeatedTracks
     YouTubePlaylistFollowUpTest.anUnreadablePlaylistIsNotReportedAsEmpty
+    LibraryHealthCheckerTest copre i gruppi della Library Health locale, non
+    le playlist account.
+
   Manuale:
     1. Apri Accounts, premi Health.
-    2. Atteso: conteggi coerenti con la lista (es. 10 playlist, 8 editabili,
-       2 read-only) e le read-only elencate.
+    2. Atteso: conteggi coerenti con la lista (esempio misurato il 21 Nov:
+       10 playlist, 8 editabili, 2 read-only) e le read-only elencate.
     3. Crea due playlist con lo stesso nome per vedere DUPLICATE_TITLE, poi
        cancellane una.
     4. Con rete assente il check deve fallire con un messaggio, non dire
        "pulito".
+    5. Apri una playlist con un brano ripetuto: il detail deve contare i
+       videoId distinti ripetuti.
 
-Limiti / aperti
-  - Legge tutte le pagine: puo' essere lento su molti account grandi.
-  - Non rileva un brano "non disponibile" se innertube non restituisce la
-    riga: quello che non arriva non e' distinguibile da una playlist vuota.
-  - Non e' stato eseguito sull'account reale in questa passata.
+COMANDI ESATTI
+  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" --tests "*LibraryHealthCheckerTest" --console=plain
+  ./desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --youtube-playlists-check
 
+LIMITI NOTI
+  - Legge tutte le pagine: puo' essere lento con molte playlist grandi.
+  - Un brano non disponibile che innertube non restituisce non e'
+    distinguibile da una playlist piu' corta: quello che non arriva non si
+    puo' controllare.
+  - Il check non e' stato eseguito sull'account reale in questa passata.
+
+
+FOLLOW-UP 6 - SCANSIONE AFFIDABILE
 ===============================================================================
-FOLLOW-UP 6 — SCANSIONE AFFIDABILE
-===============================================================================
 
-Cosa fa
-  Una scansione completa non cancella brani di una cartella che non e' riuscita
-  a leggere, non trasforma un'annullamento in errore e non si sovrappone a
-  un'altra scansione completa.
+COSA FA
+  Una scansione completa non cancella i brani di una radice che non e'
+  riuscita a leggere, non trasforma un annullamento in errore e non si
+  sovrappone a un'altra scansione completa.
 
-Dove
-  DesktopMusicScanner.kt
+DOVE STA IL CODICE
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/scanner/DesktopMusicScanner.kt
     private val scanMutex = Mutex()
-    scanDirectories(...) = withContext { scanMutex.withLock { scanDirectoriesImpl(...) } }
-    scanDirectoriesImpl(...)  (ex corpo della funzione)
-    failedDirectories: MutableList<String>
-    walkFailed dentro il SimpleFileVisitor
-    ScanProgress.Completed(totalScanned, addedOrUpdated, durationMs,
-        pruned: Boolean = true, skippedDirectories: Int = 0)
-    catch (CancellationException) -> rethrow
+    suspend fun scanDirectories(...) =
+        withContext(ioDispatcher) { scanMutex.withLock { scanDirectoriesImpl(...) } }
+    private suspend fun scanDirectoriesImpl(...)
+    val scannedDirectories = mutableListOf<String>()
+    val failedDirectories = mutableListOf<String>()
+    var walkFailed
+    override fun preVisitDirectory(...)   // eccezione -> walkFailed = true
+    override fun visitFileFailed(...)     // walkFailed = true
+    override fun postVisitDirectory(...)  // exc != null -> walkFailed = true
+    if (walkFailed) failedDirectories.add(rootDirAbs)
+        else scannedDirectories.add(rootDirAbs)
+    if (pruneMissing && scannedDirectories.isNotEmpty())
+        musicDao.deleteSongsNotInPaths(allDiscoveredPaths, scannedDirectories)
+    ScanProgress.Completed(
+        totalScanned,
+        addedOrUpdated,
+        durationMs,
+        pruned = pruneMissing && scannedDirectories.isNotEmpty(),
+        skippedDirectories = failedDirectories.size
+    )
+    catch (e: CancellationException) { throw e }
+    suspend fun scanFiles(...)   // watcher, fuori dal mutex
 
-Come funziona
-  - visitFileFailed, un errore in preVisitDirectory e un postVisitDirectory
-    con exc marcano walkFailed.
-  - Se walkFailed, la radice NON entra in scannedDirectories; quindi
-    MusicDao.deleteSongsNotInPaths non tocca i suoi brani. La poda e'
-    conservativa: si perdono anche i brani validi di quella radice, ma non si
-    cancellano quelli non visti.
-  - Una radice che non esiste non entra in nessuna delle due liste: i suoi
-    brani restano.
-  - La seconda scansione completa aspetta la prima; il watcher (scanFiles)
-    resta fuori dal mutex.
-  - CancellationException non diventa ScanProgress.Error.
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/database/MusicDao.kt
+    suspend fun deleteSongsNotInPaths(
+        existingPaths: Set<String>,
+        scannedDirectories: List<String>
+    )
+      Cancella solo i brani il cui path comincia con una delle radici elencate
+      in scannedDirectories e non e' in existingPaths. Le altre radici non
+      vengono toccate.
 
-Come verificare
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/viewmodel/LibraryStateHolder.kt
+    fun scanLibrary(...)  // pruneMissing = true
+    fun rebuildDatabase() // pruneMissing = false, forceRescan = true
+
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/SettingsCategoryDetail.kt
+    SettingsSubsection(title = "SYNC & SCANNING")
+    FilledTonalButton "Full Rescan" -> onRescanLibrary
+    OutlinedButton "Rebuild Database" -> rebuildDatabase()
+
+COME SI USA DALLA UI
+  1. Settings -> Music Management -> sezione "SYNC & SCANNING".
+  2. "Full Rescan" = scanLibrary(forceRescan = true), con pruneMissing = true.
+  3. "Rebuild Database" azzera la libreria e riscansiona con
+     pruneMissing = false: la pota non viene eseguita affatto.
+  4. La Home vuota offre lo stesso rescan quando la libreria e' vuota.
+
+COME FUNZIONA
+  - scanMutex serializza le scansioni complete: la seconda aspetta la prima.
+    scanFiles (il watcher) non prende il mutex.
+  - Per ogni radice configurata:
+      * se non esiste, non e' una directory o e' esclusa, viene saltata e NON
+        entra ne' in scannedDirectories ne' in failedDirectories;
+      * se viene camminata, ogni errore di visita (visitFileFailed, eccezione
+        in preVisitDirectory, postVisitDirectory con exc) marca walkFailed;
+      * se walkFailed, la radice finisce in failedDirectories e NON in
+        scannedDirectories.
+  - deleteSongsNotInPaths pota solo dentro le radici di scannedDirectories:
+    i brani di una radice fallita restano, anche se non sono stati visti in
+    questa passata.
+  - Una radice che non esiste non aumenta skippedDirectories: i suoi brani
+    restano, ma il conteggio resta 0. skippedDirectories conta solo le radici
+    che esistevano e sono fallite durante la camminata.
+  - pruned e' true solo se pruneMissing era richiesto e almeno una radice e'
+    stata camminata completamente. Non significa che TUTTE le radici siano
+    state lette.
+  - CancellationException viene rilanciata: non diventa ScanProgress.Error.
+
+COME VERIFICARE
   Test: non c'e' un test che inietti un errore di filesystem. Il codice e'
-  compilato e i test esistenti passano. Verifica manuale:
-    1. Aggiungi una cartella musicale con 2 file e scansiona.
-    2. Blocca la cartella (permessi negati o unita' scollegata) e riscansioni
-       senza "force".
-    3. I 2 brani devono restare nella libreria e Completed deve riportare
-       skippedDirectories = 1 e pruned = false se non resta nessuna radice.
+  compilato e i test esistenti passano. La verifica manuale osservabile e'
+  che i brani della radice restino.
+
+  Manuale:
+    1. Aggiungi una cartella musicale con 2 file e fai "Full Rescan".
+       I 2 brani devono comparire.
+    2. Crea una sottocartella con un file. Da PowerShell, con lo stesso
+       utente e senza admin, nega la lettura:
+         icacls "D:\Musica\test\bloccata" /deny "${env:USERNAME}:(OI)(CI)(RX)"
+       Fai "Full Rescan".
+       I brani della radice devono restare. Il conteggio skippedDirectories
+       non e' mostrato nella UI: la prova e' che la libreria non perde i
+       brani; per vedere il numero serve il debugger su
+       ScanProgress.Completed.skippedDirectories.
+       Ripristina i permessi:
+         icacls "D:\Musica\test\bloccata" /remove:d "${env:USERNAME}"
+    3. Scollega un'unita' o rinomina la radice e riscansiona: i brani devono
+       restare; skippedDirectories resta 0 perche' la radice non esiste e
+       viene saltata prima della camminata.
     4. Annulla una scansione lunga (cambio cartella o chiusura): non deve
        apparire ScanProgress.Error.
 
-Limiti / aperti
-  - scanFiles (watcher) puo' girare durante una scansione completa; il
-    LocalLibraryStore resta atomico, ma non c'e' una serializzazione esplicita.
-  - La poda per radice intera e' volutamente conservativa.
+COMANDI ESATTI
+  ./gradlew :desktop:compileKotlin --console=plain
+  ./gradlew :desktop:test --console=plain
+
+LIMITI NOTI
+  - scanFiles (watcher) puo' girare durante una scansione completa; lo store
+    resta atomico, ma non c'e' una serializzazione esplicita col watcher.
+  - La pota per radice intera e' volutamente conservativa: una radice fallita
+    non perde brani, ma i suoi brani validi non vengono riallineati in quella
+    passata.
   - Il caso filesystem-failure non e' stato iniettato su questa macchina.
+  - skippedDirectories e pruned non sono mostrati nella UI.
 
-===============================================================================
-FOLLOW-UP 11 — EXPORT / COPIA DELLE PLAYLIST TRA ACCOUNT
+
+FOLLOW-UP 11 - EXPORT / COPIA DELLE PLAYLIST TRA ACCOUNT
 ===============================================================================
 
-Cosa fa
+COSA FA
   Esporta le playlist selezionate in un file JSON portatile; dopo aver
   cambiato account, "Copy from file" le ricrea nell'account attivo. Non fa
   merge e non tocca le playlist esistenti.
 
-Dove
-  YouTubePlaylistsRepository.kt
-    @Serializable data class AccountPlaylistSnapshot(title, videoIds)
-    @Serializable data class AccountPlaylistPack(format, version, exportedAt,
-        source, playlists)
-    object AccountPlaylistPacks { encode(pack); decode(text) }
+DOVE STA IL CODICE
+  desktop/src/main/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistsRepository.kt
+    @Serializable data class AccountPlaylistSnapshot(
+        val title: String,
+        val videoIds: List<String> = emptyList()
+    )
+    @Serializable data class AccountPlaylistPack(
+        val format: String = "vivi-account-playlists",
+        val version: Int = 1,
+        val exportedAt: Long = 0L,
+        val source: String? = null,
+        val playlists: List<AccountPlaylistSnapshot> = emptyList()
+    ) {
+        companion object {
+            const val FORMAT = "vivi-account-playlists"
+            const val VERSION = 1
+        }
+    }
     data class CopyOutcome(created, restoredTracks, failedTracks)
-    exportPack(playlistIds): Result<AccountPlaylistPack>
-    copyPack(pack): Result<CopyOutcome>
-    uniquePlaylistTitle(title, existing)
-  DirectoryPicker.kt
-    savePlaylistPackFile(...)   -> salva .json
-    choosePlaylistPackFile(...) -> apre .json
-  YouTubePlaylistsCard.kt
-    "Export" nella barra di selezione
-    "Copy from file" nel footer
-    dialogo importPack con anteprima e conferma
+    object AccountPlaylistPacks { encode(pack); decode(text) }
+    suspend fun exportPack(playlistIds: List<String>): Result<AccountPlaylistPack>
+    suspend fun copyPack(pack: AccountPlaylistPack): Result<CopyOutcome>
+    internal fun uniquePlaylistTitle(
+        title: String,
+        existing: Collection<String>
+    ): String
 
-Formato del file
+  desktop/src/main/kotlin/com/music/vivi/desktop/utils/DirectoryPicker.kt
+    fun savePlaylistPackFile(
+        defaultFileName: String = "vivimusic-account-playlists.json",
+        initialDir: File? = null,
+        title: String = "Export account playlists",
+        onSelected: (File) -> Unit
+    )
+    fun choosePlaylistPackFile(
+        title: String = "Select a VIVI account playlist file",
+        onSelected: (File) -> Unit
+    )
+
+  desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
+    fun exportSelection(targets)
+      scrive AccountPlaylistPacks.encode(pack) in UTF-8
+    fun chooseImport()
+    fun copyImported()
+    AlertDialog "Copy account playlists?", conferma "Copy", annulla "Cancel"
+    "Export" nella barra di selezione
+    "Copy from file" nel footer della card
+
+COME SI USA DALLA UI
+  1. Settings -> Accounts -> card "YOUTUBE MUSIC PLAYLISTS".
+  2. "Select", spunta le playlist editabili, premi "Export".
+  3. Scegli dove salvare il .json (nome predefinito
+     vivimusic-account-playlists.json).
+  4. Cambia account dalla card Accounts.
+  5. Premi "Copy from file", scegli il .json.
+  6. L'anteprima "Copy account playlists?" mostra "From <file>", il numero di
+     playlist e tracce e le prime 8; premi "Copy".
+  7. Le playlist vengono create nell'account attivo, senza merge.
+
+FORMATO DEL FILE
   {
     "format": "vivi-account-playlists",
     "version": 1,
     "exportedAt": 1764000000000,
-    "source": "Nome account (opzionale)",
+    "source": "Nome account oppure null",
     "playlists": [
       { "title": "Road Trip", "videoIds": ["v1", "v2"] }
     ]
   }
-  Solo nomi e video id: niente copertina, descrizione, privacy o data di
-  creazione.
+  Solo nomi e video id, in ordine. Niente copertina, descrizione, privacy o
+  data di creazione.
 
-Come funziona
+COME FUNZIONA
   - Export: snapshot() legge tutte le pagine di ogni playlist selezionata.
-  - Copy: per ogni playlist crea un nome unico; se il titolo esiste gia'
-    diventa "Titolo (imported)", poi "(imported 2)", ecc.
-  - Ogni traccia viene aggiunta in ordine; un rifiuto viene contato, non
-    interrompe le altre.
-  - Il file viene rifiutato se format non e' quello o se version > 1.
+  - Copy: per ogni playlist crea un nome unico. Se il titolo esiste gia'
+    (confronto case-insensitive, con trim) diventa "Titolo (imported)", poi
+    "Titolo (imported 2)", ecc. Un titolo vuoto diventa "Imported playlist".
+  - Ogni traccia viene aggiunta in ordine; un rifiuto viene contato in
+    failedTracks, non interrompe le altre tracce.
+  - Se la creazione di una playlist fallisce, copyPack restituisce failure:
+    le playlist gia' create in quella passata restano, non c'e' rollback.
+  - decode rifiuta un file con format diverso o version > 1. I campi hanno
+    un default, quindi un JSON senza format/version viene letto come formato
+    corrente; un file completamente diverso fallisce comunque al parsing o
+    alla richiesta di playlists non vuote in copyPack.
   - Le playlist read-only non sono selezionabili, quindi non entrano
     nell'export dalla barra.
+  - decode ignora le chiavi JSON che non conosce (ignoreUnknownKeys = true).
 
-Come verificare
-  Test automatici:
+COME VERIFICARE
+  Test automatici (2, gia' eseguiti, 0 failure):
     YouTubePlaylistFollowUpTest.aPackRoundTripsAndRefusesAnotherFormat
     YouTubePlaylistFollowUpTest.anImportedTitleNeverReusesAnExistingName
+
   Manuale (due account reali):
     1. Account A: seleziona 2 playlist, Export, salva il .json.
     2. Passa all'account B.
     3. Copy from file, scegli il .json: l'anteprima deve mostrare 2 playlist
        e il totale tracce.
-    4. Conferma: le playlist devono comparire in B con lo stesso ordine.
+    4. Conferma "Copy": le playlist devono comparire in B con lo stesso
+       ordine di tracce.
     5. Rifai Copy: i nomi devono diventare "(imported)".
     6. Apri il file con un editor: deve avere format/version/playlists.
+    7. Prova un file con format diverso: deve essere rifiutato con un
+       messaggio, senza creare nulla.
 
-Limiti / aperti
+COMANDI ESATTI
+  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" --console=plain
+
+LIMITI NOTI
   - Niente merge e niente aggiornamento di una playlist esistente.
   - Niente Undo per la copia: per annullare si cancellano le playlist create.
   - Il file contiene solo id: se un video non e' piu' disponibile, la traccia
     viene contata come rifiutata.
-  - La copia tra due account e i dialoghi nativi non sono stati eseguiti.
+  - La copia tra due account e i dialoghi nativi non sono stati eseguiti in
+    questa passata.
 
-===============================================================================
-FOLLOW-UP NON ANCORA FATTI (dal ranking precedente)
+
+FOLLOW-UP ANCORA APERTI (dal ranking precedente)
 ===============================================================================
 
 7.  Ripristino fedele della playlist (copertina, descrizione, privacy).
@@ -436,30 +831,112 @@ FOLLOW-UP NON ANCORA FATTI (dal ranking precedente)
 10. Card account playlist su larga scala (paginazione/virtualizzazione).
 12. Verifica end-to-end della card con click reali e due account.
 
-===============================================================================
-COMANDI RAPIDI
+Questi non sono implementati. Non descriverli come fatti in una nuova
+sessione senza averli prima cercati nel codice.
+
+
+COMANDI GENERALI VERIFICATI
 ===============================================================================
 
-Compile + test:
+Compile + test completi (atteso 29 test, 0 failure):
   ./gradlew :desktop:compileKotlin :desktop:test --console=plain
 
-Solo i test dei follow-up:
-  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" \
-      --tests "*LibraryHealthAutoRelinkTest" --tests "*YouTubePlaylistOrderTest" --console=plain
+Solo le classi dei follow-up (6 classi, 29 test):
+  ./gradlew :desktop:test \
+      --tests "*YouTubePlaylistFollowUpTest" \
+      --tests "*LibraryHealthAutoRelinkTest" \
+      --tests "*YouTubePlaylistOrderTest" \
+      --tests "*LibraryHealthCheckerTest" \
+      --tests "*LibraryHealthCardSummaryTest" \
+      --tests "*LocalLibraryStoreTest" \
+      --console=plain
 
 Changelog:
   python scripts/split_changelog.py
 
-Installer:
+Installer (scrive nella build della root, non in desktop/build):
   ./gradlew :desktop:windowsInstaller --console=plain
+  Output: build/installer/VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe
 
-Controllo live account playlist (tocca solo una playlist temporanea):
-  build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --youtube-playlists-check
+App exe (non autonomo: usa le DLL e i jar che stanno accanto):
+  desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe
+
+Controllo live account playlist (crea, rinomina, aggiunge, elimina e verifica
+una sola playlist temporanea; richiede un account YouTube Music collegato):
+  ./desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --youtube-playlists-check
 
 Card headless:
-  build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --cards-render-check
+  NON esiste un task Gradle :desktop:cards-render-check. Il flag e' dell'exe:
+  prima crea la cartella di output, poi lancia l'exe dalla root.
+    mkdir -p build/cards-audit
+    VIVI_CARDS_OUTPUT=build/cards-audit \
+    VIVI_SYNC_STATE_FILE="$PWD/build/cards-audit/device-sync.json" \
+    VIVI_SETTINGS_FILE="$PWD/build/cards-audit/settings.json" \
+    ./desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe --cards-render-check
+  Il controllo avvia il grafo Koin e compone le card (compresa la card account
+  reale), ma non clicca nulla e non modifica le playlist. I PNG finiscono in
+  build/cards-audit/*.png. Usa VIVI_SYNC_STATE_FILE e VIVI_SETTINGS_FILE
+  temporanei per non toccare lo store reale.
 
 Dove guardare i risultati:
   desktop/build/test-results/test/*.xml
-  build/cards/*.png
+  desktop/build/reports/tests/test/index.html
+  build/cards-audit/*.png            (se VIVI_CARDS_OUTPUT e' quello)
+  build/cards/*.png                  (default quando il cwd e' la root)
   build/installer/VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe
+
+
+FILE DEI TEST (PATH COMPLETI)
+===============================================================================
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistFollowUpTest.kt
+  7 test: ordine per account, migrazione, Undo, pack, salute playlist.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistOrderTest.kt
+  4 test: ordinamento della card e scrittura nello store.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/library/LibraryHealthAutoRelinkTest.kt
+  4 test: auto-relink, ambiguita', file gia' usati, Undo.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/library/LibraryHealthCheckerTest.kt
+  5 test: gruppi della Library Health locale.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/presentation/screens/settings/LibraryHealthCardSummaryTest.kt
+  5 test: riepilogo e testi della card salute.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/store/LocalLibraryStoreTest.kt
+  4 test: scrittura interrotta, file temporaneo parziale, file corrotto,
+  assenza del vecchio database.
+
+
+NOTE DI AUDIT (25 NOV 2026)
+===============================================================================
+
+Queste affermazioni della bozza precedente erano sbagliate e sono state
+corrette in questo file:
+
+1. `./gradlew :desktop:cards-render-check` non esiste. `:desktop:tasks --all`
+   non mostra alcun task cards/render. Il flag e' `--cards-render-check`
+   dell'exe.
+2. I comandi dell'exe usavano `build/compose/...`; il percorso corretto e'
+   `desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe`.
+3. Il grep del commit `git log --grep="account playlist follow-ups"` non
+   trovava nulla; il subject e' "make account playlist actions resilient and
+   portable". Il comando corretto e' `--grep="account playlist actions"` o
+   `git log --oneline -- FOLLOW-UPS.txt`.
+4. I path dei test usavano `...`; ora sono completi.
+5. La card non ricarica lista e Undo con la stessa chiave: l'Undo dipende da
+   `LaunchedEffect(activeAccountId)`, la lista da
+   `LaunchedEffect(activeAccountId, refreshToken)`.
+6. Il detail di DUPLICATE_TRACKS conta i videoId distinti ripetuti, non le
+   righe in eccesso.
+7. La normalizzazione dell'auto-relink non e' un'uguaglianza titolo+artista:
+   il nome file normalizzato deve contenere titolo e artista.
+8. Nella scansione, una radice che non esiste viene saltata prima della
+   camminata e non aumenta skippedDirectories; skippedDirectories conta solo
+   le radici esistite e fallite. Il conteggio non e' mostrato nella UI.
+   "Full Rescan" passa forceRescan=true, ma quel flag riguarda i metadati,
+   non la pota: la pota e' `pruneMissing`, sempre true nelle scansioni da UI,
+   false in Rebuild.
+9. Il percorso dell'installer e' `build/installer/...` nella root (verificato
+   sul disco), non `desktop/build/installer/...`.
