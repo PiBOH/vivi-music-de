@@ -190,6 +190,10 @@ class LibraryStateHolder(
         }
     }.stateIn(coroutineScope, SharingStarted.Lazily, emptyList())
 
+    val ignoredDuplicateGroups: StateFlow<Set<String>> = musicRepository
+        .getIgnoredDuplicateGroupsFlow()
+        .stateIn(coroutineScope, SharingStarted.Lazily, emptySet())
+
     val albums: StateFlow<List<Album>> = combine(
         _albumSortOption,
         minTracksPerAlbum,
@@ -578,6 +582,18 @@ class LibraryStateHolder(
     fun deleteSong(song: Song) {
         coroutineScope.launch {
             musicRepository.deleteSong(song)
+        }
+    }
+
+    fun ignoreDuplicateGroup(key: String) {
+        coroutineScope.launch {
+            musicRepository.ignoreDuplicateGroup(key)
+        }
+    }
+
+    fun restoreIgnoredDuplicateGroups() {
+        coroutineScope.launch {
+            musicRepository.restoreIgnoredDuplicateGroups()
         }
     }
 

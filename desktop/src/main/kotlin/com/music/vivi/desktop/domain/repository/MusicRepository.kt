@@ -33,6 +33,11 @@ interface MusicRepository {
     suspend fun deleteSongsInDirectory(directoryPath: String)
     suspend fun clearLibrary()
 
+    /** The duplicate groups the owner hid, keyed by `DuplicateFinder.groupKey`. */
+    fun getIgnoredDuplicateGroupsFlow(): Flow<Set<String>>
+    suspend fun ignoreDuplicateGroup(key: String)
+    suspend fun restoreIgnoredDuplicateGroups()
+
     /** Remembers the last playing track and its position for the next start. */
     suspend fun savePlaybackResumePoint(song: Song, positionMs: Long)
     suspend fun getPlaybackResumePoint(): Pair<Song, Long>?

@@ -4,6 +4,7 @@ import com.music.vivi.desktop.data.model.Playlist
 import com.music.vivi.desktop.data.model.Song
 import com.music.vivi.desktop.data.store.LocalLibraryState
 import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.utils.DuplicateFinder
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.AfterTest
@@ -95,6 +96,23 @@ class LibraryHealthCheckerTest {
         assertEquals(6, report.issueCount)
         assertEquals(before, storeFile.readText())
         assertEquals(seeded, store.load())
+    }
+
+    @Test
+    fun anIgnoredDuplicateGroupIsNotReported() {
+        val seeded = seed()
+        val group = DuplicateFinder.findDuplicates(seeded.songs).single()
+        store.save(
+            seeded.copy(
+                ignoredDuplicateGroups = listOf(DuplicateFinder.groupKey(group))
+            )
+        )
+
+        val report = checker.scan()
+
+        assertTrue(report.duplicateGroups.isEmpty())
+        // Two missing files, one broken cover and two orphan references remain.
+        assertEquals(5, report.issueCount)
     }
 
     @Test

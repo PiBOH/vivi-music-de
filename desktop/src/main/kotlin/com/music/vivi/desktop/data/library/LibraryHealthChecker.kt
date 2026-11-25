@@ -133,7 +133,10 @@ class LibraryHealthChecker(
             missingFiles = missing,
             brokenArtwork = brokenArtwork,
             orphanPlaylistEntries = orphans,
-            duplicateGroups = DuplicateFinder.findDuplicates(state.songs)
+            duplicateGroups = DuplicateFinder.findDuplicates(
+                songs = state.songs,
+                ignoredGroups = state.ignoredDuplicateGroups.toSet()
+            )
         )
     }
 

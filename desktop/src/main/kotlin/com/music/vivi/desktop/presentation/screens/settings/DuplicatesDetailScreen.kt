@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,6 +31,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.music.vivi.desktop.data.model.Song
 import com.music.vivi.desktop.presentation.components.AsyncArtworkImage
+import com.music.vivi.desktop.presentation.components.subcomps.AppTooltip
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 import com.music.vivi.desktop.utils.AudioMetaUtils
 import com.music.vivi.desktop.utils.DuplicateFinder
@@ -62,17 +65,25 @@ fun DuplicatesDetailScreen(
     }
 
     val songs by viewModel.songs.collectAsState()
-    val duplicateGroups = remember(songs) {
+    val ignoredKeys by viewModel.ignoredDuplicateGroups.collectAsState()
+    val allGroups = remember(songs) {
         DuplicateFinder.findDuplicates(songs)
+    }
+    val duplicateGroups = remember(allGroups, ignoredKeys) {
+        allGroups.filterNot { DuplicateFinder.groupKey(it) in ignoredKeys }
     }
     val totalDuplicateTracks = remember(duplicateGroups) {
         duplicateGroups.sumOf { it.songs.size }
     }
 
-    val subtitle = if (duplicateGroups.isEmpty()) {
-        "No duplicate songs found"
-    } else {
-        "${duplicateGroups.size} duplicate groups • $totalDuplicateTracks songs"
+    val subtitle = when {
+        allGroups.isEmpty() && ignoredKeys.isEmpty() -> "No duplicate songs found"
+        else -> buildString {
+            append("${duplicateGroups.size} duplicate ")
+            append(if (duplicateGroups.size == 1) "group" else "groups")
+            append(" • $totalDuplicateTracks songs")
+            if (ignoredKeys.isNotEmpty()) append(" • ${ignoredKeys.size} ignored")
+        }
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -85,7 +96,7 @@ fun DuplicatesDetailScreen(
                 horizontalPadding = horizontalPadding
             )
 
-            if (duplicateGroups.isEmpty()) {
+            if (allGroups.isEmpty() && ignoredKeys.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -125,6 +136,11 @@ fun DuplicatesDetailScreen(
                         )
                     }
                 }
+            } else if (duplicateGroups.isEmpty()) {
+                IgnoredDuplicatesState(
+                    count = ignoredKeys.size,
+                    onRestore = { viewModel.restoreIgnoredDuplicateGroups() }
+                )
             } else {
                 LazyColumn(
                     state = listState,
@@ -132,11 +148,26 @@ fun DuplicatesDetailScreen(
                     contentPadding = PaddingValues(start = horizontalPadding, end = horizontalPadding, top = 8.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(duplicateGroups, key = { it.title + "|" + it.artist + "|" + it.songs.first().id }) { group ->
+                    if (ignoredKeys.isNotEmpty()) {
+                        item(key = "ignored-duplicates") {
+                            IgnoredDuplicatesNotice(
+                                count = ignoredKeys.size,
+                                onRestore = { viewModel.restoreIgnoredDuplicateGroups() }
+                            )
+                        }
+                    }
+                    items(
+                        duplicateGroups,
+                        key = { DuplicateFinder.groupKey(it) },
+                        contentType = { "duplicate-group" }
+                    ) { group ->
                         DuplicateGroupCard(
                             group = group,
                             onPlaySong = { song -> viewModel.playSong(song) },
-                            onDeleteSong = { song -> viewModel.deleteSong(song) }
+                            onDeleteSong = { song -> viewModel.deleteSong(song) },
+                            onIgnore = {
+                                viewModel.ignoreDuplicateGroup(DuplicateFinder.groupKey(group))
+                            }
                         )
                     }
                 }
@@ -149,7 +180,8 @@ fun DuplicatesDetailScreen(
 private fun DuplicateGroupCard(
     group: DuplicateFinder.DuplicateGroup,
     onPlaySong: (Song) -> Unit,
-    onDeleteSong: (Song) -> Unit
+    onDeleteSong: (Song) -> Unit,
+    onIgnore: () -> Unit
 ) {
     val colors = MaterialTheme.colorScheme
 
@@ -207,6 +239,88 @@ private fun DuplicateGroupCard(
                     )
                 }
             }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                AppTooltip("Hide this group from the duplicate scan") {
+                    TextButton(onClick = onIgnore) { Text("Ignore group") }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IgnoredDuplicatesNotice(count: Int, onRestore: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = colors.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$count ignored duplicate ${if (count == 1) "group" else "groups"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+                modifier = Modifier.weight(1f)
+            )
+            AppTooltip("Show the ignored duplicate groups again") {
+                TextButton(onClick = onRestore) { Text("Restore") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun IgnoredDuplicatesState(count: Int, onRestore: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                shape = RoundedCornerShape(24.dp),
+                color = colors.secondaryContainer,
+                modifier = Modifier.size(64.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        painter = painterResource(Res.drawable.ic_outlined_check_circle),
+                        contentDescription = null,
+                        tint = colors.onSecondaryContainer,
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            }
+            Text(
+                text = "No duplicate groups are shown",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colors.onSurface,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = "$count ${if (count == 1) "group is" else "groups are"} hidden from " +
+                    "the duplicate scan. Restore them to see the files again.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            Button(onClick = onRestore) { Text("Restore ignored") }
         }
     }
 }

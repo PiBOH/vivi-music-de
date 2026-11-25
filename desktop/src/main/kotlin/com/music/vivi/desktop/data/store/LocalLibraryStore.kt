@@ -143,6 +143,12 @@ data class LocalLibraryState(
     val youTubePlaylistOrders: Map<String, List<String>> = emptyMap(),
     /** The last account-playlist change Undo can reverse; survives a restart. */
     val youTubePlaylistUndo: StoredPlaylistUndo? = null,
+    /**
+     * Duplicate groups the owner chose to hide from the health scan. A key is
+     * the group's song ids, sorted and joined with `|`, so a group whose files
+     * change is reported again instead of staying hidden.
+     */
+    val ignoredDuplicateGroups: List<String> = emptyList(),
     val nextEventId: Long = 1L,
     val nextListenId: Long = 1L,
     /** The last track that was playing, so the next start can resume it paused. */
@@ -152,7 +158,8 @@ data class LocalLibraryState(
 ) {
     val isEmpty: Boolean
         get() = songs.isEmpty() && favorites.isEmpty() && playlists.isEmpty() &&
-            lyrics.isEmpty() && playbackEvents.isEmpty() && pendingListens.isEmpty()
+            lyrics.isEmpty() && playbackEvents.isEmpty() && pendingListens.isEmpty() &&
+            ignoredDuplicateGroups.isEmpty()
 }
 
 /**

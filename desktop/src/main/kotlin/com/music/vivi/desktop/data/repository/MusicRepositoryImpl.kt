@@ -108,6 +108,34 @@ class MusicRepositoryImpl(
         musicDao.clearLibrary()
     }
 
+    override fun getIgnoredDuplicateGroupsFlow(): Flow<Set<String>> = flow {
+        emit(store.load().ignoredDuplicateGroups.toSet())
+        store.tableInvalidationFlow.collect { table ->
+            if (table == "duplicates") {
+                emit(store.load().ignoredDuplicateGroups.toSet())
+            }
+        }
+    }.flowOn(ioDispatcher)
+
+    override suspend fun ignoreDuplicateGroup(key: String) {
+        val normalized = key.trim()
+        if (normalized.isEmpty()) return
+        store.update("duplicates") { state ->
+            if (normalized in state.ignoredDuplicateGroups) {
+                state
+            } else {
+                state.copy(ignoredDuplicateGroups = state.ignoredDuplicateGroups + normalized)
+            }
+        }
+    }
+
+    override suspend fun restoreIgnoredDuplicateGroups() {
+        store.update("duplicates") { state ->
+            if (state.ignoredDuplicateGroups.isEmpty()) state
+            else state.copy(ignoredDuplicateGroups = emptyList())
+        }
+    }
+
     override fun getAllAlbumsFlow(sortOption: SortOption, minTracks: Int, minDurationMs: Long): Flow<List<Album>> = flow {
         emit(musicDao.getAllAlbums(sortOption, minTracks, minDurationMs))
         store.tableInvalidationFlow.collect { table ->

@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### ✨ Added
+- [DE] **A duplicate group can be ignored without deleting its files, and restored later.**
 - [DE] **The account playlist order is kept per account, not once for the device.**
 - [DE] **The account playlist Undo survives the screen and a restart, and a partial restore can be retried.**
 - [DE] **Bulk add skips tracks already in the playlist and Undo removes the copies it made.**

@@ -228,6 +228,7 @@ class PlayerViewModel(
 
     val storageFilter = libraryStateHolder.storageFilter
     val songs = libraryStateHolder.songs
+    val ignoredDuplicateGroups = libraryStateHolder.ignoredDuplicateGroups
     val albums = libraryStateHolder.albums
     val artists = libraryStateHolder.artists
     val playlists = libraryStateHolder.playlists
@@ -313,6 +314,8 @@ class PlayerViewModel(
         playbackStateHolder.removeSongFromQueue(song.id)
         libraryStateHolder.deleteSong(song)
     }
+    fun ignoreDuplicateGroup(key: String) = libraryStateHolder.ignoreDuplicateGroup(key)
+    fun restoreIgnoredDuplicateGroups() = libraryStateHolder.restoreIgnoredDuplicateGroups()
     fun renamePlaylist(id: String, newName: String) = libraryStateHolder.renamePlaylist(id, newName)
     fun updatePlaylist(playlist: Playlist) = libraryStateHolder.updatePlaylist(playlist)
     fun addSongToPlaylist(playlistId: String, songId: String) = libraryStateHolder.addSongToPlaylist(playlistId, songId)

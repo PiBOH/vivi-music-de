@@ -6,7 +6,8 @@ import com.music.vivi.desktop.data.model.Song
  * Pure duplicate-track detection utility.
  *
  * Groups tracks whose normalized title and artist match AND whose durations
- * fall within [DEFAULT_DURATION_TOLERANCE_MS] of each other.
+ * fall within [DEFAULT_DURATION_TOLERANCE_MS] of each other. Groups the owner
+ * ignored are left out, so the health scan and the Duplicates screen agree.
  */
 object DuplicateFinder {
 
@@ -25,7 +26,8 @@ object DuplicateFinder {
 
     fun findDuplicates(
         songs: List<Song>,
-        durationToleranceMs: Long = DEFAULT_DURATION_TOLERANCE_MS
+        durationToleranceMs: Long = DEFAULT_DURATION_TOLERANCE_MS,
+        ignoredGroups: Set<String> = emptySet()
     ): List<DuplicateGroup> {
         val result = mutableListOf<DuplicateGroup>()
 
@@ -48,11 +50,21 @@ object DuplicateFinder {
                 result.addClusterIfDuplicate(cluster)
             }
 
-        return result.sortedWith(
-            compareByDescending<DuplicateGroup> { it.songs.size }
-                .thenBy { it.title.lowercase() }
-        )
+        return result
+            .filterNot { groupKey(it) in ignoredGroups }
+            .sortedWith(
+                compareByDescending<DuplicateGroup> { it.songs.size }
+                    .thenBy { it.title.lowercase() }
+            )
     }
+
+    /**
+     * The stable identity of one reported group: its song ids, sorted. Two
+     * groups made of the same files share a key; adding or removing a file
+     * changes it, so an ignored group returns when its files change.
+     */
+    fun groupKey(group: DuplicateGroup): String =
+        group.songs.map { it.id }.sorted().joinToString("|")
 
     private fun MutableList<DuplicateGroup>.addClusterIfDuplicate(cluster: List<Song>) {
         if (cluster.size > 1) {

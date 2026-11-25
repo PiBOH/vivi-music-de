@@ -76,6 +76,15 @@ class LocalLibraryStoreTest {
     }
 
     @Test
+    fun ignoredDuplicateGroupsSurviveAReopen() {
+        val state = first.copy(ignoredDuplicateGroups = listOf("song-a|song-b"))
+
+        store().save(state)
+
+        assertEquals(listOf("song-a|song-b"), store().load().ignoredDuplicateGroups)
+    }
+
+    @Test
     fun reimportWithoutLegacyLibraryFailsWithoutTouchingTheStore() {
         store().save(first)
 
