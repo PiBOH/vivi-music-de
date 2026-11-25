@@ -369,16 +369,12 @@ class YouTubePlaylistsRepository(
      */
     suspend fun addSongIfAbsent(playlistId: String, videoId: String): AddOutcome =
         withContext(ioDispatcher) {
-            if (videoId.isBlank()) return@withContext AddOutcome.FAILED
-            val tracks = readTracks(playlistId).getOrElse { return@withContext AddOutcome.FAILED }
-            if (tracks.any { it.videoId == videoId }) {
-                return@withContext AddOutcome.ALREADY_PRESENT
-            }
-            if (YouTube.addToPlaylistUnit(playlistId, videoId).isSuccess) {
-                AddOutcome.ADDED
-            } else {
-                AddOutcome.FAILED
-            }
+            addSongIfAbsentWith(
+                playlistId = playlistId,
+                videoId = videoId,
+                readTracks = { readTracks(it) },
+                add = { id, video -> YouTube.addToPlaylistUnit(id, video) }
+            )
         }
 
     /** Reads every page of a playlist, keeping the token a removal needs. */
@@ -402,13 +398,14 @@ class YouTubePlaylistsRepository(
     /** Removes one track from a playlist by resolving its `setVideoId` first. */
     suspend fun removeSong(playlistId: String, videoId: String): Result<Unit> =
         withContext(ioDispatcher) {
-            runCatching {
-                val tracks = readTracks(playlistId).getOrThrow()
-                val target = tracks.lastOrNull {
-                    it.videoId == videoId && !it.setVideoId.isNullOrBlank()
-                } ?: error("The track is not in that playlist, so it cannot be removed.")
-                YouTube.removeFromPlaylistUnit(playlistId, videoId, target.setVideoId!!).getOrThrow()
-            }
+            removeSongWith(
+                playlistId = playlistId,
+                videoId = videoId,
+                readTracks = { readTracks(it) },
+                remove = { id, video, setVideoId ->
+                    YouTube.removeFromPlaylistUnit(id, video, setVideoId)
+                }
+            )
         }
 
     /** Saves one account's order, so a drag survives leaving the screen. */
@@ -510,22 +507,16 @@ class YouTubePlaylistsRepository(
      */
     suspend fun copyPack(pack: AccountPlaylistPack): Result<CopyOutcome> = withContext(ioDispatcher) {
         runCatching {
-            require(pack.playlists.isNotEmpty()) { "The file has no playlists." }
-            val existing = readLibraryItems().mapTo(mutableListOf()) { it.title }
-            var created = 0
-            var restoredTracks = 0
-            var failedTracks = 0
-            for (snapshot in pack.playlists) {
-                val title = uniquePlaylistTitle(snapshot.title, existing)
-                val outcome = createWithTracks(
-                    AccountPlaylistSnapshot(title = title, videoIds = snapshot.videoIds)
-                ).getOrThrow()
-                existing += title
-                created++
-                restoredTracks += outcome.restoredTracks
-                failedTracks += outcome.failedTracks
-            }
-            CopyOutcome(created, restoredTracks, failedTracks)
+            copyPlaylistSnapshots(
+                playlists = pack.playlists,
+                existingTitles = readLibraryItems().map { it.title },
+                create = { title ->
+                    runCatching {
+                        YouTube.createPlaylist(title).removePrefix("VL").also { editability[it] = true }
+                    }
+                },
+                add = { id, video -> YouTube.addToPlaylistUnit(id, video) }
+            ).getOrThrow()
         }
     }
 
@@ -554,6 +545,117 @@ class YouTubePlaylistsRepository(
         }
     }
 
+}
+
+/**
+ * Adds one track only when it is absent. The read and the write are callbacks
+ * so the decision can be tested without a YouTube session.
+ */
+internal suspend fun addSongIfAbsentWith(
+    playlistId: String,
+    videoId: String,
+    readTracks: suspend (String) -> Result<List<PlaylistTrack>>,
+    add: suspend (String, String) -> Result<Unit>
+): AddOutcome {
+    if (videoId.isBlank()) return AddOutcome.FAILED
+    val tracks = readTracks(playlistId).getOrElse { return AddOutcome.FAILED }
+    if (tracks.any { it.videoId == videoId }) return AddOutcome.ALREADY_PRESENT
+    return if (add(playlistId, videoId).isSuccess) AddOutcome.ADDED else AddOutcome.FAILED
+}
+
+/** What one bulk Add did; only [addedIds] may be removed by its Undo. */
+internal data class BulkAddResult(
+    val addedIds: List<String>,
+    val already: Int,
+    val failed: Int
+) {
+    val added: Int get() = addedIds.size
+}
+
+/** Offers one track to several playlists, keeping the three outcomes separate. */
+internal suspend fun bulkAddSong(
+    playlistIds: List<String>,
+    videoId: String,
+    add: suspend (String, String) -> AddOutcome
+): BulkAddResult {
+    val addedIds = mutableListOf<String>()
+    var already = 0
+    var failed = 0
+    for (id in playlistIds) {
+        when (add(id, videoId)) {
+            AddOutcome.ADDED -> addedIds += id
+            AddOutcome.ALREADY_PRESENT -> already++
+            AddOutcome.FAILED -> failed++
+        }
+    }
+    return BulkAddResult(addedIds, already, failed)
+}
+
+/** Removes one track from several playlists and returns the ids that failed. */
+internal suspend fun removeSongFromPlaylists(
+    playlistIds: List<String>,
+    videoId: String,
+    remove: suspend (String, String) -> Result<Unit>
+): List<String> = playlistIds.filter { id -> remove(id, videoId).isFailure }
+
+/**
+ * Removes one track, using the last non-blank `setVideoId` the playlist holds
+ * for it. The read and the write are callbacks for the same reason as above.
+ */
+internal suspend fun removeSongWith(
+    playlistId: String,
+    videoId: String,
+    readTracks: suspend (String) -> Result<List<PlaylistTrack>>,
+    remove: suspend (String, String, String) -> Result<Unit>
+): Result<Unit> = runCatching {
+    val tracks = readTracks(playlistId).getOrThrow()
+    val target = tracks.lastOrNull {
+        it.videoId == videoId && !it.setVideoId.isNullOrBlank()
+    } ?: error("The track is not in that playlist, so it cannot be removed.")
+    remove(playlistId, videoId, target.setVideoId!!).getOrThrow()
+}
+
+/** The title and tracks one source playlist becomes, before anything is written. */
+internal data class PlaylistCopyPlan(
+    val title: String,
+    val videoIds: List<String>
+)
+
+/** A suffix is added when the target already uses the title, never a merge. */
+internal fun planPlaylistCopies(
+    playlists: List<AccountPlaylistSnapshot>,
+    existingTitles: Collection<String>
+): List<PlaylistCopyPlan> {
+    val titles = existingTitles.toMutableList()
+    return playlists.map { snapshot ->
+        val title = uniquePlaylistTitle(snapshot.title, titles)
+        titles += title
+        PlaylistCopyPlan(title = title, videoIds = snapshot.videoIds)
+    }
+}
+
+/**
+ * Creates one new playlist per source snapshot and adds its tracks in order.
+ * A refused track is counted; it does not stop the rest of the copy.
+ */
+internal suspend fun copyPlaylistSnapshots(
+    playlists: List<AccountPlaylistSnapshot>,
+    existingTitles: Collection<String>,
+    create: suspend (String) -> Result<String>,
+    add: suspend (String, String) -> Result<Unit>
+): Result<CopyOutcome> = runCatching {
+    require(playlists.isNotEmpty()) { "The file has no playlists." }
+    var created = 0
+    var restoredTracks = 0
+    var failedTracks = 0
+    for (plan in planPlaylistCopies(playlists, existingTitles)) {
+        val playlistId = create(plan.title).getOrThrow()
+        created++
+        for (videoId in plan.videoIds) {
+            if (add(playlistId, videoId).isSuccess) restoredTracks++ else failedTracks++
+        }
+    }
+    CopyOutcome(created, restoredTracks, failedTracks)
 }
 
 /** The shape the Undo bar persists for one snapshot. */

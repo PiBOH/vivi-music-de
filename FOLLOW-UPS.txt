@@ -70,16 +70,18 @@ COME RIPRENDERE IN UNA NUOVA SESSIONE
      grep -rn "youTubePlaylistOrders\|StoredPlaylistUndo" desktop/src
 4. Compila e testa tutto il modulo desktop:
      ./gradlew :desktop:compileKotlin :desktop:test --console=plain
-   Atteso: BUILD SUCCESSFUL, 36 test, 0 failure.
-   I 36 test sono in 8 classi:
+   Atteso: BUILD SUCCESSFUL, 47 test, 0 failure.
+   I 47 test sono in 10 classi:
      YouTubePlaylistFollowUpTest        7
-     LibraryHealthAutoRelinkTest        4
+     LibraryHealthAutoRelinkTest        5
      YouTubePlaylistOrderTest           4
      LibraryHealthCheckerTest           6
      LibraryHealthCardSummaryTest       5
      LocalLibraryStoreTest              5
      DuplicateFinderTest                3
      MusicDaoTest                       2
+     YouTubePlaylistBulkTest            5
+     YouTubePlaylistCopyTest            5
 5. Se devi toccare la card Account o la schermata Library Health, leggi anche
    la sezione "Card headless" in COMANDI GENERALI VERIFICATI: non esiste un
    task Gradle per quel controllo, si usa il flag dell'exe.
@@ -317,13 +319,32 @@ DOVE STA IL CODICE
     enum class AddOutcome { ADDED, ALREADY_PRESENT, FAILED }
     data class PlaylistTrack(val videoId: String, val setVideoId: String?)
     suspend fun addSongIfAbsent(playlistId, videoId): AddOutcome
+      delega a addSongIfAbsentWith.
+    internal suspend fun addSongIfAbsentWith(
+        playlistId, videoId,
+        readTracks: suspend (String) -> Result<List<PlaylistTrack>>,
+        add: suspend (String, String) -> Result<Unit>
+    ): AddOutcome
     suspend fun tracks(playlistId): Result<List<PlaylistTrack>>
     private suspend fun readTracks(playlistId): Result<List<PlaylistTrack>>
     suspend fun removeSong(playlistId, videoId): Result<Unit>
+      delega a removeSongWith.
+    internal suspend fun removeSongWith(
+        playlistId, videoId,
+        readTracks: suspend (String) -> Result<List<PlaylistTrack>>,
+        remove: suspend (String, String, String) -> Result<Unit>
+    ): Result<Unit>
+    internal data class BulkAddResult(addedIds, already, failed)
+    internal suspend fun bulkAddSong(playlistIds, videoId, add): BulkAddResult
+    internal suspend fun removeSongFromPlaylists(
+        playlistIds, videoId, remove
+    ): List<String>
 
   desktop/src/main/kotlin/com/music/vivi/desktop/presentation/screens/settings/YouTubePlaylistsCard.kt
     fun addCurrentTo(targets: List<RemotePlaylist>, singleLabel: String? = null)
+      usa bulkAddSong e registra solo result.addedIds per Undo.
     fun performUndo(change: PlaylistUndo)  // ramo Added
+      usa removeSongFromPlaylists.
 
 COME SI USA DALLA UI
   1. Metti in riproduzione un brano di YouTube Music. Un file locale non ha
@@ -360,8 +381,14 @@ COME FUNZIONA
     FOLLOW-UP 2).
 
 COME VERIFICARE
-  Test automatici: la parte di rete non e' unit-testata; i test puri dei
-  follow-up 1/2/5 compilano e passano. Non esiste un test del bulk.
+  Test automatici (5, gia' eseguiti, 0 failure):
+    YouTubePlaylistBulkTest.anAlreadyPresentTrackIsNotAddedAgain
+    YouTubePlaylistBulkTest.anEmptyPlaylistReceivesTheTrack
+    YouTubePlaylistBulkTest.bulkAddOnlyRecordsThePlaylistsThatReceivedTheTrack
+    YouTubePlaylistBulkTest.undoSendsOnlyTheFailedPlaylistsBackToTheToken
+    YouTubePlaylistBulkTest.undoUsesTheLastRemovalTokenForADuplicateTrack
+  Il test sostituisce la rete con callback e prova la decisione, non il
+  trasporto HTTP: la parte live resta manuale.
 
   Manuale (account reale):
     1. Scegli una playlist che contiene gia' "Get Lucky" e una che non lo ha.
@@ -454,11 +481,12 @@ COME FUNZIONA
      path (e contentUriString).
 
 COME VERIFICARE
-  Test automatici (4, gia' eseguiti, 0 failure):
+  Test automatici (5, gia' eseguiti, 0 failure):
     LibraryHealthAutoRelinkTest.aUniqueFileNameIsRelinkedAndUndoRestoresTheOldPath
     LibraryHealthAutoRelinkTest.aDifferentNameIsMatchedByTitleAndArtist
     LibraryHealthAutoRelinkTest.aFileAnotherSongAlreadyUsesIsNotTaken
     LibraryHealthAutoRelinkTest.twoFilesWithTheSameNameStayManual
+    LibraryHealthAutoRelinkTest.noCandidateIsOfferedWhenNothingMatches
 
   Manuale:
     1. Aggiungi una cartella musicale in Music Management e scansiona.
@@ -843,6 +871,15 @@ DOVE STA IL CODICE
     object AccountPlaylistPacks { encode(pack); decode(text) }
     suspend fun exportPack(playlistIds: List<String>): Result<AccountPlaylistPack>
     suspend fun copyPack(pack: AccountPlaylistPack): Result<CopyOutcome>
+      usa copyPlaylistSnapshots.
+    internal data class PlaylistCopyPlan(title, videoIds)
+    internal fun planPlaylistCopies(
+        playlists: List<AccountPlaylistSnapshot>,
+        existingTitles: Collection<String>
+    ): List<PlaylistCopyPlan>
+    internal suspend fun copyPlaylistSnapshots(
+        playlists, existingTitles, create, add
+    ): Result<CopyOutcome>
     internal fun uniquePlaylistTitle(
         title: String,
         existing: Collection<String>
@@ -911,7 +948,12 @@ COME FUNZIONA
   - decode ignora le chiavi JSON che non conosce (ignoreUnknownKeys = true).
 
 COME VERIFICARE
-  Test automatici (2, gia' eseguiti, 0 failure):
+  Test automatici (7, gia' eseguiti, 0 failure):
+    YouTubePlaylistCopyTest.anEmptyTargetAccountGetsACopyWithItsTracks
+    YouTubePlaylistCopyTest.anExistingPlaylistWithTheSameTracksGetsANewCopy
+    YouTubePlaylistCopyTest.anEmptySourcePlaylistStillCreatesAnEmptyCopy
+    YouTubePlaylistCopyTest.aRefusedTrackIsCountedWithoutStoppingTheCopy
+    YouTubePlaylistCopyTest.anEmptyPackIsRefused
     YouTubePlaylistFollowUpTest.aPackRoundTripsAndRefusesAnotherFormat
     YouTubePlaylistFollowUpTest.anImportedTitleNeverReusesAnExistingName
 
@@ -928,7 +970,7 @@ COME VERIFICARE
        messaggio, senza creare nulla.
 
 COMANDI ESATTI
-  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" --console=plain
+  ./gradlew :desktop:test --tests "*YouTubePlaylistFollowUpTest" --tests "*YouTubePlaylistCopyTest" --console=plain
 
 LIMITI NOTI
   - Niente merge e niente aggiornamento di una playlist esistente.
@@ -954,10 +996,10 @@ sessione senza averli prima cercati nel codice.
 COMANDI GENERALI VERIFICATI
 ===============================================================================
 
-Compile + test completi (atteso 36 test, 0 failure):
+Compile + test completi (atteso 47 test, 0 failure):
   ./gradlew :desktop:compileKotlin :desktop:test --console=plain
 
-Solo le classi dei follow-up (8 classi, 36 test):
+Solo le classi dei follow-up (10 classi, 47 test):
   ./gradlew :desktop:test \
       --tests "*YouTubePlaylistFollowUpTest" \
       --tests "*LibraryHealthAutoRelinkTest" \
@@ -967,6 +1009,8 @@ Solo le classi dei follow-up (8 classi, 36 test):
       --tests "*LocalLibraryStoreTest" \
       --tests "*DuplicateFinderTest" \
       --tests "*MusicDaoTest" \
+      --tests "*YouTubePlaylistBulkTest" \
+      --tests "*YouTubePlaylistCopyTest" \
       --console=plain
 
 Changelog:
@@ -1014,7 +1058,7 @@ desktop/src/test/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistOrder
   4 test: ordinamento della card e scrittura nello store.
 
 desktop/src/test/kotlin/com/music/vivi/desktop/data/library/LibraryHealthAutoRelinkTest.kt
-  4 test: auto-relink, ambiguita', file gia' usati, Undo.
+  5 test: auto-relink, ambiguita', file gia' usati, Undo, nessun candidato.
 
 desktop/src/test/kotlin/com/music/vivi/desktop/data/library/LibraryHealthCheckerTest.kt
   6 test: gruppi della Library Health locale, incluso un gruppo ignorato.
@@ -1031,6 +1075,14 @@ desktop/src/test/kotlin/com/music/vivi/desktop/utils/DuplicateFinderTest.kt
 
 desktop/src/test/kotlin/com/music/vivi/desktop/data/database/MusicDaoTest.kt
   2 test: la pota tocca solo le radici scandite; nessuna radice non pota.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistBulkTest.kt
+  5 test: brano gia' presente, playlist vuota, conteggi bulk, Undo parziale,
+  token di rimozione dell'ultima riga.
+
+desktop/src/test/kotlin/com/music/vivi/desktop/data/youtube/YouTubePlaylistCopyTest.kt
+  5 test: account vuoto, stesso titolo/tracce, playlist sorgente vuota,
+  traccia rifiutata, pack vuoto.
 
 
 NOTE DI AUDIT (25 NOV 2026)

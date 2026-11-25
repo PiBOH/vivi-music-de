@@ -9,6 +9,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class LibraryHealthAutoRelinkTest {
@@ -89,6 +90,24 @@ class LibraryHealthAutoRelinkTest {
         )
 
         assertTrue(checker.findRelinkCandidates(listOf(musicDirectory.absolutePath)).isEmpty())
+    }
+
+    @Test
+    fun noCandidateIsOfferedWhenNothingMatches() {
+        File(musicDirectory, "Unrelated.mp3").writeText("audio")
+        store.save(
+            LocalLibraryState(
+                songs = listOf(
+                    song("s1", "Title", "Artist", File(directory, "old/Title.mp3"))
+                )
+            )
+        )
+
+        assertTrue(checker.findRelinkCandidates(listOf(musicDirectory.absolutePath)).isEmpty())
+
+        val result = checker.relinkSongs(emptyList())
+        assertEquals(0, result.changed)
+        assertNull(result.undo)
     }
 
     @Test

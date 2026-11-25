@@ -54,8 +54,9 @@ import com.music.vivi.desktop.data.youtube.AccountPlaylistHealth
 import com.music.vivi.desktop.data.youtube.AccountPlaylistPack
 import com.music.vivi.desktop.data.youtube.AccountPlaylistPacks
 import com.music.vivi.desktop.data.youtube.AccountPlaylistSnapshot
-import com.music.vivi.desktop.data.youtube.AddOutcome
 import com.music.vivi.desktop.data.youtube.RemotePlaylist
+import com.music.vivi.desktop.data.youtube.bulkAddSong
+import com.music.vivi.desktop.data.youtube.removeSongFromPlaylists
 import com.music.vivi.desktop.data.youtube.YouTubeAccount
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
 import com.music.vivi.desktop.data.youtube.YouTubePlaylistsRepository
@@ -266,21 +267,14 @@ fun YouTubePlaylistsCard(
         scope.launch {
             busyAction = true
             forgetUndo()
-            var added = 0
-            var already = 0
-            var failed = 0
-            val addedIds = mutableListOf<String>()
-            for (playlist in editable) {
-                when (repository.addSongIfAbsent(playlist.id, video)) {
-                    AddOutcome.ADDED -> {
-                        added++
-                        addedIds += playlist.id
-                    }
-
-                    AddOutcome.ALREADY_PRESENT -> already++
-                    AddOutcome.FAILED -> failed++
-                }
-            }
+            val result = bulkAddSong(
+                playlistIds = editable.map { it.id },
+                videoId = video
+            ) { id, videoId -> repository.addSongIfAbsent(id, videoId) }
+            val added = result.added
+            val already = result.already
+            val failed = result.failed
+            val addedIds = result.addedIds
             message = when {
                 singleLabel != null && added == 1 ->
                     "Added \"$trackTitle\" to $singleLabel."
@@ -430,9 +424,10 @@ fun YouTubePlaylistsCard(
                 }
 
                 is PlaylistUndo.Added -> {
-                    val failedIds = change.playlistIds.filter { id ->
-                        repository.removeSong(id, change.videoId).isFailure
-                    }
+                    val failedIds = removeSongFromPlaylists(
+                        playlistIds = change.playlistIds,
+                        videoId = change.videoId
+                    ) { id, videoId -> repository.removeSong(id, videoId) }
                     when {
                         failedIds.isEmpty() -> {
                             message = "Removed \"${change.trackTitle}\" from " +
