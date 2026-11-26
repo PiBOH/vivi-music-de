@@ -77,8 +77,8 @@ jobs:
           DE="$(sed -n '4p' version.txt | tr -d '\r\n' | xargs)"
           VERSION="${MOBILE}_DE-${DE}"
           mkdir -p dist
-          cp desktop/build/compose/binaries/main/dmg/*.dmg "dist/VIVIMusic-${VERSION}-${{ matrix.arch }}.dmg"
-          cp desktop/build/compose/binaries/main/pkg/*.pkg "dist/VIVIMusic-${VERSION}-${{ matrix.arch }}.pkg"
+          cp desktop/build/compose/binaries/main/dmg/*.dmg "dist/AxolotlMusic-${VERSION}-${{ matrix.arch }}.dmg"
+          cp desktop/build/compose/binaries/main/pkg/*.pkg "dist/AxolotlMusic-${VERSION}-${{ matrix.arch }}.pkg"
           ls -la dist
 
       - name: Upload installer

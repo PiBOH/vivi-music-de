@@ -111,17 +111,17 @@ jobs:
           else
             TAG="$FULL_VERSION-$CHANNEL"
           fi
-          # Release display name: "Vivi Music <mobile>_DE <de_version>"
-          # (e.g. "Vivi Music 6.4.3_DE 1.33.6" — no "v" prefix, no hyphen after DE).
+          # Release display name: "Axolotl Music <mobile>_DE <de_version>"
+          # (e.g. "Axolotl Music 6.4.3_DE 1.33.6" — no "v" prefix, no hyphen after DE).
           TITLE_VERSION="${FULL_VERSION//_DE-/_DE }"
           echo "version=$FULL_VERSION" >> "$GITHUB_OUTPUT"
           echo "de_version=$DE_VERSION" >> "$GITHUB_OUTPUT"
           echo "title_version=$TITLE_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "name=Vivi Music $TITLE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=Axolotl Music $TITLE_VERSION" >> "$GITHUB_OUTPUT"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $FULL_VERSION (title: Vivi Music $TITLE_VERSION, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
+          echo "Resolved version: $FULL_VERSION (title: Axolotl Music $TITLE_VERSION, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
 
       - name: Extract changelog section
         id: changelog
@@ -230,13 +230,13 @@ jobs:
           # travel together.
           AUR_DIR="$(mktemp -d)"
           python3 scripts/generate_aur_pkgbuild.py --out "$AUR_DIR" --sha "${{ github.sha }}"
-          tar -czf "artifacts/VIVIMusic-${{ steps.version.outputs.version }}-AUR.tar.gz" -C "$AUR_DIR" .
+          tar -czf "artifacts/AxolotlMusic-${{ steps.version.outputs.version }}-AUR.tar.gz" -C "$AUR_DIR" .
           rm -rf "$AUR_DIR"
           # The install guide ships with every release.
           cp INSTALL-GUIDE.md artifacts/
           # A checksum next to every installer: the desktop updater verifies the
           # download against this file when GitHub's asset digest is absent.
-          for file in artifacts/VIVIMusic-*; do
+          for file in artifacts/AxolotlMusic-*; do
             case "$file" in
               *.sha256|*.md|*.tar.gz) continue ;;
             esac
@@ -255,7 +255,7 @@ jobs:
           files: artifacts/*
           fail_on_unmatched_files: true
           body: |
-            ## Vivi Music ${{ steps.version.outputs.title_version }}
+            ## Axolotl Music ${{ steps.version.outputs.title_version }}
             **Release channel:** `${{ steps.version.outputs.channel }}`
 
             ${{ steps.changelog.outputs.section }}

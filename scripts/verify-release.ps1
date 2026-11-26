@@ -1,7 +1,7 @@
 #requires -version 5.1
 <#
 .SYNOPSIS
-    Repeatable release verification for VIVI Music DE on Windows.
+    Repeatable release verification for Axolotl Music on Windows.
 
 .DESCRIPTION
     Checks, in order:
@@ -9,7 +9,7 @@
       1. the version the setup carries against version.txt;
       2. the payload of the jpackage app image (JavaFX Web, icudtl.dat, libmpv,
          the innertube and lyrics jars, no database driver);
-      3. the packaged WebView, by running VIVIMusic.exe --webview-self-test
+      3. the packaged WebView, by running AxolotlMusic.exe --webview-self-test
          from the image and reading the page back;
       4. the exact setup.exe, installed silently into a temporary folder with
          /NOICONS;
@@ -40,10 +40,10 @@
     when -NoElevate is given.
 
 .PARAMETER Installer
-    The setup.exe to verify. Default: build\installer\VIVIMusic-<version>-setup.exe
+    The setup.exe to verify. Default: build\installer\AxolotlMusic-<version>-setup.exe
 
 .PARAMETER AppImage
-    The jpackage app image. Default: desktop\build\compose\binaries\main\app\VIVIMusic
+    The jpackage app image. Default: desktop\build\compose\binaries\main\app\AxolotlMusic
 
 .PARAMETER WebViewTimeoutSeconds
     How long the packaged WebView may take to load. Default 120.
@@ -117,8 +117,8 @@ $releaseChannel = $versionLines[5]
 $fullVersion = "${mobileVersion}_DE-$deVersion"
 if ($releaseChannel -ne 'stable') { $fullVersion = "$fullVersion-$releaseChannel" }
 
-if (-not $Installer) { $Installer = Join-Path $repoRoot "build\installer\VIVIMusic-$fullVersion-setup.exe" }
-if (-not $AppImage) { $AppImage = Join-Path $repoRoot 'desktop\build\compose\binaries\main\app\VIVIMusic' }
+if (-not $Installer) { $Installer = Join-Path $repoRoot "build\installer\AxolotlMusic-$fullVersion-setup.exe" }
+if (-not $AppImage) { $AppImage = Join-Path $repoRoot 'desktop\build\compose\binaries\main\app\AxolotlMusic' }
 if (-not $ReportPath) { $ReportPath = Join-Path $repoRoot "build\release-verification-$fullVersion" }
 
 $Installer = [IO.Path]::GetFullPath($Installer)
@@ -251,9 +251,9 @@ New-Item -ItemType Directory -Force -Path $work, $homeDir, $restoredHome, $insta
 
 $installerLog = Join-Path $logDir 'installer.log'
 $uninstallLog = Join-Path $logDir 'uninstall.log'
-$appPathsKey = 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\VIVIMusic.exe'
+$appPathsKey = 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\AxolotlMusic.exe'
 $appPathsPs = ConvertTo-RegPath $appPathsKey
-$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\VIVI Music DE'
+$startMenu = Join-Path $env:ProgramData 'Microsoft\Windows\Start Menu\Programs\Axolotl Music'
 
 # The host registration as it was before this run. The same values are written
 # to $recoveryManifest, which is what lets the next run repair the machine when
@@ -269,15 +269,15 @@ function Get-RealInstallDir {
         $exe = (Get-ItemProperty -LiteralPath $appPathsPs -ErrorAction SilentlyContinue).'(default)'
         if ($exe) {
             $dir = Split-Path -Parent ([string]$exe)
-            if (Test-Path -LiteralPath (Join-Path $dir 'VIVIMusic.exe')) { return $dir }
+            if (Test-Path -LiteralPath (Join-Path $dir 'AxolotlMusic.exe')) { return $dir }
         }
     }
-    $default = Join-Path $env:ProgramFiles 'VIVIMusic'
-    if (Test-Path -LiteralPath (Join-Path $default 'VIVIMusic.exe')) { return $default }
+    $default = Join-Path $env:ProgramFiles 'AxolotlMusic'
+    if (Test-Path -LiteralPath (Join-Path $default 'AxolotlMusic.exe')) { return $default }
     return $null
 }
 
-# Inno names the key after AppId without braces (com.vivi.vivimusic.desktop_is1),
+# Inno names the key after AppId without braces (com.piboh.axolotlmusic.desktop_is1),
 # and an older build may have used another AppId, so the real entry is found by
 # the install location it points at instead of by a guessed key name.
 function Get-UninstallKeysFor {
@@ -580,7 +580,7 @@ function Get-TreeMap {
 
 function Test-ImagePayload {
     param([string]$Image)
-    Assert-True (Test-Path -LiteralPath (Join-Path $Image 'VIVIMusic.exe')) "VIVIMusic.exe is missing from $Image"
+    Assert-True (Test-Path -LiteralPath (Join-Path $Image 'AxolotlMusic.exe')) "AxolotlMusic.exe is missing from $Image"
     $appDir = Join-Path $Image 'app'
     Assert-True (Test-Path -LiteralPath $appDir) "app\ is missing from $Image"
     Assert-True (Test-Path -LiteralPath (Join-Path $Image 'runtime\bin\server\jvm.dll')) 'the jlink runtime is missing (runtime\bin\server\jvm.dll)'
@@ -619,8 +619,8 @@ function Test-ImagePayload {
 
 function Invoke-WebViewSelfTest {
     param([string]$Image, [int]$TimeoutSeconds)
-    $exe = Join-Path $Image 'VIVIMusic.exe'
-    Assert-True (Test-Path -LiteralPath $exe) "VIVIMusic.exe is missing from $Image"
+    $exe = Join-Path $Image 'AxolotlMusic.exe'
+    Assert-True (Test-Path -LiteralPath $exe) "AxolotlMusic.exe is missing from $Image"
     $stdout = Join-Path $logDir 'webview.out.txt'
     $stderr = Join-Path $logDir 'webview.err.txt'
     $frame = Join-Path $logDir 'webview-self-test.png'
@@ -698,12 +698,12 @@ try {
             $productName = $info.ProductName.Trim()
             $companyName = $info.CompanyName.Trim()
             $productVersion = $info.ProductVersion.Trim()
-            Assert-True ($productName -eq 'VIVI Music DE') "installer ProductName is '$productName'"
+            Assert-True ($productName -eq 'Axolotl Music') "installer ProductName is '$productName'"
             Assert-True ($companyName -eq 'PiBOH') "installer CompanyName is '$companyName'"
             Assert-True ($productVersion -eq $fullVersion) "installer ProductVersion is '$productVersion', expected '$fullVersion'"
             $script:sha256 = (Get-FileHash -LiteralPath $Installer -Algorithm SHA256).Hash
             $size = [math]::Round($item.Length / 1MB)
-            return ("VIVI Music DE $fullVersion, {0} MB, sha256 {1}" -f $size, $script:sha256)
+            return ("Axolotl Music $fullVersion, {0} MB, sha256 {1}" -f $size, $script:sha256)
         } | Out-Null
     }
 
@@ -732,12 +732,12 @@ try {
                 -Environment @{ 'USERPROFILE' = $homeDir; 'HOME' = $homeDir } `
                 -TimeoutSeconds 900
             Assert-True ($code -eq 0 -or $code -eq 3010) "the installer exited $code; log: $installerLog"
-            Assert-True (Test-Path -LiteralPath (Join-Path $installDir 'VIVIMusic.exe')) 'the installer produced no VIVIMusic.exe'
+            Assert-True (Test-Path -LiteralPath (Join-Path $installDir 'AxolotlMusic.exe')) 'the installer produced no AxolotlMusic.exe'
             Assert-True (Test-Path -LiteralPath (Join-Path $installDir 'unins000.exe')) 'the installer produced no uninstaller'
 
-            $imageExe = Join-Path $AppImage 'VIVIMusic.exe'
-            $installedExe = Join-Path $installDir 'VIVIMusic.exe'
-            Assert-True ((Get-FileHash -LiteralPath $installedExe).Hash -eq (Get-FileHash -LiteralPath $imageExe).Hash) 'the installed VIVIMusic.exe differs from the app image'
+            $imageExe = Join-Path $AppImage 'AxolotlMusic.exe'
+            $installedExe = Join-Path $installDir 'AxolotlMusic.exe'
+            Assert-True ((Get-FileHash -LiteralPath $installedExe).Hash -eq (Get-FileHash -LiteralPath $imageExe).Hash) 'the installed AxolotlMusic.exe differs from the app image'
 
             $imageMap = Get-TreeMap -Root $AppImage
             $installedMap = Get-TreeMap -Root $installDir -SkipUninstaller
@@ -758,7 +758,7 @@ try {
         Save-RecoveryRecord 'installed'
 
         Invoke-Stage 'startup' {
-            $exe = Join-Path $installDir 'VIVIMusic.exe'
+            $exe = Join-Path $installDir 'AxolotlMusic.exe'
             $stdout = Join-Path $logDir 'startup.out.txt'
             $stderr = Join-Path $logDir 'startup.err.txt'
             $code = Invoke-Child -FilePath $exe -Arguments '--benchmark-first-frame' `
@@ -796,7 +796,7 @@ try {
             while ((Test-Path -LiteralPath (Join-Path $installDir 'unins000.exe')) -and (Get-Date) -lt $deadline) {
                 Start-Sleep -Milliseconds 500
             }
-            Assert-True (-not (Test-Path -LiteralPath (Join-Path $installDir 'VIVIMusic.exe'))) 'the uninstaller left the app in place'
+            Assert-True (-not (Test-Path -LiteralPath (Join-Path $installDir 'AxolotlMusic.exe'))) 'the uninstaller left the app in place'
             Assert-True (-not (Test-Path -LiteralPath (Join-Path $installDir 'unins000.exe'))) 'the uninstaller left itself in place'
             Assert-True (-not (Test-Path -LiteralPath $appPathsPs)) 'the uninstaller left the App Paths key behind'
 
@@ -819,7 +819,7 @@ try {
             $parsed = Get-Content -LiteralPath $restored.Store -Raw | ConvertFrom-Json
             Assert-True ($parsed.marker -eq 'vivi-release-verification') 'the kept store lost its marker'
 
-            $exe = Join-Path $AppImage 'VIVIMusic.exe'
+            $exe = Join-Path $AppImage 'AxolotlMusic.exe'
             $stdout = Join-Path $logDir 'restore.out.txt'
             $stderr = Join-Path $logDir 'restore.err.txt'
             $code = Invoke-Child -FilePath $exe -Arguments '--benchmark-first-frame' `
@@ -911,7 +911,7 @@ try {
     $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $jsonPath -Encoding UTF8
 
     $lines = @()
-    $lines += 'VIVI Music DE release verification'
+    $lines += 'Axolotl Music release verification'
     $lines += "version:   $fullVersion"
     $lines += "installer: $Installer"
     $lines += "sha256:    $($script:sha256)"

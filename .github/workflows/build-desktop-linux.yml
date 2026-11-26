@@ -71,7 +71,7 @@ jobs:
           DE="$(sed -n '4p' version.txt | tr -d '\r\n' | xargs)"
           VERSION="${MOBILE}_DE-${DE}"
           mkdir -p dist
-          cp desktop/build/compose/binaries/main/deb/*.deb "dist/VIVIMusic-${VERSION}.deb"
+          cp desktop/build/compose/binaries/main/deb/*.deb "dist/AxolotlMusic-${VERSION}.deb"
           ls -la dist
 
       - name: Upload DEB
@@ -141,17 +141,17 @@ jobs:
           tar -czf "$TOPDIR/SOURCES/vivi-music-app-${DE}.tar.gz" -C "$APPDIR" .
           python3 scripts/generate_rpm_spec.py --out "$TOPDIR/SPECS" --version "$DE"
           cp "$TOPDIR/SPECS/vivi-music-de.desktop" "$TOPDIR/SOURCES/vivi-music-de.desktop"
-          cp desktop/icons/logo_vmde.png "$TOPDIR/SOURCES/vivi-music-de.png"
+          cp desktop/src/main/resources/icons/icon.png "$TOPDIR/SOURCES/vivi-music-de.png"
 
           rpmbuild --define "_topdir $TOPDIR" -bb "$TOPDIR/SPECS/vivi-music-de.spec"
 
           mkdir -p dist
-          RPM="$(find "$TOPDIR/RPMS" -name 'vivi-music-de-*.rpm' -print -quit)"
+          RPM="$(find "$TOPDIR/RPMS" -name '*.rpm' -print -quit)"
           if [ -z "$RPM" ]; then
             echo "No RPM produced" >&2
             exit 1
           fi
-          cp "$RPM" "dist/VIVIMusic-${VERSION}.rpm"
+          cp "$RPM" "dist/AxolotlMusic-${VERSION}.rpm"
           ls -la dist
 
       - name: Upload RPM
@@ -208,36 +208,36 @@ jobs:
           cat > "$APPDIR/AppRun" <<'EOF'
           #!/bin/sh
           HERE="$(dirname "$(readlink -f "$0")")"
-          if [ -x "$HERE/bin/VIVIMusic" ]; then exec "$HERE/bin/VIVIMusic" "$@"; fi
-          if [ -x "$HERE/VIVIMusic" ]; then exec "$HERE/VIVIMusic" "$@"; fi
+          if [ -x "$HERE/bin/axolotlmusic" ]; then exec "$HERE/bin/axolotlmusic" "$@"; fi
+          if [ -x "$HERE/axolotlmusic" ]; then exec "$HERE/axolotlmusic" "$@"; fi
           for f in "$HERE"/bin/*; do
             if [ -x "$f" ] && [ ! -d "$f" ]; then exec "$f" "$@"; fi
           done
-          echo "VIVIMusic: no executable found" >&2
+          echo "Axolotl Music: no executable found" >&2
           exit 1
           EOF
           chmod +x "$APPDIR/AppRun"
 
-          cat > "$APPDIR/vivimusic.desktop" <<'EOF'
+          cat > "$APPDIR/axolotlmusic.desktop" <<'EOF'
           [Desktop Entry]
-          Name=VIVI Music
+          Name=Axolotl Music
           Comment=Expressive YouTube Music client for desktop
           Exec=AppRun
-          Icon=vivimusic
+          Icon=axolotlmusic
           Terminal=false
           Type=Application
           Categories=AudioVideo;Audio;Player;
           EOF
 
-          cp desktop/icons/logo_vmde.png "$APPDIR/vivimusic.png"
+          cp desktop/src/main/resources/icons/icon.png "$APPDIR/axolotlmusic.png"
 
           # The icon the AppImage itself carries is `.DirIcon` at the AppDir
-          # root: `Icon=vivimusic` in the .desktop above names the file, and the
+          # root: `Icon=axolotlmusic` in the .desktop above names the file, and the
           # bundler embeds whatever `.DirIcon` points at. Without it a build of
           # appimagetool can fall back to its own default, which is what left the
           # AppImage — and the panel entry it integrates — wearing the wrong
           # icon. Symlinked rather than copied so the two can never drift.
-          ln -sf vivimusic.png "$APPDIR/.DirIcon"
+          ln -sf axolotlmusic.png "$APPDIR/.DirIcon"
 
           # appimagetool is itself an AppImage; extract it to avoid the FUSE
           # requirement on the runner, then run the extracted AppRun.
@@ -245,7 +245,7 @@ jobs:
           chmod +x appimagetool.AppImage
           ./appimagetool.AppImage --appimage-extract >/dev/null
           mkdir -p desktop/build/compose/binaries/main/appImage
-          ARCH=x86_64 ./squashfs-root/AppRun "$APPDIR" "desktop/build/compose/binaries/main/appImage/VIVIMusic-${VERSION}.AppImage"
+          ARCH=x86_64 ./squashfs-root/AppRun "$APPDIR" "desktop/build/compose/binaries/main/appImage/AxolotlMusic-${VERSION}.AppImage"
 
       - name: Collect AppImage
         shell: bash
