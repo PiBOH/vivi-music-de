@@ -1,4 +1,4 @@
-/* main.js — shared bits for the VIVI Music DE site
+/* main.js — shared bits for the Axolotl Music site
    theme, nav, scroll reveals, copy buttons, os sniffing,
    github data + a small markdown renderer.
    vanilla js on purpose: this site has to stay pushable to
@@ -177,7 +177,7 @@
   };
 
   /* ---------- github helpers ---------- */
-  var REPO = "PiBOH/vivi-music-de";
+  var REPO = "PiBOH/axolotl-music";
   window.VM_REPO = REPO;
   window.vmGH = {
     REPO: REPO,
@@ -551,7 +551,7 @@
         // reserves the box before the image loads, so the grid never reflows
         // (CLS) while the screenshots stream in.
         html += '<figure class="gshot" data-src="' + src + '">' +
-          '<img src="' + src + '" alt="VIVI Music DE screenshot — ' + alt + '" width="1920" height="1080" loading="lazy" decoding="async">' +
+          '<img src="' + src + '" alt="Axolotl Music screenshot — ' + alt + '" width="1920" height="1080" loading="lazy" decoding="async">' +
           '<figcaption>' + alt + '</figcaption></figure>';
       });
       container.innerHTML = html;
