@@ -17,7 +17,7 @@
       <img src="https://img.shields.io/badge/license-modifed_gpl_v3-brightgreen?style=for-the-badge&link=https%3A%2F%2Fgithub.com%2FPiBOH%2Fvivi-music%2Fblob%2Fvivi-music-de%2FLICENSE" alt="License">
     </a>
     <a href="https://piboh.github.io/axolotl-music/">
-      <img src="https://img.shields.io/badge/Website-VIVI%20Music%20DE-ED5564?style=for-the-badge" alt="Website">
+      <img src="https://img.shields.io/badge/Website-Axolotl%20Music-ED5564?style=for-the-badge" alt="Website">
     </a>
     <a href="https://t.me/axolotlmusic">
       <img src="https://img.shields.io/badge/Telegram-Join%20Community-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="Join Telegram">
