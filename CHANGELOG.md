@@ -16,6 +16,14 @@
 - [DE] **The library health card counts the hidden playlist rows correctly.**
 - [DE] **The new settings cards and the update dialog were rendered and corrected.**
 
+## [6.0.8.11_DE-1.56.1-beta3] - 2026-11-26
+
+### 🔧 Changed
+- [DE] **The imported playback check now exercises the queue, crossfade, the equalizer and a live Listen Together room together.**
+
+### 🐛 Fixed
+- [DE] **History records a track when playback is paused, not only when the song changes.**
+
 ## [6.0.8.11_DE-1.56.0-beta2] - 2026-11-26
 
 ### ✨ Added

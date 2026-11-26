@@ -47,6 +47,7 @@ class DesktopListeningStatsTracker(
     fun onPlaybackStateChanged(isPlaying: Boolean) {
         val now = timeProvider()
         var newlyStartedPlayingSong: Song? = null
+        var playToRecord: Pair<Song, Long>? = null
 
         currentSession.updateAndGet { session ->
             if (session == null) return@updateAndGet null
@@ -55,12 +56,25 @@ class DesktopListeningStatsTracker(
             if (!wasPlaying && isPlaying) {
                 newlyStartedPlayingSong = session.song
             }
+            // A pause is the end of the listening session as far as the history
+            // screen is concerned. Recording only on a song change left the screen
+            // empty for anyone who paused and went looking for the track.
+            val recordOnPause = !isPlaying &&
+                accumulated.accumulatedListeningMs >= MIN_SESSION_LISTEN_MS &&
+                !accumulated.isCountRecorded
+            if (recordOnPause) {
+                playToRecord = accumulated.song to accumulated.accumulatedListeningMs
+            }
             accumulated.copy(
                 isPlaying = isPlaying,
-                lastRecordedEpochMs = now
+                lastRecordedEpochMs = now,
+                isCountRecorded = accumulated.isCountRecorded || recordOnPause
             )
         }
 
+        playToRecord?.let { (song, listenedMs) ->
+            recordPlay(song, listenedMs, forceSynchronous = false)
+        }
         newlyStartedPlayingSong?.let { scrobbleManager?.onPlayingNow(it) }
     }
 
@@ -84,21 +98,7 @@ class DesktopListeningStatsTracker(
         val song = finalSession.song
 
         if (listenedMs >= MIN_SESSION_LISTEN_MS && !finalSession.isCountRecorded) {
-            if (forceSynchronous || !coroutineScope.isActive) {
-                runCatching {
-                    runBlocking {
-                        withContext(NonCancellable) {
-                            musicRepository.recordSongPlayed(song, listenedMs)
-                        }
-                    }
-                }
-            } else {
-                coroutineScope.launch {
-                    withContext(NonCancellable) {
-                        musicRepository.recordSongPlayed(song, listenedMs)
-                    }
-                }
-            }
+            recordPlay(song, listenedMs, forceSynchronous)
         }
 
         scrobbleManager?.onSessionFinalized(
@@ -107,6 +107,24 @@ class DesktopListeningStatsTracker(
             listenedMs = listenedMs,
             trackDurationMs = song.duration
         )
+    }
+
+    private fun recordPlay(song: Song, listenedMs: Long, forceSynchronous: Boolean) {
+        if (forceSynchronous || !coroutineScope.isActive) {
+            runCatching {
+                runBlocking {
+                    withContext(NonCancellable) {
+                        musicRepository.recordSongPlayed(song, listenedMs)
+                    }
+                }
+            }
+        } else {
+            coroutineScope.launch {
+                withContext(NonCancellable) {
+                    musicRepository.recordSongPlayed(song, listenedMs)
+                }
+            }
+        }
     }
 
     private fun accumulateTime(session: ActiveSession, now: Long): ActiveSession {

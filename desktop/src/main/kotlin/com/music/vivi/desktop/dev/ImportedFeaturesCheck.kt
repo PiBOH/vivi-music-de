@@ -15,6 +15,7 @@ import com.music.vivi.desktop.data.network.lyrics.LyricsProvidersClient
 import com.music.vivi.desktop.data.player.PlaybackAudioCache
 import com.music.vivi.desktop.data.player.PlaybackUriResolver
 import com.music.vivi.desktop.data.player.QueueManager
+import com.music.vivi.desktop.data.player.mpv.MpvAudioEngine
 import com.music.vivi.desktop.data.listentogether.ListenTogetherManager
 import com.music.vivi.desktop.data.listentogether.LtRoomRole
 import com.music.vivi.desktop.di.appModules
@@ -24,12 +25,20 @@ import com.music.vivi.desktop.domain.repository.LyricsRepository
 import com.music.vivi.desktop.domain.repository.MusicRepository
 import com.music.vivi.desktop.domain.repository.SettingsRepository
 import com.music.vivi.desktop.presentation.screens.ExpandedPlayerScreen
+import com.music.vivi.desktop.presentation.screens.ListenTogetherScreen
 import com.music.vivi.desktop.domain.player.SleepTimerSession
 import com.music.vivi.desktop.presentation.viewmodel.PlaybackStateHolder
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 import com.music.vivi.desktop.ui.theme.PixelPlayerTheme
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.net.URI
+import javax.sound.sampled.AudioFileFormat
+import javax.sound.sampled.AudioFormat
+import javax.sound.sampled.AudioInputStream
+import javax.sound.sampled.AudioSystem
+import kotlin.math.PI
+import kotlin.math.sin
 import kotlin.system.exitProcess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -250,7 +259,31 @@ object ImportedFeaturesCheck {
         music.savePlaybackResumePoint(song, 42_000L)
         val stored = music.getPlaybackQueue()
         println("[queue] stored ids=${stored?.first?.joinToString { it.id }} index=${stored?.second}")
-        val queueOk = stored != null && stored.first.map { it.id } == queue.map { it.id } && stored.second == 0
+
+        // --- queue API: add, play-next, reorder and remove on a real QueueManager ---
+        val fourth = catalogueSong("fJ9rUzIMcZQ", "Bohemian Rhapsody", "Queen")
+        val fifth = catalogueSong("3JZ_D3ELwOQ", "Queue Check", "Tester")
+        val queueProbe = QueueManager()
+        queueProbe.setQueue(listOf(song, second, third), 0)
+        queueProbe.addToQueue(listOf(fourth))
+        queueProbe.playNextInQueue(fifth)
+        queueProbe.moveQueueItem(0, 2)
+        queueProbe.removeFromQueue(2)
+        val probeIds = queueProbe.queue.value.map { it.id }
+        val probeIndex = queueProbe.currentIndex.value
+        val probeCurrent = queueProbe.currentSong.value?.id
+        println("[queue] ops ids=$probeIds index=$probeIndex current=$probeCurrent")
+        music.savePlaybackQueue(queueProbe.queue.value, queueProbe.currentIndex.value)
+        val probePersisted = music.getPlaybackQueue()
+        println(
+            "[queue] ops persisted ids=${probePersisted?.first?.map { it.id }} " +
+                "index=${probePersisted?.second}"
+        )
+        val queueOpsOk = probeIds == listOf(fifth.id, second.id, third.id, fourth.id) &&
+            probeIndex == 2 && probeCurrent == third.id &&
+            probePersisted?.first?.map { it.id } == probeIds && probePersisted?.second == probeIndex
+        val queueOk = stored != null && stored.first.map { it.id } == queue.map { it.id } &&
+            stored.second == 0 && queueOpsOk
 
         // --- lyrics: the configured chain, Musixmatch first, through the store ---
         val lyricsSettings = settings.getSettings()
@@ -392,21 +425,125 @@ object ImportedFeaturesCheck {
                 "[lt] guest applied track=$guestTrack seek=$guestSeek pauses=$guestPauses " +
                     "queue=$guestQueueSize playing=$guestPlaying enginePath=${guestEngine.lastPath}"
             )
+            if (joined) {
+                render("listen-together.png", 1220, 820) {
+                    PixelPlayerTheme(darkTheme = true) {
+                        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                            ListenTogetherScreen(viewModel = player, manager = listenTogether, onBack = {})
+                        }
+                    }
+                }
+            }
             ltOk = joined && guestTrack == "yt:dQw4w9WgXcQ" && guestSeek >= 70_000L &&
                 guestPauses > 0 && guestQueueSize == 4 && guestManager.role.value == LtRoomRole.GUEST
             guestManager.leaveParty()
         }
         listenTogether.leaveParty()
 
-        // The live phase played and queued other tracks; leave the restart phase the
-        // queue the app should resume, with the cached track at index 0.
+        // --- history through the real transport, no direct DAO write ---
+        // The LT block above depends on network timing; this local track makes the
+        // path deterministic: play, listen past the 5 s threshold, pause.
+        val historyWav = File("$OUT_DIR/history-runtime.wav").apply {
+            parentFile?.mkdirs()
+            writeTone(this, 12_000, frequencyHz = 330.0)
+        }
+        val runtimeSong = Song(
+            id = "local:history-runtime",
+            title = "Runtime History",
+            artist = "Tester",
+            album = "Check Album",
+            path = historyWav.absolutePath,
+            duration = 12_000L
+        )
+        playback.playSong(runtimeSong)
+        val runtimeStarted = waitFor(20_000) {
+            queueManager.currentSong.value?.id == runtimeSong.id &&
+                playback.playerInfo.value.isPlaying
+        }
+        Thread.sleep(6_500)
+        playback.togglePlayPause()
+        val runtimePaused = waitFor(5_000) { !playback.playerInfo.value.isPlaying }
+        Thread.sleep(1_000)
+        val runtimeRecent = music.getRecentlyPlayedSongsFlow(20).first()
+        println("[history] after real playback=${runtimeRecent.joinToString { "${it.id}:${it.playCount}" }}")
+        val runtimeHistoryOk = runtimeStarted && runtimePaused &&
+            runtimeRecent.any { it.id == runtimeSong.id && it.playCount > 0 && it.lastPlayedTimestamp > 0 }
+        val historyAllOk = historyOk && runtimeHistoryOk
+
+        // --- crossfade + equalizer on real mpv, with the settings the UI writes ---
+        val wavA = File("$OUT_DIR/crossfade-a.wav").apply { parentFile?.mkdirs(); writeTone(this, 8_000) }
+        val wavB = File("$OUT_DIR/crossfade-b.wav").apply { writeTone(this, 8_000) }
+        val crossA = Song(
+            id = "local:crossfade-a",
+            title = "Crossfade A",
+            artist = "Tester",
+            album = "Check Album",
+            path = wavA.absolutePath,
+            duration = 8_000L
+        )
+        val crossB = crossA.copy(id = "local:crossfade-b", title = "Crossfade B", path = wavB.absolutePath)
+        val eqBands = listOf(6f, 4f, 2f, 0f, -2f, 0f, 2f, 4f, 6f, 0f)
+        settings.setCrossfadeEnabled(true)
+        settings.setCrossfadeDurationSeconds(2)
+        settings.setEqualizerEnabled(true)
+        settings.setEqualizerBands(eqBands)
+        settings.setEqualizerPreamp(0f)
+        Thread.sleep(1200)
+        val audioSettings = settings.getSettings()
+        println(
+            "[audio] settings crossfade=${audioSettings.crossfadeEnabled}/" +
+                "${audioSettings.crossfadeDurationSeconds}s equalizer=${audioSettings.equalizerEnabled} " +
+                "bands=${audioSettings.equalizerBands}"
+        )
+        val mpv = engine as? MpvAudioEngine
+        playback.playSongs(listOf(crossA, crossB), 0)
+        val crossStarted = waitFor(30_000) { engine.playbackState.value == PlaybackState.PLAYING }
+        var sawEqualizer = false
+        var sawCrossfade = false
+        var filtersBefore = ""
+        var filtersAfter = ""
+        var crossPath = engine.currentTrackPath
+        if (mpv != null) {
+            val deadline = System.currentTimeMillis() + 25_000
+            while (System.currentTimeMillis() < deadline) {
+                val filters = mpv.runtimeAudioSnapshot().filters
+                if (filters.contains("equalizer=f=31")) {
+                    sawEqualizer = true
+                    if (filtersBefore.isEmpty()) filtersBefore = filters
+                }
+                if (engine.isCrossfading.value) sawCrossfade = true
+                if (queueManager.currentSong.value?.id == crossB.id && engine.currentTrackPath == crossB.path) break
+                Thread.sleep(100)
+            }
+            Thread.sleep(400)
+            filtersAfter = mpv.runtimeAudioSnapshot().filters
+            crossPath = engine.currentTrackPath
+        }
+        println(
+            "[audio] crossfade started=$crossStarted observed=$sawCrossfade " +
+                "current=${queueManager.currentSong.value?.id} path=$crossPath"
+        )
+        println("[audio] equalizer before=\"$filtersBefore\" after=\"$filtersAfter\"")
+        val crossfadeOk = crossStarted && sawCrossfade &&
+            queueManager.currentSong.value?.id == crossB.id && crossPath == crossB.path &&
+            sawEqualizer && filtersAfter.contains("equalizer=f=31") &&
+            audioSettings.crossfadeEnabled && audioSettings.equalizerEnabled &&
+            audioSettings.crossfadeDurationSeconds == 2 && audioSettings.equalizerBands == eqBands
+        playback.stopPlayback()
+
+        // The crossfade check left the graph on the local test pair. Clear it and
+        // let the debounced writer settle before seeding the restart queue.
+        Thread.sleep(2000)
         music.savePlaybackQueue(queue, 0)
         music.savePlaybackResumePoint(song, 42_000L)
-        Thread.sleep(2500)
+        Thread.sleep(500)
         println("[queue] reseeded for restart: ${music.getPlaybackQueue()?.first?.map { it.id }} index=0 resume=42000")
 
-        println("[imported] quality=$qualityOk cache=$cacheOk history=$historyOk queue=$queueOk lyrics=$lyricsOk lt=$ltOk")
-        return qualityOk && cacheOk && historyOk && queueOk && lyricsOk && ltOk
+        println(
+            "[imported] quality=$qualityOk cache=$cacheOk history=$historyAllOk(queue=$historyOk runtime=$runtimeHistoryOk) " +
+                "queue=$queueOk lyrics=$lyricsOk lt=$ltOk crossfadeEqualizer=$crossfadeOk"
+        )
+        return qualityOk && cacheOk && historyAllOk && queueOk && lyricsOk && ltOk && crossfadeOk
     }
 
     private suspend fun verifyRestore(): Boolean {
@@ -435,6 +572,17 @@ object ImportedFeaturesCheck {
         val recent = music.getRecentlyPlayedSongsFlow(20).first()
         println("[restore] history=${recent.joinToString { "${it.id}:${it.title}" }}")
         val historyOk = recent.any { it.id == "local:imported-check" } && recent.any { it.id == "yt:$VIDEO_ID" }
+        val persistedSettings = koin.get<SettingsRepository>().getSettings()
+        println(
+            "[restore] settings cache=${persistedSettings.audioCacheEnabled} " +
+                "quality=${persistedSettings.audioQuality} " +
+                "crossfade=${persistedSettings.crossfadeEnabled}/${persistedSettings.crossfadeDurationSeconds}s " +
+                "equalizer=${persistedSettings.equalizerEnabled}"
+        )
+        val settingsOk = persistedSettings.audioCacheEnabled &&
+            persistedSettings.audioQuality.equals("HIGH", ignoreCase = true) &&
+            persistedSettings.crossfadeEnabled && persistedSettings.crossfadeDurationSeconds == 2 &&
+            persistedSettings.equalizerEnabled
         val restoredLyrics = koin.get<LyricsRepository>().getLyrics(
             songId = "yt:$VIDEO_ID",
             songPath = "ytmusic://$VIDEO_ID",
@@ -451,8 +599,11 @@ object ImportedFeaturesCheck {
         val positionOk = position >= 40_000L
         val pathOk = cached != null && path == cached.absolutePath
         val pausedOk = playback.playerInfo.value.isPlaying == false
-        println("[restore] queue=$queueOk position=$positionOk path=$pathOk paused=$pausedOk history=$historyOk lyrics=$lyricsOk")
-        return queueOk && positionOk && pathOk && pausedOk && historyOk && lyricsOk && playingOrPaused
+        println(
+            "[restore] queue=$queueOk position=$positionOk path=$pathOk paused=$pausedOk " +
+                "history=$historyOk lyrics=$lyricsOk settings=$settingsOk"
+        )
+        return queueOk && positionOk && pathOk && pausedOk && historyOk && lyricsOk && settingsOk && playingOrPaused
     }
 
     /**
@@ -552,6 +703,23 @@ object ImportedFeaturesCheck {
         override fun setReplayGain(enabled: Boolean, mode: String) = Unit
 
         override fun release() = Unit
+    }
+
+    private fun writeTone(file: File, durationMs: Int, frequencyHz: Double = 440.0) {
+        val sampleRate = 44_100f
+        val frames = (sampleRate * durationMs / 1000).toInt()
+        val format = AudioFormat(sampleRate, 16, 1, true, false)
+        val data = ByteArray(frames * 2)
+        for (frame in 0 until frames) {
+            val sample = (sin(2.0 * PI * frequencyHz * frame / sampleRate) * 8_000).toInt()
+            data[frame * 2] = (sample and 0xFF).toByte()
+            data[frame * 2 + 1] = ((sample shr 8) and 0xFF).toByte()
+        }
+        AudioSystem.write(
+            AudioInputStream(ByteArrayInputStream(data), format, frames.toLong()),
+            AudioFileFormat.Type.WAVE,
+            file
+        )
     }
 
     private fun waitFor(timeoutMs: Long, condition: () -> Boolean): Boolean {

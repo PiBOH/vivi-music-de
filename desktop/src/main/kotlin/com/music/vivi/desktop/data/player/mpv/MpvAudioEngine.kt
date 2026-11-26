@@ -767,7 +767,8 @@ class MpvAudioEngine(
             codec = read("audio-codec-name"),
             sampleRate = read("audio-params/samplerate"),
             channels = read("audio-params/channel-count"),
-            device = read("audio-device")
+            device = read("audio-device"),
+            filters = read("af")
         )
     }
 
@@ -945,5 +946,6 @@ data class RuntimeAudioSnapshot(
     val codec: String = "",
     val sampleRate: String = "",
     val channels: String = "",
-    val device: String = ""
+    val device: String = "",
+    val filters: String = ""
 )
