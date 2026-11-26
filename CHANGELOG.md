@@ -16,6 +16,11 @@
 - [DE] **The library health card counts the hidden playlist rows correctly.**
 - [DE] **The new settings cards and the update dialog were rendered and corrected.**
 
+## [6.0.8.11_DE-1.56.1-beta4] - 2026-11-26
+
+### 🔧 Changed
+- [DE] **The History and Listen Together widget paths are now executable tests, not manager calls read from code.**
+
 ## [6.0.8.11_DE-1.56.1-beta3] - 2026-11-26
 
 ### 🔧 Changed
