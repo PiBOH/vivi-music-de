@@ -1,6 +1,7 @@
 package com.music.vivi.desktop.compose
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -16,6 +17,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 import com.music.vivi.desktop.data.listentogether.LtConnectionState
+import com.music.vivi.desktop.data.model.StatsTimeRange
 import com.music.vivi.desktop.data.listentogether.LtRoomRole
 import com.music.vivi.desktop.data.listentogether.LtRoomState
 import com.music.vivi.desktop.data.listentogether.LtUserInfo
@@ -43,16 +45,24 @@ class DesktopWidgetPathsTest {
                     }
                 }
 
-                // Every song except the two older fixtures is from today: 22 today, 24 all time.
-                onNodeWithTag("history-range-day").performScrollTo().performClick()
-                waitForIdle()
-                onNodeWithText("22 tracks played").assertExists()
-                println("[UI] History range=DAY count=22")
-
-                onNodeWithTag("history-range-all").performScrollTo().performClick()
-                waitForIdle()
-                onNodeWithText("24 tracks played").assertExists()
-                println("[UI] History range=ALL count=24")
+                val now = System.currentTimeMillis()
+                val expectedCounts = StatsTimeRange.entries.associateWith { range ->
+                    val (start, end) = range.resolveBounds(now)
+                    songs.count { song ->
+                        val timestamp = song.lastPlayedTimestamp
+                        timestamp > 0 && timestamp <= end && (start == null || timestamp >= start)
+                    }
+                }
+                println("[UI] History expected counts=$expectedCounts")
+                StatsTimeRange.entries.forEach { range ->
+                    val tag = "history-range-${range.name.lowercase()}"
+                    val expected = expectedCounts.getValue(range)
+                    onNodeWithTag(tag).performScrollTo().performClick()
+                    waitForIdle()
+                    onNodeWithTag(tag).assertIsSelected()
+                    onNodeWithText("$expected tracks played").assertExists()
+                    println("[UI] History range=${range.name} count=$expected")
+                }
 
                 onNodeWithTag("history-play-latest").performClick()
                 waitUntil(timeoutMillis = 5_000) { harness.queueManager.queue.value.size == 24 }
