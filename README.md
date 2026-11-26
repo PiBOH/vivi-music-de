@@ -1,1 +1,1 @@
-https://piboh.github.io/vivi-music-de
+https://piboh.github.io/axolotl-music
