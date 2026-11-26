@@ -102,15 +102,15 @@ dependencies there, or you break the desktop build.
     change whose `[APK]` bullet is missing from the shared file, or that lands
     on `vivi-music-de-apk` without the file being copied over, is an unfinished
     change, not a smaller one.
-  - **Official repository**: everything lives in **`PiBOH/vivi-music-de`** (the
+  - **Official repository**: everything lives in **`PiBOH/axolotl-music`** (the
     branch names above are unchanged). Every link in code, docs, the installer,
     the website and the CI points there — never at the old `PiBOH/vivi-music`
-    fork. Example URLs: `https://github.com/PiBOH/vivi-music-de`,
+    fork. Example URLs: `https://github.com/PiBOH/axolotl-music`,
     `.../blob/vivi-music-de/<file>`, `.../releases`, `.../issues`, and the site
-    at `https://piboh.github.io/vivi-music-de/`.
+    at `https://piboh.github.io/axolotl-music/`.
   - **Everything is done on the official repository, on the branch that owns
     the change** — no more work on the `PiBOH/vivi-music` fork, which stays a
-    read-only mirror. Locally `origin` is `PiBOH/vivi-music-de` and the fork is
+    read-only mirror. Locally `origin` is `PiBOH/axolotl-music` and the fork is
     the `fork` remote: never push to `fork`.
   - **Branch map (mandatory)**:
     - `vivi-music-de` (default): the desktop edition — program code, docs,
@@ -155,7 +155,7 @@ dependencies there, or you break the desktop build.
     development branch. "Silent" is the point: the site changes, and nothing
     else about the project reacts to it.
   - **Issue references use the official numbering**: the tracker lives in
-    `PiBOH/vivi-music-de`. The fork's numbering is historical and must never be
+    `PiBOH/axolotl-music`. The fork's numbering is historical and must never be
     reused — its issues were transferred in order, so `#4` became `#3`, `#5`
     became `#4`, …, `#85` became `#81` (the fork itself is empty and kept as a
     read-only mirror, its URLs serving as redirects). Every `#N` in
@@ -202,7 +202,7 @@ dependencies there, or you break the desktop build.
     (`ApkDownloads`) and the mobile updater (`APK_LATEST_VERSION_URL`) all read
     it, and "latest" is decided by the **version code** (chronology/version
     code, never a version-string comparison). Use the fixed raw URLs:
-    `https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest/<file>`.
+    `https://raw.githubusercontent.com/PiBOH/axolotl-music/apk-latest/.releases/apk/latest/<file>`.
 - **`settings.json` — the user-editable options file (mandatory)**:
   - `~/.vivimusic/settings.json` (`SettingsFile`) mirrors **options only**, keyed
     with the app's own camelCase field names (`hide_custom_apk_download_button`
@@ -1072,10 +1072,10 @@ locale tag):
 ## 7. GitHub Issues workflow — MANDATORY
 
 Every user-reported problem or feature request MUST first become a GitHub
-issue on `PiBOH/vivi-music-de` **before any code is changed**:
+issue on `PiBOH/axolotl-music` **before any code is changed**:
 
 1. **Check for duplicates first**:
-   `gh issue list --repo PiBOH/vivi-music-de --state all --search "<keywords>"`
+   `gh issue list --repo PiBOH/axolotl-music --state all --search "<keywords>"`
    — only open a new issue when no equivalent open/closed issue exists.
 
 2. **Open the issue first** (via the `gh` CLI; on this machine it is not on
@@ -1096,7 +1096,7 @@ issue on `PiBOH/vivi-music-de` **before any code is changed**:
    the commit message (e.g. `Closes #NN` / `Fixes #NN`).
 
 4. **Close the issue** after the fix is committed and pushed:
-   `gh issue close <NN> --repo PiBOH/vivi-music-de`.
+   `gh issue close <NN> --repo PiBOH/axolotl-music`.
 
 5. **NEVER close an issue opened by someone else.** Only issues authored by the
    user (they are created through the user's `gh` auth, so the author is
@@ -1412,7 +1412,7 @@ the middle of its own welcome.
 be kept exactly as the mobile welcome screen has them: `UPI`
 (`upi://pay?pa=vividhpashokan@axl&pn=Vividh P Ashokan`) and Buy Me a Coffee
 (`https://ko-fi.com/vividhpashokan`). The repository and channel links are the DE
-ones (`github.com/PiBOH/vivi-music-de`, `t.me/vivimusicde`). The labels
+ones (`github.com/PiBOH/axolotl-music`, `t.me/vivimusicde`). The labels
 `support_upi` and `support_buy_me_a_coffee` are BRAND names, identical in every
 language on purpose, authored in `scripts/desktop_extra_translations_94.py` and
 listed in the audit's `BRAND_KEYS` beside `telegram_channel`.
