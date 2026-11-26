@@ -84,19 +84,18 @@ class DesktopListeningStatsTracker(
         val song = finalSession.song
 
         if (listenedMs >= MIN_SESSION_LISTEN_MS && !finalSession.isCountRecorded) {
-            val songId = song.id
             if (forceSynchronous || !coroutineScope.isActive) {
                 runCatching {
                     runBlocking {
                         withContext(NonCancellable) {
-                            musicRepository.recordSongPlayed(songId, listenedMs)
+                            musicRepository.recordSongPlayed(song, listenedMs)
                         }
                     }
                 }
             } else {
                 coroutineScope.launch {
                     withContext(NonCancellable) {
-                        musicRepository.recordSongPlayed(songId, listenedMs)
+                        musicRepository.recordSongPlayed(song, listenedMs)
                     }
                 }
             }

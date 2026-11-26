@@ -248,7 +248,7 @@ object YouTubeWebLogin {
             val steps = Label(
                 "1. Sign in with your Google account.    " +
                     "2. Wait for the window to close.    " +
-                    "3. VIVI Music DE keeps the session on this computer."
+                    "3. Axolotl Music keeps the session on this computer."
             ).apply {
                 textFill = Color.web("#1c1b1f")
                 isWrapText = true
@@ -269,7 +269,7 @@ object YouTubeWebLogin {
                 VBox.setVgrow(browser, Priority.ALWAYS)
             }
             val stage = Stage()
-            stage.title = "VIVI Music DE - YouTube Music sign-in"
+            stage.title = "Axolotl Music - YouTube Music sign-in"
             stage.scene = Scene(root, 1000.0, 720.0)
             stage.setOnCloseRequest {
                 windowOpen = false

@@ -410,7 +410,7 @@ class MusicRepositoryImpl(
     override fun getRecentlyPlayedSongsFlow(limit: Int): Flow<List<Song>> = flow {
         emit(musicDao.getRecentlyPlayedSongs(limit))
         store.tableInvalidationFlow.collect { table ->
-            if (table == "recently_played" || table == "songs") {
+            if (table == "recently_played" || table == "songs" || table == "played_songs") {
                 emit(musicDao.getRecentlyPlayedSongs(limit))
             }
         }
@@ -419,6 +419,18 @@ class MusicRepositoryImpl(
     override suspend fun recordSongPlayed(songId: String, durationMs: Long) {
         musicDao.recordSongPlayed(songId, durationMs)
     }
+
+    override suspend fun recordSongPlayed(song: Song, durationMs: Long) {
+        musicDao.recordSongPlayed(song, durationMs)
+    }
+
+    override suspend fun getPlayedSongs(): List<Song> = musicDao.getPlayedSongs()
+
+    override suspend fun savePlaybackQueue(queue: List<Song>, index: Int) {
+        musicDao.savePlaybackQueue(queue, index)
+    }
+
+    override suspend fun getPlaybackQueue(): Pair<List<Song>, Int>? = musicDao.getPlaybackQueue()
 
     override fun getPlaybackEventsFlow(limit: Int): Flow<List<PlaybackEvent>> = flow {
         emit(musicDao.getPlaybackEvents(limit))

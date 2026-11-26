@@ -4,6 +4,7 @@ import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_back
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_forward
 import com.music.vivi.desktop.generated.resources.ic_rounded_close
+import com.music.vivi.desktop.generated.resources.ic_rounded_group
 import com.music.vivi.desktop.generated.resources.ic_rounded_search
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedVisibility
@@ -64,6 +65,7 @@ fun AppTopBar(
     isQueueOpen: Boolean = false,
     queueCount: Int = 0,
     onToggleQueue: () -> Unit = {},
+    onOpenListenTogether: () -> Unit = {},
     searchFocusRequester: FocusRequester = remember { FocusRequester() },
     onSearchFocusChange: (Boolean) -> Unit = {},
     canGoBack: Boolean = false,
@@ -273,7 +275,25 @@ fun AppTopBar(
                 modifier = Modifier.align(Alignment.CenterEnd),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(if (isNarrow) 4.dp else 8.dp)
-            ) {
+            )             {
+                AppTooltip(
+                    text = "Listen together",
+                    alignment = Alignment.BottomCenter,
+                    offset = DpOffset(0.dp, 6.dp)
+                ) {
+                    IconButton(
+                        onClick = onOpenListenTogether,
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_rounded_group),
+                            contentDescription = "Listen together",
+                            tint = colors.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
                 QueueToggleButton(
                     visible = showQueueToggle && queueCount > 0,
                     isQueueOpen = isQueueOpen,

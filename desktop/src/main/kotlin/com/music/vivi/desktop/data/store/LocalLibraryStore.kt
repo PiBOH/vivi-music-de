@@ -63,6 +63,7 @@ data class StoredLyrics(
     val plainJson: String? = null,
     val syncedJson: String? = null,
     val isFromRemote: Boolean = false,
+    val source: String? = null,
     val lastUpdated: Long = 0L
 )
 
@@ -126,6 +127,16 @@ data class LocalLibraryState(
     val playlists: List<Playlist> = emptyList(),
     val lyrics: List<StoredLyrics> = emptyList(),
     val playbackEvents: List<PlaybackEvent> = emptyList(),
+    /**
+     * Catalogue tracks that were played but are not part of the local library.
+     * The history screen reads them next to the library songs, so a YouTube
+     * Music track keeps its title, artist and cover after the play. Only the
+     * most recent [PLAYED_SONGS_LIMIT] are kept.
+     */
+    val playedSongs: List<Song> = emptyList(),
+    /** The queue as it was when the app last closed, so a restart resumes it. */
+    val playbackQueue: List<Song> = emptyList(),
+    val playbackQueueIndex: Int = -1,
     val pendingListens: List<ListenBrainzPendingListen> = emptyList(),
     val artists: List<StoredArtist> = emptyList(),
     /**
@@ -158,8 +169,12 @@ data class LocalLibraryState(
 ) {
     val isEmpty: Boolean
         get() = songs.isEmpty() && favorites.isEmpty() && playlists.isEmpty() &&
-            lyrics.isEmpty() && playbackEvents.isEmpty() && pendingListens.isEmpty() &&
-            ignoredDuplicateGroups.isEmpty()
+            lyrics.isEmpty() && playbackEvents.isEmpty() && playedSongs.isEmpty() &&
+            pendingListens.isEmpty() && ignoredDuplicateGroups.isEmpty()
+
+    companion object {
+        const val PLAYED_SONGS_LIMIT = 500
+    }
 }
 
 /**

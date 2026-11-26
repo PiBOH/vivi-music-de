@@ -51,7 +51,7 @@ object DiagnosticExport {
     }
 
     private fun systemReport(): String = buildString {
-        appendLine("VIVI Music DE ${BuildConfig.APP_VERSION_NAME}")
+        appendLine("Axolotl Music ${BuildConfig.APP_VERSION_NAME}")
         appendLine("Application id: ${BuildConfig.APPLICATION_ID}")
         appendLine("OS: ${System.getProperty("os.name")} ${System.getProperty("os.version")} (${System.getProperty("os.arch")})")
         appendLine("Java: ${System.getProperty("java.version")} (${System.getProperty("java.vendor")})")
@@ -126,7 +126,7 @@ object DiagnosticExport {
     }.getOrElse { "The log cannot be read: ${it.message}" }
 
     private fun readme(): String = """
-        VIVI Music DE diagnostic package.
+        Axolotl Music diagnostic package.
 
         Included: app and system version, settings with credentials removed, the
         size and counts of device-sync.json, the names of the backup files, and

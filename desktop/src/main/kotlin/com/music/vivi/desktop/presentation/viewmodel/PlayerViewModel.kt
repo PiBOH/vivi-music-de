@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 import com.music.vivi.desktop.data.metadata.AudioMetadataDetails
 import com.music.vivi.desktop.data.metadata.BatchMetadataResult
+import com.music.vivi.desktop.data.listentogether.ListenTogetherManager
 import com.music.vivi.desktop.data.metadata.BatchSongMetadataUpdate
 import com.music.vivi.desktop.data.metadata.EditableSongMetadata
 import com.music.vivi.desktop.data.metadata.MetadataEditResult
@@ -57,7 +58,9 @@ class PlayerViewModel(
         coroutineScope = kotlinx.coroutines.CoroutineScope(
             kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Default
         )
-    )
+    ),
+    /** Listen Together: the party screen and the player sync share this manager. */
+    val listenTogetherManager: ListenTogetherManager? = null
 ) {
     val isEndOfTrackTimerActive = sleepTimerStateHolder?.isEndOfTrackTimerActive ?: MutableStateFlow(false)
     val activeTimerDurationMinutes = sleepTimerStateHolder?.activeTimerDurationMinutes ?: MutableStateFlow(null)
@@ -170,6 +173,15 @@ class PlayerViewModel(
     val crossfadeDurationSeconds = playbackStateHolder.crossfadeDurationSeconds
     val audioFadeOnPlayPause = playbackStateHolder.audioFadeOnPlayPause
     val showQueueHistory = playbackStateHolder.showQueueHistory
+    val audioQuality = playbackStateHolder.audioQuality
+    val audioCacheEnabled = playbackStateHolder.audioCacheEnabled
+    val audioCacheLimitMb = playbackStateHolder.audioCacheLimitMb
+    val audioCacheSizeBytes = playbackStateHolder.audioCacheSizeBytes
+    val listenTogetherServerUrl = playbackStateHolder.listenTogetherServerUrl
+    val listenTogetherUsername = playbackStateHolder.listenTogetherUsername
+    val listenTogetherPartySize = playbackStateHolder.listenTogetherPartySize
+    val listenTogetherSyncVolume = playbackStateHolder.listenTogetherSyncVolume
+    val listenTogetherSmartResync = playbackStateHolder.listenTogetherSmartResync
     val closeToTray = playbackStateHolder.closeToTray
     val selectedAudioDevice = playbackStateHolder.selectedAudioDevice
     val availableAudioDevices = playbackStateHolder.availableAudioDevices
@@ -187,6 +199,16 @@ class PlayerViewModel(
     fun setCrossfadeDurationSeconds(duration: Int) = playbackStateHolder.setCrossfadeDurationSeconds(duration)
     fun setAudioFadeOnPlayPause(enabled: Boolean) = playbackStateHolder.setAudioFadeOnPlayPause(enabled)
     fun setShowQueueHistory(show: Boolean) = playbackStateHolder.setShowQueueHistory(show)
+    fun setAudioQuality(quality: String) = playbackStateHolder.setAudioQuality(quality)
+    fun setAudioCacheEnabled(enabled: Boolean) = playbackStateHolder.setAudioCacheEnabled(enabled)
+    fun setAudioCacheLimitMb(limitMb: Int) = playbackStateHolder.setAudioCacheLimitMb(limitMb)
+    fun refreshAudioCacheSize() = playbackStateHolder.refreshAudioCacheSize()
+    fun clearAudioCache() = playbackStateHolder.clearAudioCache()
+    fun setListenTogetherServerUrl(url: String) = playbackStateHolder.setListenTogetherServerUrl(url)
+    fun setListenTogetherUsername(name: String) = playbackStateHolder.setListenTogetherUsername(name)
+    fun setListenTogetherPartySize(size: Int) = playbackStateHolder.setListenTogetherPartySize(size)
+    fun setListenTogetherSyncVolume(enabled: Boolean) = playbackStateHolder.setListenTogetherSyncVolume(enabled)
+    fun setListenTogetherSmartResync(enabled: Boolean) = playbackStateHolder.setListenTogetherSmartResync(enabled)
     fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
     fun setSelectedAudioDevice(device: String) = playbackStateHolder.setSelectedAudioDevice(device)
     fun refreshAudioDevices() = playbackStateHolder.refreshAudioDevices()
@@ -259,12 +281,14 @@ class PlayerViewModel(
     val albumArtCacheLimitMb = libraryStateHolder.albumArtCacheLimitMb
     val autoScanLrcFiles = libraryStateHolder.autoScanLrcFiles
     val lyricsSourcePreference = libraryStateHolder.lyricsSourcePreference
+    val lyricsProviders = libraryStateHolder.lyricsProviders
 
     fun setMinSongDuration(durationMs: Int) = libraryStateHolder.setMinSongDuration(durationMs)
     fun setMinTracksPerAlbum(minTracks: Int) = libraryStateHolder.setMinTracksPerAlbum(minTracks)
     fun setAlbumArtCacheLimitMb(limitMb: Int) = libraryStateHolder.setAlbumArtCacheLimitMb(limitMb)
     fun setAutoScanLrcFiles(enabled: Boolean) = libraryStateHolder.setAutoScanLrcFiles(enabled)
     fun setLyricsSourcePreference(preference: LyricsSourcePreference) = libraryStateHolder.setLyricsSourcePreference(preference)
+    fun setLyricsProviders(providers: List<String>) = libraryStateHolder.setLyricsProviders(providers)
     fun resetAllLyrics() = libraryStateHolder.resetAllLyrics()
 
     fun setStorageFilter(filter: StorageFilter) = libraryStateHolder.setStorageFilter(filter)

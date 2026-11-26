@@ -28,6 +28,12 @@ object DesktopPathProvider {
     }
 
     val cacheDir: File by lazy {
+        val override = System.getenv("VIVI_CACHE_DIR")?.takeIf { it.isNotBlank() }
+        if (override != null) {
+            val dir = File(override)
+            if (!dir.exists()) dir.mkdirs()
+            return@lazy dir
+        }
         val dir = when {
             osName.contains("win") -> {
                 val localAppData = System.getenv("LOCALAPPDATA") ?: "$userHome/AppData/Local"

@@ -10,6 +10,7 @@ import org.jaudiotagger.tag.FieldKey
 import com.music.vivi.desktop.data.database.LyricsDao
 import com.music.vivi.desktop.data.model.Lyrics
 import com.music.vivi.desktop.data.network.lyrics.LrcLibClient
+import com.music.vivi.desktop.data.network.lyrics.LyricsProvidersClient
 import com.music.vivi.desktop.data.preferences.LyricsSourcePreference
 import com.music.vivi.desktop.data.youtube.YouTubeLyrics
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
@@ -22,6 +23,7 @@ import com.music.vivi.desktop.utils.MultiLangRomanizer
 class LyricsRepositoryImpl(
     private val lyricsDao: LyricsDao,
     private val lrcLibClient: LrcLibClient = LrcLibClient(),
+    private val lyricsProvidersClient: LyricsProvidersClient = LyricsProvidersClient(),
     private val settingsRepository: SettingsRepository? = null,
     private val youtubeLyrics: YouTubeLyrics? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
@@ -31,7 +33,9 @@ class LyricsRepositoryImpl(
         songId: String,
         songPath: String,
         title: String,
-        artist: String
+        artist: String,
+        durationMs: Long,
+        album: String
     ): Lyrics? = withContext(ioDispatcher) {
         val cached = lyricsDao.getLyrics(songId)
         if (cached != null) {
@@ -46,9 +50,29 @@ class LyricsRepositoryImpl(
         // id, which is exact, so it is tried before the title/artist chain below.
         if (songPath.startsWith(YouTubeMusicRepository.VIDEO_SCHEME)) {
             val videoId = songPath.removePrefix(YouTubeMusicRepository.VIDEO_SCHEME)
-            val remote = youtubeLyrics?.fetch(videoId, 0L)
-            if (remote != null) lyricsDao.insertOrUpdateLyrics(songId, remote)
-            return@withContext remote
+            val settings = settingsRepository?.getSettings()
+            // The mobile order asks the configured providers first (Musixmatch at
+            // the top), then falls back to the video-id lookup.
+            if (settings?.fetchOnlineLyrics == true) {
+                val provided = fetchFromProviders(
+                    title = title,
+                    artist = artist,
+                    durationMs = durationMs,
+                    album = album,
+                    videoId = videoId,
+                    enabled = settings.lyricsProviders
+                )
+                if (provided != null) {
+                    lyricsDao.insertOrUpdateLyrics(songId, provided)
+                    return@withContext provided
+                }
+            }
+            val remote = youtubeLyrics?.fetch(videoId, durationMs)?.copy(source = "SimpMusic")
+            if (remote != null) {
+                lyricsDao.insertOrUpdateLyrics(songId, remote)
+                return@withContext remote
+            }
+            return@withContext null
         }
 
         val settings = settingsRepository?.getSettings()
@@ -61,18 +85,18 @@ class LyricsRepositoryImpl(
         val fetchers: List<suspend () -> Lyrics?> = when (preference) {
             LyricsSourcePreference.EMBEDDED_FIRST -> listOfNotNull(
                 { fetchEmbedded(file) },
-                if (allowOnline) ({ fetchOnline(title, artist) }) else null,
+                if (allowOnline) ({ fetchOnline(title, artist, durationMs, album, settings?.lyricsProviders.orEmpty()) }) else null,
                 { fetchLocal(file) }
             )
             LyricsSourcePreference.API_FIRST -> listOfNotNull(
-                if (allowOnline) ({ fetchOnline(title, artist) }) else null,
+                if (allowOnline) ({ fetchOnline(title, artist, durationMs, album, settings?.lyricsProviders.orEmpty()) }) else null,
                 { fetchEmbedded(file) },
                 { fetchLocal(file) }
             )
             LyricsSourcePreference.LOCAL_FIRST -> listOfNotNull(
                 { fetchLocal(file) },
                 { fetchEmbedded(file) },
-                if (allowOnline) ({ fetchOnline(title, artist) }) else null
+                if (allowOnline) ({ fetchOnline(title, artist, durationMs, album, settings?.lyricsProviders.orEmpty()) }) else null
             )
         }
 
@@ -100,7 +124,7 @@ class LyricsRepositoryImpl(
         if (lyricsFile != null) {
             return runCatching {
                 val text = lyricsFile.readText(Charsets.UTF_8)
-                LrcParser.parse(text).copy(areFromRemote = false)
+                LrcParser.parse(text).copy(areFromRemote = false, source = "Local file")
             }.getOrNull()
         }
         return null
@@ -124,7 +148,7 @@ class LyricsRepositoryImpl(
             }.distinct()
 
             for (field in candidates) {
-                val parsed = LrcParser.parse(field).copy(areFromRemote = false)
+                val parsed = LrcParser.parse(field).copy(areFromRemote = false, source = "Embedded")
                 if (!parsed.synced.isNullOrEmpty()) return@runCatching parsed
                 if (firstPlainLyrics == null && !parsed.plain.isNullOrEmpty()) {
                     firstPlainLyrics = parsed
@@ -134,10 +158,48 @@ class LyricsRepositoryImpl(
         }.getOrNull()
     }
 
-    private suspend fun fetchOnline(title: String, artist: String): Lyrics? {
-        if (title.isBlank() || artist.isBlank()) return null
+    private suspend fun fetchOnline(
+        title: String,
+        artist: String,
+        durationMs: Long,
+        album: String,
+        enabledProviders: List<String>
+    ): Lyrics? {
+        if (title.isBlank()) return null
+        val provided = fetchFromProviders(
+            title = title,
+            artist = artist,
+            durationMs = durationMs,
+            album = album,
+            videoId = null,
+            enabled = enabledProviders
+        )
+        if (provided != null) return provided
+        // LrcLib keeps its own title/artist client for the search dialog; ask it
+        // only when the provider list itself has nothing to offer.
+        if (artist.isBlank()) return null
         val onlineLyrics = lrcLibClient.fetchLyrics(title = title, artist = artist)
-        return onlineLyrics?.copy(areFromRemote = true)
+        return onlineLyrics?.copy(areFromRemote = true, source = "LrcLib")
+    }
+
+    private suspend fun fetchFromProviders(
+        title: String,
+        artist: String,
+        durationMs: Long,
+        album: String,
+        videoId: String?,
+        enabled: List<String>
+    ): Lyrics? {
+        val result = lyricsProvidersClient.fetch(
+            title = title,
+            artist = artist,
+            durationSeconds = (durationMs / 1000L).toInt().coerceAtLeast(0),
+            album = album.takeIf { it.isNotBlank() },
+            videoId = videoId,
+            enabled = enabled.ifEmpty { LyricsProvidersClient.DEFAULT_ENABLED }
+        ) ?: return null
+        val parsed = LrcParser.parse(result.text).copy(areFromRemote = true, source = result.source)
+        return parsed.takeIf { !it.synced.isNullOrEmpty() || !it.plain.isNullOrEmpty() }
     }
 
     override suspend fun saveLyrics(songId: String, lyrics: Lyrics) {

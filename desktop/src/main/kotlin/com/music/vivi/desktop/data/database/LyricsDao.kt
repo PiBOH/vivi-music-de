@@ -35,7 +35,7 @@ class LyricsDao(
         val synced = entry.syncedJson?.takeIf { it.isNotBlank() }?.let { raw ->
             runCatching { json.decodeFromString(syncedLineListSerializer, raw) }.getOrNull()
         }
-        Lyrics(plain = plain, synced = synced, areFromRemote = entry.isFromRemote)
+        Lyrics(plain = plain, synced = synced, areFromRemote = entry.isFromRemote, source = entry.source)
     }
 
     suspend fun insertOrUpdateLyrics(songId: String, lyrics: Lyrics) = withContext(ioDispatcher) {
@@ -44,6 +44,7 @@ class LyricsDao(
             plainJson = lyrics.plain?.let { json.encodeToString(it) },
             syncedJson = lyrics.synced?.let { json.encodeToString(syncedLineListSerializer, it) },
             isFromRemote = lyrics.areFromRemote,
+            source = lyrics.source,
             lastUpdated = System.currentTimeMillis()
         )
         store.update("lyrics_cache") { state ->

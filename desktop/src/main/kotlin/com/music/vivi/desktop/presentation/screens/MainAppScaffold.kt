@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -325,6 +326,7 @@ fun MainAppScaffold(
                     isQueueOpen = isQueueSidePanelOpen,
                     queueCount = queue.size,
                     onToggleQueue = onToggleQueueSidePanel,
+                    onOpenListenTogether = { nav.navigate(DesktopNavTarget.ListenTogether) },
                     searchFocusRequester = searchFocusRequester,
                     onSearchFocusChange = onSearchFocusChange,
                     canGoBack = nav.canGoBack || isExpandedPlayerOpen || isCompactQueueMode || songToAddToPlaylist != null || songToDelete != null || songToEditMetadata != null || batchSongsToEdit != null || showShortcutsDialog || showQuickAccessLimitDialog,
@@ -416,6 +418,27 @@ fun MainAppScaffold(
                                                 songs = songs,
                                                 onBack = { nav.goBack() }
                                             )
+                                        }
+                                        is DesktopNavTarget.ListenTogether -> {
+                                            val manager = viewModel.listenTogetherManager
+                                            if (manager != null) {
+                                                ListenTogetherScreen(
+                                                    viewModel = viewModel,
+                                                    manager = manager,
+                                                    onBack = { nav.goBack() }
+                                                )
+                                            } else {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = "Listen together is not available.",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+                                            }
                                         }
                                         else -> {
                                             HomeScreen(

@@ -84,6 +84,10 @@ interface MusicRepository {
 
     fun getRecentlyPlayedSongsFlow(limit: Int = 500): Flow<List<Song>>
     suspend fun recordSongPlayed(songId: String, durationMs: Long = 0L)
+    suspend fun recordSongPlayed(song: Song, durationMs: Long = 0L)
+    suspend fun getPlayedSongs(): List<Song>
+    suspend fun savePlaybackQueue(queue: List<Song>, index: Int)
+    suspend fun getPlaybackQueue(): Pair<List<Song>, Int>?
     fun getPlaybackEventsFlow(limit: Int = 500): Flow<List<PlaybackEvent>>
     suspend fun getPlaybackEvents(limit: Int = 500): List<PlaybackEvent>
     suspend fun getPlaybackEventsBetween(start: Long, end: Long): List<PlaybackEvent>

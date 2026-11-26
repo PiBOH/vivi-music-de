@@ -39,7 +39,7 @@ class StatsStateHolder(
     init {
         coroutineScope.launch {
             musicRepository.getPlaybackEventsFlow().collect {
-                val songs = musicRepository.getAllSongs()
+                val songs = musicRepository.getAllSongs() + musicRepository.getPlayedSongs()
                 refreshStats(songs)
             }
         }
@@ -49,14 +49,14 @@ class StatsStateHolder(
         if (_selectedRange.value == range) return
         _selectedRange.value = range
         coroutineScope.launch {
-            val songs = musicRepository.getAllSongs()
+            val songs = musicRepository.getAllSongs() + musicRepository.getPlayedSongs()
             val events = musicRepository.getPlaybackEvents()
             _currentSummary.value = calculator.calculateSummary(range, events, songs)
         }
     }
 
     suspend fun refreshStats(songs: List<Song>? = null) {
-        val targetSongs = songs ?: musicRepository.getAllSongs()
+        val targetSongs = songs ?: (musicRepository.getAllSongs() + musicRepository.getPlayedSongs())
         val events = musicRepository.getPlaybackEvents()
 
         var foundHomeSummary: PlaybackStatsSummary? = null

@@ -235,6 +235,27 @@ object SettingsSearchCatalog {
             icon = Res.drawable.ic_automirrored_rounded_queue_music
         ),
         SettingSearchItem(
+            title = "Audio Quality",
+            description = "Choose the stream quality for catalogue tracks (Auto, High or Low bitrate)",
+            section = SettingsSection.PLAYBACK,
+            keywords = listOf("audio", "quality", "bitrate", "high", "low", "aac", "stream"),
+            icon = Res.drawable.ic_rounded_graphic_eq
+        ),
+        SettingSearchItem(
+            title = "Audio Cache",
+            description = "Keep played catalogue tracks on disk and limit the space they use",
+            section = SettingsSection.PLAYBACK,
+            keywords = listOf("cache", "download", "offline", "storage", "space", "limit"),
+            icon = Res.drawable.ic_rounded_layers
+        ),
+        SettingSearchItem(
+            title = "Online Lyrics Sources",
+            description = "Choose which providers supply online lyrics, Musixmatch included",
+            section = SettingsSection.PLAYBACK,
+            keywords = listOf("lyrics", "musixmatch", "lrclib", "kugou", "provider", "source", "unison"),
+            icon = Res.drawable.ic_lyrics
+        ),
+        SettingSearchItem(
             title = "Saved Song Speeds",
             description = "View count of individual songs with custom playback speed and clear all overrides",
             section = SettingsSection.PLAYBACK,

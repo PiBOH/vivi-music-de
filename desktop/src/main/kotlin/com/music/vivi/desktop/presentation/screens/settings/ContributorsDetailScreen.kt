@@ -74,7 +74,7 @@ private data class ContributorEntry(
 private data class ContributorsFile(val contributors: List<ContributorEntry> = emptyList())
 
 private const val CONTRIBUTORS_RAW_URL =
-    "https://raw.githubusercontent.com/PiBOH/vivi-music-de/vivi-music-de/contributorsde.json"
+    "https://raw.githubusercontent.com/PiBOH/axolotl-music/vivi-music-de/contributorsde.json"
 
 /** The headings the screen shows, in this order, matching the JSON `group` values. */
 private val ContributorGroupOrder = listOf(

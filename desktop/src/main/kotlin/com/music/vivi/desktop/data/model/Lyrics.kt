@@ -9,13 +9,16 @@ import kotlinx.serialization.Serializable
  * @param plain List of plain-text lines (unsynced).
  * @param synced List of (milliseconds, line) pairs for synced lyrics.
  * @param areFromRemote Indicates whether the lyrics were fetched from a remote source.
+ * @param source The provider that answered ("Musixmatch", "LrcLib", "SimpMusic",
+ *   "Embedded", "Local file"), shown as the status line above the lyrics.
  */
 @Immutable
 @Serializable
 data class Lyrics(
     val plain: List<String>? = null,
     val synced: List<SyncedLine>? = null,
-    val areFromRemote: Boolean = false
+    val areFromRemote: Boolean = false,
+    val source: String? = null
 )
 
 @Immutable

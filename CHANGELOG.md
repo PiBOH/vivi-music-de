@@ -16,6 +16,15 @@
 - [DE] **The library health card counts the hidden playlist rows correctly.**
 - [DE] **The new settings cards and the update dialog were rendered and corrected.**
 
+## [6.0.8.11_DE-1.56.0-beta2] - 2026-11-26
+
+### ✨ Added
+- [DE] **Audio quality, the audio cache, the queue and History come back from 1.55.**
+- [DE] **Listen Together is back as a Material 3 screen.**
+- [DE] **Online lyrics answer with Musixmatch first, and a candidate with no lyrics can no longer win the match.**
+- [DE] **A profile written before the lyrics sources existed is migrated once, in the load path.**
+- [DE] **The app and the Windows setup are Axolotl Music.**
+
 ## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
 
 ### ✨ Added

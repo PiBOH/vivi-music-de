@@ -12,6 +12,7 @@ import com.music.vivi.desktop.data.model.SearchFilterType
 import com.music.vivi.desktop.data.model.SearchResultItem
 import com.music.vivi.desktop.data.model.Song
 import com.music.vivi.desktop.data.model.SortOption
+import com.music.vivi.desktop.data.store.LocalLibraryState
 import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.data.store.StoredArtist
 
@@ -325,6 +326,61 @@ class MusicDao(
         Unit
     }
 
+    /**
+     * Records a play with the song's own metadata.
+     *
+     * A catalogue track is not in `songs` (the library list stays the user's
+     * files), so its snapshot goes into `playedSongs`: the history screen can
+     * still draw it, and the playback event keeps pointing at a track whose
+     * title, artist and cover are known after a restart.
+     */
+    suspend fun recordSongPlayed(song: Song, durationMs: Long = 0L) = withContext(ioDispatcher) {
+        val now = System.currentTimeMillis()
+        store.update("recently_played", "playback_events", "songs", "played_songs") { state ->
+            val previous = state.playedSongs.firstOrNull { it.id == song.id }
+            val snapshot = song.copy(
+                playCount = (previous?.playCount ?: song.playCount) + 1,
+                lastPlayedTimestamp = now
+            )
+            state.copy(
+                songs = state.songs.map { current ->
+                    if (current.id == song.id) {
+                        current.copy(playCount = current.playCount + 1, lastPlayedTimestamp = now)
+                    } else {
+                        current
+                    }
+                },
+                playedSongs = (state.playedSongs.filterNot { it.id == song.id } + snapshot)
+                    .takeLast(LocalLibraryState.PLAYED_SONGS_LIMIT),
+                playbackEvents = state.playbackEvents + PlaybackEvent(
+                    id = state.nextEventId,
+                    songId = song.id,
+                    timestamp = now,
+                    durationMs = durationMs
+                ),
+                nextEventId = state.nextEventId + 1L
+            )
+        }
+        Unit
+    }
+
+    /** Catalogue tracks that were played but are not in the local library. */
+    suspend fun getPlayedSongs(): List<Song> = withContext(ioDispatcher) {
+        store.load().playedSongs.sortedByDescending { it.lastPlayedTimestamp }
+    }
+
+    suspend fun savePlaybackQueue(queue: List<Song>, index: Int) = withContext(ioDispatcher) {
+        store.update("playback_queue") { state ->
+            state.copy(playbackQueue = queue, playbackQueueIndex = index)
+        }
+        Unit
+    }
+
+    suspend fun getPlaybackQueue(): Pair<List<Song>, Int>? = withContext(ioDispatcher) {
+        val state = store.load()
+        if (state.playbackQueue.isEmpty()) null else state.playbackQueue to state.playbackQueueIndex
+    }
+
     suspend fun getPlaybackEvents(limit: Int = 500): List<PlaybackEvent> = withContext(ioDispatcher) {
         store.load().playbackEvents
             .sortedByDescending { it.timestamp }
@@ -338,8 +394,18 @@ class MusicDao(
     }
 
     suspend fun getRecentlyPlayedSongs(limit: Int = 500): List<Song> = withContext(ioDispatcher) {
-        store.load().songs
-            .filter { it.lastPlayedTimestamp > 0L }
+        val state = store.load()
+        val byId = LinkedHashMap<String, Song>()
+        for (song in state.songs) {
+            if (song.lastPlayedTimestamp > 0L) byId[song.id] = song
+        }
+        for (song in state.playedSongs) {
+            val existing = byId[song.id]
+            if (existing == null || song.lastPlayedTimestamp >= existing.lastPlayedTimestamp) {
+                byId[song.id] = song
+            }
+        }
+        byId.values
             .sortedByDescending { it.lastPlayedTimestamp }
             .take(limit)
     }

@@ -46,8 +46,11 @@ class YouTubeMusicRepository(
      * The User-Agent travels with the URL because googlevideo expects the one of
      * the client that requested it, so the engine needs the pair, not the URL alone.
      */
-    suspend fun resolveStream(videoId: String): StreamResolver.ResolvedStream? {
-        val streams = StreamResolver.resolve(videoId)
+    suspend fun resolveStream(
+        videoId: String,
+        quality: StreamResolver.AudioQuality = StreamResolver.AudioQuality.AUTO
+    ): StreamResolver.ResolvedStream? {
+        val streams = StreamResolver.resolve(videoId, quality)
         return streams.firstOrNull()
     }
 

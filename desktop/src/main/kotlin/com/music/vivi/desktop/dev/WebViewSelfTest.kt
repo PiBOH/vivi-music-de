@@ -90,7 +90,7 @@ object WebViewSelfTest {
                     engine.load(LOGIN_URL)
                 }
                 val window = Stage()
-                window.title = "VIVI Music DE - WebView self test"
+                window.title = "Axolotl Music - WebView self test"
                 window.scene = Scene(browser, 1000.0, 720.0)
                 window.setOnHidden { closed.countDown() }
                 window.show()

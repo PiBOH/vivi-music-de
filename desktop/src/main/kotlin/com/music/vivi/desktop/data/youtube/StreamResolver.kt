@@ -29,8 +29,30 @@ object StreamResolver {
 
     data class ResolvedStream(val url: String, val userAgent: String, val durationMs: Long? = null)
 
-    /** Preferred itags, best first: AAC-LC 256k, AAC-LC 128k, then Opus (mpv handles all three). */
-    private val PREFERRED_ITAGS = listOf(141, 140, 251, 250)
+    /**
+     * The format the listener asked for. `AUTO` and `HIGH` prefer AAC 256 kbps,
+     * then the 160 kbps Opus track, then AAC 128 kbps; `LOW` starts at AAC 128
+     * kbps. Opus is a real quality step here, not just a fallback, because the
+     * client chain often ships 251 and no 141.
+     */
+    enum class AudioQuality(val preferredItags: List<Int>) {
+        // 141 is 256 kbps AAC, 251 is ~160 kbps Opus, 140 is 128 kbps AAC and
+        // 250 is ~70 kbps Opus: the high setting must not stop at 140 when the
+        // client chain also offers the higher Opus track.
+        AUTO(listOf(141, 251, 140, 250)),
+        HIGH(listOf(141, 251, 140, 250)),
+        LOW(listOf(140, 250, 251, 141));
+
+        companion object {
+            fun from(key: String?): AudioQuality =
+                entries.firstOrNull { it.name.equals(key, ignoreCase = true) } ?: AUTO
+        }
+    }
+
+    /** The quality the last resolution asked for, for the verification harness. */
+    @Volatile
+    var lastRequestedQuality: AudioQuality = AudioQuality.AUTO
+        private set
 
     private val CLIENT_CHAIN: List<YouTubeClient> = listOf(
         YouTubeClient.VISIONOS,
@@ -65,30 +87,35 @@ object StreamResolver {
      * order, so a bot-blocked URL from one source never prevents playback when
      * another source works.
      */
-    suspend fun resolve(videoId: String): List<ResolvedStream> {
+    suspend fun resolve(
+        videoId: String,
+        quality: AudioQuality = AudioQuality.AUTO
+    ): List<ResolvedStream> {
+        lastRequestedQuality = quality
+        val cacheKey = "$videoId:${quality.name}"
         val now = System.currentTimeMillis()
-        cache[videoId]?.let { hit ->
+        cache[cacheKey]?.let { hit ->
             if (hit.expiresAt > now && hit.streams.isNotEmpty()) return hit.streams
-            cache.remove(videoId)
+            cache.remove(cacheKey)
         }
 
         GuestSession.ensure()
-        var resolution = resolveOnce(videoId)
+        var resolution = resolveOnce(videoId, quality)
         // Bot detection: no candidate at all usually means the guest identity was
         // flagged, so rotate it and try once more.
         if (resolution.streams.isEmpty()) {
             GuestSession.rotate()
-            resolution = resolveOnce(videoId)
+            resolution = resolveOnce(videoId, quality)
         }
         var attempts = 0
         while (resolution.streams.isEmpty() && attempts < 2) {
             delay(750L)
-            resolution = resolveOnce(videoId)
+            resolution = resolveOnce(videoId, quality)
             attempts++
         }
 
         if (resolution.streams.isNotEmpty() && generation(videoId) == resolution.generation) {
-            cache[videoId] = Cached(resolution.streams, System.currentTimeMillis() + CACHE_TTL_MS)
+            cache[cacheKey] = Cached(resolution.streams, System.currentTimeMillis() + CACHE_TTL_MS)
             while (cache.size > CACHE_MAX_ENTRIES) {
                 val oldest = cache.entries.minByOrNull { it.value.expiresAt }?.key ?: break
                 cache.remove(oldest)
@@ -99,7 +126,7 @@ object StreamResolver {
 
     private data class Resolution(val streams: List<ResolvedStream>, val generation: Long)
 
-    private suspend fun resolveOnce(videoId: String): Resolution {
+    private suspend fun resolveOnce(videoId: String, quality: AudioQuality): Resolution {
         val newPipeStreams = withContext(Dispatchers.IO) {
             runCatching { YouTube.getNewPipeStreamUrls(videoId) }.getOrDefault(emptyList())
         }
@@ -107,7 +134,7 @@ object StreamResolver {
         // the best answer there is. A muxed one (itag 18 and friends) carries the
         // video track too and a third of the bitrate, so it is kept only as a
         // fallback and the client chain is asked for an audio-only URL first.
-        val newPipeAudio = PREFERRED_ITAGS.firstNotNullOfOrNull { tag ->
+        val newPipeAudio = quality.preferredItags.firstNotNullOfOrNull { tag ->
             newPipeStreams.firstOrNull { it.first == tag }?.second
         }
         if (!newPipeAudio.isNullOrBlank()) {
@@ -142,7 +169,7 @@ object StreamResolver {
                 continue
             }
 
-            val url = resolveFromResponse(response, ytClient) ?: continue
+            val url = resolveFromResponse(response, ytClient, quality) ?: continue
             val durationMs = response.videoDetails?.lengthSeconds?.toDoubleOrNull()?.times(1000)?.toLong()
             if (collected.any { it.url == url }) continue
             collected += ResolvedStream(url, ytClient.userAgent, durationMs)
@@ -160,10 +187,14 @@ object StreamResolver {
     }
 
     /** Picks the best audio format from a successful player response and resolves its URL. */
-    private fun resolveFromResponse(response: PlayerResponse, ytClient: YouTubeClient): String? {
+    private fun resolveFromResponse(
+        response: PlayerResponse,
+        ytClient: YouTubeClient,
+        quality: AudioQuality
+    ): String? {
         val adaptive = response.streamingData?.adaptiveFormats ?: return null
         val audio = adaptive.filter { it.isAudio && it.isOriginal }
-        val format = PREFERRED_ITAGS.firstNotNullOfOrNull { tag -> audio.firstOrNull { it.itag == tag } }
+        val format = quality.preferredItags.firstNotNullOfOrNull { tag -> audio.firstOrNull { it.itag == tag } }
             ?: audio.firstOrNull()
             ?: return null
 

@@ -81,7 +81,7 @@ private val MaintainersList = listOf(
         id = "piboh",
         displayName = "@PiBOH",
         role = "Lead developer",
-        detail = "Lead developer and maintainer of VIVI Music DE.",
+        detail = "Lead developer and maintainer of Axolotl Music.",
         avatarUrl = "https://github.com/PiBOH.png",
         githubUrl = "https://github.com/PiBOH"
     )
@@ -91,9 +91,9 @@ private val ProjectLinks = listOf(
     ProjectLink(
         id = "source",
         title = "Source code",
-        subtitle = "github.com/PiBOH/vivi-music-de",
+        subtitle = "github.com/PiBOH/axolotl-music",
         icon = Res.drawable.ic_github,
-        url = "https://github.com/PiBOH/vivi-music-de"
+        url = "https://github.com/PiBOH/axolotl-music"
     ),
     ProjectLink(
         id = "licenses",

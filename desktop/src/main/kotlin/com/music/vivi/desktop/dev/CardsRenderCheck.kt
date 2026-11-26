@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.music.vivi.desktop.data.library.LibraryHealthChecker
+import com.music.vivi.desktop.data.listentogether.ListenTogetherManager
 import com.music.vivi.desktop.data.youtube.YouTubeAccount
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
 import com.music.vivi.desktop.data.youtube.YouTubePlaylistsRepository
@@ -22,6 +23,9 @@ import com.music.vivi.desktop.di.appModules
 import com.music.vivi.desktop.domain.model.AppReleaseInfo
 import com.music.vivi.desktop.domain.model.UpdateDownloadState
 import com.music.vivi.desktop.presentation.components.AppUpdateDialog
+import com.music.vivi.desktop.presentation.screens.ListenTogetherScreen
+import com.music.vivi.desktop.presentation.screens.settings.SettingsCategoryDetail
+import com.music.vivi.desktop.presentation.screens.settings.SettingsSection
 import com.music.vivi.desktop.presentation.screens.settings.AutoBackupCard
 import com.music.vivi.desktop.presentation.screens.settings.DiagnosticsCard
 import com.music.vivi.desktop.presentation.screens.settings.LibraryHealthCard
@@ -63,6 +67,7 @@ object CardsRenderCheck {
         val playlists = koin.get<YouTubePlaylistsRepository>()
         val music = koin.get<YouTubeMusicRepository>()
         val health = koin.get<LibraryHealthChecker>()
+        val listenTogether = koin.get<ListenTogetherManager>()
 
         var failed = false
         fun card(
@@ -101,6 +106,64 @@ object CardsRenderCheck {
         card("12-sync.png", 760, 380) { SyncStatusCard() }
         card("13-diagnostics.png", 760, 320) { DiagnosticsCard() }
         card("14-health.png", 760, 320) { LibraryHealthCard(checker = health) }
+        if (!render("19-settings-playback.png", 1000, 3200, settleMs = 3000) {
+                PixelPlayerTheme(darkTheme = true) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        SettingsCategoryDetail(
+                            section = SettingsSection.PLAYBACK,
+                            viewModel = player,
+                            isDarkTheme = true,
+                            isDynamicColor = false,
+                            onToggleDarkTheme = {},
+                            onToggleDynamicColor = {},
+                            onRescanLibrary = {},
+                            onOpenFoldersDetail = {},
+                            onOpenArtistsDetail = {},
+                            onOpenDuplicatesDetail = {},
+                            onOpenPaletteStyleDetail = {},
+                            onBack = {}
+                        )
+                    }
+                }
+            }
+        ) {
+            failed = true
+        }
+
+        if (!render("21-settings-library.png", 1000, 3200, settleMs = 2500) {
+                PixelPlayerTheme(darkTheme = true) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        SettingsCategoryDetail(
+                            section = SettingsSection.LIBRARY,
+                            viewModel = player,
+                            isDarkTheme = true,
+                            isDynamicColor = false,
+                            onToggleDarkTheme = {},
+                            onToggleDynamicColor = {},
+                            onRescanLibrary = {},
+                            onOpenFoldersDetail = {},
+                            onOpenArtistsDetail = {},
+                            onOpenDuplicatesDetail = {},
+                            onOpenPaletteStyleDetail = {},
+                            onBack = {}
+                        )
+                    }
+                }
+            }
+        ) {
+            failed = true
+        }
+
+        if (!render("18-listen-together.png", 1220, 780, settleMs = 2500) {
+                PixelPlayerTheme(darkTheme = true) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        ListenTogetherScreen(viewModel = player, manager = listenTogether)
+                    }
+                }
+            }
+        ) {
+            failed = true
+        }
 
         val release = AppReleaseInfo(
             versionTag = "6.0.8.11_DE-1.57.0-beta1",
@@ -108,7 +171,7 @@ object CardsRenderCheck {
             releaseNotes = "The account playlists are managed from Accounts. " +
                 "A weekly backup runs on its own. The updater checks the SHA-256 " +
                 "before it offers the installer.",
-            htmlUrl = "https://github.com/PiBOH/vivi-music-de/releases",
+            htmlUrl = "https://github.com/PiBOH/axolotl-music/releases",
             publishedAt = "2026-11-21T12:00:00Z",
             isPrerelease = true,
             assets = emptyList()

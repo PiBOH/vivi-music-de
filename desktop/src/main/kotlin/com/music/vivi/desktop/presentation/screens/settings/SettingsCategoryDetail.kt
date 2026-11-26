@@ -3,6 +3,8 @@ package com.music.vivi.desktop.presentation.screens.settings
 import com.music.vivi.desktop.generated.resources.ic_align_justify_space_even
 import com.music.vivi.desktop.generated.resources.ic_lyrics
 import com.music.vivi.desktop.generated.resources.Res
+import com.music.vivi.desktop.generated.resources.ic_rounded_cloud_download
+import com.music.vivi.desktop.generated.resources.ic_rounded_graphic_eq
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_queue_music
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_volume_down
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_volume_up
@@ -71,6 +73,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -477,8 +480,8 @@ fun SettingsCategoryDetail(
                         )
 
                         ExpressiveSwitchRow(
-                            title = "Fetch Online Lyrics (LRCLIB)",
-                            subtitle = "Automatically fetch and sync lyrics from LRCLIB online database",
+                            title = "Fetch Online Lyrics",
+                            subtitle = "Automatically fetch and sync lyrics from the enabled online sources",
                             checked = fetchOnlineLyrics,
                             onCheckedChange = { viewModel.setFetchOnlineLyrics(it) },
                             leadingIcon = {
@@ -633,6 +636,46 @@ fun SettingsCategoryDetail(
                             shape = getGroupShape(1, 2),
                             onClick = { showResetLyricsDialog = true }
                         )
+                    }
+                }
+
+                item {
+                    val enabledLyricsProviders by viewModel.lyricsProviders.collectAsState()
+                    val providers = listOf(
+                        Triple("Musixmatch", "Musixmatch", "Word-synced lyrics from the Musixmatch catalogue."),
+                        Triple("YouLyPlus", "YouLyPlus", "Apple Music, Spotify and Musixmatch mirrors."),
+                        Triple("Paxsenix", "PaxSenix", "Multi-source synced lyrics."),
+                        Triple("BetterLyrics", "Better Lyrics", "Word-by-word TTML lyrics."),
+                        Triple("LrcLib", "LrcLib", "Community synced and plain lyrics."),
+                        Triple("Kugou", "KuGou", "Synced lyrics from the KuGou catalogue."),
+                        Triple("Unison", "Unison", "Community lyrics with word timing."),
+                        Triple("SimpMusic", "SimpMusic", "YouTube Music lyrics by video id.")
+                    )
+
+                    SettingsSubsection(title = "ONLINE LYRICS SOURCES") {
+                        providers.forEachIndexed { index, provider ->
+                            val (key, title, subtitle) = provider
+                            ExpressiveSwitchRow(
+                                title = title,
+                                subtitle = subtitle,
+                                checked = key in enabledLyricsProviders,
+                                onCheckedChange = { enabled ->
+                                    viewModel.setLyricsProviders(
+                                        if (enabled) enabledLyricsProviders + key
+                                        else enabledLyricsProviders - key
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painterResource(Res.drawable.ic_lyrics),
+                                        null,
+                                        tint = colors.secondary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                },
+                                shape = getGroupShape(index, providers.size)
+                            )
+                        }
                     }
                 }
             }
@@ -989,6 +1032,204 @@ fun SettingsCategoryDetail(
                 }
 
                 item {
+                    val audioQuality by viewModel.audioQuality.collectAsState()
+                    val audioCacheEnabled by viewModel.audioCacheEnabled.collectAsState()
+                    val audioCacheLimitMb by viewModel.audioCacheLimitMb.collectAsState()
+                    val audioCacheSize by viewModel.audioCacheSizeBytes.collectAsState()
+
+                    var cacheLimitDraft by remember(audioCacheLimitMb) {
+                        mutableStateOf(audioCacheLimitMb.toFloat())
+                    }
+
+                    LaunchedEffect(audioCacheEnabled) {
+                        if (audioCacheEnabled) viewModel.refreshAudioCacheSize()
+                    }
+
+                    SettingsSubsection(title = "AUDIO QUALITY AND CACHE") {
+                        Surface(
+                            shape = if (audioCacheEnabled) getGroupShape(0, 3) else getGroupShape(0, 2),
+                            color = colors.surfaceContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_graphic_eq),
+                                        contentDescription = null,
+                                        tint = colors.secondary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+
+                                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(
+                                            text = "Audio Quality",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = colors.onSurface
+                                        )
+                                        Text(
+                                            text = "Format requested for catalogue playback. Auto keeps the best available stream.",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = colors.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    listOf(
+                                        "auto" to "Auto",
+                                        "high" to "High (up to 256 kbps)",
+                                        "low" to "Low (128 kbps)"
+                                    ).forEach { (qualityKey, qualityLabel) ->
+                                        val isSelected = audioQuality == qualityKey
+                                        val animatedContainerColor by animateColorAsState(
+                                            targetValue = if (isSelected) colors.primary else colors.surfaceContainerHighest,
+                                            label = "audioQualityContainer"
+                                        )
+                                        val animatedContentColor by animateColorAsState(
+                                            targetValue = if (isSelected) colors.onPrimary else colors.onSurfaceVariant,
+                                            label = "audioQualityContent"
+                                        )
+
+                                        Surface(
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = animatedContainerColor,
+                                            modifier = Modifier
+                                                .height(40.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .clickable { viewModel.setAudioQuality(qualityKey) }
+                                        ) {
+                                            Box(
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(
+                                                    text = qualityLabel,
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = animatedContentColor,
+                                                    maxLines = 1
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        ExpressiveSwitchRow(
+                            title = "Audio Cache",
+                            subtitle = "Keep played catalogue tracks on disk so the next play is local.",
+                            checked = audioCacheEnabled,
+                            onCheckedChange = { viewModel.setAudioCacheEnabled(it) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(Res.drawable.ic_rounded_cloud_download),
+                                    contentDescription = null,
+                                    tint = colors.secondary,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            },
+                            shape = if (audioCacheEnabled) getGroupShape(1, 3) else getGroupShape(1, 2)
+                        )
+
+                        AnimatedVisibility(
+                            visible = audioCacheEnabled,
+                            enter = expandVertically() + fadeIn(),
+                            exit = shrinkVertically() + fadeOut()
+                        ) {
+                            Surface(
+                                shape = getGroupShape(2, 3),
+                                color = colors.surfaceContainer,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_rounded_cloud_download),
+                                            contentDescription = null,
+                                            tint = colors.secondary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+
+                                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Text(
+                                                text = "Cache Size",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = colors.onSurface
+                                            )
+                                            Text(
+                                                text = "${formatCacheSize(audioCacheSize)} used of ${audioCacheLimitMb} MB",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = colors.onSurfaceVariant
+                                            )
+                                        }
+                                    }
+
+                                    ExpressiveSliderSettingsRow(
+                                        title = "Limit",
+                                        value = cacheLimitDraft,
+                                        valueRange = 128f..10240f,
+                                        steps = 19,
+                                        onValueChange = { cacheLimitDraft = it },
+                                        onValueChangeFinished = {
+                                            viewModel.setAudioCacheLimitMb(cacheLimitDraft.roundToInt())
+                                            viewModel.refreshAudioCacheSize()
+                                        },
+                                        valueText = { value -> "${(value / 128f).roundToInt() * 128} MB" },
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Stored in the app cache folder.",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = colors.onSurfaceVariant,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        TextButton(
+                                            onClick = {
+                                                viewModel.clearAudioCache()
+                                            },
+                                            enabled = audioCacheSize > 0L
+                                        ) {
+                                            Text("Clear cache")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                item {
                     val crossfadeEnabled by viewModel.crossfadeEnabled.collectAsState()
                     val crossfadeDuration by viewModel.crossfadeDurationSeconds.collectAsState()
                     val audioFadeOnPlayPause by viewModel.audioFadeOnPlayPause.collectAsState()
@@ -1288,3 +1529,12 @@ fun SettingsCategoryDetail(
 }
 
 
+
+private fun formatCacheSize(bytes: Long): String = when {
+    bytes >= 1024L * 1024L * 1024L ->
+        "${(bytes / (1024.0 * 1024.0 * 1024.0) * 10).roundToInt() / 10.0} GB"
+    bytes >= 1024L * 1024L ->
+        "${(bytes / (1024.0 * 1024.0) * 10).roundToInt() / 10.0} MB"
+    bytes >= 1024L -> "${bytes / 1024L} KB"
+    else -> "$bytes B"
+}

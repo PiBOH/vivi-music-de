@@ -148,7 +148,7 @@ val generateBuildConfig = tasks.register("generateBuildConfig") {
             package com.music.vivi.desktop
 
             object BuildConfig {
-                const val APP_NAME: String = "VIVI Music DE"
+                const val APP_NAME: String = "Axolotl Music"
                 const val APP_VERSION_NAME: String = "$vName"
                 const val APP_VERSION_CODE: Int = $vCode
                 const val APPLICATION_ID: String = "com.music.vivi.desktop"
@@ -231,14 +231,14 @@ compose.desktop {
                 TargetFormat.Pkg
             )
 
-            packageName = "VIVIMusic"
+            packageName = "AxolotlMusic"
             packageVersion = numericPackageVersion
-            description = "VIVI Music DE - YouTube Music desktop client"
+            description = "Axolotl Music - YouTube Music desktop client"
             vendor = "PiBOH"
             copyright = "Copyright (C) 2026 PiBOH"
 
             linux {
-                packageName = "vivimusicde"
+                packageName = "axolotlmusic"
                 iconFile.set(project.file("src/main/resources/icons/icon.png"))
                 debPackageVersion = debianPackageVersion
                 rpmPackageVersion = deVersion
@@ -252,7 +252,7 @@ compose.desktop {
                 iconFile.set(project.file("src/main/resources/icons/icon.ico"))
                 packageVersion = numericPackageVersion
                 exePackageVersion = numericPackageVersion
-                menuGroup = "VIVI Music DE"
+                menuGroup = "Axolotl Music"
                 // Distinct from PixelPlayer's UUID so both products can coexist.
                 upgradeUuid = "5f1c8f52-6d3a-4a60-9a1e-3f0d6b7c9e21"
             }
@@ -262,7 +262,7 @@ compose.desktop {
                 packageVersion = numericPackageVersion
                 dmgPackageVersion = numericPackageVersion
                 bundleID = "com.music.vivi.desktop"
-                packageName = "VIVI Music DE"
+                packageName = "Axolotl Music"
                 appCategory = "public.app-category.music"
                 minimumSystemVersion = "12.0"
             }
@@ -362,7 +362,7 @@ tasks.register("windowsInstaller") {
     val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
     val rootDir = rootProject.projectDir
     val installerOutputDir = File(rootDir, "build/installer")
-    val appImageDir = layout.buildDirectory.dir("compose/binaries/main/app/VIVIMusic").get().asFile
+    val appImageDir = layout.buildDirectory.dir("compose/binaries/main/app/AxolotlMusic").get().asFile
     val iconsDir = File(projectDir, "icons")
     val issScript = File(rootDir, "installer/windows/VIVIMusic.iss")
     // The release numbers are script properties; read them into locals so the task
@@ -397,11 +397,11 @@ tasks.register("windowsInstaller") {
             "/DVersionInfoVersion=$fileVersion",
             "/DSourceDir=${appImageDir.absolutePath}",
             "/DOutputDir=${outputDir.absolutePath}",
-            "/DIconFile=${File(icons, "logo_vmde.ico").absolutePath}",
-            "/DWizardImageFile=${File(icons, "logo_vmde_wizard.bmp").absolutePath}",
-            "/DWizardSmallImageFile=${File(icons, "logo_vmde_small.bmp").absolutePath}",
-            "/DWizardImageFileDark=${File(icons, "logo_vmde_wizard_dark.bmp").absolutePath}",
-            "/DWizardSmallImageFileDark=${File(icons, "logo_vmde_small_dark.bmp").absolutePath}",
+            "/DIconFile=${File(icons, "logo_axolotl.ico").absolutePath}",
+            "/DWizardImageFile=${File(icons, "logo_axolotl_wizard.bmp").absolutePath}",
+            "/DWizardSmallImageFile=${File(icons, "logo_axolotl_small.bmp").absolutePath}",
+            "/DWizardImageFileDark=${File(icons, "logo_axolotl_wizard_dark.bmp").absolutePath}",
+            "/DWizardSmallImageFileDark=${File(icons, "logo_axolotl_small_dark.bmp").absolutePath}",
             issScript.absolutePath
         )
         logger.lifecycle("Using Inno Setup compiler: ${iscc.absolutePath}")
@@ -418,7 +418,7 @@ tasks.register("windowsInstaller") {
         if (exit != 0) {
             throw GradleException("Inno Setup compilation failed (exit $exit); log: $logFile")
         }
-        val setup = File(outputDir, "VIVIMusic-$appVersion-setup.exe")
+        val setup = File(outputDir, "AxolotlMusic-$appVersion-setup.exe")
         if (!setup.isFile) throw GradleException("ISCC exited 0 but $setup is missing")
         val engine = Regex("Compiler engine version: (.+)").find(collected)?.groupValues?.get(1)?.trim()
         if (engine == null || !engine.startsWith("Inno Setup 7")) {

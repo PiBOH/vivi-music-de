@@ -41,6 +41,8 @@ import com.music.vivi.desktop.domain.repository.JellyfinRepository
 import com.music.vivi.desktop.domain.repository.ListenBrainzRepository
 import com.music.vivi.desktop.domain.repository.NavidromeRepository
 import com.music.vivi.desktop.data.network.RemoteArtworkResolver
+import com.music.vivi.desktop.data.listentogether.ListenTogetherManager
+import com.music.vivi.desktop.data.player.PlaybackAudioCache
 import com.music.vivi.desktop.data.player.PlaybackUriResolver
 import com.music.vivi.desktop.data.youtube.YouTubeLyrics
 import com.music.vivi.desktop.data.youtube.YouTubeMusicRepository
@@ -149,11 +151,14 @@ val repositoryModule: Module = module {
     single<JellyfinRepository> { JellyfinRepositoryImpl(apiClient = get(), musicDao = get(), playlistDao = get(), settingsRepository = get(), coroutineScope = get()) }
     single { ScrobbleManager(listenBrainzRepository = get(), navidromeRepository = get(), settingsRepository = get(), coroutineScope = get()) }
     single { RemoteArtworkResolver(navidromeRepository = get(), jellyfinRepository = get(), okHttpClient = get()) }
+    single { PlaybackAudioCache(okHttpClient = get(), coroutineScope = get()) }
     single {
         PlaybackUriResolver(
             navidromeRepository = get(),
             jellyfinRepository = get(),
-            youtubeMusicRepository = get()
+            youtubeMusicRepository = get(),
+            audioCache = get(),
+            settingsRepository = get()
         )
     }
     single { DesktopMusicScanner(musicDao = get(), lyricsDao = get(), ioDispatcher = get()) }
@@ -187,6 +192,7 @@ val stateModule: Module = module {
             settingsRepository = get(),
             listeningStatsTracker = get(),
             playbackUriResolver = get(),
+            audioCache = get(),
             sleepTimerSession = get(),
             coroutineScope = get()
         )
@@ -196,6 +202,15 @@ val stateModule: Module = module {
             session = get(),
             audioEngine = get(),
             queueManager = get(),
+            coroutineScope = get()
+        )
+    }
+    single {
+        ListenTogetherManager(
+            playback = get(),
+            queueManager = get(),
+            audioEngine = get(),
+            settingsRepository = get(),
             coroutineScope = get()
         )
     }
@@ -261,7 +276,8 @@ val stateModule: Module = module {
             sleepTimerStateHolder = get(),
             mediaSessionBridge = get(),
             youtubeMusicStateHolder = get(),
-            youtubeAccountStateHolder = get()
+            youtubeAccountStateHolder = get(),
+            listenTogetherManager = get()
         )
     }
 }

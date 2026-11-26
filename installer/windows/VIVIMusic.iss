@@ -1,4 +1,4 @@
-; VIVI Music DE — Windows installer (Inno Setup).
+; Axolotl Music — Windows installer (Inno Setup).
 ;
 ; The self-contained app image is produced by jpackage (Gradle
 ; `createDistributable`) and passed in through /DSourceDir. Version and icon
@@ -12,7 +12,7 @@
 ; the Welcome and Finished pages and a small one in the header of every other
 ; page. When `WizardImageFile` / `WizardSmallImageFile` are not declared, that
 ; artwork is what the user sees, so the setup advertised Inno Setup instead of
-; VIVI Music DE. Both are declared below and point at the brand bitmaps kept in
+; Axolotl Music. Both are declared below and point at the brand bitmaps kept in
 ; `desktop/icons` (the same mark as the app icon): the images already existed,
 ; nothing referenced them.
 ;
@@ -80,26 +80,26 @@
 ; absolute paths anyway.
 #define RepoRoot AddBackslash(SourcePath) + "..\.."
 #ifndef IconFile
-#define IconFile RepoRoot + "\desktop\icons\logo_vmde.ico"
+#define IconFile RepoRoot + "\desktop\icons\logo_axolotl.ico"
 #endif
 #ifndef WizardImageFile
-#define WizardImageFile RepoRoot + "\desktop\icons\logo_vmde_wizard.bmp"
+#define WizardImageFile RepoRoot + "\desktop\icons\logo_axolotl_wizard.bmp"
 #endif
 #ifndef WizardImageFileDark
-#define WizardImageFileDark RepoRoot + "\desktop\icons\logo_vmde_wizard_dark.bmp"
+#define WizardImageFileDark RepoRoot + "\desktop\icons\logo_axolotl_wizard_dark.bmp"
 #endif
 #ifndef WizardSmallImageFileDark
-#define WizardSmallImageFileDark RepoRoot + "\desktop\icons\logo_vmde_small_dark.bmp"
+#define WizardSmallImageFileDark RepoRoot + "\desktop\icons\logo_axolotl_small_dark.bmp"
 #endif
 #ifndef WizardSmallImageFile
-#define WizardSmallImageFile RepoRoot + "\desktop\icons\logo_vmde_small.bmp"
+#define WizardSmallImageFile RepoRoot + "\desktop\icons\logo_axolotl_small.bmp"
 #endif
 
-#define AppName "VIVI Music DE"
-#define AppExe "VIVIMusic.exe"
+#define AppName "Axolotl Music"
+#define AppExe "AxolotlMusic.exe"
 #define AppPublisher "PiBOH"
-#define AppId "com.vivi.vivimusic.desktop"
-#define AppURL "https://github.com/PiBOH/vivi-music-de"
+#define AppId "com.piboh.axolotlmusic.desktop"
+#define AppURL "https://github.com/PiBOH/axolotl-music"
 
 [Setup]
 AppId={#AppId}
@@ -113,8 +113,8 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}/releases
-AppComments={#AppName} — the desktop edition of VIVI Music.
-DefaultDirName={autopf}\VIVIMusic
+AppComments={#AppName} — YouTube Music for the desktop.
+DefaultDirName={autopf}\AxolotlMusic
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 ; Always show the "Select Destination Location" page so the user can see (and
@@ -130,7 +130,7 @@ UsePreviousLanguage=yes
 ; previous install of the same AppId, and the earlier installers of this app
 ; (and the jpackage MSI) used "VIVI Music": an upgrade therefore kept the OLD
 ; name, which is why the same app appeared under "VIVI Music" on one machine
-; and "VIVI Music DE" on another. With the group page disabled, saying no here
+; and "Axolotl Music" on another. With the group page disabled, saying no here
 ; is what keeps the name at DefaultGroupName on every install and upgrade.
 UsePreviousGroup=no
 AllowNoIcons=yes
@@ -139,7 +139,7 @@ AllowNoIcons=yes
 SetupLogging=yes
 AllowUNCPath=no
 OutputDir={#OutputDir}
-OutputBaseFilename=VIVIMusic-{#AppVersion}-setup
+OutputBaseFilename=AxolotlMusic-{#AppVersion}-setup
 SetupIconFile={#IconFile}
 ; --- Branding: the wizard's own artwork (see the file header) ---------------
 ; `dynamic` follows Windows' light/dark setting (needs Inno Setup 6.6+; CI has
@@ -372,107 +372,107 @@ vietnamese.UninstallKept=Chỉ giữ lại bản sao lưu mới nhất và cài 
 ; Generated — run `python3 scripts/generate_installer_welcome.py` instead of
 ; editing the block, so a change to the app's tables reaches the installer.
 ; --- BEGIN GENERATED: welcome strings ---
-english.WelcomeTitle=Welcome to VIVI Music DE
+english.WelcomeTitle=Welcome to Axolotl Music
 english.WelcomeDesc=Choose your language to get started. You can change it later from Settings → Language.
-azerbaijani.WelcomeTitle=VIVI Music DE-yə xoş gəlmisiniz
+azerbaijani.WelcomeTitle=Axolotl Music-yə xoş gəlmisiniz
 azerbaijani.WelcomeDesc=Başlamaq üçün dilinizi seçin. Daha sonra Ayarlar → Dil bölməsindən dəyişə bilərsiniz.
-indonesian.WelcomeTitle=Selamat datang di VIVI Music DE
+indonesian.WelcomeTitle=Selamat datang di Axolotl Music
 indonesian.WelcomeDesc=Pilih bahasa Anda untuk memulai. Anda dapat mengubahnya nanti dari Pengaturan → Bahasa.
-malay.WelcomeTitle=Selamat datang ke VIVI Music DE
+malay.WelcomeTitle=Selamat datang ke Axolotl Music
 malay.WelcomeDesc=Pilih bahasa anda untuk bermula. Anda boleh menukarnya kemudian daripada Tetapan → Bahasa.
-bosnian.WelcomeTitle=Dobrodošli u VIVI Music DE
+bosnian.WelcomeTitle=Dobrodošli u Axolotl Music
 bosnian.WelcomeDesc=Odaberite jezik za početak. Kasnije ga možete promijeniti u Postavke → Jezik.
-catalan.WelcomeTitle=Benvingut a VIVI Music DE
+catalan.WelcomeTitle=Benvingut a Axolotl Music
 catalan.WelcomeDesc=Trieu el vostre idioma per començar. Podeu canviar-lo més tard des de Configuració → Idioma.
-german.WelcomeTitle=Willkommen bei VIVI Music DE
+german.WelcomeTitle=Willkommen bei Axolotl Music
 german.WelcomeDesc=Wählen Sie Ihre Sprache. Sie können sie später unter Einstellungen → Sprache ändern.
-estonian.WelcomeTitle=Tere tulemast VIVI Music DE-sse
+estonian.WelcomeTitle=Tere tulemast Axolotl Music-sse
 estonian.WelcomeDesc=Alustamiseks valige oma keel. Saate seda hiljem muuta jaotises Seaded → Keel.
-spanish.WelcomeTitle=Bienvenido a VIVI Music DE
+spanish.WelcomeTitle=Bienvenido a Axolotl Music
 spanish.WelcomeDesc=Elige tu idioma para empezar. Puedes cambiarlo más tarde desde Ajustes → Idioma.
-basque.WelcomeTitle=Ongi etorri VIVI Music DE-ra
+basque.WelcomeTitle=Ongi etorri Axolotl Music-ra
 basque.WelcomeDesc=Hasi zure hizkuntza aukeratuz. Geroago Aldatzeko ezarpenak → Hizkuntza atalean alda dezakezu.
-filipino.WelcomeTitle=Maligayang pagdating sa VIVI Music DE
+filipino.WelcomeTitle=Maligayang pagdating sa Axolotl Music
 filipino.WelcomeDesc=Piliin ang iyong wika upang magsimula. Maaari mo itong baguhin sa ibang pagkakataon mula sa Mga Setting → Wika.
-french.WelcomeTitle=Bienvenue dans VIVI Music DE
+french.WelcomeTitle=Bienvenue dans Axolotl Music
 french.WelcomeDesc=Choisissez votre langue pour commencer. Vous pourrez la modifier plus tard depuis Paramètres → Langue.
-croatian.WelcomeTitle=Dobrodošli u VIVI Music DE
+croatian.WelcomeTitle=Dobrodošli u Axolotl Music
 croatian.WelcomeDesc=Odaberite jezik za početak. Kasnije ga možete promijeniti u Postavke → Jezik.
-italian.WelcomeTitle=Benvenuto in VIVI Music DE
+italian.WelcomeTitle=Benvenuto in Axolotl Music
 italian.WelcomeDesc=Scegli la tua lingua per iniziare. Potrai cambiarla in seguito dalle Impostazioni → Lingua.
-lithuanian.WelcomeTitle=Sveiki atvykę į VIVI Music DE
+lithuanian.WelcomeTitle=Sveiki atvykę į Axolotl Music
 lithuanian.WelcomeDesc=Pasirinkite kalbą, kad pradėtumėte. Vėliau galėsite ją pakeisti Nustatymai → Kalba.
-hungarian.WelcomeTitle=Üdvözöljük a VIVI Music DE-ben
+hungarian.WelcomeTitle=Üdvözöljük a Axolotl Music-ben
 hungarian.WelcomeDesc=Kezdéshez válassza ki a nyelvét. Később a Beállítások → Nyelv menüben módosíthatja.
-dutch.WelcomeTitle=Welkom bij VIVI Music DE
+dutch.WelcomeTitle=Welkom bij Axolotl Music
 dutch.WelcomeDesc=Kies uw taal om te beginnen. U kunt deze later wijzigen via Instellingen → Taal.
-norwegian.WelcomeTitle=Velkommen til VIVI Music DE
+norwegian.WelcomeTitle=Velkommen til Axolotl Music
 norwegian.WelcomeDesc=Velg språket ditt for å komme i gang. Du kan endre det senere fra Innstillinger → Språk.
-polish.WelcomeTitle=Witamy w VIVI Music DE
+polish.WelcomeTitle=Witamy w Axolotl Music
 polish.WelcomeDesc=Wybierz język, aby rozpocząć. Możesz go później zmienić w Ustawienia → Język.
-portuguese.WelcomeTitle=Bem-vindo ao VIVI Music DE
+portuguese.WelcomeTitle=Bem-vindo ao Axolotl Music
 portuguese.WelcomeDesc=Escolha o seu idioma para começar. Pode alterá-lo mais tarde em Definições → Idioma.
-brazilianportuguese.WelcomeTitle=Bem-vindo ao VIVI Music DE
+brazilianportuguese.WelcomeTitle=Bem-vindo ao Axolotl Music
 brazilianportuguese.WelcomeDesc=Escolha o seu idioma para começar. Pode alterá-lo mais tarde em Definições → Idioma.
-romanian.WelcomeTitle=Bine ați venit la VIVI Music DE
+romanian.WelcomeTitle=Bine ați venit la Axolotl Music
 romanian.WelcomeDesc=Alegeți limba pentru a începe. O puteți schimba mai târziu din Setări → Limbă.
-slovak.WelcomeTitle=Vitajte vo VIVI Music DE
+slovak.WelcomeTitle=Vitajte vo Axolotl Music
 slovak.WelcomeDesc=Vyberte si jazyk na začiatok. Neskôr ho môžete zmeniť v Nastavenia → Jazyk.
-slovenian.WelcomeTitle=Dobrodošli v VIVI Music DE
+slovenian.WelcomeTitle=Dobrodošli v Axolotl Music
 slovenian.WelcomeDesc=Izberite svoj jezik za začetek. Pozneje ga lahko spremenite v Nastavitve → Jezik.
-finnish.WelcomeTitle=Tervetuloa VIVI Music DE:hen
+finnish.WelcomeTitle=Tervetuloa Axolotl Music:hen
 finnish.WelcomeDesc=Valitse kieli aloittaaksesi. Voit vaihtaa sitä myöhemmin kohdassa Asetukset → Kieli.
-swedish.WelcomeTitle=Välkommen till VIVI Music DE
+swedish.WelcomeTitle=Välkommen till Axolotl Music
 swedish.WelcomeDesc=Välj ditt språk för att komma igång. Du kan ändra det senare från Inställningar → Språk.
-vietnamese.WelcomeTitle=Chào mừng đến với VIVI Music DE
+vietnamese.WelcomeTitle=Chào mừng đến với Axolotl Music
 vietnamese.WelcomeDesc=Chọn ngôn ngữ của bạn để bắt đầu. Bạn có thể thay đổi sau đó từ Cài đặt → Ngôn ngữ.
-turkish.WelcomeTitle=VIVI Music DE'ye hoş geldiniz
+turkish.WelcomeTitle=Axolotl Music'ye hoş geldiniz
 turkish.WelcomeDesc=Başlamak için dilinizi seçin. Daha sonra Ayarlar → Dil bölümünden değiştirebilirsiniz.
-czech.WelcomeTitle=Vítejte ve VIVI Music DE
+czech.WelcomeTitle=Vítejte ve Axolotl Music
 czech.WelcomeDesc=Vyberte jazyk pro začátek. Později jej můžete změnit v Nastavení → Jazyk.
-greek.WelcomeTitle=Καλώς ήρθατε στο VIVI Music DE
+greek.WelcomeTitle=Καλώς ήρθατε στο Axolotl Music
 greek.WelcomeDesc=Επιλέξτε τη γλώσσα σας για να ξεκινήσετε. Μπορείτε να την αλλάξετε αργότερα από Ρυθμίσεις → Γλώσσα.
-belarusian.WelcomeTitle=Сардэчна запрашаем у VIVI Music DE
+belarusian.WelcomeTitle=Сардэчна запрашаем у Axolotl Music
 belarusian.WelcomeDesc=Выберыце мову, каб пачаць. Пазней яе можна змяніць у Налады → Мова.
-bulgarian.WelcomeTitle=Добре дошли в VIVI Music DE
+bulgarian.WelcomeTitle=Добре дошли в Axolotl Music
 bulgarian.WelcomeDesc=Изберете език, за да започнете. Можете да го промените по-късно от Настройки → Език.
-russian.WelcomeTitle=Добро пожаловать в VIVI Music DE
+russian.WelcomeTitle=Добро пожаловать в Axolotl Music
 russian.WelcomeDesc=Выберите язык, чтобы начать. Позже его можно изменить в Настройки → Язык.
-serbian.WelcomeTitle=Добродошли у VIVI Music DE
+serbian.WelcomeTitle=Добродошли у Axolotl Music
 serbian.WelcomeDesc=Изаберите језик да бисте почели. Касније га можете променити у Подешавања → Језик.
-ukrainian.WelcomeTitle=Ласкаво просимо до VIVI Music DE
+ukrainian.WelcomeTitle=Ласкаво просимо до Axolotl Music
 ukrainian.WelcomeDesc=Виберіть мову, щоб почати. Пізніше її можна змінити в Налаштування → Мова.
-hebrew.WelcomeTitle=ברוך הבא ל-VIVI Music DE
+hebrew.WelcomeTitle=ברוך הבא ל-Axolotl Music
 hebrew.WelcomeDesc=בחר את השפה שלך כדי להתחיל. תוכל לשנות אותה מאוחר יותר מהגדרות ← שפה.
-arabic.WelcomeTitle=مرحبًا بك في VIVI Music DE
+arabic.WelcomeTitle=مرحبًا بك في Axolotl Music
 arabic.WelcomeDesc=اختر لغتك للبدء. يمكنك تغييرها لاحقًا من الإعدادات ← اللغة.
-persian.WelcomeTitle=به VIVI Music DE خوش آمدید
+persian.WelcomeTitle=به Axolotl Music خوش آمدید
 persian.WelcomeDesc=برای شروع زبان خود را انتخاب کنید. می‌توانید بعداً از تنظیمات ← زبان تغییرش دهید.
-hindi.WelcomeTitle=VIVI Music DE में आपका स्वागत है
+hindi.WelcomeTitle=Axolotl Music में आपका स्वागत है
 hindi.WelcomeDesc=शुरू करने के लिए अपनी भाषा चुनें। आप इसे बाद में सेटिंग्स → भाषा से बदल सकते हैं।
-assamese.WelcomeTitle=VIVI Music DE লৈ আদৰণি
+assamese.WelcomeTitle=Axolotl Music লৈ আদৰণি
 assamese.WelcomeDesc=আৰম্ভ কৰিবলৈ আপোনাৰ ভাষা বাছনি কৰক। পিছত ছেটিংছ → ভাষা মেনুৰ পৰা সলনি কৰিব পাৰে।
-bengali.WelcomeTitle=VIVI Music DE-তে স্বাগতম
+bengali.WelcomeTitle=Axolotl Music-তে স্বাগতম
 bengali.WelcomeDesc=শুরু করতে আপনার ভাষা চয়ন করুন। পরে সেটিংস → ভাষা থেকে পরিবর্তন করতে পারেন।
-punjabi.WelcomeTitle=VIVI Music DE ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ
+punjabi.WelcomeTitle=Axolotl Music ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ
 punjabi.WelcomeDesc=ਸ਼ੁਰੂ ਕਰਨ ਲਈ ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ। ਤੁਸੀਂ ਇਸਨੂੰ ਬਾਅਦ ਵਿੱਚ ਸੈਟਿੰਗਾਂ → ਭਾਸ਼ਾ ਤੋਂ ਬਦਲ ਸਕਦੇ ਹੋ।
-tamil.WelcomeTitle=VIVI Music DE க்கு வரவேற்கிறோம்
+tamil.WelcomeTitle=Axolotl Music க்கு வரவேற்கிறோம்
 tamil.WelcomeDesc=தொடங்க உங்கள் மொழியைத் தேர்ந்தெடுக்கவும். பின்னர் அமைப்புகள் → மொழி என்பதிலிருந்து மாற்றலாம்.
-telugu.WelcomeTitle=VIVI Music DE కి స్వాగతం
+telugu.WelcomeTitle=Axolotl Music కి స్వాగతం
 telugu.WelcomeDesc=ప్రారంభించడానికి మీ భాషను ఎంచుకోండి. తరువాత సెట్టింగ్‌లు → భాష నుండి మార్చవచ్చు.
-malayalam.WelcomeTitle=VIVI Music DE ലേക്ക് സ്വാഗതം
+malayalam.WelcomeTitle=Axolotl Music ലേക്ക് സ്വാഗതം
 malayalam.WelcomeDesc=ആരംഭിക്കാൻ നിങ്ങളുടെ ഭാഷ തിരഞ്ഞെടുക്കുക. പിന്നീട് ക്രമീകരണങ്ങൾ → ഭാഷയിൽ നിന്ന് മാറ്റാം.
-thai.WelcomeTitle=ยินดีต้อนรับสู่ VIVI Music DE
+thai.WelcomeTitle=ยินดีต้อนรับสู่ Axolotl Music
 thai.WelcomeDesc=เลือกภาษาของคุณเพื่อเริ่มต้น คุณสามารถเปลี่ยนได้ในภายหลังจาก การตั้งค่า → ภาษา
-khmer.WelcomeTitle=ស្វាគមន៍មកកាន់ VIVI Music DE
+khmer.WelcomeTitle=ស្វាគមន៍មកកាន់ Axolotl Music
 khmer.WelcomeDesc=ជ្រើសរើសភាសារបស់អ្នកដើម្បីចាប់ផ្តើម។ អ្នកអាចផ្លាស់ប្តូរវានៅពេលក្រោយពីការកំណត់ → ភាសា។
-japanese.WelcomeTitle=VIVI Music DE へようこそ
+japanese.WelcomeTitle=Axolotl Music へようこそ
 japanese.WelcomeDesc=開始するには言語を選択してください。後で設定 → 言語から変更できます。
-chinesesimplified.WelcomeTitle=欢迎使用 VIVI Music DE
+chinesesimplified.WelcomeTitle=欢迎使用 Axolotl Music
 chinesesimplified.WelcomeDesc=选择您的语言以开始使用。之后可在设置 → 语言中更改。
-chinesetraditional.WelcomeTitle=歡迎使用 VIVI Music DE
+chinesetraditional.WelcomeTitle=歡迎使用 Axolotl Music
 chinesetraditional.WelcomeDesc=選擇您的語言以開始使用。之後可在設定 → 語言中變更。
-korean.WelcomeTitle=VIVI Music DE에 오신 것을 환영합니다
+korean.WelcomeTitle=Axolotl Music에 오신 것을 환영합니다
 korean.WelcomeDesc=시작하려면 언어를 선택하세요. 나중에 설정 → 언어에서 변경할 수 있습니다.; --- END GENERATED: welcome strings ---
 
 [Code]
@@ -511,7 +511,9 @@ begin
         if RegQueryStringValue(HKLM, RootKeys[J] + '\' + Names[I], 'DisplayName', DisplayName) and
            RegQueryStringValue(HKLM, RootKeys[J] + '\' + Names[I], 'UninstallString', UninstallString) then
         begin
-          if (Pos('VIVI', Uppercase(DisplayName)) > 0) and (Pos('MSIEXEC', Uppercase(UninstallString)) > 0) then
+          if ((Pos('VIVI', Uppercase(DisplayName)) > 0) or
+              (Pos('AXOLOTL', Uppercase(DisplayName)) > 0)) and
+             (Pos('MSIEXEC', Uppercase(UninstallString)) > 0) then
           begin
             Exec('msiexec.exe', '/x ' + Names[I] + ' /qn /norestart', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
           end;
@@ -546,7 +548,7 @@ end;
 // in %TEMP% so the record is never lost.
 function UninstallLogPath(): String;
 begin
-  Result := GetEnv('TEMP') + '\VIVIMusic-uninstall.log';
+  Result := GetEnv('TEMP') + '\AxolotlMusic-uninstall.log';
 end;
 
 procedure AddUninstallLine(const Line: String);
@@ -599,7 +601,7 @@ end;
 // Removes a Start Menu folder an older installer left under another name.
 //
 // The jpackage MSI, and the first versions of this installer, put the shortcuts
-// in a "VIVI Music" folder; this one uses "VIVI Music DE" (DefaultGroupName) and
+// in a "VIVI Music" folder; this one uses "Axolotl Music" (DefaultGroupName) and
 // keeps it on every upgrade (UsePreviousGroup=no). The leftovers of the other
 // name would otherwise sit next to the new entry forever. Only a folder that
 // really holds this app's shortcut is touched, and the removal is written to the
@@ -607,20 +609,28 @@ end;
 procedure RemoveStaleStartMenuGroup();
 var
   Roots: TArrayOfString;
-  I: Integer;
+  Names: TArrayOfString;
+  I, J: Integer;
   Folder: String;
 begin
   SetArrayLength(Roots, 2);
   Roots[0] := ExpandConstant('{commonprograms}');
   Roots[1] := ExpandConstant('{userprograms}');
+  SetArrayLength(Names, 2);
+  Names[0] := 'VIVI Music';
+  Names[1] := 'VIVI Music DE';
   for I := 0 to GetArrayLength(Roots) - 1 do begin
-    Folder := Roots[I] + '\VIVI Music';
-    if DirExists(Folder) then begin
-      if FileExists(Folder + '\VIVIMusic.lnk') or FileExists(Folder + '\VIVI Music.lnk') then begin
-        if DelTree(Folder, True, True, True) then
-          AddInstallLine('Removed the old Start Menu folder: ' + Folder)
-        else
-          AddInstallLine('Could not remove the old Start Menu folder: ' + Folder);
+    for J := 0 to GetArrayLength(Names) - 1 do begin
+      Folder := Roots[I] + '\' + Names[J];
+      if DirExists(Folder) then begin
+        if FileExists(Folder + '\VIVIMusic.lnk') or
+           FileExists(Folder + '\VIVI Music.lnk') or
+           FileExists(Folder + '\VIVI Music DE.lnk') then begin
+          if DelTree(Folder, True, True, True) then
+            AddInstallLine('Removed the old Start Menu folder: ' + Folder)
+          else
+            AddInstallLine('Could not remove the old Start Menu folder: ' + Folder);
+        end;
       end;
     end;
   end;
@@ -668,7 +678,7 @@ end;
   .vivide.backup) -> "YYYYMMDD_HHMMSS".
   The timestamp is always the last 15 characters before the extension, so
   comparing those strings is chronological even when the prefixes differ
-  (auto_backup_* vs vivimusic-de_*). }
+  (auto_backup_* vs axolotl-music_*). }
 function BackupTimestamp(const FileName: String): String;
 var
   Base: String;
@@ -1118,4 +1128,4 @@ begin
         'Log: ' + UninstallLogPath(),
         mbInformation, MB_OK);
   end;
-end;
+end;

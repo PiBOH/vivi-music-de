@@ -75,7 +75,7 @@ class BackupManager(
             ).getOrThrow()
 
             reportProgress(BackupOperationType.EXPORT, ++step, totalSteps,
-                "Backup complete", "Your VIVI Music DE backup was created successfully.")
+                "Backup complete", "Your Axolotl Music backup was created successfully.")
         }
     }
 

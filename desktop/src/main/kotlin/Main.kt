@@ -223,6 +223,9 @@ fun main(args: Array<String> = emptyArray()) {
     com.music.vivi.desktop.dev.YouTubePlaylistsCheck.handle(args)
     // Renders the new settings cards and the update dialog without a window.
     com.music.vivi.desktop.dev.CardsRenderCheck.handle(args)
+    // Proves the imported playback, history, queue, lyrics and Listen Together
+    // paths with the real graph instead of a compile.
+    com.music.vivi.desktop.dev.ImportedFeaturesCheck.handle(args)
     // Fills the same JSON store with the small Album/Playlist fixture used by the
     // visual checks, then exits before a window exists.
     DemoLibrarySeed.handle(args)
@@ -239,7 +242,7 @@ fun main(args: Array<String> = emptyArray()) {
     // One process per store: a second window would rewrite the same
     // device-sync.json from another in-memory snapshot.
     if (!com.music.vivi.desktop.utils.SingleInstanceGuard.acquire()) {
-        System.err.println("VIVI Music DE is already running.")
+        System.err.println("Axolotl Music is already running.")
         exitProcess(0)
     }
     val isBenchmark = args.contains("--benchmark-first-frame")

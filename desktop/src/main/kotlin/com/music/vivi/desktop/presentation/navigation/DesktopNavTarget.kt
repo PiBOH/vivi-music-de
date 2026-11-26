@@ -37,6 +37,10 @@ sealed interface DesktopNavTarget {
         override val rootDestination = DesktopNavDestination.HOME
     }
 
+    data object ListenTogether : DesktopNavTarget {
+        override val rootDestination = DesktopNavDestination.HOME
+    }
+
     data object Songs : DesktopNavTarget {
         override val rootDestination = DesktopNavDestination.SONGS
     }

@@ -137,6 +137,10 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(fetchOnlineLyrics = enabled) }
     }
 
+    override suspend fun setLyricsProviders(providers: List<String>) {
+        updateSettings { it.copy(lyricsProviders = providers.distinct()) }
+    }
+
     override suspend fun setArtistDelimiters(delimiters: List<String>) {
         updateSettings { it.copy(artistDelimiters = delimiters.distinct(), artistSettingsRescanRequired = true) }
     }
@@ -309,6 +313,39 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(showQueueHistory = show) }
     }
 
+    override suspend fun setAudioQuality(quality: String) {
+        val normalized = quality.lowercase().takeIf { it in setOf("auto", "high", "low") } ?: "auto"
+        updateSettings { it.copy(audioQuality = normalized) }
+    }
+
+    override suspend fun setAudioCacheEnabled(enabled: Boolean) {
+        updateSettings { it.copy(audioCacheEnabled = enabled) }
+    }
+
+    override suspend fun setAudioCacheLimitMb(limitMb: Int) {
+        updateSettings { it.copy(audioCacheLimitMb = limitMb.coerceIn(128, 10240)) }
+    }
+
+    override suspend fun setListenTogetherServerUrl(url: String) {
+        updateSettings { it.copy(listenTogetherServerUrl = url.trim()) }
+    }
+
+    override suspend fun setListenTogetherUsername(name: String) {
+        updateSettings { it.copy(listenTogetherUsername = name.trim().take(32)) }
+    }
+
+    override suspend fun setListenTogetherPartySize(size: Int) {
+        updateSettings { it.copy(listenTogetherPartySize = size.coerceIn(2, 10)) }
+    }
+
+    override suspend fun setListenTogetherSyncVolume(enabled: Boolean) {
+        updateSettings { it.copy(listenTogetherSyncVolume = enabled) }
+    }
+
+    override suspend fun setListenTogetherSmartResync(enabled: Boolean) {
+        updateSettings { it.copy(listenTogetherSmartResync = enabled) }
+    }
+
     override suspend fun setCloseToTray(enabled: Boolean) {
         updateSettings { it.copy(closeToTray = enabled) }
     }
@@ -478,17 +515,50 @@ class SettingsRepositoryImpl(
             if (settingsFile.exists()) {
                 val content = settingsFile.readText(Charsets.UTF_8)
                 val loaded = json.decodeFromString(UserSettings.serializer(), content)
-                loaded.copy(uiScale = loaded.uiScale.coerceIn(0.70f, 2.00f))
+                val migrated = migrateLyricsSources(loaded)
+                migrated.copy(uiScale = migrated.uiScale.coerceIn(0.70f, 2.00f))
             } else {
+                // A new profile starts with the online sources on; the marker says
+                // the migration already ran, so turning the switch off stays off.
                 val defaultSettings = UserSettings(
-                    musicDirectories = DesktopPathProvider.defaultMusicDirectories
+                    musicDirectories = DesktopPathProvider.defaultMusicDirectories,
+                    lyricsSourcesMigration = 1
                 )
                 saveSettingsToDiskSync(defaultSettings)
                 defaultSettings
             }
         } catch (e: Exception) {
-            UserSettings(musicDirectories = DesktopPathProvider.defaultMusicDirectories)
+            UserSettings(
+                musicDirectories = DesktopPathProvider.defaultMusicDirectories,
+                lyricsSourcesMigration = 1
+            )
         }
+    }
+
+    /**
+     * The profiles written before the imported sources landed can carry
+     * `fetchOnlineLyrics: false`, which makes every provider unreachable and was
+     * the reason the sources looked dead. A new profile starts with them on; an
+     * existing one is brought to the same state here, in the load path and not in
+     * the defaults, because the file already holds the old value.
+     *
+     * The change is one-time: [UserSettings.lyricsSourcesMigration] records that it
+     * ran, so a user who turns the switch off afterwards keeps it off. The source
+     * order the user chose is kept; only an empty list is filled from the default.
+     */
+    private fun migrateLyricsSources(loaded: UserSettings): UserSettings {
+        if (loaded.lyricsSourcesMigration >= 1) return loaded
+        val migrated = loaded.copy(
+            fetchOnlineLyrics = true,
+            lyricsProviders = loaded.lyricsProviders.ifEmpty { UserSettings().lyricsProviders },
+            lyricsSourcesMigration = 1
+        )
+        println(
+            "[settings] lyrics migration 1: fetchOnlineLyrics ${loaded.fetchOnlineLyrics} -> true, " +
+                "providers=${migrated.lyricsProviders.joinToString()} (${settingsFile.absolutePath})"
+        )
+        saveSettingsToDiskSync(migrated)
+        return migrated
     }
 
     private suspend fun saveSettingsToDisk(settings: UserSettings) = withContext(ioDispatcher) {

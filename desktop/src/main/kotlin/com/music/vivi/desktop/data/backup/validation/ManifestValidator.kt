@@ -22,7 +22,7 @@ class ManifestValidator {
         if (manifest.schemaVersion > BackupManifest.CURRENT_SCHEMA_VERSION) {
             errors.add(ValidationError(
                 code = "FUTURE_VERSION",
-                message = "Backup was created with a newer version of VIVI Music DE (v${manifest.schemaVersion}). Please update your app.",
+                message = "Backup was created with a newer version of Axolotl Music (v${manifest.schemaVersion}). Please update your app.",
                 severity = Severity.ERROR
             ))
         }

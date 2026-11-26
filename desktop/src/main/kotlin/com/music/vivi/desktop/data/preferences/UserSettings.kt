@@ -22,7 +22,25 @@ data class UserSettings(
     val isShuffleEnabled: Boolean = false,
     val repeatMode: Int = 0, // 0: OFF, 1: ALL, 2: ONE
     val fetchDeezerArtistImages: Boolean = false,
-    val fetchOnlineLyrics: Boolean = false,
+    // The imported mobile chain fetches online lyrics by default; the switch in
+    // Settings still turns it off and the sources below decide who is asked.
+    val fetchOnlineLyrics: Boolean = true,
+    // Online lyrics sources, in the mobile app's priority order. Musixmatch is
+    // included with the owner's authorization.
+    val lyricsProviders: List<String> = listOf(
+        "Musixmatch",
+        "YouLyPlus",
+        "Paxsenix",
+        "BetterLyrics",
+        "LrcLib",
+        "Kugou",
+        "Unison",
+        "SimpMusic"
+    ),
+    // 1 = the imported online sources were applied once. Profiles written before
+    // 1.56 can carry fetchOnlineLyrics=false; loadSettingsFromDisk turns them on
+    // the first time it sees this marker missing, then leaves later choices alone.
+    val lyricsSourcesMigration: Int = 0,
     val excludedDirectories: List<String> = emptyList(),
     val artistDelimiters: List<String> = listOf("/", ";", ",", "+", "&"),
     val wordDelimiters: List<String> = listOf("featuring", "feat.", "feat", "ft.", "ft", "vs.", "vs", "versus", "with", "prod.", "prod"),
@@ -50,6 +68,19 @@ data class UserSettings(
     val crossfadeDurationSeconds: Int = 3,
     val audioFadeOnPlayPause: Boolean = true,
     val showQueueHistory: Boolean = true,
+    // Catalogue audio quality: "auto" keeps the best available format,
+    // "high" prefers AAC 256 kbps and "low" prefers AAC 128 kbps.
+    val audioQuality: String = "auto",
+    // Keep played catalogue tracks on disk so the next play is local.
+    val audioCacheEnabled: Boolean = true,
+    val audioCacheLimitMb: Int = 1024,
+    // Listen Together: the relay, the name last used and the room cap the host
+    // enforces when a join request arrives.
+    val listenTogetherServerUrl: String = "wss://devilmi-vivi-music-listen-together.hf.space",
+    val listenTogetherUsername: String = "",
+    val listenTogetherPartySize: Int = 5,
+    val listenTogetherSyncVolume: Boolean = true,
+    val listenTogetherSmartResync: Boolean = true,
     val closeToTray: Boolean = false,
     val selectedAudioDevice: String = "auto",
     val equalizerEnabled: Boolean = false,

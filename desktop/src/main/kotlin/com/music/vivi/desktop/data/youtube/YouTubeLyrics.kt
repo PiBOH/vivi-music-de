@@ -37,14 +37,15 @@ class YouTubeLyrics(
             if (syncedRaw != null) {
                 val parsed = runCatching { LrcParser.parse(syncedRaw) }.getOrNull()
                 if (parsed != null && (!parsed.synced.isNullOrEmpty() || !parsed.plain.isNullOrEmpty())) {
-                    return@withContext parsed.copy(areFromRemote = true)
+                    return@withContext parsed.copy(areFromRemote = true, source = "SimpMusic")
                 }
             }
             val plainRaw = track.plainLyrics?.takeIf { it.isNotBlank() }
             if (plainRaw != null) {
                 return@withContext Lyrics(
                     plain = plainRaw.lines().map { it.trim() },
-                    areFromRemote = true
+                    areFromRemote = true,
+                    source = "SimpMusic"
                 )
             }
         }

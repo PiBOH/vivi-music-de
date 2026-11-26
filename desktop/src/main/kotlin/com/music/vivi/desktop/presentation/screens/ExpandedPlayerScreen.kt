@@ -560,6 +560,19 @@ fun ExpandedPlayerScreen(
                                                 color = colors.onSurface
                                             )
 
+                                            // The provider that answered, so the sources
+                                            // imported from the mobile app are visible.
+                                            val lyricsSource = playerInfo.lyrics?.source
+                                            if (!lyricsSource.isNullOrBlank()) {
+                                                val synced = !playerInfo.lyrics?.synced.isNullOrEmpty()
+                                                Text(
+                                                    text = "$lyricsSource · ${if (synced) "synced" else "plain"}",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = colors.onSurfaceVariant,
+                                                    modifier = Modifier.padding(start = 2.dp)
+                                                )
+                                            }
+
                                             AnimatedVisibility(
                                                 visible = lyricsStatusMessage != null,
                                                 enter = fadeIn() + expandHorizontally(),

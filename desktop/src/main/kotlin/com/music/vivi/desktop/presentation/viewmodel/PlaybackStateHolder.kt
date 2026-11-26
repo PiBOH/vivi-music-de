@@ -26,6 +26,7 @@ import com.music.vivi.desktop.data.model.Lyrics
 import com.music.vivi.desktop.data.model.PlayerInfo
 import com.music.vivi.desktop.data.model.QueueItem
 import com.music.vivi.desktop.data.model.Song
+import com.music.vivi.desktop.data.player.PlaybackAudioCache
 import com.music.vivi.desktop.data.player.PlaybackTarget
 import com.music.vivi.desktop.data.player.PlaybackUriResolver
 import com.music.vivi.desktop.data.player.QueueManager
@@ -47,6 +48,7 @@ class PlaybackStateHolder(
     private val settingsRepository: SettingsRepository,
     private val listeningStatsTracker: DesktopListeningStatsTracker = DesktopListeningStatsTracker(musicRepository),
     private val playbackUriResolver: PlaybackUriResolver? = null,
+    private val audioCache: PlaybackAudioCache? = null,
     val sleepTimerSession: SleepTimerSession = SleepTimerSession(),
     private val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 ) {
@@ -66,6 +68,18 @@ class PlaybackStateHolder(
                 persistResumePoint()
             }
         }
+        coroutineScope.launch {
+            combine(queueManager.queue, queueManager.currentIndex) { queue, index -> queue to index }
+                .distinctUntilChanged { (oldQueue, oldIndex), (newQueue, newIndex) ->
+                    oldIndex == newIndex && oldQueue.map { it.id } == newQueue.map { it.id }
+                }
+                .collectLatest { (queue, index) ->
+                    delay(1200)
+                    if (queueRestored) {
+                        runCatching { musicRepository.savePlaybackQueue(queue, index) }
+                    }
+                }
+        }
     }
 
     /**
@@ -73,11 +87,20 @@ class PlaybackStateHolder(
      * the transport is left to the user, only the queue and the seek are restored.
      */
     private suspend fun restoreLastPlayback() {
-        val resume = runCatching { musicRepository.getPlaybackResumePoint() }.getOrNull() ?: return
-        if (queueManager.currentSong.value != null) return
-        val (song, position) = resume
-        queueManager.setQueue(listOf(song), 0)
-        playResolved(song)
+        try {
+            if (queueManager.currentSong.value != null) return
+            val savedQueue = runCatching { musicRepository.getPlaybackQueue() }.getOrNull()
+            val resume = runCatching { musicRepository.getPlaybackResumePoint() }.getOrNull()
+
+            val (song, position) = if (savedQueue != null && savedQueue.first.isNotEmpty()) {
+                val index = savedQueue.second.coerceIn(0, savedQueue.first.lastIndex)
+                queueManager.setQueue(savedQueue.first, index)
+                val target = savedQueue.first[index]
+                target to (resume?.takeIf { it.first.id == target.id }?.second ?: 0L)
+            } else {
+                resume ?: return
+            }
+            playResolved(song)
         // Wait for the engine to actually open the track, then pause it: a fixed
         // delay would leave a YouTube stream playing when resolution is slow.
         var waited = 0
@@ -85,8 +108,13 @@ class PlaybackStateHolder(
             delay(200)
             waited += 200
         }
-        audioEngine.pause()
-        if (position > 0L) audioEngine.seekTo(position)
+            audioEngine.pause()
+            if (position > 0L) audioEngine.seekTo(position)
+        } finally {
+            // The queue writer must not persist the empty initial state over the
+            // queue read from disk while the restore is still running.
+            queueRestored = true
+        }
     }
 
     private fun persistResumePoint() {
@@ -135,6 +163,79 @@ class PlaybackStateHolder(
         .map { it.showQueueHistory }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
 
+    val audioQuality: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.audioQuality }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "auto")
+
+    val audioCacheEnabled: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.audioCacheEnabled }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val audioCacheLimitMb: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.audioCacheLimitMb }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 1024)
+
+    val listenTogetherServerUrl: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.listenTogetherServerUrl }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "")
+
+    val listenTogetherUsername: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.listenTogetherUsername }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "")
+
+    val listenTogetherPartySize: StateFlow<Int> = settingsRepository.settingsFlow
+        .map { it.listenTogetherPartySize }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, 5)
+
+    val listenTogetherSyncVolume: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.listenTogetherSyncVolume }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val listenTogetherSmartResync: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.listenTogetherSmartResync }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    /**
+     * True while the user is a guest in a Listen Together room: the host owns
+     * the transport, so local play/pause/seek/skip must not fight it.
+     */
+    @Volatile
+    var userControlLocked: Boolean = false
+
+    @Volatile
+    private var queueRestored = false
+
+    @Volatile
+    private var remoteAction = false
+
+    /** Runs a transport change the remote host asked for, past the guest lock. */
+    fun <T> asRemote(block: () -> T): T {
+        remoteAction = true
+        return try {
+            block()
+        } finally {
+            remoteAction = false
+        }
+    }
+
+    private val _audioCacheSizeBytes = MutableStateFlow(0L)
+    val audioCacheSizeBytes: StateFlow<Long> = _audioCacheSizeBytes.asStateFlow()
+
+    fun refreshAudioCacheSize() {
+        val cache = audioCache ?: return
+        coroutineScope.launch {
+            _audioCacheSizeBytes.value = runCatching { cache.sizeBytes() }.getOrDefault(0L)
+        }
+    }
+
+    fun clearAudioCache() {
+        val cache = audioCache ?: return
+        coroutineScope.launch {
+            runCatching { cache.clear() }
+            _audioCacheSizeBytes.value = 0L
+        }
+    }
+
     val closeToTray: StateFlow<Boolean> = settingsRepository.settingsFlow
         .map { it.closeToTray }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
@@ -161,6 +262,38 @@ class PlaybackStateHolder(
 
     fun setShowQueueHistory(show: Boolean) {
         coroutineScope.launch { settingsRepository.setShowQueueHistory(show) }
+    }
+
+    fun setAudioQuality(quality: String) {
+        coroutineScope.launch { settingsRepository.setAudioQuality(quality) }
+    }
+
+    fun setAudioCacheEnabled(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setAudioCacheEnabled(enabled) }
+    }
+
+    fun setAudioCacheLimitMb(limitMb: Int) {
+        coroutineScope.launch { settingsRepository.setAudioCacheLimitMb(limitMb) }
+    }
+
+    fun setListenTogetherServerUrl(url: String) {
+        coroutineScope.launch { settingsRepository.setListenTogetherServerUrl(url) }
+    }
+
+    fun setListenTogetherUsername(name: String) {
+        coroutineScope.launch { settingsRepository.setListenTogetherUsername(name) }
+    }
+
+    fun setListenTogetherPartySize(size: Int) {
+        coroutineScope.launch { settingsRepository.setListenTogetherPartySize(size) }
+    }
+
+    fun setListenTogetherSyncVolume(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setListenTogetherSyncVolume(enabled) }
+    }
+
+    fun setListenTogetherSmartResync(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setListenTogetherSmartResync(enabled) }
     }
 
     fun setCloseToTray(enabled: Boolean) {
@@ -362,7 +495,9 @@ class PlaybackStateHolder(
                 songId = currentSong.id,
                 songPath = currentSong.path,
                 title = currentSong.title,
-                artist = currentSong.artist
+                artist = currentSong.artist,
+                durationMs = currentSong.duration,
+                album = currentSong.album
             )
             _playerInfo.update { it.copy(lyrics = fresh, lyricsSyncOffsetMs = 0) }
             _lyricsSearchUiState.value = LyricsSearchUiState.Idle
@@ -483,7 +618,14 @@ class PlaybackStateHolder(
                 }
                 if (song != null) {
                     scheduleTransitionFor(song)
-                    val lyrics = lyricsRepository.getLyrics(song.id, song.path, song.title, song.artist)
+                    val lyrics = lyricsRepository.getLyrics(
+                        song.id,
+                        song.path,
+                        song.title,
+                        song.artist,
+                        song.duration,
+                        song.album
+                    )
                     _playerInfo.update {
                         it.copy(
                             lyrics = lyrics,
@@ -781,11 +923,13 @@ class PlaybackStateHolder(
     }
 
     fun playSong(song: Song) {
+        if (userControlLocked && !remoteAction) return
         queueManager.playSong(song)
         playResolved(song)
     }
 
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
+        if (userControlLocked && !remoteAction) return
         val target = queueManager.setQueue(songs, startIndex)
         if (target != null) {
             playResolved(target)
@@ -799,6 +943,7 @@ class PlaybackStateHolder(
     }
 
     fun togglePlayPause() {
+        if (userControlLocked && !remoteAction) return
         if (audioEngine.playbackState.value == PlaybackState.PLAYING) {
             audioEngine.pause()
             persistResumePoint()
@@ -817,6 +962,7 @@ class PlaybackStateHolder(
     }
 
     fun playNext() {
+        if (userControlLocked && !remoteAction) return
         val next = queueManager.getNextSong()
         if (next != null) {
             playResolved(next)
@@ -827,6 +973,7 @@ class PlaybackStateHolder(
     }
 
     fun playPrevious() {
+        if (userControlLocked && !remoteAction) return
         val prev = queueManager.getPreviousSong(audioEngine.currentPositionMs.value)
         if (prev != null) {
             playResolved(prev)
@@ -834,6 +981,7 @@ class PlaybackStateHolder(
     }
 
     fun seekTo(positionMs: Long) {
+        if (userControlLocked && !remoteAction) return
         audioEngine.seekTo(positionMs)
         val song = queueManager.currentSong.value
         if (song != null && crossfadeEnabled.value) {

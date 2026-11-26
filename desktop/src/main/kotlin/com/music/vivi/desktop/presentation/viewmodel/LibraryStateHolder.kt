@@ -112,6 +112,10 @@ class LibraryStateHolder(
         .map { LyricsSourcePreference.fromStorageKey(it.lyricsSourcePreference) }
         .stateIn(coroutineScope, SharingStarted.Eagerly, LyricsSourcePreference.EMBEDDED_FIRST)
 
+    val lyricsProviders: StateFlow<List<String>> = settingsRepository.settingsFlow
+        .map { it.lyricsProviders }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
+
     val musicDirectories: StateFlow<List<String>> = settingsRepository.settingsFlow
         .map { it.musicDirectories }
         .stateIn(coroutineScope, SharingStarted.Eagerly, emptyList())
@@ -460,6 +464,12 @@ class LibraryStateHolder(
     fun setLyricsSourcePreference(preference: LyricsSourcePreference) {
         coroutineScope.launch {
             settingsRepository.setLyricsSourcePreference(preference)
+        }
+    }
+
+    fun setLyricsProviders(providers: List<String>) {
+        coroutineScope.launch {
+            settingsRepository.setLyricsProviders(providers)
         }
     }
 

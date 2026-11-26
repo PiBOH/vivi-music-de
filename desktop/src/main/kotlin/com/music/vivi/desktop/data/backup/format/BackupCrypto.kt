@@ -48,7 +48,7 @@ object BackupCrypto {
 
     fun decryptingStream(raw: InputStream, passphrase: String): InputStream {
         val marker = readFully(raw, ENC_MARKER.size)
-        require(marker.contentEquals(ENC_MARKER)) { "Not an encrypted VIVI Music DE backup." }
+        require(marker.contentEquals(ENC_MARKER)) { "Not an encrypted Axolotl Music backup." }
         val salt = readFully(raw, SALT_BYTES)
         val iv = readFully(raw, IV_BYTES)
         val iterations = ByteBuffer.wrap(readFully(raw, 4)).int
