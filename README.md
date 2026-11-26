@@ -25,21 +25,21 @@
   </p>
 
   <p>
-    <b>Windows</b> · <b>Linux</b> · <b>macOS</b> — the Desktop Edition of VIVI Music,<br>
+    <b>Windows</b> · <b>Linux</b> · <b>macOS</b> — the desktop edition of Axolotl Music,<br>
     synced with your phone.
   </p>
 </div>
 
 <hr>
 
-<h2>🎵 About VIVI Music DE</h2>
+<h2>🎵 About Axolotl Music</h2>
 
 <table align="center" width="100%">
   <tr valign="middle">
     <td width="60%" align="left">
-      <p>✨ <b>VIVI Music DE</b> is the native desktop edition of <a href="https://github.com/vivizzz007/vivi-music">VIVI Music</a> — a premium, modern music player built for Windows, Linux and macOS. It keeps the exact Material 3 design of the mobile app and adapts it to the desktop with a collapsible sidebar, a full player, synced lyrics, and an Apple Music–style mini-player.</p>
+      <p>✨ <b>Axolotl Music</b> is the native desktop edition of <a href="https://github.com/vivizzz007/vivi-music">VIVI Music</a> — a premium, modern music player built for Windows, Linux and macOS. It keeps the exact Material 3 design of the mobile app and adapts it to the desktop with a collapsible sidebar, a full player, synced lyrics, and an Apple Music–style mini-player.</p>
 <p><b>Platform testing note:</b> the lead developer (<a href="https://github.com/PiBOH">@PiBOH</a>) can currently test DE only on Windows. Therefore Windows has naturally received the most compatibility testing and platform-specific attention; Linux and macOS builds are produced by CI and may need additional community testing.</p>
-      <p>Its defining feature is <b>cross-device sync</b>: pair it with the VIVI Music app on your phone and your playback, seek position, settings and library follow you from one device to the other — instantly, over the same Wi-Fi or a cloud relay.</p>
+      <p>Its defining feature is <b>cross-device sync</b>: pair it with the Axolotl Music app on your phone and your playback, seek position, settings and library follow you from one device to the other — instantly, over the same Wi-Fi or a cloud relay.</p>
       <blockquote>
         <b>🎵 Your music, your aesthetic — on every screen you own.</b>
       </blockquote>
@@ -62,7 +62,7 @@
   <tr valign="top">
     <td width="33%" align="center">
       <b>🪟 Windows 10+</b><br>
-      <small>Inno Setup installer (<code>.exe</code>) and <code>.msi</code><br>installs to <code>C:\Program Files\VIVIMusic</code></small>
+      <small>Inno Setup installer (<code>.exe</code>) and <code>.msi</code><br>installs to <code>C:\Program Files\AxolotlMusic</code></small>
     </td>
     <td width="33%" align="center">
       <b>🐧 Linux</b><br>
@@ -142,7 +142,7 @@
 
 <h2>🔗 Pairing with your phone</h2>
 
-<p>VIVI Music DE syncs with the <a href="https://github.com/PiBOH/axolotl-music/releases/latest">VIVI Music</a> Android app:</p>
+<p>Axolotl Music syncs with its <a href="https://github.com/PiBOH/axolotl-music/releases/latest">Android app</a>:</p>
 
 <ol>
   <li>On the desktop, open <strong>Settings → Device sync</strong> and tap <strong>Start LAN server</strong> (same Wi-Fi), or connect to a relay server.</li>
@@ -190,7 +190,7 @@
 
 <h2>🛡️ Privacy &amp; Data Collection</h2>
 
-<p>At <strong>VIVI Music DE</strong>, your privacy is our top priority. Your music and data belong exclusively to you.</p>
+<p>At <strong>Axolotl Music</strong>, your privacy is our top priority. Your music and data belong exclusively to you.</p>
 
 <ul>
   <li><strong>Zero data collection:</strong> we do <strong>not</strong> collect, store, or share your personal information, usage habits, or listening history.</li>
@@ -206,7 +206,7 @@
 
 <p>Any trademark, service mark, trade name, or other intellectual property rights used in this project are owned by their respective owners.</p>
 
-<p><strong>VIVI Music DE</strong> is an independent project created for educational and personal use purposes.</p>
+<p><strong>Axolotl Music</strong> is an independent project created for educational and personal use purposes.</p>
 
 <hr>
 
@@ -242,7 +242,7 @@
 
   <h2>🙏 Special Thanks &amp; Credits </h2>
 
-  <p>VIVI Music DE is built upon the foundation of amazing open-source projects and developers:</p>
+  <p>Axolotl Music is built upon the foundation of amazing open-source projects and developers:</p>
   <br>
 
   <table border="0" cellpadding="10" cellspacing="0" width="90%">
@@ -250,8 +250,8 @@
       <td width="50%" align="left">
         <b>💡 Special Thanks</b>
         <ul>
-          <li><strong><a href="https://github.com/vivizzz007/vivi-music">vivizzz007</a></strong> – the original Android app that VIVI Music DE ports to the desktop.</li>
-          <li><strong><a href="https://github.com/PiBOH">@PiBOH</a></strong> – for having created and maintaining VIVI Music DE.</li>
+          <li><strong><a href="https://github.com/vivizzz007/vivi-music">vivizzz007</a></strong> – the original Android app that Axolotl Music ports to the desktop.</li>
+          <li><strong><a href="https://github.com/PiBOH">@PiBOH</a></strong> – for having created and maintaining Axolotl Music.</li>
           <li><strong><a href="https://github.com/mostafaalagamy">Mostafa Alagamy</a></strong> – inspiration and contributions to the open source community.</li>
           <li><strong><a href="https://github.com/ZemerTeam/zemer-cipher">@Zemer</a></strong> – for inventing the new playback method! 🎉</li>
         </ul>
@@ -272,5 +272,5 @@
   <p align="center"><strong>Thank you to all the amazing developers who made this project possible!</strong></p>
   <hr width="60%">
   <p align="center"><strong>Made with ❤️ for music lovers everywhere</strong></p>
-  <p align="center">⭐ Star this repo if you enjoy VIVI Music DE!</p>
+  <p align="center">⭐ Star this repo if you enjoy Axolotl Music!</p>
 </div>
