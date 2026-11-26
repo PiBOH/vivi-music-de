@@ -1,12 +1,12 @@
-# VIVI Music DE — Installation Guide
+# Axolotl Music — Installation Guide
 
-VIVI Music DE is the native desktop edition of
+Axolotl Music is the native desktop edition of
 [VIVI Music](https://github.com/vivizzz007/vivi-music) (YouTube Music client),
 built with Kotlin and Compose Multiplatform. It runs on **Windows 10+**,
 **Linux (x86_64)** and **macOS 10.15+**.
 
 > **Where to download:** all installers are attached to the
-> [GitHub Releases](https://github.com/PiBOH/vivi-music/releases) page. Pick
+> [GitHub Releases](https://github.com/PiBOH/axolotl-music/releases) page. Pick
 > the latest version, then grab the file for your system below.
 
 ---
@@ -48,10 +48,10 @@ user-friendly). The `.msi` is provided for silent / enterprise deployments.
 
 ### Option A — Installer (.exe, recommended)
 
-1. Download `VIVIMusic-…-x64.exe` from the
-   [Releases](https://github.com/PiBOH/vivi-music/releases) page.
+1. Download `AxolotlMusic-…-x64.exe` from the
+   [Releases](https://github.com/PiBOH/axolotl-music/releases) page.
 2. Double-click the file and follow the wizard.
-3. The app installs to `C:\Program Files\VIVIMusic` and starts when the wizard
+3. The app installs to `C:\Program Files\AxolotlMusic` and starts when the wizard
    finishes (or launch it from the Start menu / desktop shortcut).
 
 ### Option B — MSI package (.msi)
@@ -60,21 +60,23 @@ user-friendly). The `.msi` is provided for silent / enterprise deployments.
 2. Double-click to install, or deploy silently with:
 
    ```powershell
-   msiexec /i VIVIMusic-….msi /qn
+   msiexec /i AxolotlMusic-….msi /qn
    ```
 
 3. Launch from the Start menu.
 
 ### Uninstall
 
-Open **Settings → Apps → Installed apps**, find **VIVI Music**, and choose
-*Uninstall* — or run the uninstaller from `C:\Program Files\VIVIMusic`.
+Open **Settings → Apps → Installed apps**, find **Axolotl Music**, and choose
+*Uninstall* — or run the uninstaller from `C:\Program Files\AxolotlMusic`.
 
 > Installed updates are cached under `~/.vivimusic/updates/` and cleaned up
 > automatically after 7 days.
 >
-**On uninstall, only two things survive**: the **newest `.vivide.backup`** (a
-full restore point with your settings and playlists) and
+**On uninstall, only two things survive**: the **newest full backup**
+(`.vivide.lbkp`, or a legacy `.vivide.bkp` / `.vivide.backup`; a section
+export with `.vivide.sbkp`, `.vivide.sections` or `.pxpl` is not a restore
+point) and
 `%USERPROFILE%\.vivimusic\device-sync.json`. Everything else in
 `~/.vivimusic` is deleted — downloaded updates, audio, video/canvas and lyrics
 caches, logs, imported fonts, playlists.json and every older backup.
@@ -83,64 +85,87 @@ caches, logs, imported fonts, playlists.json and every older backup.
 
 ## Linux
 
-Three ways to install, depending on your distribution.
+Four ways to install, depending on your distribution.
 
 ### Option A — Debian / Ubuntu (.deb)
 
 Works on Debian, Ubuntu and their derivatives.
 
 ```bash
-sudo apt install ./VIVIMusic-….deb
+sudo apt install ./AxolotlMusic-….deb
 ```
 
 or:
 
 ```bash
-sudo dpkg -i VIVIMusic-….deb && sudo apt-get install -f
+sudo dpkg -i AxolotlMusic-….deb && sudo apt-get install -f
 ```
 
-Launch **VIVI Music DE** from your application menu.
+Launch **Axolotl Music** from your application menu.
 
-### Option B — AppImage (any distro, portable)
+### Option B — Fedora / RHEL / openSUSE (.rpm)
+
+Works on Fedora and any other RPM-based distribution (RHEL, openSUSE). The
+package is self-contained: it bundles its own runtime, so no system Java is
+needed.
+
+```bash
+sudo dnf install ./AxolotlMusic-….rpm
+```
+
+On openSUSE use `sudo zypper install ./AxolotlMusic-….rpm` instead. Everything is
+installed under `/opt/vivi-music-de`, with a `vivi-music-de` launcher, a desktop
+entry in the applications menu and an icon in the hicolor theme.
+
+### Option C — AppImage (any distro, portable)
 
 Works on most distributions, including Arch and Fedora.
 
 ```bash
-chmod +x VIVIMusic-….AppImage
-./VIVIMusic-….AppImage
+chmod +x AxolotlMusic-….AppImage
+./AxolotlMusic-….AppImage
 ```
 
 If your system blocks AppImages (no FUSE), extract and run it instead:
 
 ```bash
-./VIVIMusic-….AppImage --appimage-extract
+./AxolotlMusic-….AppImage --appimage-extract
 ./squashfs-root/AppRun
 ```
 
 ### Uninstall (Linux)
 
 - **.deb**: uninstall normally with `sudo apt remove vivimusic` / `sudo dpkg -r`.
-  The package's `postrm` hook keeps only the newest
-  `~/.vivimusic/backups/*.vivide.backup` (a full restore point with settings and
-  playlists) plus `~/.vivimusic/device-sync.json`, and deletes everything else
+  The package's `postrm` hook keeps only the newest full backup
+  (`~/.vivimusic/backups/*.vivide.lbkp`, or a legacy `*.vivide.bkp` /
+  `*.vivide.backup`, a restore
+  point with settings and playlists) plus `~/.vivimusic/device-sync.json`,
+  and deletes everything else
   (`~/.vivimusic/updates`, audio, video/canvas and lyrics caches, logs, fonts,
   playlists.json, older backups).
 - **AppImage**: delete the file. To clean your user data the same way, run:
   `sh scripts/uninstall-cleanup.sh` from this repo (or the script shipped in
   the release).
+- **.rpm**: uninstall with `sudo dnf remove vivi-music-de` (`sudo zypper remove
+  vivi-music-de` on openSUSE). The package's `%postun` scriptlet runs the same
+  cleanup as the `.deb` one — newest backup plus `device-sync.json` kept, every
+  cache removed.
 - **AUR**: `pacman -R vivi-music-de` runs the same cleanup automatically via
   the package's `post_remove` hook.
 
-### Option C — Arch Linux (AUR-style PKGBUILD)
+### Option D — Arch Linux (AUR-style PKGBUILD)
 
-Every release also ships a **`PKGBUILD`** (plus `SRCINFO` and an uninstall
-hook `vivi-music-de.install`) as release assets.
+Every release also ships a **`AxolotlMusic-….AUR.tar.gz`** archive holding the
+**`PKGBUILD`**, its `SRCINFO` and the uninstall hook (`vivi-music-de.install`).
+They travel together because `makepkg` needs the hook file next to the
+`PKGBUILD` (that is what `install=` points at).
 To build and install a proper system package:
 
 ```bash
-# 1. Create a directory, put the PKGBUILD from the release assets inside it
-mkdir vivi-music-de && cd vivi-music-de
-# 2. Copy the PKGBUILD file from the release assets here, then:
+# 1. Download the .AUR.tar.gz from the release assets and extract it
+mkdir vivi-music-de && tar -xzf AxolotlMusic-….AUR.tar.gz -C vivi-music-de
+cd vivi-music-de
+# 2. The three files are side by side now
 makepkg -si
 ```
 
@@ -162,7 +187,7 @@ Two formats are published (Intel and Apple Silicon builds separately).
 ### Option A — Disk image (.dmg)
 
 1. Download the `.dmg` for your architecture.
-2. Open it and drag **VIVI Music** into the **Applications** folder.
+2. Open it and drag **Axolotl Music** into the **Applications** folder.
 3. Launch from Applications. If macOS warns that the app is from an
    unidentified developer (it's not notarized), right-click the app → **Open**
    → **Open** again, or run:
@@ -178,17 +203,22 @@ Two formats are published (Intel and Apple Silicon builds separately).
 
 ### Uninstall
 
-Drag `VIVI Music.app` from **Applications** to the Trash, then clean your user
-data the same way Windows/Linux do — keep only the newest `.vivide.backup`
-(settings + playlists) and `device-sync.json`, and delete everything else:
+Drag `Axolotl Music.app` from **Applications** to the Trash, then clean your user
+data the same way Windows/Linux do — keep only the newest full backup
+(`.vivide.lbkp`, or a legacy `.vivide.bkp` / `.vivide.backup`; settings +
+playlists) and
+`device-sync.json`, and delete everything else:
 
 ```bash
 sh scripts/uninstall-cleanup.sh        # from this repo (or the release assets)
 ```
 
-What remains: `~/.vivimusic/device-sync.json` and the newest
-`~/.vivimusic/backups/*.vivide.backup`; all caches (updates, audio,
-video/canvas, lyrics, logs), fonts, playlists.json and older backups are removed.
+What remains: `~/.vivimusic/device-sync.json` and the newest full backup in
+`~/.vivimusic/backups/*.vivide.lbkp` (or a legacy `*.vivide.bkp` /
+`*.vivide.backup`); all caches
+(updates, audio, video/canvas, lyrics, logs), fonts, playlists.json and older
+backups are removed, including every `.vivide.sbkp` or `.vivide.sections`
+export.
 
 ---
 
@@ -204,7 +234,7 @@ video/canvas, lyrics, logs), fonts, playlists.json and older backups are removed
    the app. The session is stored only on this device.
 
 > Pairing with the Android app (LAN or cloud) is covered in the **Sync**
-> section of the app and on the [website](https://piboh.github.io/vivi-music/sync.html).
+> section of the app and on the [website](https://piboh.github.io/axolotl-music/sync.html).
 
 ---
 
@@ -214,7 +244,7 @@ video/canvas, lyrics, logs), fonts, playlists.json and older backups are removed
   new installer downloads (with progress) and opens for you — on Windows the
   `.exe` is preferred over the `.msi`.
 - **Manual:** download the latest installer from
-  [GitHub Releases](https://github.com/PiBOH/vivi-music/releases) and install
+  [GitHub Releases](https://github.com/PiBOH/axolotl-music/releases) and install
   over the current version. Your settings, library and playlists are kept.
 
 ---
@@ -247,6 +277,6 @@ On Windows `~` is `C:\Users\<you>`, on Linux/macOS it's `/home/<you>` /
 
 ---
 
-*VIVI Music DE — free software under a
-[modified GPL-3.0](https://github.com/PiBOH/vivi-music/blob/vivi-music-de/LICENSE) license. The original
+*Axolotl Music — free software under a
+[modified GPL-3.0](https://github.com/PiBOH/axolotl-music/blob/vivi-music-de/LICENSE) license. The original
 mobile app is created by [VIVIDH P ASHOKAN](https://github.com/vivizzz007).*
