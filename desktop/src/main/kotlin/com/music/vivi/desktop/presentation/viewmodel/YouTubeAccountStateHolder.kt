@@ -60,15 +60,18 @@ data class YouTubeAccountUiState(
  * the running app already uses the new identity.
  */
 class YouTubeAccountStateHolder(
-    private val coroutineScope: CoroutineScope
+    private val coroutineScope: CoroutineScope,
+    restoreOnInit: Boolean = true
 ) {
 
     private val _state = MutableStateFlow(YouTubeAccountUiState(isSignedIn = YouTubeAccount.isSignedIn))
     val state: StateFlow<YouTubeAccountUiState> = _state.asStateFlow()
 
     init {
-        YouTubeAccount.restore()
-        refresh()
+        if (restoreOnInit) {
+            YouTubeAccount.restore()
+            refresh()
+        }
     }
 
     /** Re-reads the session and, when signed in, verifies the account it belongs to. */

@@ -36,6 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -413,7 +414,8 @@ private fun JoinPartyCard(
             onValueChange = onCodeChange,
             label = "Party code",
             placeholder = "ABC123",
-            monospace = true
+            monospace = true,
+            modifier = Modifier.testTag("lt-join-code")
         )
 
         FilledTonalButton(
@@ -718,7 +720,8 @@ private fun PartyTextField(
     onValueChange: (String) -> Unit,
     label: String,
     placeholder: String,
-    monospace: Boolean = false
+    monospace: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     androidx.compose.material3.OutlinedTextField(
         value = value,
@@ -731,6 +734,7 @@ private fun PartyTextField(
             fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
             letterSpacing = if (monospace) 4.sp else 0.sp
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     )
 }
+

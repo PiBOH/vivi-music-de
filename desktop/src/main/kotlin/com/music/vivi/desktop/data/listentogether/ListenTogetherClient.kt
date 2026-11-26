@@ -303,6 +303,10 @@ class ListenTogetherClient(
     private var connectStartedAt = 0L
     private var pingSentAt = 0L
 
+    /** Last code a join attempt carried, for the widget-to-manager test. */
+    internal var lastJoinCodeForTest: String? = null
+        private set
+
     private val pendingMessages = ConcurrentLinkedQueue<String>()
 
     val isInRoom: Boolean get() = _roomState.value != null
@@ -424,6 +428,7 @@ class ListenTogetherClient(
 
     fun joinRoom(code: String, name: String) {
         abandonSession()
+        lastJoinCodeForTest = code.trim().uppercase()
         username = name.trim()
         _busy.value = true
         send(
@@ -432,6 +437,22 @@ class ListenTogetherClient(
                 json.encodeToJsonElement(LtJoinRoom(code.trim().uppercase(), username))
             )
         )
+    }
+
+    /**
+     * Seeds the room state for a UI test, so the screen's room branch can be
+     * exercised without a relay. Runtime behaviour is unchanged.
+     */
+    internal fun installRoomStateForTest(
+        state: LtRoomState?,
+        role: LtRoomRole = LtRoomRole.GUEST,
+        connection: LtConnectionState = LtConnectionState.CONNECTED
+    ) {
+        _roomState.value = state
+        _role.value = role
+        _connectionState.value = connection
+        _serverOnline.value = connection == LtConnectionState.CONNECTED
+        _busy.value = false
     }
 
     fun leaveRoom() {

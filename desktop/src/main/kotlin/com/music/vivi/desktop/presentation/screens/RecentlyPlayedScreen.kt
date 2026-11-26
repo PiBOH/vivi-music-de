@@ -57,6 +57,7 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -124,7 +125,7 @@ fun RecentlyPlayedScreen(
         Column(modifier = Modifier.fillMaxSize()) {
             LazyColumn(
                 state = lazyListState,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth().testTag("history-list"),
                 contentPadding = PaddingValues(bottom = 28.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
@@ -236,7 +237,8 @@ private fun RecentlyPlayedRangeSelector(
             RecentlyPlayedRangeChip(
                 label = range.displayName,
                 selected = selected == range,
-                onClick = { onRangeSelected(range) }
+                onClick = { onRangeSelected(range) },
+                modifier = Modifier.testTag("history-range-${range.name.lowercase()}")
             )
         }
     }
@@ -353,7 +355,8 @@ private fun RecentlyPlayedActions(
             onClick = onPlay,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .testTag("history-play-latest"),
             shape = RoundedCornerShape(
                 topStart = cornerSize,
                 topEnd = 14.dp,
@@ -378,7 +381,8 @@ private fun RecentlyPlayedActions(
             onClick = onShuffle,
             modifier = Modifier
                 .weight(1f)
-                .fillMaxSize(),
+                .fillMaxSize()
+                .testTag("history-shuffle"),
             shape = RoundedCornerShape(
                 topStart = 14.dp,
                 topEnd = cornerSize,

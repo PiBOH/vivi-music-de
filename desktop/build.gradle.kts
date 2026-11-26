@@ -1,3 +1,5 @@
+@file:OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import java.net.URI
 
@@ -118,6 +120,7 @@ dependencies {
     // Testing
     testImplementation(kotlin("test-junit5"))
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+    testImplementation(compose.uiTest)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
