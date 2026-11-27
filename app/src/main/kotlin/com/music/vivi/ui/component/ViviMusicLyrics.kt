@@ -46,7 +46,7 @@ import com.music.vivi.utils.rememberPreference
 import kotlinx.coroutines.delay
 
 /**
- * Apple Music style lyrics animation — ViviMusic_1
+ * Apple Music style lyrics animation — classic 1.55
  * Features:
  * - Word-by-word fill with spring easing (FastOutSlowInEasing)
  * - Spring-based scale with gentle bounce on activation

@@ -525,7 +525,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             "APPEARANCE",
             go("theme", "Theme", "Mode, accent and palette", SettingsSection.V155_THEME),
             go("playerDesign", "Player & mini-player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
-            go("canvas", "ViviMusic Canvas", "Animated artwork behind the player", SettingsSection.V155_CANVAS),
+            go("canvas", "Canvas", "Animated artwork behind the player", SettingsSection.V155_CANVAS),
             go("font", "App font", "App font and lyrics", SettingsSection.V155_FONT),
             go("density", "Density & grid", "Interface scale and grid size", SettingsSection.V155_DENSITY),
             go("transitions", "Screen transitions", "Fade, slide or off", SettingsSection.V155_TRANSITIONS),

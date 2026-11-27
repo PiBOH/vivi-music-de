@@ -12,7 +12,7 @@ import android.net.nsd.NsdServiceInfo
 /**
  * Discovers the desktop's local LAN relay via mDNS/NSD.
  *
- * The desktop (VIVI Music DE) advertises a `_vivimusic._tcp` service when its
+ * The desktop edition advertises a `_vivimusic._tcp` service when its
  * LAN server is started; this helper resolves the first matching service to a
  * `ws://<host>:<port>` relay URL that can be dropped into the Devices screen.
  */

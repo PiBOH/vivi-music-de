@@ -157,7 +157,7 @@ fun ChangelogScreen(
                         }
                     )
                     val connection = changelogUrl.openConnection() as HttpURLConnection
-                    connection.setRequestProperty("User-Agent", "ViviMusic-Changelog-App")
+                    connection.setRequestProperty("User-Agent", "AxolotlMusic-Changelog-App")
                     connection.setRequestProperty(
                         "Accept",
                         if (isOurSource) "application/vnd.github+json" else "application/json"
@@ -250,7 +250,7 @@ fun ChangelogScreen(
                 val isOurSource = getUpdateSource(context) == UPDATE_SOURCE_FORK
                 val releasesUrl = URL("https://api.github.com/repos/${updateRepo(context)}/releases")
                 val connection = releasesUrl.openConnection() as HttpURLConnection
-                connection.setRequestProperty("User-Agent", "ViviMusic-Changelog-App")
+                connection.setRequestProperty("User-Agent", "AxolotlMusic-Changelog-App")
                 connection.setRequestProperty("Accept", "application/vnd.github+json")
                 
                 if (connection.responseCode == 200) {
