@@ -133,7 +133,7 @@
     <string name="show_wrapped_card">Montre Résumé</string>
     <string name="devices">Bann aparey</string>
     <string name="device_sync">Sinkronizasion bann aparey</string>
-    <string name="device_sync_desc">Pare sa telefonn-la avek VIVI Music DE lor ou laptop pou sinkroniz bann reglaz, file ek biblitek.</string>
+    <string name="device_sync_desc">Pare sa telefonn-la avek Axolotl Music lor ou laptop pou sinkroniz bann reglaz, file ek biblitek.</string>
     <string name="device_sync_server">Servér relé</string>
     <string name="device_sync_discover">Trouv desktop</string>
     <string name="device_sync_scan_qr">Sken kod QR</string>
@@ -144,6 +144,6 @@
     <string name="device_sync_paired">Pared</string>
     <string name="device_sync_not_paired">Pa ankor pared</string>
     <string name="device_sync_paired_device">Aparey pared</string>
-    <string name="sync_vivi_volume">Sinkroniz volim VIVI</string>
-    <string name="sync_vivi_volume_desc">Reflet slider volim dan aplikasion ant sa telefonn ek VIVI Music DE. Deaktiv li pou gard volim player sak aparey indepandan.</string>
+    <string name="sync_vivi_volume">Sinkroniz volim Axolotl Music</string>
+    <string name="sync_vivi_volume_desc">Reflet slider volim dan aplikasion ant sa telefonn ek Axolotl Music. Deaktiv li pou gard volim player sak aparey indepandan.</string>
 </resources>

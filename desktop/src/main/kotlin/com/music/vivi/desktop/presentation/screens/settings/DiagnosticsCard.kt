@@ -71,7 +71,7 @@ fun DiagnosticsCard() {
                         onClick = {
                             val stamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                             DirectoryPicker.saveDiagnosticsFile(
-                                defaultFileName = "VIVIMusicDE_Diagnostics_$stamp.zip"
+                                defaultFileName = "AxolotlMusic_Diagnostics_$stamp.zip"
                             ) { target ->
                                 busy = true
                                 message = null

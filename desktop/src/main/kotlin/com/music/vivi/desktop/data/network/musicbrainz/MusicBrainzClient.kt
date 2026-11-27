@@ -283,6 +283,6 @@ class MusicBrainzClient(
     }
 
     companion object {
-        private val USER_AGENT = "VIVIMusicDE/${BuildConfig.APP_VERSION_NAME} ( https://github.com/kayoi/pixelplayer-desktop )"
+        private val USER_AGENT = "AxolotlMusic/${BuildConfig.APP_VERSION_NAME} ( https://github.com/PiBOH/axolotl-music )"
     }
 }

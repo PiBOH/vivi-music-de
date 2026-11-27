@@ -34,7 +34,7 @@ import kotlin.system.exitProcess
  * view model were still a stub, or the screen still built its own fake data, this
  * would fail: every value printed here comes from the objects the window composes.
  *
- * Usage: `VIVIMusic.exe --verify-app-flow [--query=...]`. Exit code 0 means the
+ * Usage: `AxolotlMusic.exe --verify-app-flow [--query=...]`. Exit code 0 means the
  * whole flow passed.
  */
 object RealAppFlowCheck {

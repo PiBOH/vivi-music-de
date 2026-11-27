@@ -23,7 +23,7 @@ import com.music.vivi.desktop.data.network.github.UpdateAssets
  * It then proves a corrupted published hash and a corrupted file are refused,
  * and that a name missing from the file resolves to nothing.
  *
- * Usage: `VIVIMusic.exe --verify-update-checksum`
+ * Usage: `AxolotlMusic.exe --verify-update-checksum`
  */
 object UpdateChecksumCheck {
 

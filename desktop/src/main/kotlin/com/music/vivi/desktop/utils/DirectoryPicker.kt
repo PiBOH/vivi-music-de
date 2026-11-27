@@ -102,7 +102,7 @@ object DirectoryPicker {
 
     /** The portable JSON file the Accounts card uses to move playlists between accounts. */
     fun choosePlaylistPackFile(
-        title: String = "Select a VIVI account playlist file",
+        title: String = "Select an Axolotl Music account playlist file",
         onSelected: (File) -> Unit
     ) {
         scope.launch {
@@ -114,7 +114,7 @@ object DirectoryPicker {
     }
 
     fun savePlaylistPackFile(
-        defaultFileName: String = "vivimusic-account-playlists.json",
+        defaultFileName: String = "axolotl-music-account-playlists.json",
         initialDir: File? = null,
         title: String = "Export account playlists",
         onSelected: (File) -> Unit
@@ -157,7 +157,7 @@ object DirectoryPicker {
     ) = pickBackupFile(title, listOf(BackupManager.EXTENSION, "vivide.sections", "pxpl"), onSelected)
 
     fun saveBackupFile(
-        defaultFileName: String = "VIVIMusicDE_Sections.${BackupManager.EXTENSION}",
+        defaultFileName: String = "AxolotlMusic_Sections.${BackupManager.EXTENSION}",
         initialDir: File? = null,
         title: String = "Export Section Backup",
         onSelected: (File) -> Unit
@@ -172,7 +172,7 @@ object DirectoryPicker {
 
     /** A diagnostic package is a plain zip: no legacy suffix to strip. */
     fun saveDiagnosticsFile(
-        defaultFileName: String = "VIVIMusicDE_Diagnostics.zip",
+        defaultFileName: String = "AxolotlMusic_Diagnostics.zip",
         initialDir: File? = null,
         title: String = "Export diagnostic package",
         onSelected: (File) -> Unit
@@ -192,7 +192,7 @@ object DirectoryPicker {
     ) = pickBackupFile(title, listOf(FullBackup.EXTENSION, "vivide.bkp", "vivide.backup"), onSelected)
 
     fun saveVivideBackupFile(
-        defaultFileName: String = "VIVIMusicDE.${FullBackup.EXTENSION}",
+        defaultFileName: String = "AxolotlMusic.${FullBackup.EXTENSION}",
         initialDir: File? = null,
         title: String = "Export full device backup",
         onSelected: (File) -> Unit

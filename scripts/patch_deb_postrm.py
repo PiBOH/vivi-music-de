@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Inject the VIVI Music DE uninstall cleanup into a .deb's postrm script.
+"""Inject the Axolotl Music uninstall cleanup into a .deb's postrm script.
 
 jpackage generates a .deb whose postrm only removes the installed files under
 /opt. When the user uninstalls (`dpkg -r` / `apt remove`), dpkg runs postrm as
@@ -11,7 +11,7 @@ lyrics, logs, …) — the same behavior the Windows uninstaller has.
 The hook sources the shared `scripts/uninstall-cleanup.sh` at uninstall time.
 Because postrm runs as root and the script is kept in the repo (not installed
 under /opt, which is being removed), the hook needs the script at a stable
-location: we copy it into `/usr/share/vivi-music-de/uninstall-cleanup.sh`
+location: we copy it into `/usr/share/axolotl-music/uninstall-cleanup.sh`
 during install (see the postinst hook below) so postrm can find it even after
 the /opt files are gone.
 """
@@ -24,10 +24,10 @@ import tempfile
 from pathlib import Path
 
 CLEANUP_SOURCE = Path(__file__).resolve().parent / "uninstall-cleanup.sh"
-INSTALL_TARGET = "/usr/share/vivi-music-de/uninstall-cleanup.sh"
+INSTALL_TARGET = "/usr/share/axolotl-music/uninstall-cleanup.sh"
 
 POSTRM_HOOK = """\
-# --- VIVI Music DE uninstall cleanup (keeps one final backup, wipes caches) ---
+# --- Axolotl Music uninstall cleanup (keeps one final backup, wipes caches) ---
 if [ "$1" = "remove" ] || [ "$1" = "purge" ]; then
     if [ -f "{target}" ]; then
         sh "{target}" || true
@@ -36,9 +36,9 @@ fi
 """
 
 POSTINST_HOOK = """\
-# --- VIVI Music DE uninstall cleanup support file ---
-mkdir -p /usr/share/vivi-music-de
-for src in /opt/vivi-music-de/bin/uninstall-cleanup.sh /opt/VIVIMusic/bin/uninstall-cleanup.sh; do
+# --- Axolotl Music uninstall cleanup support file ---
+mkdir -p /usr/share/axolotl-music
+for src in /opt/axolotlmusic/bin/uninstall-cleanup.sh /opt/AxolotlMusic/bin/uninstall-cleanup.sh /opt/vivi-music-de/bin/uninstall-cleanup.sh /opt/VIVIMusic/bin/uninstall-cleanup.sh; do
     if [ -f "$src" ]; then
         cp -f "$src" "{target}" 2>/dev/null || true
         break
@@ -56,11 +56,13 @@ def read_script() -> str:
 
 def ensure_script_in_package(workdir: Path) -> None:
     """Embed the cleanup script into the package's /opt tree so the postinst
-    hook can copy it to /usr/share. jpackage installs to /opt/VIVIMusic or
-    /opt/vivi-music-de depending on the package name; we write it to both
-    candidate trees if present, and to opt root otherwise."""
+    hook can copy it to /usr/share. jpackage installs to /opt/axolotlmusic (or
+    the older /opt/AxolotlMusic, /opt/VIVIMusic and /opt/vivi-music-de); we
+    write it to every candidate tree if present, and to opt root otherwise."""
     script = read_script()
     candidates = [
+        workdir / "opt" / "axolotlmusic" / "bin" / "uninstall-cleanup.sh",
+        workdir / "opt" / "AxolotlMusic" / "bin" / "uninstall-cleanup.sh",
         workdir / "opt" / "VIVIMusic" / "bin" / "uninstall-cleanup.sh",
         workdir / "opt" / "vivi-music-de" / "bin" / "uninstall-cleanup.sh",
     ]

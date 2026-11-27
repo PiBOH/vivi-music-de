@@ -37,7 +37,7 @@
 <table align="center" width="100%">
   <tr valign="middle">
     <td width="60%" align="left">
-      <p>✨ <b>Axolotl Music</b> is the native desktop edition of the <a href="https://github.com/vivizzz007/vivi-music">Vivi Music mobile app</a> — a premium, modern music player built for Windows, Linux and macOS. It keeps the exact Material 3 design of the mobile app and adapts it to the desktop with a collapsible sidebar, a full player, synced lyrics, and an Apple Music–style mini-player.</p>
+      <p>✨ <b>Axolotl Music</b> is the native desktop edition of the <a href="https://github.com/PiBOH/axolotl-music/releases/latest">Axolotl Music mobile app</a> — a premium, modern music player built for Windows, Linux and macOS. It keeps the exact Material 3 design of the mobile app and adapts it to the desktop with a collapsible sidebar, a full player, synced lyrics, and an Apple Music–style mini-player.</p>
 <p><b>Platform testing note:</b> the lead developer (<a href="https://github.com/PiBOH">@PiBOH</a>) can currently test DE only on Windows. Therefore Windows has naturally received the most compatibility testing and platform-specific attention; Linux and macOS builds are produced by CI and may need additional community testing.</p>
       <p>Its defining feature is <b>cross-device sync</b>: pair it with the Axolotl Music app on your phone and your playback, seek position, settings and library follow you from one device to the other — instantly, over the same Wi-Fi or a cloud relay.</p>
       <blockquote>

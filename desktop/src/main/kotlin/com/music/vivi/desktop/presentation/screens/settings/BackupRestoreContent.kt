@@ -203,7 +203,7 @@ fun BackupRestoreContent(
                         Button(
                             onClick = {
                                 DirectoryPicker.saveBackupFile(
-                                    defaultFileName = "VIVIMusicDE_Sections_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${BackupManager.EXTENSION}"
+                                    defaultFileName = "AxolotlMusic_Sections_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${BackupManager.EXTENSION}"
                                 ) { targetFile ->
                                     coroutineScope.launch {
                                         isProcessing = true
@@ -550,7 +550,7 @@ private fun FullBackupCard(store: LocalLibraryStore) {
                         enabled = !busy,
                         onClick = {
                             DirectoryPicker.saveVivideBackupFile(
-                                defaultFileName = "VIVIMusicDE_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${FullBackup.EXTENSION}"
+                                defaultFileName = "AxolotlMusic_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.${FullBackup.EXTENSION}"
                             ) { target ->
                                 busy = true
                                 message = null

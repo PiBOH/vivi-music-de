@@ -29,9 +29,9 @@ import kotlin.system.exitProcess
  * (not from the in-memory cache) and printed before and after.
  *
  * Usage:
- * - `VIVIMusic.exe --verify-store-write` toggles the first liked song and exits
+ * - `AxolotlMusic.exe --verify-store-write` toggles the first liked song and exits
  *   non-zero when the file does not change within ten seconds.
- * - `VIVIMusic.exe --store-state` only prints what the file holds, so a second
+ * - `AxolotlMusic.exe --store-state` only prints what the file holds, so a second
  *   process can prove the value survived the restart.
  */
 object StoreWriteCheck {

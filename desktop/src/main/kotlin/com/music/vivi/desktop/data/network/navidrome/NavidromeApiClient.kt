@@ -37,11 +37,11 @@ class NavidromeApiClient(
             NavidromeAuthMethod.TOKEN -> {
                 val salt = UUID.randomUUID().toString().replace("-", "").take(12)
                 val token = md5(cred.password + salt)
-                mapOf("u" to cred.username, "t" to token, "s" to salt, "v" to "1.16.1", "c" to "VIVIMusicDE", "f" to "json")
+                mapOf("u" to cred.username, "t" to token, "s" to salt, "v" to "1.16.1", "c" to "AxolotlMusic", "f" to "json")
             }
             NavidromeAuthMethod.PASSWORD -> {
                 val hex = cred.password.toByteArray(Charsets.UTF_8).joinToString("") { "%02x".format(it) }
-                mapOf("u" to cred.username, "p" to "enc:$hex", "v" to "1.16.1", "c" to "VIVIMusicDE", "f" to "json")
+                mapOf("u" to cred.username, "p" to "enc:$hex", "v" to "1.16.1", "c" to "AxolotlMusic", "f" to "json")
             }
         }
     }

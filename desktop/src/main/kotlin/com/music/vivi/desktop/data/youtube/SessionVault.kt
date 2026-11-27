@@ -159,7 +159,7 @@ internal object SessionVault {
                     plain,
                     entropy,
                     com.sun.jna.platform.win32.WinCrypt.CRYPTPROTECT_UI_FORBIDDEN,
-                    "VIVI Music DE session",
+                    "Axolotl Music session",
                     null
                 )
             }.getOrNull() ?: return null
@@ -230,7 +230,7 @@ internal object SessionVault {
 
         Platform.isLinux() -> runCommand(
             listOf(
-                "secret-tool", "store", "--label=VIVI Music DE YouTube session key",
+                "secret-tool", "store", "--label=Axolotl Music YouTube session key",
                 "application", SECRET_TOOL_APPLICATION,
                 "purpose", SECRET_TOOL_PURPOSE
             ),

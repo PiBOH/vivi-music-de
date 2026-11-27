@@ -1,7 +1,7 @@
-# Render Blueprint — one-click deploy of the VIVI Music sync relay.
+# Render Blueprint — one-click deploy of the Axolotl Music sync relay.
 #
 # From the Render dashboard: New -> Blueprint -> select this repo (branch
-# `vivi-music-de`). Render reads this file and creates the `vivimusic-device-sync`
+# `axolotl-music-de`). Render reads this file and creates the `vivimusic-device-sync`
 # web service below. After the first deploy, set the client URL to
 # `wss://<service-name>.onrender.com`.
 services:

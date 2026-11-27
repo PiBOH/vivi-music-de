@@ -94,7 +94,7 @@
     <string name="secondary_color_style">Sekunder</string>
     <string name="devices">Peranti</string>
     <string name="device_sync">Penyegerakan peranti</string>
-    <string name="device_sync_desc">Pasangkan telefon ini dengan VIVI Music DE pada komputer anda untuk menyegerakkan tetapan, baris gilir dan pustaka.</string>
+    <string name="device_sync_desc">Pasangkan telefon ini dengan Axolotl Music pada komputer anda untuk menyegerakkan tetapan, baris gilir dan pustaka.</string>
     <string name="device_sync_server">Pelayan geganti</string>
     <string name="device_sync_discover">Cari desktop</string>
     <string name="device_sync_scan_qr">Imbas kod QR</string>
@@ -105,6 +105,6 @@
     <string name="device_sync_paired">Dipasangkan</string>
     <string name="device_sync_not_paired">Tidak dipasangkan</string>
     <string name="device_sync_paired_device">Peranti dipasangkan</string>
-    <string name="sync_vivi_volume">Segerakkan kelantangan VIVI</string>
-    <string name="sync_vivi_volume_desc">Cerminkan peluncur kelantangan dalam aplikasi antara telefon ini dan VIVI Music DE. Lumpuhkannya untuk memastikan kelantangan pemain setiap peranti kekal bebas.</string>
+    <string name="sync_vivi_volume">Segerakkan kelantangan Axolotl Music</string>
+    <string name="sync_vivi_volume_desc">Cerminkan peluncur kelantangan dalam aplikasi antara telefon ini dan Axolotl Music. Lumpuhkannya untuk memastikan kelantangan pemain setiap peranti kekal bebas.</string>
 </resources>

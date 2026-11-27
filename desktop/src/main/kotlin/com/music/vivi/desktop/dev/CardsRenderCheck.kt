@@ -167,7 +167,7 @@ object CardsRenderCheck {
 
         val release = AppReleaseInfo(
             versionTag = "6.0.8.11_DE-1.57.0-beta1",
-            versionName = "Vivi Music 6.0.8.11_DE 1.57.0",
+            versionName = "Axolotl Music 6.0.8.11_DE 1.57.0",
             releaseNotes = "The account playlists are managed from Accounts. " +
                 "A weekly backup runs on its own. The updater checks the SHA-256 " +
                 "before it offers the installer.",
@@ -192,7 +192,7 @@ object CardsRenderCheck {
                 onDismiss = {},
                 onOpenRelease = {},
                 downloadState = UpdateDownloadState.Ready(
-                    file = File("VIVIMusic-6.0.8.11_DE-1.57.0-setup.exe"),
+                    file = File("AxolotlMusic-6.0.8.11_DE-1.57.0-setup.exe"),
                     sha256 = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
                 ),
                 onDownload = {},

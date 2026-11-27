@@ -375,7 +375,7 @@
     <string name="restore_failed_corrupt">The backup is corrupt and cannot be restored</string>
 
     <string name="discord_integration">Discord Integration</string>
-    <string name="discord_information">vivimusic uses the KizzyRPC library to set your Discord account\'s status. This involves using the Discord Gateway connection, which may be considered a violation of Discord\'s TOS. However, there are no known cases of user accounts being suspended for this reason. Use at your own risk.\n\nvivimusic will only extract your token, and everything else is stored locally.</string>
+    <string name="discord_information">Axolotl Music uses the KizzyRPC library to set your Discord account\'s status. This involves using the Discord Gateway connection, which may be considered a violation of Discord\'s TOS. However, there are no known cases of user accounts being suspended for this reason. Use at your own risk.\n\nAxolotl Music will only extract your token, and everything else is stored locally.</string>
     <string name="dismiss">Dismiss</string>
     <string name="options">Options</string>
     <string name="preview">Preview</string>
@@ -477,7 +477,7 @@
     <string name="device_sync_paired">Paired</string>
     <string name="device_sync_not_paired">Not paired</string>
     <string name="device_sync_paired_device">Paired device</string>
-    <string name="sync_vivi_volume">Sync VIVI volume</string>
+    <string name="sync_vivi_volume">Sync Axolotl Music volume</string>
     <string name="sync_vivi_volume_desc">Mirror the in-app volume slider between this phone and Axolotl Music. Disable it to keep each device\'s player volume independent.</string>
     <string name="sync_native_volume">Sync OS volume</string>
     <string name="sync_native_volume_desc">Mirror the system volume of this phone and of Axolotl Music, so the media volume keys move both. Turn it off to keep the two devices independent.</string>

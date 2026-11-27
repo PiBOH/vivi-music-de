@@ -74,7 +74,7 @@ private data class ContributorEntry(
 private data class ContributorsFile(val contributors: List<ContributorEntry> = emptyList())
 
 private const val CONTRIBUTORS_RAW_URL =
-    "https://raw.githubusercontent.com/PiBOH/axolotl-music/vivi-music-de/contributorsde.json"
+    "https://raw.githubusercontent.com/PiBOH/axolotl-music/axolotl-music-de/contributorsde.json"
 
 /** The headings the screen shows, in this order, matching the JSON `group` values. */
 private val ContributorGroupOrder = listOf(
@@ -100,13 +100,13 @@ private fun loadBundledContributors(): List<ContributorEntry> = runCatching {
         .orEmpty()
 }.getOrDefault(emptyList())
 
-/** The live list from the `vivi-music-de` branch; empty when offline. */
+/** The live list from the `axolotl-music-de` branch; empty when offline. */
 private fun fetchContributorsFromGitHub(): List<ContributorEntry> = runCatching {
     val connection = URI(CONTRIBUTORS_RAW_URL).toURL().openConnection() as HttpURLConnection
     try {
         connection.connectTimeout = 6000
         connection.readTimeout = 6000
-        connection.setRequestProperty("User-Agent", "VIVIMusicDE")
+        connection.setRequestProperty("User-Agent", "AxolotlMusic")
         connection.setRequestProperty("Accept", "application/json")
         if (connection.responseCode == 200) {
             connection.inputStream.use { parseContributors(it.readBytes().decodeToString()) }
@@ -157,7 +157,7 @@ private suspend fun fetchContributorAvatar(url: String): ImageBitmap? {
             connection.requestMethod = "GET"
             connection.connectTimeout = 4000
             connection.readTimeout = 4000
-            connection.setRequestProperty("User-Agent", "VIVIMusicDE")
+            connection.setRequestProperty("User-Agent", "AxolotlMusic")
             val bytes = connection.inputStream.use { it.readBytes() }
             SkiaImage.makeFromEncoded(bytes).toComposeImageBitmap().also {
                 contributorAvatarCache[url] = it

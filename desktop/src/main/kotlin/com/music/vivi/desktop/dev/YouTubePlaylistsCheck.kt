@@ -18,7 +18,7 @@ import kotlin.system.exitProcess
  * deletes it in `finally`, including after a failure, so a run cannot leave a
  * test playlist in the account.
  *
- * Usage: `VIVIMusic.exe --youtube-playlists-check`. Exit code 0 means every
+ * Usage: `AxolotlMusic.exe --youtube-playlists-check`. Exit code 0 means every
  * step was observed through a fresh account read.
  */
 object YouTubePlaylistsCheck {
@@ -40,7 +40,7 @@ object YouTubePlaylistsCheck {
 
         val repository = YouTubePlaylistsRepository()
         val stamp = System.currentTimeMillis()
-        val name = "VIVI check $stamp"
+        val name = "Axolotl check $stamp"
         val renamed = "$name renamed"
         var createdId: String? = null
         val failures = mutableListOf<String>()

@@ -232,7 +232,7 @@
     <string name="google_cast">Google Cast</string>
     <string name="google_cast_description">Włącz przesyłanie dźwięku do Chromecasta i innych urządzeń obsługujących Cast</string>
     <string name="last_fm_send_likes">Wyślij polubienia/niepolubienia</string>
-    <string name="last_fm_send_likes_description">Polub/niepolub piosenki w Last.fm, gdy są polubione/niepolubione w vivimusic</string>
+    <string name="last_fm_send_likes_description">Polub/niepolub piosenki w Last.fm, gdy są polubione/niepolubione w Axolotl Music</string>
     <string name="logging_in">Logowanie…</string>
     <string name="hide_video_songs">Ukryj utwory wideo</string>
     <string name="details_desc">Wyświetl informacje o utworze</string>
@@ -307,14 +307,14 @@
     <string name="wrapped_total_artists_subtitle">Unikalni artyści</string>
     <string name="wrapped_total_songs_title">Słuchałeś/aś</string>
     <string name="wrapped_total_songs_subtitle">Unikalnie piosenki</string>
-    <string name="wrapped_intro_title">vivimusic</string>
+    <string name="wrapped_intro_title">Axolotl Music</string>
     <string name="wrapped_intro_subtitle">Czas sprawdzić, czego słuchałeś/aś</string>
     <string name="wrapped_intro_button">Zaczynamy!</string>
-    <string name="wrapped_end_thanks">Dzięki, że słuchasz z vivimusic!</string>
+    <string name="wrapped_end_thanks">Dzięki, że słuchasz z Axolotl Music!</string>
     <string name="wrapped_end_create_playlist">Stwórz swoją playlistę Wrapped</string>
     <string name="wrapped_end_creating_playlist">Tworzenie...</string>
     <string name="wrapped_end_playlist_saved">Zapisano Playlistę</string>
-    <string name="wrapped_logo_content_description">Logo vivimusic</string>
+    <string name="wrapped_logo_content_description">Logo Axolotl Music</string>
     <string name="wrapped_year">2026</string>
     <string name="wrapped_ready_title">­TWOJE WRAPPED JEST GOTOWE!</string>
     <string name="wrapped_ready_subtitle">Czas sprawdzić, co pokochałeś/aś w tym roku.</string>
@@ -347,9 +347,9 @@
     <string name="import_error_title">Błąd importu</string>
     <string name="casting_to">Wysyłanie do %s</string>
     <string name="progress_percent">Postęp %s%%</string>
-    <string name="listening_to_vivimusic">Słuchasz vivimusic</string>
+    <string name="listening_to_vivimusic">Słuchasz Axolotl Music</string>
     <string name="listen_on_youtube_music">Odtwórz w YouTube Music</string>
-    <string name="visit_vivimusic">Odwiedź vivimusic</string>
+    <string name="visit_vivimusic">Odwiedź Axolotl Music</string>
     <string name="open">Otwórz</string>
     <string name="failed_to_create_image">Nie udało się utworzyć obrazu: %s</string>
     <string name="copied_title">Skopiowano Tytuł</string>
@@ -386,7 +386,7 @@
     <string name="error_copy_hint">Skopiuj informacje o błędzie, aby pomóc nam rozwiązać problem</string>
     <string name="album_art">Okładka albumu</string>
     <string name="no_song_playing">Nic nie jest odtwarzane</string>
-    <string name="tap_to_open">Dotknij, aby otworzyć vivimusic</string>
+    <string name="tap_to_open">Dotknij, aby otworzyć Axolotl Music</string>
     <string name="previous">Poprzedni</string>
     <string name="play_pause">Odtwórz/Wstrzymaj</string>
     <string name="next">Następny</string>
@@ -404,7 +404,7 @@
     <string name="decryption_library_pipepipe_api_desc">Deszyfrowanie oparte na API przy użyciu MetroExtractor. Szybsze, ale zależne od zewnętrznego serwera. W razie błędu automatycznie przełącza się na NewPipe.</string>
     <string name="devices">Urządzenia</string>
     <string name="device_sync">Synchronizacja urządzeń</string>
-    <string name="device_sync_desc">Sparuj ten telefon z VIVI Music DE na komputerze, aby zsynchronizować ustawienia, kolejkę i bibliotekę.</string>
+    <string name="device_sync_desc">Sparuj ten telefon z Axolotl Music na komputerze, aby zsynchronizować ustawienia, kolejkę i bibliotekę.</string>
     <string name="device_sync_server">Serwer przekaźnikowy</string>
     <string name="device_sync_discover">Znajdź komputer</string>
     <string name="device_sync_scan_qr">Zeskanuj kod QR</string>
@@ -415,6 +415,6 @@
     <string name="device_sync_paired">Sparowano</string>
     <string name="device_sync_not_paired">Nie sparowano</string>
     <string name="device_sync_paired_device">Sparowane urządzenie</string>
-    <string name="sync_vivi_volume">Synchronizuj głośność VIVI</string>
-    <string name="sync_vivi_volume_desc">Odzwierciedlaj suwak głośności w aplikacji między tym telefonem a VIVI Music DE. Wyłącz go, aby głośność odtwarzacza każdego urządzenia pozostała niezależna.</string>
+    <string name="sync_vivi_volume">Synchronizuj głośność Axolotl Music</string>
+    <string name="sync_vivi_volume_desc">Odzwierciedlaj suwak głośności w aplikacji między tym telefonem a Axolotl Music. Wyłącz go, aby głośność odtwarzacza każdego urządzenia pozostała niezależna.</string>
 </resources>

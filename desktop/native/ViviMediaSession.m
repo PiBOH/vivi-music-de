@@ -1,4 +1,4 @@
-// ViviMediaSession.m — macOS system "Now Playing" integration for VIVI Music DE.
+// ViviMediaSession.m — macOS system "Now Playing" integration for Axolotl Music.
 //
 // Registers the app with the system media session (Control Center / Lock Screen
 // "Now Playing" tile) via MediaPlayer.framework and answers the physical media
@@ -258,11 +258,11 @@ void viviRegisterEventCallback(vivi_event_cb cb) {
 
 // Sets the app identity shown in the system tile. The tile takes the visible
 // name from the bundle, so this only records it for diagnostics (previously it
-// overwrote the track title, so the tile could show "VIVI Music" as the song).
+// overwrote the track title, so the tile could show the app name as the song).
 void viviSetAppIdentity(const char *appNameUtf8) {
     NSString *name = appNameUtf8
                          ? [NSString stringWithUTF8String:appNameUtf8]
-                         : @"VIVI Music";
+                         : @"Axolotl Music";
     dispatch_async(dispatch_get_main_queue(), ^{
         g_appName = name;
     });

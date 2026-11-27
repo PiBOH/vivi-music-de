@@ -9,7 +9,7 @@ on:
         type: string
         default: ''
   push:
-    branches: [ axolotl-music-de, main, beta ]
+    branches: [ axolotl-music-de ]
     tags-ignore: [ '**' ]
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
   # Builds are delegated to the per-OS reusable workflows. This workflow only
   # collects their artifacts and publishes the release. They run on manual
   # dispatch, or on push when the commit message starts with "v" (our release
-  # signal), mirroring the old axolotl-music-de release pipeline.
+  # signal) on the axolotl-music-de branch.
   build-windows:
     name: Windows
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'v'))

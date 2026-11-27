@@ -124,7 +124,7 @@ class LrcLibClient(
             connection.requestMethod = "GET"
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
-            connection.setRequestProperty("User-Agent", "VIVIMusicDE/${BuildConfig.APP_VERSION_NAME} (https://github.com/adlifarizi/PixelPlayerDesktop)")
+            connection.setRequestProperty("User-Agent", "AxolotlMusic/${BuildConfig.APP_VERSION_NAME} (https://github.com/PiBOH/axolotl-music)")
 
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 connection.inputStream.bufferedReader().use { it.readText() }

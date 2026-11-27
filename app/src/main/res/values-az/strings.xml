@@ -305,7 +305,7 @@
     <string name="backup_create_failed">Couldn\'t create yedək</string>
     <string name="restore_failed">Uğursuz -a bərpa yedək</string>
     <string name="discord_integration">Discord Integration</string>
-    <string name="discord_information">vivimusic uses KizzyRPC kitabxana -a set sizin Discord hesab\'s status. Bu involves using Discord Gateway bağlantı, which may olmaq considered bir violation -ın Discord\'s TOS. However, there dır no known cases -ın user accounts being suspended üçün bu reason. Istifadə et at sizin own risk.\n\nvivimusic will only extract sizin token, və everything else dır stored locally.</string>
+    <string name="discord_information">Axolotl Music uses KizzyRPC kitabxana -a set sizin Discord hesab\'s status. Bu involves using Discord Gateway bağlantı, which may olmaq considered bir violation -ın Discord\'s TOS. However, there dır no known cases -ın user accounts being suspended üçün bu reason. Istifadə et at sizin own risk.\n\nAxolotl Music will only extract sizin token, və everything else dır stored locally.</string>
     <string name="dismiss">Bağla</string>
     <string name="options">Seçimlər</string>
     <string name="preview">Önizləmə</string>
@@ -368,7 +368,7 @@
     <string name="new_release_notifications_subtitle">Notify when bookmarked ifaçılar buraxmaq yeni mahnılar və ya albomlar (beta)</string>
     <string name="new_release_channel_name">Yeni Releases</string>
     <string name="new_release_channel_desc">Bildirişlər üçün yeni releases -dan sizin bookmarked ifaçılar</string>
-    <string name="new_release_notifications_info">Açıq some cihazlar (Samsung, Xiaomi, etc.), batareya optimization may delay və ya block arxa fon bildirişlər. -a ensure timely xəbərdarlıqlar, set Vivi Musiqi -a Unrestricted batareya usage in sizin cihaz parametrlər.</string>
+    <string name="new_release_notifications_info">Açıq some cihazlar (Samsung, Xiaomi, etc.), batareya optimization may delay və ya block arxa fon bildirişlər. -a ensure timely xəbərdarlıqlar, set Axolotl Musiqi -a Unrestricted batareya usage in sizin cihaz parametrlər.</string>
     <string name="taste_based_release_notifications">Zövq-əsaslanan buraxmaq xəbərdarlıqlar</string>
     <string name="taste_based_release_notifications_subtitle">Notify when ifaçılar siz tez-tez listen -a buraxmaq yeni mahnılar və ya albomlar</string>
     <string name="search_albums">Albom axtar…</string>
@@ -391,5 +391,5 @@
     <string name="listening_summary">Dinləmə xülasəsi</string>
     <string name="setting_listening_summary_desc">Gündəlik dinləmə tendensiyalarınıza və keçmiş oxutma statistikalarınıza baxın.</string>
     <string name="sync_native_volume">OS səsini sinxronlaşdır</string>
-    <string name="sync_native_volume_desc">Bu telefonun və VIVI Music DE-nin sistem səsini eyni saxlayın ki, media səs düymələri hər ikisini idarə etsin. İki cihazı ayrı saxlamaq üçün söndürün.</string>
+    <string name="sync_native_volume_desc">Bu telefonun və Axolotl Music-nin sistem səsini eyni saxlayın ki, media səs düymələri hər ikisini idarə etsin. İki cihazı ayrı saxlamaq üçün söndürün.</string>
 </resources>

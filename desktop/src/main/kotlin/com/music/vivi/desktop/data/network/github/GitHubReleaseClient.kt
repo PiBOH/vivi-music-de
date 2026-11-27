@@ -40,8 +40,7 @@ class GitHubReleaseClient(
     private val json: Json,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val owner: String = "PiBOH",
-    // The repository was renamed from vivi-music-de to axolotl-music; GitHub
-    // redirects the old API path, but ask for the current name directly.
+    // Ask for the current official repository name directly.
     private val repo: String = "axolotl-music"
 ) {
     /**

@@ -115,10 +115,10 @@ object AccountPlaylistPacks {
     fun decode(text: String): Result<AccountPlaylistPack> = runCatching {
         val pack = json.decodeFromString(AccountPlaylistPack.serializer(), text)
         require(pack.format == AccountPlaylistPack.FORMAT) {
-            "This is not a VIVI account playlist file."
+            "This is not an Axolotl Music account playlist file."
         }
         require(pack.version <= AccountPlaylistPack.VERSION) {
-            "This file was written by a newer VIVI Music."
+            "This file was written by a newer Axolotl Music."
         }
         pack
     }

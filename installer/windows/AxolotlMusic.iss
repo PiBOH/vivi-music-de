@@ -17,7 +17,7 @@
 ; nothing referenced them.
 ;
 ; ---------------------------------------------------------------------------
-; Appearance: light, dark and the VIVI Music brand
+; Appearance: light, dark and the Axolotl Music brand
 ; ---------------------------------------------------------------------------
 ; `WizardStyle=modern dynamic` makes the setup follow Windows' own light/dark
 ; setting, so the appearance is never a question the user has to answer. There
@@ -128,9 +128,9 @@ UsePreviousTasks=yes
 UsePreviousLanguage=yes
 ; NOT the Start Menu folder. Inno reuses the group name recorded by the
 ; previous install of the same AppId, and the earlier installers of this app
-; (and the jpackage MSI) used "VIVI Music": an upgrade therefore kept the OLD
-; name, which is why the same app appeared under "VIVI Music" on one machine
-; and "Axolotl Music" on another. With the group page disabled, saying no here
+  ; (and the jpackage MSI) used the former name: an upgrade therefore kept the
+  ; OLD name, which is why the same app appeared under two names on two
+  ; machines. With the group page disabled, saying no here
 ; is what keeps the name at DefaultGroupName on every install and upgrade.
 UsePreviousGroup=no
 AllowNoIcons=yes
@@ -295,7 +295,7 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 
 [Registry]
 ; Makes the app launchable by name from the Run dialog / the Explorer address
-; bar (`VIVIMusic`), the way most Windows apps register themselves.
+  ; bar (`AxolotlMusic`), the way most Windows apps register themselves.
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\{#AppExe}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#AppExe}"; Flags: uninsdeletekey
 
 [Run]

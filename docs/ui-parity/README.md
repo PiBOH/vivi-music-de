@@ -1,8 +1,8 @@
 # Bit UI parity screenshots
 
-Every PNG here is a real window of the packaged `VIVIMusic.exe` (the jpackage
-image in `desktop/build/compose/binaries/main/app/VIVIMusic`), captured with
-`agent-desktop screenshot --app VIVIMusic.exe`. Nothing is a mockup or a
+Every PNG here is a real window of the packaged `AxolotlMusic.exe` (the jpackage
+image in `desktop/build/compose/binaries/main/app/AxolotlMusic`), captured with
+`agent-desktop screenshot --app AxolotlMusic.exe`. Nothing is a mockup or a
 hand-drawn frame.
 
 ## Side-by-side with the reference
@@ -67,7 +67,7 @@ at 1220 x 780:
   13 px detail, switch or chevron); that one divergence is deliberate and
   documented in `AGENTS.md`.
 - **Verification without elevation**: every screenshot in this pass comes from
-  the packaged image `desktop/build/compose/binaries/main/app/VIVIMusic/VIVIMusic.exe`,
+  the packaged image `desktop/build/compose/binaries/main/app/AxolotlMusic/AxolotlMusic.exe`,
   which is the payload the installer ships, so nothing depends on an
   administrator prompt.
 
@@ -113,7 +113,7 @@ where the reference tints each card from its own subject.
 **Which build each pair comes from.** All six refreshed pairs
 (`02-explore`, `03-library`, `04-search`, `06-downloads`, `07-local-music`,
 `08-settings`) are captures of the packaged image above on 15 Nov, taken with
-`VIVIMusic.exe --open=<section>` and `agent-desktop screenshot`. `01-home`,
+`AxolotlMusic.exe --open=<section>` and `agent-desktop screenshot`. `01-home`,
 `05-history` and `09-player` are from the 12:34 build of the same day and were
 not part of this pass.
 
@@ -143,7 +143,7 @@ not part of this pass.
 | `25-search-results.png` | A real query ("daft punk") returning YouTube Music songs |
 | `26-search-playing.png` | The same list after clicking the first row: the track plays and the mini player shows it |
 | `27-search-enter.png` | Enter submitted from the rail field on the rebuilt 1.56.0-beta, results returned |
-| `28-installed-search.png` | The same submit on the installed copy in `C:\Program Files\VIVIMusic` |
+| `28-installed-search.png` | The same submit on the installed copy in `C:\Program Files\AxolotlMusic` |
 | `side/12-mini-player.png` | The floating capsule mini player over the Search page (third pass) |
 | `side/13-settings-real.png` | Settings carrying this build's own options, rail foot at ACCOUNT + SETTINGS (third pass) |
 | `side/14-player-lyrics-scroll.png` | The lyrics panel following the playhead (third pass) |
@@ -195,11 +195,11 @@ appended"). `Download` on a song row reaches `PlayerController.downloadToCache`
 `~/.vivimusic/playlists.json`.
 
 The fixed build was rebuilt as
-`dist/VIVIMusic-6.0.8.11_DE-1.56.0-setup.exe` and installed over the existing
+`dist/AxolotlMusic-6.0.8.11_DE-1.56.0-setup.exe` and installed over the existing
 copy. The parity pass rebuilt it again (150,837,066 bytes, 15 Nov 12:34) and
-installed it at 12:36; the installed `app/VIVIMusic.cfg` points at
+installed it at 12:36; the installed `app/AxolotlMusic.cfg` points at
 `desktop-2d4ab622...jar`, the jar that build produced. On the earlier 11:25 build
-the installed launcher's `app/VIVIMusic.cfg` pointed at `desktop-4b92beaf...jar`
+the installed launcher's `app/AxolotlMusic.cfg` pointed at `desktop-4b92beaf...jar`
 (11:24); the older `desktop-*.jar` files from earlier installs stay in
 the folder, unused, because Inno Setup does not remove files it no longer
 ships. The submit was then repeated on that installed exe (`28-installed-search.png`)
@@ -215,13 +215,13 @@ Driving the packaged app from a script needs two things that cost an hour here:
 the window has to own the foreground before a synthetic click, or Windows gives
 the click to the activation and the widget never sees it (`.ignore/tmp/click7.ps1`
 attaches the input queue and checks `GetForegroundWindow` first), and text has to
-arrive as real keys (`agent-desktop press --app VIVIMusic.exe --headed <key>`):
+arrive as real keys (`agent-desktop press --app AxolotlMusic.exe --headed <key>`):
 `SendKeys` from a background PowerShell reaches nothing. A window that keeps
 losing the foreground to the shell needs the focus attempt repeated until
 `GetForegroundWindow` really returns it (`.ignore/tmp/click7.ps1` loops eight
 times); one attempt is not enough, and the click that follows a failed one is
 spent on the activation. A deep link starts the app on a screen without any
-click at all: `VIVIMusic.exe --open=search` (also `player`, `queue`, `library`,
+click at all: `AxolotlMusic.exe --open=search` (also `player`, `queue`, `library`,
 `settings` and the settings pages, `Main.kt` `screenForSection`), which is why
 `docs/ui-parity/27-search-enter.png` was reached that way.
 

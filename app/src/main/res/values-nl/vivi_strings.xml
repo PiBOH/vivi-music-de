@@ -211,7 +211,7 @@
     <string name="lyrics_line_spacing">Songtekst regel afstand</string>
     <string name="show_wrapped_card">Toon Wrapped</string>
     <string name="progress_percent">Vooruitgang %s%%</string>
-    <string name="visit_vivimusic">Bezoek vivimusic</string>
+    <string name="visit_vivimusic">Bezoek Axolotl Music</string>
     <string name="copied_title">Titel gekopieerd</string>
     <string name="copied_artist">Artiest gekopieerd</string>
     <string name="lyrics_glow_effect">Gloeiende songtekst</string>
@@ -274,7 +274,7 @@
     <string name="delete_desc">Dit item permanent verwijderen</string>
     <string name="devices">Apparaten</string>
     <string name="device_sync">Apparaatsynchronisatie</string>
-    <string name="device_sync_desc">Koppel deze telefoon aan VIVI Music DE op je computer om instellingen, wachtrij en bibliotheek te synchroniseren.</string>
+    <string name="device_sync_desc">Koppel deze telefoon aan Axolotl Music op je computer om instellingen, wachtrij en bibliotheek te synchroniseren.</string>
     <string name="device_sync_server">Relayserver</string>
     <string name="device_sync_discover">Computer zoeken</string>
     <string name="device_sync_scan_qr">QR-code scannen</string>
@@ -285,6 +285,6 @@
     <string name="device_sync_paired">Gekoppeld</string>
     <string name="device_sync_not_paired">Niet gekoppeld</string>
     <string name="device_sync_paired_device">Gekoppeld apparaat</string>
-    <string name="sync_vivi_volume">VIVI-volume synchroniseren</string>
-    <string name="sync_vivi_volume_desc">Spiegel de volumeschuifregelaar in de app tussen deze telefoon en VIVI Music DE. Schakel het uit om het volume van elke speler onafhankelijk te houden.</string>
+    <string name="sync_vivi_volume">Axolotl Music-volume synchroniseren</string>
+    <string name="sync_vivi_volume_desc">Spiegel de volumeschuifregelaar in de app tussen deze telefoon en Axolotl Music. Schakel het uit om het volume van elke speler onafhankelijk te houden.</string>
 </resources>

@@ -30,7 +30,7 @@ class JellyfinApiClient(
         private const val CLIENT_NAME = BuildConfig.APP_NAME
         private const val CLIENT_VERSION = BuildConfig.APP_VERSION_NAME
         private const val DEVICE_NAME = "Desktop"
-        private const val DEVICE_ID = "VIVIMusicDE-PC"
+        private const val DEVICE_ID = "AxolotlMusic-PC"
     }
 
     private fun buildAuthHeader(token: String? = null): String {

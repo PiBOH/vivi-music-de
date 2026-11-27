@@ -17,7 +17,7 @@ import kotlin.system.exitProcess
  * what a real library would give them.
  *
  * Usage: `VIVI_SYNC_STATE_FILE=<fixture>` with
- * `VIVIMusic.exe --seed-demo-library=<directory>`, where the directory holds
+ * `AxolotlMusic.exe --seed-demo-library=<directory>`, where the directory holds
  * `covers/random-access-memories.jpg`, `covers/after-hours.jpg` and
  * `covers/late-night-drive.jpg`. The flag refuses to run without
  * `VIVI_SYNC_STATE_FILE`, so an accidental call cannot replace the default

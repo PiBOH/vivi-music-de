@@ -54,7 +54,7 @@ object Paxsenix {
 
                 defaultRequest {
                     url("https://lyrics.paxsenix.org")
-                    header("User-Agent", "ViviMusic/$appVersion")
+                    header("User-Agent", "AxolotlMusic/$appVersion")
                 }
 
                 expectSuccess = true

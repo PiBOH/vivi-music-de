@@ -3,7 +3,7 @@
 Date: 20 November 2026.
 
 Reference: PixelPlayerDesktop 1.1.0, launched from its own Gradle build.
-Clone: VIVI Music DE, branch `vivi-music-de`, launched from `:desktop:run`.
+Clone: Axolotl Music, branch `axolotl-music-de`, launched from `:desktop:run`.
 
 Both windows were 1936 x 1096 and were captured at the same tab. The library is
 identical in content: three albums, three playlists, two albums with a cover,
@@ -20,7 +20,7 @@ PixelPlayer, plus three playlist rows written into its own `pixelplayer.db`.
 The artwork cache and the playlist row use the same JPEG bytes as
 `docs/ui-parity/album-playlist/fixtures/covers/`.
 
-VIVI Music DE uses `LocalLibraryStore` and `~/.vivimusic/device-sync.json`.
+Axolotl Music uses `LocalLibraryStore` and `~/.vivimusic/device-sync.json`.
 `--seed-demo-library=<dir>` writes the fixture through the same `save` call a
 user change uses. The flag refuses to run without `VIVI_SYNC_STATE_FILE`, so the
 default store is outside its write path. For the screenshots the store and
@@ -33,25 +33,25 @@ has no music folders to add, which keeps the frame at exactly three albums.
 | Frame | File |
 |---|---|
 | PixelPlayerDesktop, Albums | `docs/ui-parity/album-playlist/screenshots/pixelplayer-albums.png` |
-| VIVI Music DE, Albums | `docs/ui-parity/album-playlist/screenshots/vivi-music-albums.png` |
+| Axolotl Music, Albums | `docs/ui-parity/album-playlist/screenshots/vivi-music-albums.png` |
 | Album cards, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/album-cards-pixel.png` |
-| Album cards, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/album-cards-vivi.png` |
+| Album cards, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/album-cards-vivi.png` |
 | PixelPlayerDesktop, Playlists | `docs/ui-parity/album-playlist/screenshots/pixelplayer-playlists.png` |
-| VIVI Music DE, Playlists | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists.png` |
+| Axolotl Music, Playlists | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists.png` |
 | Playlist rows and covers, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/playlist-covers-pixel.png` |
-| Playlist rows and covers, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/playlist-covers-vivi.png` |
+| Playlist rows and covers, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/playlist-covers-vivi.png` |
 | Empty Albums, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-albums-empty.png` |
-| Empty Albums, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-albums-empty.png` |
+| Empty Albums, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/vivi-music-albums-empty.png` |
 | Empty Playlists, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-playlists-empty.png` |
-| Empty Playlists, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-empty.png` |
+| Empty Playlists, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-empty.png` |
 | Playlist hover, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/pixelplayer-playlists-hover.png` |
-| Playlist hover, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-hover.png` |
+| Playlist hover, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/vivi-music-playlists-hover.png` |
 | Play button close-up, PixelPlayerDesktop | `docs/ui-parity/album-playlist/screenshots/playlist-hover-pixel.png` |
-| Play button close-up, VIVI Music DE | `docs/ui-parity/album-playlist/screenshots/playlist-hover-vivi.png` |
+| Play button close-up, Axolotl Music | `docs/ui-parity/album-playlist/screenshots/playlist-hover-vivi.png` |
 
 ## Album view, element by element
 
-| Visible element | PixelPlayerDesktop resource or image | VIVI Music DE resource or image | Result |
+| Visible element | PixelPlayerDesktop resource or image | Axolotl Music resource or image | Result |
 |---|---|---|---|
 | Shuffle button | `ic_rounded_shuffle` | `ic_rounded_shuffle` | Same XML, byte for byte |
 | Grid view button | `ic_rounded_grid_view` | `ic_rounded_grid_view` | Same XML |
@@ -70,7 +70,7 @@ has no music folders to add, which keeps the frame at exactly three albums.
 
 ## Playlist view, element by element
 
-| Visible element | PixelPlayerDesktop resource or image | VIVI Music DE resource or image | Result |
+| Visible element | PixelPlayerDesktop resource or image | Axolotl Music resource or image | Result |
 |---|---|---|---|
 | New button | `ic_automirrored_rounded_playlist_add` | `ic_automirrored_rounded_playlist_add` | Same XML |
 | Import button | `ic_rounded_upload_file` | `ic_rounded_upload_file` | Same XML |
@@ -93,7 +93,7 @@ PixelPlayer's database was copied to a temporary backup, its library tables were
 emptied, and the database and settings were restored after the captures. VIVI
 used `build/empty-run` through `VIVI_SYNC_STATE_FILE` and `VIVI_SETTINGS_FILE`.
 
-| Visible element | PixelPlayerDesktop | VIVI Music DE | Result |
+| Visible element | PixelPlayerDesktop | Axolotl Music | Result |
 |---|---|---|---|
 | Album empty icon | `ic_rounded_album`, 54 dp, 45% `onSurfaceVariant` | same drawable, size and tint | Same XML and geometry |
 | Album empty title | "No albums in library" | same string | Same `LibraryEmptyState` body |
@@ -117,7 +117,7 @@ was taken after the hover state settled. The OS screenshot does not draw the
 pointer itself; the visible evidence is the 38 dp Play button that exists only
 while the row is hovered and the playlist has at least one song.
 
-| Visible element | PixelPlayerDesktop | VIVI Music DE | Result |
+| Visible element | PixelPlayerDesktop | Axolotl Music | Result |
 |---|---|---|---|
 | Hover-only Play button | `ic_rounded_play_arrow`, 20 dp in a 38 dp `primary` circle | same drawable and geometry | Same XML and body; present in both frames |
 | Play button condition | `isHovered && playlistSongs.isNotEmpty()` | same condition | Same `PlaylistListItem` body |
@@ -137,7 +137,7 @@ A SHA-256 comparison of both
 `src/main/composeResources/drawable` directories gives:
 
 - PixelPlayerDesktop: 154 drawable XML files.
-- VIVI Music DE: 154 drawable XML files.
+- Axolotl Music: 154 drawable XML files.
 - Missing in VIVI: 0.
 - Extra in VIVI: 0.
 - Different content: 0.

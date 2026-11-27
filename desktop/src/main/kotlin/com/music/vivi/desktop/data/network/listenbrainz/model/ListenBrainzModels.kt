@@ -31,8 +31,8 @@ data class ListenBrainzTrackMetadata(
 
 @Serializable
 data class ListenBrainzAdditionalInfo(
-    @SerialName("media_player") val mediaPlayer: String? = "VIVIMusicDE",
-    @SerialName("submission_client") val submissionClient: String? = "VIVIMusicDE",
+    @SerialName("media_player") val mediaPlayer: String? = "AxolotlMusic",
+    @SerialName("submission_client") val submissionClient: String? = "AxolotlMusic",
     @SerialName("duration_ms") val durationMs: Long? = null,
     @SerialName("recording_mbid") val recordingMbid: String? = null
 )
