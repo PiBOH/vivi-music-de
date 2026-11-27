@@ -216,6 +216,10 @@ fun main(args: Array<String> = emptyArray()) {
     // Proves the session is sealed at rest, the old plaintext is migrated, sign-out
     // and the backup stay clean and the logs carry no cookie value.
     SessionVaultCheck.handle(args)
+    // Proves the update checksum path against the published release: downloads
+    // the one SHA256SUMS, matches its asset line and refuses a corrupted hash
+    // and a corrupted file.
+    com.music.vivi.desktop.dev.UpdateChecksumCheck.handle(args)
     // Proves the saved-account list, the switch and the fallback on a temporary
     // directory, so the account this machine uses is never touched.
     YouTubeAccountsCheck.handle(args)

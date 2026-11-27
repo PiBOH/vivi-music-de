@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.data.backup.AutoBackupScheduler
 import com.music.vivi.desktop.data.network.github.GitHubReleaseClient
+import com.music.vivi.desktop.data.network.github.ReleaseChecksums
 import com.music.vivi.desktop.domain.model.AppReleaseInfo
 import com.music.vivi.desktop.domain.model.ReleaseAsset
 import com.music.vivi.desktop.domain.model.SemanticVersion
@@ -137,22 +138,8 @@ class UpdateStateHolder(
             )
             return
         }
-        val checksumAsset = release.assets.firstOrNull {
-            it.name.equals("SHA256SUMS", ignoreCase = true)
-        } ?: release.assets.firstOrNull {
-            it.name.equals("${asset.name}.sha256", ignoreCase = true)
-        }
         coroutineScope.launch {
-            val expected = asset.sha256 ?: checksumAsset
-                ?.let { releaseClient.fetchText(it.downloadUrl).getOrNull() }
-                ?.lineSequence()
-                ?.map { it.trim() }
-                ?.firstOrNull { line ->
-                    line.substringAfter(' ', "").trim().removePrefix("*").equals(asset.name, ignoreCase = true)
-                }
-                ?.substringBefore(' ')
-                ?.lowercase()
-                ?.takeIf { it.length == 64 }
+            val expected = ReleaseChecksums.resolve(release, asset, releaseClient)?.sha256
             if (expected == null) {
                 _downloadState.value = UpdateDownloadState.Failed(
                     "The release does not publish a SHA-256 for ${asset.name}, so the download was not started."
@@ -173,7 +160,7 @@ class UpdateStateHolder(
                 if (actual == null) {
                     file.delete()
                     _downloadState.value = UpdateDownloadState.Failed("The downloaded file could not be hashed.")
-                } else if (!actual.equals(expected, ignoreCase = true)) {
+                } else if (!ReleaseChecksums.matches(expected, actual)) {
                     file.delete()
                     _downloadState.value = UpdateDownloadState.Failed(
                         "The downloaded file does not match the published SHA-256. It was deleted."
