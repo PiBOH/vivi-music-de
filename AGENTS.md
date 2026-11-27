@@ -88,13 +88,13 @@ dependencies there, or you break the desktop build.
     similar docs material) must be applied and pushed on **both**
     `vivi-music-de` and `vivi-music-de-apk`, with equivalent content (their
     hashes may differ). `main` stays excluded (upstream mirror).
-  - **`CHANGELOG.md` and `version.txt` are not "equivalent", they are the
-    same file on both branches** (same order, same versions, same dates, byte
-    for byte): the APK's changes are part of the DE's own release entry as
-    `[APK]` bullets, so the two are never written separately. A change to
-    either file is applied to one branch and then copied to the other
-    wholesale (`git checkout <other-branch> -- CHANGELOG.md version.txt`), not
-    re-typed — and `TODO.md` follows the same content.
+  - **`CHANGELOG.md`, `CHANGELOG.dev.md` and `version.txt` are not "equivalent",
+    they are the same files on both branches** (same order, same versions, same
+    dates, byte for byte): the APK's changes are part of the DE's own release
+    entry as `[APK]` bullets, so the two are never written separately. A change
+    to any of these files is applied to one branch and then copied to the other
+    wholesale (`git checkout <other-branch> -- CHANGELOG.md CHANGELOG.dev.md
+    version.txt`), not re-typed — and `TODO.md` follows the same content.
   - **An APK change never gets a section, a file or a version of its own**: it
     is added as an `[APK]` bullet to the entry being prepared — the one the
     desktop's changes go into — and pushed to **both** branches as that same
@@ -197,6 +197,12 @@ dependencies there, or you break the desktop build.
     the only place an APK ever lives. That branch is recreated from scratch and
     force-pushed on every run: it must always be **one commit**, so the APK
     binaries never accumulate in the repository history.
+  - **Checksums are one file per release (mandatory)**: `Auto Release` publishes
+    a single `SHA256SUMS` at the root of the release assets, one
+    `<sha256>  <file>` line for every installer and archive it uploaded (the
+    `INSTALL-GUIDE.md` and the checksum file itself are excluded). It writes no
+    per-file `.sha256` any more; the updater reads GitHub's asset digest first
+    and falls back to the matching line in `SHA256SUMS`.
   - `.releases/apk/latest` is the **only** APK download path: the website
     (the `gh-pages` branch, `APK_BASE`), the desktop Devices screen
     (`ApkDownloads`) and the mobile updater (`APK_LATEST_VERSION_URL`) all read
@@ -268,29 +274,37 @@ dependencies there, or you break the desktop build.
   `TODO.md` stale after a change.
 - Match the existing conventions of the file you edit (naming, formatting,
   KDoc style). Do not reformat untouched code.
-- **Tooltips on buttons (always):** every clickable icon/button in the DE must
-  be wrapped in the shared `Tooltip(text) { … }` composable
-  (`Tooltips.kt`, `@OptIn(ExperimentalFoundationApi::class)`) so hovering shows
-  the button's name. This applies to all new buttons and to existing buttons
-  when touched; use the localized label when one exists, otherwise a short
-  English name. Never show raw localization keys.
+- **Tooltips on buttons (always):** every clickable icon/button in the desktop
+  window is wrapped in the clone's `AppTooltip(text) { … }` composable
+  (`presentation/components/subcomps/AppTooltip.kt`,
+  `@OptIn(ExperimentalFoundationApi::class)`) so hovering shows the button's
+  name after its 450 ms delay: a `surfaceContainerHighest` card with a 1 dp
+  `outlineVariant` border, a 0.90 to 1.0 scale spring and a 160 ms fade. This
+  applies to all new buttons and to existing buttons when touched; the text is
+  the short English name the window already uses for that action, and
+  `AppTooltip` draws nothing for a blank string, so a placeholder is not a
+  tooltip. This module has no localization keys to fall back on (see *The
+  desktop UI: anatomy, patterns, style*).
 - **A cut text says the whole of itself on hover (always):** a text the layout
   has to truncate (an ellipsized line, a clamped title, a row too narrow for its
-  name) shows the full string while the pointer is on it, through the same
-  `Tooltip` composable as the bullet above, with the whole string as its text.
-  This applies to all new text and to existing text when touched: an ellipsis
-  with nothing behind it, or a name cut in half with no way to read the rest, is
-  a defect rather than a layout detail. The UI preview does it for every cut
-  text through `cutTextOf` (`js/chrome.js`), and `scroll_check.mjs` fails
-  when one has no tooltip.
-- **No visible scrollbar (always):** Compose's `verticalScroll`/`LazyColumn`
-  draw no bar, so the DE does not add one (the live log's own 10 dp bar is the
-  one deliberate exception, because it scrolls a stream of lines with no other
-  way to tell position). A pane or a list that needs a bar to be usable is the
-  wrong answer - the content is sized instead, and a text that does not fit
-  follows the hover rule above. The UI preview hides every bar for the same
-  reason (`css/base.css`), and `scroll_check.mjs` fails when one takes room in a
-  scroll box.
+  name) shows the full string while the pointer is on it, through `AppTooltip`
+  as the bullet above, with the whole string as its text. This applies to all
+  new text and to existing text when touched: an ellipsis with nothing behind
+  it, or a name cut in half with no way to read the rest, is a defect rather
+  than a layout detail. A `maxLines` with `TextOverflow.Ellipsis` is exactly the
+  case that needs it; the mini bar's scrolling title uses `basicMarquee`
+  instead, which is the other accepted answer for a title that is too long for
+  its row. This module has no scroll or preview checker, so the check is reading
+  the screen.
+- **Scrollbars: the clone's own, and only where a long list needs one.**
+  Compose's `verticalScroll`/`LazyColumn` draw no bar on their own. The desktop
+  window has exactly one bar of its own, `ExpressiveScrollBar`, and it is used
+  by the long lists it was built for (`SongsTab`, the queue panel) together with
+  `songFastScrollLabel` and the `ExpressiveScrollBarLabelResolvers`. Elsewhere a
+  pane or a list is sized instead of given a bar, and a text that does not fit
+  follows the hover rule above. Do not add a bar to a short list or to a card,
+  do not restyle the one the clone draws where it already exists, and do not
+  reintroduce a bar the clone does not have.
 - **Distinct icons for distinct actions (always):** do not reuse the same icon
   for different meanings in the DE. When a concept already has an icon, keep
   that icon everywhere it appears; when adding a new action, pick a new icon
@@ -301,6 +315,7 @@ dependencies there, or you break the desktop build.
   playlist entries/filter → `PlaylistPlay`, add-to-playlist → `PlaylistAdd`,
   right Now-Playing panel → `VerticalSplit`, library/albums → `LibraryMusic`,
   menu (⋯) → `MoreVert`, settings → `Settings`.
+- **Apple surfaces use Apple icons (mandatory):** wherever the edition draws an Apple Music surface (the v17 player, its tab row, the large lyrics view and the mini bar), the icon is the Apple one for that action, never a generic Material glyph: shuffle, repeat and repeat-one, autoplay/infinity, lyrics, queue, audio output and listening together all keep the Apple shape and weight. A Material icon is not a stand-in for an Apple control, and an Apple control is never drawn with the words of a Material icon name.
 - **Button emphasis: filled first, outlined last (always):** a clickable button
   is never an `OutlinedButton` (or `md-button--outlined` in the UI preview)
   unless the owner asks for one. Material 3 gives the hierarchy, and the DE
@@ -330,20 +345,10 @@ dependencies there, or you break the desktop build.
     (`Shapes.extraSmall` 8, `small` 12, `medium` 16, `large` 20, `extraLarge`
     28, plus `none` and `full`), or from the component's own token where the app
     fixes the corner itself (the 24 dp settings card). A bare `14.dp` corner is
-    a defect: it is a level nobody can find again. A shape that is not a corner
-    but a *family* comes from the same page, through `CookieShapes` (the
-    library's cookies and clover), and the map is: an artist's artwork and a
-    song's cover in a row → the 4-sided cookie; a person (the Contributors
-    list, developers and community alike, and the author of this edition) → the
-    9-sided cookie; a Listen Together avatar → the 4-leaf clover. Nothing else invents a polygon, and a screen
-    never hand-rolls one of these three. A shape that has to move takes the
-    animated constructors (`rememberPersonCookie`, `rememberArtistCookie`,
-    `rememberCloverShape`) instead of the fixed rest value: a hover rounds a
-    cookie's corners, a selection tightens and turns it, and the clover fills
-    its lobes. The numbers live in `CookieShapes.kt`, and the preview's
-    `.md-avatar` carries the same two polygons as CSS `path()` values
-    (`.ignore/cookie_paths.py` generates them), because a `url()` clipPath
-    cannot interpolate.
+    a defect: it is a level nobody can find again. A cover in a row is a card:
+    it takes `MaterialTheme.shapes.medium` (16 dp), the corner M3 gives a card.
+    A polygon is never hand-rolled, and no shape is mandatory for a screen: a
+    layout may use plain rounded cards wherever they fit it.
   - **Colour** - <https://m3.material.io/styles/color>: a component draws with a
     role (`primary`, `onPrimaryContainer`, `surfaceContainerHigh`,
     `outlineVariant`, ...), never with a literal value. Raw colours live in the
@@ -352,36 +357,362 @@ dependencies there, or you break the desktop build.
     reason - the ink an artwork carries over an arbitrary hue, the colour
     wheel's own spectrum, the theme-mode circles. `styles_check.mjs` fails on a
     corner that is not a scale level and on a colour outside `tokens.css`.
-  - **Motion** - <https://m3.material.io/styles/motion>: a duration and a curve
-    come from `Motion` (`desktop/.../Motion.kt`), never from the call site. The
-    object holds the published sixteen duration steps (`SHORT1` 50 ms ...
-    `EXTRA_LONG4` 1000 ms) and the seven easing tokens, and it is what
-    `Animations.kt` builds every transition out of. The direction picks the
-    curve: something arriving decelerates (`emphasizedDecelerate`), something
-    leaving accelerates (`emphasizedAccelerate`), a movement that begins and ends
-    on screen uses `emphasized`. A state change - a hover, a press - is not a
-    transition: it rides an effects spring through `Motion.hoverProgress`, which
-    is what `Modifier.hoverGrow` animates a cookie or a clover with. The springs'
-    damping and stiffness are the DE's own (Material publishes the spring tokens
-    but not those numbers), the durations and the curves are the published ones.
-    The UI preview mirrors the same table in `css/tokens.css`
-    (`--md-sys-motion-*`), `:desktop:motionCheck` and `motion_check.mjs` verify
-    both, and an `Animation speed` or `Animations` change reaches every one of
-    them.
+  - **Motion** - <https://m3.material.io/styles/motion>: the cloned module has
+    no `Motion` object and no `Animations.kt`. A duration and a curve are written
+    at the call site, inside the screen that owns them, in the vocabulary the
+    clone already uses: panels and overlays are `AnimatedVisibility` with
+    `fadeIn`/`slideIn`/`expandHorizontally` in the 180-350 ms band; a hover, a
+    press or a width change is an `animateFloatAsState`/`animateDpAsState`
+    spring (`FastOutSlowInEasing` at 160 ms in `AppTooltip`,
+    `Spring.DampingRatioMediumBouncy` + `Spring.StiffnessLow` for the mini
+    player's play/pause corner, `Spring.DampingRatioNoBouncy` +
+    `Spring.StiffnessMediumLow` for the sidebar width); the active lyric line
+    follows its own alpha/scale animation. Something arriving decelerates,
+    something leaving accelerates, a movement that begins and ends on screen
+    uses the slower spring, and a state change is not a transition. Keep a new
+    transition inside the band the neighbouring screen already uses, and keep an
+    infinite animation only where it stops with playback and with a minimized
+    window (`LocalWindowMinimized`, `WavySliderExpressive`). The sentences of
+    this bullet that named `Motion.kt`, `css/tokens.css`, `:desktop:motionCheck`
+    and `motion_check.mjs` described the retired Bit surface; none of them exist
+    here.
 - **Expressive theme rule (always):** don't move away from expressive theme.
   You design it like the way the Spotify, Apple, etc. do, but don't move away
   from Material theme color.
-- Kotlin formatting: keep to the project's existing style; do not run a global
-  formatter that rewrites unrelated lines.
-- Verify non-trivial changes by compiling the affected module
-  (`./gradlew :module:compileKotlin`, `:app:compileUniversalFossDebugKotlin`,
-  `:desktop:compileKotlin`) before committing.
-- **Ponytail (always):** on every coding task, apply the `ponytail` skill
-  (installed in `.agents/skills/ponytail`): smallest working solution, reuse
-  what already exists in the codebase, stdlib/native over new code and new
-  dependencies, one line before fifty. It complements the golden rule in §4 and
-  never overrides explicit user requests, the trust-boundary/error-handling
-  rules, or the localization rule in §6.
+
+### The desktop surface: the PixelPlayerDesktop clone - MANDATORY
+
+The desktop window is PixelPlayerDesktop's surface, carried over file by file:
+the shell and the shortcuts in `Main.kt`, the Material 3 theme in `ui/theme/`,
+the components in `presentation/components/`, the screens in
+`presentation/screens/` and the audio engine in `data/player/mpv/`. VIVI Music
+DE owns the name, the icon, the installer metadata and the backend wiring. It
+does not own a second design language, so a screen changes by changing the
+cloned screen, not by adding a parallel surface next to it.
+
+| Surface | Files |
+|---|---|
+| Window, shortcuts, startup flags, dev harnesses | `Main.kt` |
+| Theme, typography, dynamic colour | `ui/theme/` |
+| Player, lyrics, queue | `presentation/screens/player/` |
+| Library tabs | `presentation/screens/library/` |
+| Album, artist, playlist, folder, daily mix | `presentation/screens/*DetailScreen.kt`, `DailyMixScreen.kt` |
+| YouTube Music search | `presentation/screens/YouTubeMusicScreen.kt` |
+| Settings | `presentation/screens/settings/` |
+| Dialogs and shared rows | `presentation/components/` |
+| Audio engine, stream handoff | `data/player/mpv/MpvAudioEngine.kt`, `data/player/PlaybackUriResolver.kt` |
+
+- **Material 3, with the palette from the artwork.** Every screen reads
+  `MaterialTheme.colorScheme`; the scheme comes from MaterialKolor, seeded from
+  the current cover. No screen carries a hand-written palette, and a new colour
+  is a scheme role, not a hex value at the call site.
+- **libmpv is the engine, and the URL comes from innertube.** `MpvAudioEngine`
+  is the only playback path: `play(uri, httpHeaders)` and
+  `crossfadeTo(uri, httpHeaders, ...)` receive the resolved stream together with
+  the `User-Agent` and `Referer` headers that `PlaybackUriResolver` produced,
+  and the engine sets them through `http-header-fields`. A stream that needs the
+  handoff is a bug in the resolver, never a reason to bypass the engine.
+- **Branding is data, not a fork.** The app name and version come from
+  `version.txt` through `BuildConfig` (`APP_NAME`, `APP_VERSION_NAME`), the
+  window title from `BuildConfig.APP_NAME`, the installer name from
+  `packageName = "VIVIMusic"`, and the icon from `src/main/resources/icons/`
+  (`icon.ico`, `icon.icns`, `icon.png`, taken from `vivi-music-de`). A branded
+  string is edited in one of those places, never searched and replaced through
+  the sources: every user-visible use of the name (window title, tray, sidebar,
+  welcome screens, shortcuts dialog, mini window) reads
+  `BuildConfig.APP_NAME`, so a hardcoded brand string is a bug.
+- **Performance is the surface's own rule: 120 FPS or it is not finished.**
+  The renderer is forced (`-Dskiko.renderApi`, Direct3D on Windows, Metal on
+  macOS, OpenGL elsewhere) and the frame clock stays on vsync. Turning vsync off
+  (`-Dskiko.vsync.enabled=false`) was measured at one frame every 4.3 s while the
+  window was resized, against a steady 60 fps with it on: the uncapped repaint
+  loop competes with the AWT event pump. The cap is the panel, not a limiter, so
+  a 120/144 Hz display is served at its own rate. UI models are
+  `@Immutable` or `@Stable`; the playhead, the seek bar and the synced lyrics
+  read their value inside the leaf that draws them (`Modifier.graphicsLayer`,
+  `Canvas`, `derivedStateOf`); every `LazyColumn` and `LazyRow` carries a stable
+  `key` and a `contentType`; JSON parsing, network calls and colour extraction
+  run on `Dispatchers.IO` or `Dispatchers.Default`; a blurred backdrop is a
+  fixed-size layer over a static image, never a full-window blur recomputed per
+  frame, and no new `Modifier.blur` goes on anything that redraws with the
+  playhead.
+- **A resize is a layout, not a repaint storm.** `Main.kt` debounces the
+  window's `WM_SIZE` reports by 180 ms and repaints from the debounced size, so
+  dragging an edge moves a frame per step instead of re-laying out the whole
+  window per pixel. `--fps-log=<file>` appends one line per second with the
+  frames the window actually produced; a performance claim is made with that
+  log, not by feel.
+- **The libmpv payload: engine fetched, loader tracked.**
+  `desktop/app-resources/windows/mpv/vulkan-1.dll` (616 KB) is in git, because
+  the loader is what this GPU needs and it is small; `libmpv-2.dll` (121 MB) is
+  gitignored and fetched by `:desktop:setupMpvWindows` from the mpv-winbuild
+  release. `prepareAppResources`, `createDistributable`, `run` and every
+  packaging task depend on that task, so a clean checkout packages an app that
+  plays without a manual step. `setupMpvWindows` must not declare the directory
+  as an output: Compose's `prepareAppResources` reads it as an input and Gradle
+  rejects the pair as an undeclared dependency. The path cannot sit under a
+  hidden directory either: Compose reports `prepareAppResources NO-SOURCE` for a
+  root inside `.ignore`.
+- **Storage: one JSON store, no database engine.** The desktop has no database
+  dependency and no driver. The library (songs, liked songs, playlists, the
+  lyrics cache, the playback events, the ListenBrainz queue and the artist
+  images) is `LocalLibraryState` in `data/store/`, persisted under the
+  `localLibrary` key of `~/.vivimusic/device-sync.json`: the 1.55.0 model, where
+  one pretty JSON state is read once into memory (`LocalLibraryStore.load`),
+  every change goes through `update` under a lock, and the whole file is written
+  back. Keys the store does not own are preserved on every write, and the
+  options stay in `settings.json`. A library written by the previous build is
+  imported once, on the first start that has no `localLibrary` key, by
+  `LegacyLibraryImport` (a parser of the old file, not an engine), and that file
+  is left on disk untouched. Never add a database dependency, driver, ORM or a
+  database-backed cache to `desktop`: a new persisted value is a field of
+  `LocalLibraryState` plus the DAO method that reads it and the invalidation
+  name it emits. The same parser reads the browsers' cookie stores
+  (`BrowserCookies`), so importing a browser session needs no driver either.
+  A write is a synced temporary file followed by a rename, with the previous
+  file rotated to `device-sync.json.bak`; a file that does not parse is moved to
+  `device-sync.json.corrupt-<millis>` and the backup is tried before the store
+  starts empty. `desktop/src/test` stops a write halfway and proves the previous
+  library is read back. Settings reads the import record (`libraryImport`) and
+  offers Reimporta behind a confirmation, and Backup & Restore writes two kinds:
+  a full-device `.vivide.lbkp` zip (manifest plus the whole `device-sync.json`,
+  credentials excluded) with a `device-sync.json.pre-restore-<millis>` copy
+  before a restore, and a section export with its own `.vivide.sbkp`
+  extension. The names are how a picker and the uninstaller tell the two apart:
+  the full-backup picker reads `.vivide.lbkp` and still imports a `.vivide.bkp`
+  or `.vivide.backup` from an earlier build, the section picker reads
+  `.vivide.sbkp` and still imports a `.vivide.sections` or `.pxpl` file, and
+  neither relies on the file name to read the archive itself.
+- **Housekeeping the desktop does by itself.** `SingleInstanceGuard` takes an
+  OS lock on `.vivimusic.lock` beside the store before the window is built, so
+  two builds cannot write one library; a process that loses the lock exits 0.
+  The library also stores the resume point (`resumeSong`, `resumePositionMs`,
+  `resumeUpdatedAt`); the player restores that track paused and seeks to the
+  position. `AutoBackupScheduler` writes a weekly full backup through the same
+  exporter (`auto_backup_<millis>.vivide.lbkp`, five kept) and backs up before
+  an update downloads, with `autoBackupEnabled`, `backupBeforeUpdate` and
+  `lastAutoBackupAt` in `settings.json`. Settings exports a diagnostic zip
+  (`system.txt`, redacted `settings.json`, store summary, backup listing and
+  the newest logs) and scans the library for missing files, broken covers,
+  orphan playlist entries and duplicate groups; the health card's groups open
+  `LibraryHealthDetailScreen`, where a missing file is relinked through the
+  audio picker, orphan entries are removed only for the selected playlists
+  after a preview, duplicates open the existing Duplicate Songs screen, and
+  every change has an Undo bar that restores the previous path or playlist
+  order. A scan and a repair never delete a song file on their own, and a
+  reference that became valid again is kept. The updater downloads the
+  asset that matches the OS, checks its SHA-256 against GitHub's asset digest
+  or against its line in the release's single `SHA256SUMS` file, and only then
+  offers the install; the automatic release workflow writes that one file. It reads
+  the official `PiBOH/axolotl-music` release list (`/releases?per_page=20`,
+  prereleases included), not `/releases/latest`, because every desktop build
+  is a prerelease and the latest endpoint has no stable release to return.
+
+  The new settings cards are rendered by `--cards-render-check`, which starts
+  the app's Koin graph, composes `YouTubePlaylistsCard`, `AutoBackupCard`,
+  `SyncStatusCard`, `DiagnosticsCard` and `LibraryHealthCard` in an
+  `ImageComposeScene` and writes the frames under `build/cards/`; it also
+  composes `AppUpdateDialog` with Idle, Ready and Failed states. The account
+  list has a visible scrollbar and marks read-only playlists, and the update
+  dialog gives Download, Install and Try again their own icons with the full
+  SHA-256 behind a tooltip. Use `VIVI_CARDS_OUTPUT` and a temporary
+  `VIVI_SYNC_STATE_FILE`/`VIVI_SETTINGS_FILE` when the render must not touch
+  the real store or start a playback restore.
+- **The YouTube session is sealed at rest.** `yt-cookie.txt` and the
+  `yt-context.txt` identity beside it are never plain text: `SessionVault` wraps
+  them with DPAPI (application entropy,
+  `CRYPTPROTECT_UI_FORBIDDEN`) on Windows and with AES-256-GCM under a key in
+  the macOS keychain (`security`) or the Linux Secret Service (`secret-tool`)
+  elsewhere, writing through a temporary file and an atomic rename, 0600 on
+  POSIX. A plaintext file from an older build is re-sealed on the first read;
+  when no keystore is reachable the file is removed and the session lives only
+  in memory for that run. Sign-out deletes both files, their `.tmp` copy and
+  the keystore key, and neither `FullBackup` nor the section `BackupWriter`
+  contains the session. `YtLog` and the sign-in debug log pass every line
+  through `SecretRedactor`, so a diagnostic that quotes a header cannot persist
+  a cookie value. `--session-vault-check` proves the sealed round trip, the
+  plaintext migration, the sign-out cleanup, the backup entries, the redaction
+  and the existing log files; `--seal-session` migrates an installation in
+  place. **Measured on 20 Nov:** `--session-vault-check` exits 0 (`RESULT: PASS`,
+  0 cookie assignment lines in `youtube.log`); the real 4260-byte cookie and
+  580-byte context were sealed in place to `VIVICOK1` (4537 and 857 bytes, 0
+  plaintext markers, no `.tmp` left) and read back; `:desktop:compileKotlin`
+  passes.
+- **YouTube Music accounts switch without a restart.** The sealed list
+  `yt-accounts.json` (`YouTubeAccountBook`) holds every identity with its
+  cookie, `dataSyncId`, `visitorData` and the name, email, handle and avatar
+  YouTube Music reports; the active one is mirrored into `yt-cookie.txt` and
+  `yt-context.txt`, which stay the files startup reads. `YouTubeAccount.switchTo`
+  replaces `YouTube.cookie` and rewrites those files in the running process, so
+  the next search, stream resolution or account request uses the new identity;
+  the state holder bumps `sessionRevision` and `MainAppScaffold` re-submits the
+  open query, so an open catalogue follows the switch too. The Accounts card
+  shows the active avatar and name with a session status (Signed out, Checking
+  session..., Session active, Session expired, Session check failed), lists every
+  saved account with Switch and Remove (the active one is marked with a check),
+  and adds an account from the in-app Google window or a signed-in browser. A
+  rotated cookie with the same email updates the existing entry instead of
+  adding a duplicate; removing the active account falls back to the most
+  recently used one, and only when none is left does the sign-out delete the
+  files and call `SessionVault.forget()`. `--youtube-accounts-check` proves the
+  list, switch, merge, fallback and seal in a temporary directory;
+  `--youtube-account-verify` prints the real installation's identities (id
+  prefix, name, whether an email is set) and asks YouTube Music who the active
+  session belongs to. **Measured on 20 Nov:** `--youtube-accounts-check` exits 0
+  with `RESULT: PASS`; `--youtube-account-verify` printed
+  `verify: ACTIVE (name set, email=set)` and `signedIn=true saved=1`; the sealed
+  real `yt-accounts.json` starts with `VIVICOK1` and holds 0 cookie markers;
+  `--benchmark-first-frame` printed `TIME_TO_FIRST_FRAME: 4811ms`;
+  `:desktop:compileKotlin` passes. The card was not visually inspected.
+- **`:desktop:windowsInstaller` is configuration-cache clean.** This repository
+  enables the configuration cache, so the task resolves its paths, the Inno
+  compiler and the release numbers while the build is configured, and its action
+  captures only strings and files. A `rootProject`, `layout` or build-script
+  property read inside `doLast` fails the build (after the setup has already
+  been written) with "cannot serialize Gradle script object references". The
+  setup lands in `build/installer/VIVIMusic-<version>-setup.exe`. The script has
+  an `[InstallDelete]` rule for the app folder files a previous build shipped
+  and the current one does not, which is why the database driver an older
+  install left behind is gone after an upgrade: a file that is not in the new
+  image but sits in the target folder survives an in-place install otherwise,
+  and the installed package is verified by listing `app/` for it.
+- **A release is verified by one script, not by a session.**
+  `scripts/verify-release.ps1` reads `version.txt`, then checks the setup's own
+  version resource (ProductName, CompanyName, ProductVersion) and its SHA-256.
+  `image-payload` lists the jpackage image: `VIVIMusic.exe`, the jlink runtime,
+  the `innertube` and `lyricsProvider` jars, `javafx-web` with its
+  `jfxwebkit.dll`, the loose `icudtl.dat`, `libmpv-2.dll` and `vulkan-1.dll`,
+  and fails on any `sqlite` jar. `packaged-webview` runs
+  `VIVIMusic.exe --webview-self-test` from the image: that harness opens the
+  sign-in page in the packaged JavaFX engine, waits for `SUCCEEDED`, reads
+  `document.readyState`, the title and the body length, writes a PNG and exits
+  0 only when the page painted text, so a runtime that lost `java.net.http`
+  fails here. `install` runs the exact setup with `/VERYSILENT
+  /SUPPRESSMSGBOXES /NORESTART /SP- /NOICONS /DIR=<temp>` and compares the
+  installed tree with the app image file by file (name and size). `startup`
+  runs the installed `--benchmark-first-frame` with `user.home` and
+  `USERPROFILE` on a temporary home. `uninstall` runs `unins000.exe` on the
+  same profile and requires the program and the App Paths key gone while only
+  the newest full backup (`.vivide.lbkp`, or a legacy `.vivide.bkp` /
+  `.vivide.backup`) and `device-sync.json` survive, while a newer
+  `.vivide.sbkp` export is deleted. `restore` copies
+  those two files into a fresh temporary home and starts the app again, which
+  proves the kept restore point is usable. The uninstall key, App Paths and the
+  Start Menu folder are exported/copied before the install and restored in a
+  `finally`, so the real installation on the machine is never left
+  unregistered, even when a stage fails. The installer stages need an elevated
+  shell; without one the script relaunches itself through UAC unless
+  `-NoElevate` is given. `-SkipInstaller` checks the image and the WebView only
+  (no admin, nothing installed); `-KeepTemp` keeps the logs, the frames and the
+  installed tree. The report is `build/release-verification-<version>.txt` and
+  `.json`. A durable record in `build\release-verification-host` (a manifest
+  plus the registry exports and a Start Menu copy) is written before the
+  install and deleted only after the restore has been verified. If the script
+  is killed between the install and its `finally`, the next run finds the
+  record, removes the temporary installation with the sandbox profile it
+  recorded, imports the real uninstall entry and App Paths value back, deletes
+  a temporary uninstall entry the uninstaller did not reach, restores the Start
+  Menu folder, verifies all three and only then deletes the record; it reports
+  that as `recovery PASS` before any other stage, and it needs the same
+  elevation. The real uninstall entry is found by the install location it
+  points at, not by a guessed key name: Inno writes
+  `com.vivi.vivimusic.desktop_is1` without the braces an earlier version of
+  this check looked for. `-CrashAfter <stage>` stops a run with exit code 99
+  right after that stage, skipping the cleanup, which is how the repair is
+  tested. The setup's own uninstaller also skips its closing message box under
+  `/VERYSILENT` now (`UninstallSilent`), because that box blocked an unattended
+  uninstall. **Measured on 20 Nov with
+  `VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
+  `40422FBFD187F5E06F13FAEC09D22263FBE3E83C0C5E973DBB3543D9B4A7D80A`):**
+  `RESULT: PASS`, with `packaged-webview` loading Accedi - Account Google in
+  7.3 s (a 22 423-byte frame), `install` 18.8 s and all 289 files identical to
+  the image, `startup` `TIME_TO_FIRST_FRAME: 4088ms`, `uninstall` 1.8 s with
+  the two kept files, `restore` starting on them in 4.9 s, and
+  `host-registration` restoring the real `C:\Program Files\VIVIMusic` path.
+  The repair was tested by killing a run after `install` and after
+  `uninstall`: both times the next run printed `recovery PASS` (4.2 s and
+  2.6 s) and left App Paths, the uninstall entry and the Start Menu as they
+  were.
+- **Verification.** A desktop change is checked with `./gradlew
+  :desktop:compileKotlin` and, when it reaches playback or the shell,
+  `./gradlew :desktop:run` or the packaged app in
+  `build/compose/binaries/main/app/VIVIMusic/`. `--benchmark-first-frame` prints
+  the time to the first painted frame. `--verify-backend-playback` runs the whole
+  backend chain in one process and exits non-zero when a stage fails: the
+  catalogue search through `:innertube`, the stream resolution, libmpv playing
+  it with the innertube headers (position advancing and `current-ao` set), the
+  lyrics from `:lyricsProvider` and both screens composed headlessly. It writes
+  `build/verify-youtube-screen.png` and `build/verify-lyrics-screen.png`, and
+  that is the evidence a playback claim is made with.
+  `--verify-app-flow` is the same claim made through the app instead of beside
+  it: it starts the window's Koin graph, drives the search holder the screen
+  binds, calls the `onPlaySongs` lambda the screen passes and reads the state
+  the panes read, then writes `build/app-search-screen.png` (MainAppScaffold on
+  YouTube Music) and `build/app-lyrics-screen.png` (the expanded player's
+  lyrics). A stub view model cannot pass it, so a playback claim is made with
+  this check when the question is whether the app itself plays.
+  `--youtube-playlists-check` exercises the account playlist card against
+  the signed-in session: it lists the account's playlists, creates a
+  timestamped temporary one, renames it, adds the first YouTube Music
+  result, checks the playlist page contains it, deletes it and checks it is
+  gone. It only touches that playlist and deletes it in a `finally`. The card
+  itself also selects several playlists, adds the playing track to all of them
+  (skipping a track the playlist already holds), deletes them with a
+  snapshot-based Undo, undoes a rename and drags the rows into a per-account
+  order saved in `LocalLibraryState.youTubePlaylistOrders`; the old
+  `youTubePlaylistOrder` is still read as the first account's order. The Undo
+  token is persisted in `LocalLibraryState.youTubePlaylistUndo` and scoped to
+  the account, so it survives a restart and a partial restore keeps only the
+  playlists that still need a retry. The same card has a read-only Health check
+  (read-only lists, duplicate titles, empty lists, repeated tracks, unreadable
+  pages) and an export/copy path: Export writes a versioned
+  `vivi-account-playlists` JSON with names and ordered video ids, and Copy from
+  file recreates those playlists in the signed-in account without merging. The
+  live check still covers the single-playlist path only.
+
+  The library health screen also relinks missing files automatically when the
+  match is unique: `findRelinkCandidates` matches an exact file name first and
+  then a normalized title plus artist, skips excluded folders and any file
+  another song already points at, and `relinkSongs` applies the batch in one
+  write with a `LibraryHealthUndo.SongPaths` token. A full library scan only
+  prunes a root it walked completely (`DesktopMusicScanner` keeps a failed root
+  out of `deleteSongsNotInPaths`) and one full scan runs at a time.
+  **Measured on 21 Nov:** `RESULT: PASS` on the signed-in account with 10
+  playlists (8 editable, 2 read-only), including the added
+  `4D7u5KF7SP8` and the final absence.
+  `--verify-store-write` proves the JSON store takes a real write: it starts the
+  same graph, calls `PlayerViewModel.toggleFavorite`, the call the heart makes,
+  and prints the favorite flag and the liked count read back from the file
+  before and after; `--store-state` prints the same values without writing, so a
+  second process proves the value survived the restart. `--youtube-webview-check`
+  opens the JavaFX sign-in window on Google's sign-in page and waits for it to
+  close; `--webview-self-test` is its unattended form (same page, same engine,
+  exits 0 only when the page painted text, optional `--webview-timeout=` and
+  `--webview-snapshot=`) and is what `scripts/verify-release.ps1` runs from the
+  packaged image. The window uses the 1.55.0 capture flow (software renderer, `LOGIN_INFO`
+  polling on www.youtube.com, full cookie header and the ytcfg ids). `--render-api=<api>`
+  overrides the renderer for one run, and `--start-tab=ALBUMS|PLAYLISTS` opens a
+  library tab without changing the saved preference; both exist for captures.
+  `--seed-demo-library=<dir>` writes the Album/Playlist fixture through
+  `LocalLibraryStore.save` and exits; it refuses to run without
+  `VIVI_SYNC_STATE_FILE`, and `VIVI_SETTINGS_FILE` points at a settings file
+  with no music folders, so the local scanner adds nothing. The fixture covers
+  are under `docs/ui-parity/album-playlist/fixtures/covers/`; the table and
+  frames are in `docs/ui-parity/album-playlist/COMPARISON.md`; all 154 drawable
+  XML files are byte-identical between PixelPlayerDesktop and this clone.
+  PixelPlayerDesktop needs `vulkan-1.dll` beside `libmpv-2.dll` or JNA reports
+  `UnsatisfiedLinkError`.
+  `:desktop:test` holds the store tests (interrupted write, partial temporary
+  file, corrupt file, missing legacy database).
+- **What this replaced.** The Bit UI files (`BitTheme.kt`, `BitShell.kt`,
+  `BitPages.kt`, `BitDetail.kt`, `BitSettings.kt`, `BitApp.kt`, `BitIcons.kt`,
+  `BitTint.kt`, `BitFramePacing.kt`), the icon-minimizer task, the
+  class-data-sharing archive and the Bit render checks were retired with that
+  surface; `desktop/src/test` now holds only the JSON store tests. The sections of this
+  file that describe those mechanisms (the headless render checks, the
+  icon-minimization measurement, the class-data-sharing note) describe the
+  retired surface; the desktop has no such tasks today. `desktop/build.gradle.kts`
+  is the clone's script, wired to `:innertube` and `:lyricsProvider`.
 
 ### The desktop UI: anatomy, patterns, style - MANDATORY
 
@@ -390,7 +721,7 @@ screen is put together, and which visual decisions are already made. It
 describes `desktop/src/main/kotlin/com/music/vivi/desktop` as it stands today.
 The counts below are from that tree and are there to answer "does this codebase
 do it this way?" without a search: 0 `stringResource` calls (the module has no
-string resources), 0 `Icons.*` references against 594 `Res.drawable.*`, 155
+string resources), 0 `Icons.*` references against 594 `Res.drawable.*`, 154
 vector drawables, 29 `@Immutable`/`@Stable` annotations across 16 files, 50
 `graphicsLayer`, 34 `derivedStateOf`, 73 `LazyColumn`, 23 `contentType`, 107
 `Dispatchers.IO`, 16 `Dispatchers.Default`, 66 `AppTooltip`, 0 `Modifier.blur`.
@@ -471,13 +802,16 @@ calls `TrackDialogInput()` first (from `LocalInputFocus.kt`), which keeps the
 window shortcuts from firing while a field inside it has focus: 31 of the 38
 dialogs already do, and a text field inside a dialog without it is a defect.
 
-**5. Icons and tooltips.** Every glyph is a vector drawable in
+**5. Icons and tooltips.** Action glyphs are vector drawables in
 `desktop/src/main/composeResources/drawable/`, named
 `ic_<style>_<material_symbol_name>.xml` (`ic_rounded_play_arrow.xml`,
-`ic_automirrored_rounded_queue_music.xml`, `ic_app_logo.xml`), referenced as
-`Res.drawable.<name>` with `painterResource`. There is no `Icons.Default.*` call
-in this module: a new icon is copied from Material Symbols as an XML drawable
-and named the same way, then referenced by that name. The meaning map is the
+`ic_automirrored_rounded_queue_music.xml`, `ic_rounded_group.xml`), referenced
+as `Res.drawable.<name>` with `painterResource`. The brand mark is the one
+raster exception: `vivi_app_logo.png` is the official 1024 px icon cut to a
+transparent 512 px circle and drawn through `ViviLogo`, never tinted. There is
+no `Icons.Default.*` call in this module: a new action icon is copied from
+Material Symbols as an XML drawable and named the same way, then referenced by
+that name. The meaning map is the
 one written above (queue `queue_music`, playlist `playlist_play`, add to
 playlist `playlist_add`, menu `more_vert`, settings `settings`, library
 `library_music`), and the right-hand queue panel's own toggle button draws
@@ -527,9 +861,14 @@ keys. The brand lives in exactly these places: `version.txt` through
 `BuildConfig.APP_NAME`/`APP_VERSION_NAME`, the `Window`/tray titles and tooltip
 in `Main.kt`, `packageName = "VIVIMusic"` in `desktop/build.gradle.kts`, the
 installer metadata in `installer/`, `src/main/resources/icons/`
-(`icon.ico`/`icns`/`png`) and `composeResources/drawable/ic_app_logo.xml`. A
-version number on a screen is read from `BuildConfig.APP_VERSION_NAME`, never
-typed. Known drift to fix when that code is touched: the tray menu's first item
+(`icon.ico`/`icns`/`png`) and `composeResources/drawable/vivi_app_logo.png`
+through `ViviLogo`. The About screen's maintainers section ends with a
+Contributors card that opens the dedicated Contributors screen: one card per
+person, read live from `contributorsde.json` on the `vivi-music-de` branch
+every time the screen opens, with the copy bundled on the classpath
+(`processResources`) as the offline fallback and a repeated handle drawn once.
+A version number on a screen is read from `BuildConfig.APP_VERSION_NAME`,
+never typed. Known drift to fix when that code is touched: the tray menu's first item
 still says `Open PixelPlayer`, and the window title is a literal instead of
 `BuildConfig.APP_NAME`.
 
@@ -626,6 +965,73 @@ Existing text that already contains a long dash and is not being edited is left
 as it is: do not go looking for em dashes to replace. The rule governs new text
 and the lines you actually touch.
 
+### Performance is part of every change - MANDATORY
+
+A change to the DE is not finished until its UI cost has been checked, and the
+check is part of the change, not a follow-up.
+
+- The playhead, the audio level and any other value that changes many times a
+  second are never passed to a container as a primitive. They travel as a
+  lambda or a `State` and are read in the leaf that draws them: the slider, the
+  clock text, the karaoke line, `drawBehind`, `graphicsLayer` or the progress
+  lambda. A container that reads them recomposes its whole subtree at tick rate.
+- A value that only changes every few seconds (the active lyric line) is a
+  `derivedStateOf`; it must not recompose the list on every clock tick.
+- The root collects a state without the playhead. `PlayerController.uiState`
+  exists for that reason; collecting the whole `PlayerState` at the app root
+  rebuilds the sidebar, the open screen and the player on every audio report.
+- Every `LazyColumn` / `LazyRow` / `LazyVerticalGrid` declares a stable `key`
+  and a `contentType`. A cover in a small row asks the image loader for the
+  size it is drawn at, not for the full-resolution original.
+- Infinite animations pause when playback stops and when the window is not
+  focused or is minimized (`WindowActivity`). Brushes, gradients and paths are
+  cached with `remember` or `drawWithCache`, never allocated per frame; a
+  blurred backdrop is a fixed-size layer that is scaled, not a full-window blur
+  re-rasterized on every frame. No new `Modifier.blur` on content that changes
+  per frame.
+- The renderer is chosen before the window exists. On Windows `RenderMode`
+  probes `D3D12CreateDevice`; with no adapter the app forces
+  `SKIKO_RENDER_API=SOFTWARE` instead of Skiko's OpenGL fallback, whose
+  `glFinish` blocked the AWT pump for seconds per frame. The Performance switch
+  persists a manual software choice, and `--render-api=` overrides one run. On
+  the 60 Hz test machine the OpenGL fallback measured one frame every 4.3 s and
+  one frame per resize gesture, while software held 62 to 70 fps through a
+  continuous resize and 64 to 65 fps idle.
+- Verify with `:desktop:compileKotlin` and the render checks of the affected
+  screens. `CHANGELOG.dev.md` states what used to recompose or draw on every
+  tick and what does now; a speed claim needs a measurement, and "it compiles"
+  is not one.
+- `:desktop:playheadRecompositionCheck` advances 20 ticks and fails if the
+  player screen or the Expressive container recomposes more than twice, or if
+  the seek leaf does not follow all 20. In the 1.58.5 run, the old primitive shape recomposed
+  16 to 19 times at the container and 16 to 19 at the clock, since the first
+  frames fold into the initial one. The isolated shape stayed at 0 screen and
+  0 container, and the seek leaf followed all 20 ticks. The check reports
+  recomposition counts, not FPS. `:desktop:m3ePlayerRenderCheck` paints the
+  touched Expressive screen.
+
+### Verification on this machine: agent-desktop - MANDATORY
+
+`agent-desktop` (Vercel Labs, <https://github.com/vercel-labs/agent-desktop>)
+is installed globally with `npm install -g agent-desktop` and is the agreed
+tool for driving the desktop app while checking a change. Use it for the parts
+a window exposes to the OS, and use the render checks for the Compose UI:
+
+- **agent-desktop: launch, window and screenshot.**
+  `agent-desktop status` proves the helper is up, `agent-desktop list-apps`
+  finds `VIVIMusic.exe`, and `agent-desktop snapshot --app VIVIMusic.exe -i
+  --compact` gives the window's accessibility tree. Compose Desktop exposes
+  only the title bar to Windows UI Automation, so the snapshot normally shows
+  the window controls and not the in-app controls; a menu the app draws is not
+  in that tree. Use the tool to start the app, focus or resize its window and
+  take a screenshot, then read the screenshot.
+- **Render checks: the Compose UI.**
+  `./gradlew :desktop:applePlayerV17RenderCheck` (and the other `*RenderCheck`
+  tasks) renders the screen headlessly and writes a PNG; that is how a layout,
+  a colour, an icon or a tooltip is verified. A check that only launched the
+  window does not prove the UI drew correctly.
+- Neither tool replaces compiling the affected module before a commit.
+
 ### Documentation voice - MANDATORY
 
 Documentation, changelog entries and `TODO.md` rows are never written in the
@@ -668,7 +1074,10 @@ macOS **both** `.dmg` and `.pkg`, Linux keeps `.deb` + `.rpm` (Fedora) +
 together because makepkg requires the hook next to the PKGBUILD, and a loose
 `*.install` in the asset list is noise). Do not drop a format to save size — the payload is trimmed
   instead. The JavaFX WebView jars (`javafx-web`, `icudtl.dat`) are required by
-the working sign-in WebView and are **never** trimmed for size.
+the working sign-in WebView and are **never** trimmed for size. The jlink
+module list includes `java.net.http`, which JavaFX Web loads on the first page;
+without it the packaged window fails with `NoClassDefFoundError` while a Gradle
+run, on the full JDK, still works.
 
 ### Class-data sharing (the startup archive)
 
@@ -785,7 +1194,7 @@ behavior, state the risk before editing and, when in doubt, ask.
 **explicitly** asks)
 
 - **Embedded WebView sign-in (Google login)**: it works now (sign-in window,
-cookie extraction, auto-close and session save). Do not modify the WebView
+session extraction, auto-close and session save). Do not modify the WebView
 login flow in any way.
 
 ## 5. Versioning and CHANGELOG — MANDATORY
@@ -888,9 +1297,51 @@ version of the form `<mobile>_DE-<de>` (e.g. `6.0.5_DE-1.0.0`):
   Keep that derivation in place — do not put the full `_DE-` version into
   `packageVersion`.
 
-### CHANGELOG.md — Keep a Changelog
+#### The 1.56.0 beta line — MANDATORY until the owner says otherwise
 
-Update `CHANGELOG.md` on **every important change**, following
+The owner set this rule on 2026-11-27: every change published from 2026-11-05
+onward stays on the single desktop line `6.0.8.11_DE-1.56.0-betaN`, and only
+the beta number moves. That means:
+
+- `version.txt` keeps line 1 `6.0.8.11` and line 4 `1.56.0`; line 6 is `betaN`
+  (currently `beta5`). A new DE release bumps only N (`beta5`, `beta6`, ...) and
+  line 5 (the DE version code) by one. Never move the base to `1.56.1`, `1.57`
+  or `1.58` while this rule is in force.
+- The changelog heading is
+  `## [6.0.8.11_DE-1.56.0-betaN] - YYYY-MM-DD`. The 2026-11-05 to 2026-11-27
+  window is consolidated once into `6.0.8.11_DE-1.56.0-beta5`, and those
+  entries are never split across versions again.
+- The GitHub release tag and title follow `version.txt`:
+  `6.0.8.11_DE-1.56.0-betaN` and
+  `Axolotl Music 6.0.8.11_DE 1.56.0-betaN`.
+- The rule stays until the owner explicitly replaces it.
+
+### Two changelogs — `CHANGELOG.md` (short) and `CHANGELOG.dev.md` (full)
+
+The project keeps the record twice, and they are not written separately:
+
+- **`CHANGELOG.dev.md` is the source.** Every change lands there with the whole
+  story: what was wrong, what it does now, the figures that were measured, the
+  files and checks involved. **No word limit** in this file, and nothing is
+  trimmed on the way in. It is the file a maintainer reads a year later.
+- **`CHANGELOG.md` is generated from it**, by `python3 scripts/split_changelog.py`.
+  It carries one line per change: the entry's own head and nothing else, for
+  example `- [DE] **Content's five switches are one card.**` The detail stays in
+  the dev file. **Never edit `CHANGELOG.md` by hand** - a change made there is
+  gone at the next run of the script, which is also how the two cannot drift.
+- The script keeps the headings, the blank lines and the notes a section
+  carries; it reduces an entry to its bold head (or to its first sentence when
+  it has no bold head), drops the continuation lines that follow it, drops a
+  `### ... Commits` subsection with its list, and drops an untagged line that is
+  only a commit subject (`- v: DE ...`).
+- **The release bodies come from `CHANGELOG.md`**, because that is the file
+  `.github/workflows/auto-release.yml` extracts.
+- **Both files are the same file on both development branches**, like
+  `version.txt`: apply a change on `vivi-music-de`, then copy it to
+  `vivi-music-de-apk` wholesale (`git checkout <other-branch> -- CHANGELOG.md
+  CHANGELOG.dev.md`), never retype it.
+
+Update `CHANGELOG.dev.md` on **every important change**, following
 [Keep a Changelog](https://keepachangelog.com/). Use exactly these sections:
 
 - `Added` — for new features.
@@ -902,12 +1353,57 @@ Update `CHANGELOG.md` on **every important change**, following
 
 Keep an `## [Unreleased]` section at the top; when a version is released,
 convert it to a dated entry (`## [X.Y.Z] - YYYY-MM-DD`) and add the new version
-to the top of `CHANGELOG.md`. Omit sections that have no entries.
+to the top of `CHANGELOG.dev.md`. Omit sections that have no entries.
 
-**Desktop-specific entries are marked with `[DE]`** (e.g.
-`- [DE] New desktop feature.`), so desktop and Android changes stay
-distinguishable in the changelog. Desktop releases use the combined
-`<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
+**Every bullet is tagged with the surface it changes, and no bullet is left
+untagged** (`- [DE] …` for the desktop edition, `- [APK] …` for the Android
+app, `- [DE][APK] …` for one change that reaches both), so desktop and Android
+changes stay distinguishable in the changelog. Desktop releases use the
+combined `<mobile>_DE-<de>` version (`## [6.0.5_DE-1.0.0] - …`).
+
+**An entry's head is written for the person using the app, and its body is
+written for whoever maintains it (MANDATORY).** The head is the one line that
+reaches `CHANGELOG.md` and the release page, so it says the change and nothing
+else; the body under it is the full account, and it may be as long as the
+change needs. The rules, in order:
+
+- **One bullet per change.** A change is one thing the reader notices: a screen
+  rebuilt, a defect fixed, an option added, a start made faster. Two unrelated
+  changes are two bullets, never one paragraph.
+- **The head names the change in one line.** It is the sentence `CHANGELOG.md`
+  and the release page will show, so it says what changed for the reader and
+  nothing else, in about ten to twenty words. Bold is the convention: `- [DE]
+  **Content's five switches are one card.**` A head that needs a second sentence
+  to be understood is two entries.
+- **The body is the whole account.** What was wrong, what it does now, the
+  options a screen offers with their names and values, the platforms it was
+  verified on, what stays unchanged, the figures that were measured, the check
+  or task that proves it, a `**Watch:**` step and an `**Open sub-item:**` when
+  one is left open. Nothing is invented and nothing is silently lost: an entry
+  that says something the shipped code no longer does is a defect, not a style
+  question, and when an entry records two successive states of one screen only
+  the last one is written in the present tense. A superseded entry does not stay
+  saying something false until someone decides what to do with it: it is
+  corrected to what ships first, and whether it is then removed or folded into
+  the newer one is the owner's call.
+- **A count, a coverage and the qualifier are content.** How many intervals a
+  row offers, how many languages carry a string, which rows are affected, over
+  how many of them, and "the 27 dropdowns drawn as a row" rather than "all of
+  them": those are facts of the entry, not padding, in the body and in the head
+  alike.
+- **Change → dev file → script.** Write the entry in `CHANGELOG.dev.md`, then run
+  `python3 scripts/split_changelog.py`; the short file is the result, never a
+  hand edit. An emoji is never a word; a token counts when it carries at least
+  one letter or digit (`12 dp`, `M3IconButton` and `-2:23` count, a lone dash or
+  a smiley does not).
+- **For example**, the dev file keeps "`:desktop:dropdownPositionCheck` opens one
+  for real on the compose ui-test harness and reads the menu against the row:
+  the first option sits 12 px under the row's bottom with its left edge on the
+  row's", while the short file shows "a settings dropdown opens under the row it
+  belongs to, right-aligned to its value, and flips above the row at the floor
+  of the window".
+- **English and no long dash**, like every other line of this file (see the
+  language rules).
 
 ### `AGENTS.md` changes never go in the CHANGELOG — MANDATORY (do not violate)
 
@@ -939,12 +1435,15 @@ never from memory:
    - Verify: `git diff version.txt` actually shows the new values. Forgetting
      this has already produced releases with stale versions — the fix must
      never be left to the user.
-2. **`CHANGELOG.md` updated?**
+2. **`CHANGELOG.dev.md` updated, and `CHANGELOG.md` regenerated?**
    - New dated section `## [<mobile>_DE-<de>-<channel>] - YYYY-MM-DD`
      directly under `## [Unreleased]`, entries in strict descending version
      order, correct `Added`/`Changed`/`Fixed`/… heading, changes marked
-     `[DE]` and/or `[APK]`.
-   - Verify: `git diff CHANGELOG.md` shows the new versioned section.
+     `[DE]` and/or `[APK]`, the whole story in the body.
+   - Then `python3 scripts/split_changelog.py`, which rewrites `CHANGELOG.md`
+     from it. Never hand-edit the short file.
+   - Verify: `git diff CHANGELOG.dev.md` shows the new versioned section and
+     `git diff CHANGELOG.md` shows the same section reduced to its heads.
 3. **`TODO.md` updated?**
    - Completed items marked `[x]`, started-but-unfinished `[~]`, new pending
      work added. Never leave it stale after a change.
@@ -956,8 +1455,9 @@ never from memory:
    may use `docs:`. Short title, details in the body, **no agent co-author
    footer** (see §3).
 6. **Final check before push**: `git status --short` shows only the intended
-   files staged, and `git log -1 --stat` shows `version.txt`, `CHANGELOG.md`
-   and `TODO.md` together with the code changes.
+   files staged, and `git log -1 --stat` shows `version.txt`,
+   `CHANGELOG.dev.md`, `CHANGELOG.md` and `TODO.md` together with the code
+   changes.
 
 The checklist is not optional: skipping items has already caused releases
 published with an un-bumped `version.txt` and changelog entries that never

@@ -1,6 +1,9 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-27
+
 ### ✨ Added
+
 - [DE] **A duplicate group can be ignored without deleting its files, and restored later.**
 - [DE] **The account playlist order is kept per account, not once for the device.**
 - [DE] **The account playlist Undo survives the screen and a restart, and a partial restore can be retried.**
@@ -10,37 +13,11 @@
 - [DE] **Account playlists can be exported to a file and copied into another account.**
 - [DE] **The account playlist card selects several playlists, acts on them together and undoes a delete or a rename.**
 - [DE] **Library health issues are reviewed and repaired from their own screen, with a preview and Undo.**
-
-### 🔧 Changed
-- [DE] **A library scan only prunes folders it actually walked, and one full scan runs at a time.**
-- [DE] **The library health card counts the hidden playlist rows correctly.**
-- [DE] **The new settings cards and the update dialog were rendered and corrected.**
-
-## [6.0.8.11_DE-1.56.1-beta4] - 2026-11-26
-
-### 🔧 Changed
-- [DE] **The History and Listen Together widget paths are now executable tests, not manager calls read from code.**
-
-## [6.0.8.11_DE-1.56.1-beta3] - 2026-11-26
-
-### 🔧 Changed
-- [DE] **The imported playback check now exercises the queue, crossfade, the equalizer and a live Listen Together room together.**
-
-### 🐛 Fixed
-- [DE] **History records a track when playback is paused, not only when the song changes.**
-
-## [6.0.8.11_DE-1.56.0-beta2] - 2026-11-26
-
-### ✨ Added
 - [DE] **Audio quality, the audio cache, the queue and History come back from 1.55.**
 - [DE] **Listen Together is back as a Material 3 screen.**
 - [DE] **Online lyrics answer with Musixmatch first, and a candidate with no lyrics can no longer win the match.**
 - [DE] **A profile written before the lyrics sources existed is migrated once, in the load path.**
 - [DE] **The app and the Windows setup are Axolotl Music.**
-
-## [6.0.8.11_DE-1.56.0-beta1] - 2026-11-17
-
-### ✨ Added
 - [DE] **The account's YouTube Music playlists are managed from Accounts.**
 - [DE] **A second copy of the app cannot open the same library.**
 - [DE] **The last track and its position come back on the next start, paused.**
@@ -61,8 +38,35 @@
 - [DE] **A visual check can fill the JSON library with a fixed Album/Playlist fixture.**
 - [DE] **A full-device backup is one `.vivide.lbkp` file, and older names still import.**
 - [DE] **Settings shows where the library came from and can import it again.**
+- [DE] **BitChord's shell replaces the VIVI chrome.**
+- [DE] **The right panel is BitChord's 360 dp Now Playing column.**
+- [DE] **The song menu carries BitChord's whole action set.**
+- [DE] **Animations has a Lyrics animation choice.**
+- [DE] **Search lives in the rail, as in BitChord.**
+- [DE] **The Home render check paints real cards, and it fails when the Home slips.**
+- [DE] **Home carries the feed's whole category set, not only its first page.**
+- [DE] **Appearance has a Designs screen that shows both looks and chooses one per screen.**
+- [DE] **Home has a Material 3 Expressive style: 180 dp cards, the title on the cover, every category the feed returns.**
+- [DE] **The Home shelves are painted headlessly.**
+- [DE] **Every shelf says where it is, with the Expressive carousel's indicator.**
+- [DE] **The Home is BitChord's shelf stack.**
+- [DE] **"Apple Player v17" is the main player, and it is BitChord's.**
+- [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.**
+- [DE] **Stats for nerds is an overlay of the real audio figures.**
+- [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
+- [DE] **The player's inline lyrics animate with the reader's own style.**
+- [DE] **The playlist is BitChord's screen and the search is its field.**
+- [DE] **Explore takes the place of "New", and the Library is BitChord's.**
+- [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
 
 ### 🔧 Changed
+
+- [DE] **The release publishes one `SHA256SUMS` file, and the updater reads the matching line.**
+- [DE] **A library scan only prunes folders it actually walked, and one full scan runs at a time.**
+- [DE] **The library health card counts the hidden playlist rows correctly.**
+- [DE] **The new settings cards and the update dialog were rendered and corrected.**
+- [DE] **The History and Listen Together widget paths are now executable tests, not manager calls read from code.**
+- [DE] **The imported playback check now exercises the queue, crossfade, the equalizer and a live Listen Together room together.**
 - [DE] **The updater no longer just opens the release page.**
 - [DE] **Section backups have their own `.vivide.sbkp` extension.**
 - [DE] **The sidebar mark is the 1024 px icon and the name no longer gets cut.**
@@ -83,98 +87,67 @@
 - [DE] **About credits only the VIVI Music DE lead developer.**
 - [DE] **Every brand string comes from `BuildConfig.APP_NAME`.**
 - [DE] **The window resizes without freezing.**
-
-### 🛑 Removed
-- [DE] **The Bit UI and its machinery.**
-
-## [6.0.8.11_DE-1.58.6-beta11] - 2026-11-12
-
-### ✨ Added
-- [DE] **[beta10] BitChord's shell replaces the VIVI chrome.**
-- [DE] **[beta10] The right panel is BitChord's 360 dp Now Playing column.**
-- [DE] **[beta10] The song menu carries BitChord's whole action set.**
-- [DE] **[beta10] Animations has a Lyrics animation choice.**
-- [DE] **[beta10] Search lives in the rail, as in BitChord.**
-- [DE] **[beta9] The Home render check paints real cards, and it fails when the Home slips.**
-- [DE] **[beta9] Home carries the feed's whole category set, not only its first page.**
-- [DE] **[beta9] Appearance has a Designs screen that shows both looks and chooses one per screen.**
-- [DE] **[beta9] Home has a Material 3 Expressive style: 180 dp cards, the title on the cover, every category the feed returns.**
-- [DE] **[beta8] The Home shelves are painted headlessly.**
-- [DE] **[beta8] Every shelf says where it is, with the Expressive carousel's indicator.**
-- [DE] **[beta7] The Home is BitChord's shelf stack.**
-
-### 🔧 Changed
-- [DE] **[beta11] A graphics driver that cannot present a frame switches the window to software rendering once.**
-- [DE] **[beta11] Cover thumbnails are decoded at the size they are drawn.**
-- [DE] **[beta10] Album, artist and queue are BitChord surfaces, and a check paints them.**
-- [DE] **[beta10] Home, Explore, Library, History, Playlist and Listen Together use the BitChord surfaces.**
-- [DE] **[beta10] The mini player stays at the bottom.**
-- [DE] **[beta10] Search results are 56 dp rows with the shared menu.**
-- [DE] **[beta9] The players read the playhead only in their leaves.**
-- [DE] **[beta9] Every desktop list declares its content type, and small covers load at their drawn size.**
-- [DE] **[beta9] The mini player's moving background stops with playback and window focus.**
-- [DE] **[beta9] The player no longer recomposes the whole app on every playhead report.**
-- [DE] **[beta9] The m3e Home opens on this build once, and its rows are the sketch's rows.**
-- [DE] **[beta9] The v17 player and its mini bar draw BitChord's transport controls at their measured size.**
-- [DE] **[beta9] Classic Home is BitChord's shelf stack, 1:1.**
-- [DE] **[beta9] The shelf and the mosaic are shared with the new style instead of copied.**
-- [DE] **[beta8] Home's album shelves are the reference video's multi-browse carousel, to the numbers its frames measure.**
-- [DE] **[beta8] Every card cover is the project's cookie, and the rounded-square experiment is undone.**
-- [DE] **[beta8] New releases in Explore is the same multi-browse shelf as Home.**
-- [DE] **[beta8] The carousel arrows appear only while the pointer is on the row.**
-- [DE] **[beta8] The v17 mini bar's volume is a bare line.**
-- [DE] **[beta7] The cover's colour is switched on Theme & Colors, and it follows every track.**
-- [DE] **[beta7] The stacked Apple Player v17 is centred in the window.**
-- [DE] **[beta7] The v17 mini bar uses the player's own transport glyphs.**
-- [DE] **[beta7] New release albums are cards.**
-- [DE] **[beta6] The accent is neutral, and the cover's colour is a developer option.**
-- [DE] **[beta6] The accent options are gone from Theme & Colors.**
-- [DE] **[beta6] The v17 transport is BitChord's row: bigger, bare, and beside the sleeve.**
-- [DE] **[beta6] The inline lyric row opens the player's own lyrics panel.**
-- [DE] **[beta6] The stacked v17 player ends at the volume bar.**
-- [DE] **[beta6] The slider style options stay removed.**
-- [DE] **[beta5] The v17 player's right column is the reference's own.**
-- [DE] **[beta5] The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
-- [DE] **[beta5] The queue remembers where it started.**
-- [DE] **[beta5] The v17 render check can paint the panel in any language.**
-- [DE] **[beta5] The v17 menu's heart row says what it does.**
-- [DE] **[beta5] The string generator writes again, and the beta4 rows it had lost are back in its source.**
-- [DE] **[beta4] Unlock frame rate is on from the first start, whatever Developer options says.**
-- [DE] **[beta4] The v17 player's controls are BitChord's row, under the artwork.**
-- [DE] **[beta4] The inline-lyrics switch is a player setting, shown only for Apple Player v17.**
-- [DE] **[beta4] Every cover is requested at BitChord's own sizes.**
-- [DE] **[beta4] The v17 player's sliders are slim lines, and the wavy tracks are gone.**
-- [DE] **[beta4] Turning Inline lyrics off removes the row, instead of leaving a link in its place.**
-- [DE] **[beta4] The queue and the lyrics take the column one at a time, and each glyph returns to the controls.**
-- [DE] **[beta4] The v17 mini bar draws the player's own glyph family.**
-- [DE] **[beta4] The Library has no Google sign-in prompt.**
-
-### 🐛 Fixed
-- [DE] **[beta10] The page no longer shows a duplicate search field.**
-- [DE] **[beta10] The content pane has no top corner radius.**
-- [DE] **[beta7] Explore keeps the New release albums when the page answers empty.**
-- [DE] **[beta7] A failed stream is retried at 128 kbps, and a skipped track says so.**
-
-### 🗑️ Removed
-- [DE] **[beta10] The old VIVI album and artist screens are gone.**
-
-## [6.0.8.11_DE-1.56.0-beta] - 2026-11-05
-
-### ✨ Added
-- [DE] **"Apple Player v17" is the main player, and it is BitChord's.**
-- [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.**
-- [DE] **Stats for nerds is an overlay of the real audio figures.**
-- [DE] **"Apple Music v17" is the fourth mini player: BitChord's transport bar at the bottom.**
-- [DE] **The player's inline lyrics animate with the reader's own style.**
-- [DE] **The playlist is BitChord's screen and the search is its field.**
-- [DE] **Explore takes the place of "New", and the Library is BitChord's.**
-- [DE] **The queue is BitChord's own screen, and the Radio is its cards.**
-
-### 🔧 Changed
+- [DE] **A graphics driver that cannot present a frame switches the window to software rendering once.**
+- [DE] **Cover thumbnails are decoded at the size they are drawn.**
+- [DE] **Album, artist and queue are BitChord surfaces, and a check paints them.**
+- [DE] **Home, Explore, Library, History, Playlist and Listen Together use the BitChord surfaces.**
+- [DE] **The mini player stays at the bottom.**
+- [DE] **Search results are 56 dp rows with the shared menu.**
+- [DE] **The players read the playhead only in their leaves.**
+- [DE] **Every desktop list declares its content type, and small covers load at their drawn size.**
+- [DE] **The mini player's moving background stops with playback and window focus.**
+- [DE] **The player no longer recomposes the whole app on every playhead report.**
+- [DE] **The m3e Home opens on this build once, and its rows are the sketch's rows.**
+- [DE] **The v17 player and its mini bar draw BitChord's transport controls at their measured size.**
+- [DE] **Classic Home is BitChord's shelf stack, 1:1.**
+- [DE] **The shelf and the mosaic are shared with the new style instead of copied.**
+- [DE] **Home's album shelves are the reference video's multi-browse carousel, to the numbers its frames measure.**
+- [DE] **Every card cover is the project's cookie, and the rounded-square experiment is undone.**
+- [DE] **New releases in Explore is the same multi-browse shelf as Home.**
+- [DE] **The carousel arrows appear only while the pointer is on the row.**
+- [DE] **The v17 mini bar's volume is a bare line.**
+- [DE] **The cover's colour is switched on Theme & Colors, and it follows every track.**
+- [DE] **The stacked Apple Player v17 is centred in the window.**
+- [DE] **The v17 mini bar uses the player's own transport glyphs.**
+- [DE] **New release albums are cards.**
+- [DE] **The accent is neutral, and the cover's colour is a developer option.**
+- [DE] **The accent options are gone from Theme & Colors.**
+- [DE] **The v17 transport is BitChord's row: bigger, bare, and beside the sleeve.**
+- [DE] **The inline lyric row opens the player's own lyrics panel.**
+- [DE] **The stacked v17 player ends at the volume bar.**
+- [DE] **The slider style options stay removed.**
+- [DE] **The v17 player's right column is the reference's own.**
+- [DE] **The song menu is the reference's eleven entries, and the actions the desktop was missing are real.**
+- [DE] **The queue remembers where it started.**
+- [DE] **The v17 render check can paint the panel in any language.**
+- [DE] **The v17 menu's heart row says what it does.**
+- [DE] **The string generator writes again, and the beta4 rows it had lost are back in its source.**
+- [DE] **Unlock frame rate is on from the first start, whatever Developer options says.**
+- [DE] **The v17 player's controls are BitChord's row, under the artwork.**
+- [DE] **The inline-lyrics switch is a player setting, shown only for Apple Player v17.**
+- [DE] **Every cover is requested at BitChord's own sizes.**
+- [DE] **The v17 player's sliders are slim lines, and the wavy tracks are gone.**
+- [DE] **Turning Inline lyrics off removes the row, instead of leaving a link in its place.**
+- [DE] **The queue and the lyrics take the column one at a time, and each glyph returns to the controls.**
+- [DE] **The v17 mini bar draws the player's own glyph family.**
+- [DE] **The Library has no Google sign-in prompt.**
 - [DE] **The stacked Apple Player v17 is centred and keeps its own backdrop.**
 - [DE] **The sidebar is BitChord's, the radio screen is gone, and the Apple Music v17 bar reaches the right edge.**
 - [DE] **The artwork check fetches its own sleeve and measures every Explore card.**
 - [DE] **The Apple Player v17 gains the row of controls under the artwork, inline lyrics, the background styles and its queue menu.**
+
+### 🐛 Fixed
+
+- [DE] **History records a track when playback is paused, not only when the song changes.**
+- [DE] **The page no longer shows a duplicate search field.**
+- [DE] **The content pane has no top corner radius.**
+- [DE] **Explore keeps the New release albums when the page answers empty.**
+- [DE] **A failed stream is retried at 128 kbps, and a skipped track says so.**
+
+### 🛑 Removed
+
+- [DE] **The Bit UI and its machinery.**
+- [DE] **The old VIVI album and artist screens are gone.**
 
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23
 
