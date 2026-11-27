@@ -463,7 +463,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             sw("includePreReleases", "Include pre-releases", "Offer beta builds as well as stable builds."),
             dd(
                 "updateSource", "Update source",
-                listOf("fork" to "Axolotl Music (official)", "original" to "Vivi Music upstream"),
+                listOf("fork" to "Axolotl Music (official)", "original" to "Original project"),
                 "fork",
                 "The repository the updater reads.",
             ),
@@ -558,7 +558,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
                     "KARAOKE" to "Karaoke",
                     "APPLE" to "Apple Music",
                     "APPLE_V2" to "Apple Music v2",
-                    "VIVIMUSIC_1" to "Vivi Music 1.55",
+                    "VIVIMUSIC_1" to "Classic 1.55",
                     "LYRICS_V2" to "Lyrics v2",
                     "METRO_LYRICS" to "Metro",
                     "ALPHA" to "Alpha",
@@ -566,7 +566,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
                 "VIVIMUSIC_1",
             ),
             sw("lyricsGlowEffect", "Glow", "Glow the active line.", true),
-            sw("lyricsAppleMusicBlur", "Apple Music blur", "Blur the inactive lines in the Vivi Music style."),
+            sw("lyricsAppleMusicBlur", "Apple Music blur", "Blur the inactive lines in the classic style."),
             sw("lyricsStandardBlur", "Standard blur", "Blur the inactive lines in the standard style."),
         ),
         group(
@@ -606,7 +606,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         group(
             "PLAYER",
             go("playerDesign", "Player & mini-player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
-            go("equalizerScreen", "Vivi Equalizer", "Profiles, bands and preamp", SettingsSection.V155_EQUALIZER),
+            go("equalizerScreen", "Equalizer", "Profiles, bands and preamp", SettingsSection.V155_EQUALIZER),
             dd(
                 "audioQuality", "Audio quality",
                 listOf("auto" to "Auto", "high" to "High (256 kbps)", "low" to "Low (128 kbps)"),
@@ -905,16 +905,16 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         ),
     )
     SettingsSection.V155_CANVAS -> page(
-        "ViviMusic Canvas", "Animated artwork",
+        "Canvas", "Animated artwork",
         group(
             "CANVAS",
-            sw("canvasEnabled", "ViviMusic Canvas", "Play the animated artwork.", true),
+            sw("canvasEnabled", "Canvas", "Play the animated artwork.", true),
             dd(
                 "canvasSource", "Canvas source",
                 listOf(
                     "AUTO" to "Automatic",
                     "APPLE_MUSIC" to "Apple Music",
-                    "VIVIMUSIC" to "ViviMusic",
+                    "VIVIMUSIC" to "Axolotl Music",
                     "TIDAL" to "Tidal",
                 ),
                 "AUTO",
