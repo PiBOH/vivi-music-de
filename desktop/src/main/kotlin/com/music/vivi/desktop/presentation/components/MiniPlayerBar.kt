@@ -64,6 +64,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -159,6 +160,7 @@ fun MiniPlayerBar(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .testTag("mini-bar-expand")
                                     .pointerHoverIcon(PointerIcon.Hand)
                                     .clickable(
                                         interactionSource = narrowInteractionSource,
@@ -332,6 +334,7 @@ fun MiniPlayerBar(
                         modifier = Modifier
                             .weight(1f)
                             .padding(end = if (isMedium) 4.dp else 8.dp)
+                            .testTag("mini-bar-expand")
                             .pointerHoverIcon(PointerIcon.Hand)
                             .clickable(
                                 interactionSource = infoInteractionSource,

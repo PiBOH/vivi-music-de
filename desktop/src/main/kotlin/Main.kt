@@ -59,6 +59,7 @@ import com.music.vivi.desktop.presentation.components.InputFocusTracker
 import com.music.vivi.desktop.presentation.components.LocalInputFocusTracker
 import com.music.vivi.desktop.presentation.components.LocalWindowMinimized
 import com.music.vivi.desktop.presentation.components.MiniPlayerWindowView
+import com.music.vivi.desktop.presentation.miniPlayerWindows
 import com.music.vivi.desktop.presentation.navigation.DesktopBackDispatcher
 import com.music.vivi.desktop.presentation.navigation.DesktopNavDestination
 import com.music.vivi.desktop.presentation.navigation.DesktopNavigator
@@ -462,8 +463,14 @@ fun main(args: Array<String> = emptyArray()) {
         )
     }
 
+    val windows = miniPlayerWindows(
+        isWindowVisible = isWindowVisible,
+        isMiniPlayerMode = isMiniPlayerMode,
+        isExiting = isExiting
+    )
+
     Window(
-        visible = isWindowVisible && !isMiniPlayerMode,
+        visible = windows.mainVisible,
         onCloseRequest = {
             if (closeToTray) {
                 isWindowVisible = false
@@ -757,13 +764,13 @@ fun main(args: Array<String> = emptyArray()) {
         }
     }
 
-    if (isMiniPlayerMode && !isExiting) {
+    if (windows.miniCreated) {
         val miniWindowState = rememberWindowState(
             width = 360.dp,
             height = 184.dp
         )
         Window(
-            visible = isWindowVisible,
+            visible = windows.miniVisible,
             onCloseRequest = {
                 playerViewModel.setMiniPlayerMode(false)
             },

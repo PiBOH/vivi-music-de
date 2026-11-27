@@ -10,6 +10,7 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_search
 import com.music.vivi.desktop.generated.resources.ic_rounded_speed
 import com.music.vivi.desktop.generated.resources.ic_rounded_timer
 import com.music.vivi.desktop.generated.resources.ic_rounded_speaker
+import com.music.vivi.desktop.generated.resources.ic_rounded_tab
 import org.jetbrains.compose.resources.painterResource
 import java.io.File
 
@@ -71,6 +72,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -118,6 +120,7 @@ fun ExpandedPlayerScreen(
     viewModel: PlayerViewModel,
     initialTab: ExpandedTab = ExpandedTab.LYRICS,
     onClose: () -> Unit,
+    onOpenMiniPlayer: (() -> Unit)? = null,
     onEditMetadata: ((Song) -> Unit)? = null,
     onAddToPlaylist: ((Song) -> Unit)? = null,
     onDelete: ((Song) -> Unit)? = null,
@@ -285,6 +288,34 @@ fun ExpandedPlayerScreen(
                     Spacer(modifier = Modifier.weight(1f))
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (onOpenMiniPlayer != null) {
+                            AppTooltip(
+                                text = "Mini Player (Ctrl+Shift+M)",
+                                alignment = Alignment.BottomCenter,
+                                offset = DpOffset(0.dp, 6.dp)
+                            ) {
+                                FilledIconButton(
+                                    onClick = onOpenMiniPlayer,
+                                    shape = CircleShape,
+                                    colors = IconButtonDefaults.filledIconButtonColors(
+                                        containerColor = colors.surfaceContainerHighest,
+                                        contentColor = colors.onSurface
+                                    ),
+                                    modifier = Modifier
+                                        .size(buttonSize)
+                                        .testTag("full-player-mini-player")
+                                ) {
+                                    Icon(
+                                        painter = painterResource(Res.drawable.ic_rounded_tab),
+                                        contentDescription = "Mini Player",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(12.dp))
+                        }
+
                         val equalizerContainerColor = if (equalizerEnabled) colors.primary else colors.surfaceContainerHighest
                         val equalizerContentColor = if (equalizerEnabled) colors.onPrimary else colors.onSurface
 

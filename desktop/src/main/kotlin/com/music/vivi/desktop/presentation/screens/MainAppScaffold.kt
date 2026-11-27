@@ -841,6 +841,7 @@ fun MainAppScaffold(
                 viewModel = viewModel,
                 initialTab = initialExpandedTab,
                 onClose = { isExpandedPlayerOpen = false },
+                onOpenMiniPlayer = { viewModel.setMiniPlayerMode(true) },
                 onEditMetadata = { song -> songToEditMetadata = song },
                 onAddToPlaylist = { song -> songToAddToPlaylist = song },
                 onDelete = { song -> songToDelete = song },
