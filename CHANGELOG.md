@@ -46,7 +46,7 @@
 - [DE] **Home has a Material 3 Expressive style: 180 dp cards, the title on the cover, every category the feed returns.**
 - [DE] **The Home shelves are painted headlessly.**
 - [DE] **Every shelf says where it is, with the Expressive carousel's indicator.**
-- [DE] **The previous Apple player is "Vivi Music 1.55", offered only by a developer switch.**
+- [DE] **The previous Apple player is "Classic 1.55", offered only by a developer switch.**
 - [DE] **Stats for nerds is an overlay of the real audio figures.**
 - [DE] **The player's inline lyrics animate with the reader's own style.**
 
