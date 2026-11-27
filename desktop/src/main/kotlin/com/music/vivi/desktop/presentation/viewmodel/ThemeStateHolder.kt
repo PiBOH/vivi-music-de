@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 
 import com.music.vivi.desktop.data.preferences.AlbumArtColorAccuracy
 import com.music.vivi.desktop.data.preferences.AlbumArtPaletteStyle
+import com.music.vivi.desktop.data.preferences.UserSettings
 import com.music.vivi.desktop.domain.repository.SettingsRepository
 import com.music.vivi.desktop.ui.theme.dynamic.DynamicColorProcessor
 
@@ -32,6 +33,16 @@ class ThemeStateHolder(
                     DynamicColorProcessor.clearCache()
                 }
             }
+        }
+    }
+
+    /** The whole option record, for the imported 1.55 pages that read fields
+     *  the 1.56 surface does not expose. */
+    val userSettings: StateFlow<UserSettings> = settingsRepository.settingsFlow
+
+    fun setLegacySetting(key: String, value: String) {
+        coroutineScope.launch {
+            settingsRepository.setLegacySetting(key, value)
         }
     }
 

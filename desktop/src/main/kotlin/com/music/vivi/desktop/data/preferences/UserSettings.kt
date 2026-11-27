@@ -118,5 +118,9 @@ data class UserSettings(
     val showIntroSplash: Boolean = true,
     val introStyle: String = "logo_name",
     val introBackground: String = "gradient",
-    val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS
+    val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS,
+    // 1.55-only options that have no typed field here yet. Keys are the ones
+    // used by the imported 1.55 screens; common options keep their typed field
+    // so both surfaces read and write the same value.
+    val legacySettings: Map<String, String> = emptyMap()
 )

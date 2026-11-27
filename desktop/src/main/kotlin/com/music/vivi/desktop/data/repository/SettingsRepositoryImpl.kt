@@ -457,6 +457,12 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(lastDismissedUpdateVersion = version) }
     }
 
+    override suspend fun setLegacySetting(key: String, value: String) {
+        updateSettings { settings ->
+            settings.copy(legacySettings = settings.legacySettings + (key to value))
+        }
+    }
+
     override suspend fun setQuickAccessItems(items: List<QuickAccessItem>) {
         updateSettings { it.copy(quickAccessItems = items) }
     }

@@ -1,8 +1,27 @@
 package com.music.vivi.desktop.presentation.screens.settings
 
 import com.music.vivi.desktop.generated.resources.Res
+import com.music.vivi.desktop.generated.resources.ic_lyrics
+import com.music.vivi.desktop.generated.resources.ic_outlined_auto_graph
+import com.music.vivi.desktop.generated.resources.ic_outlined_bolt
+import com.music.vivi.desktop.generated.resources.ic_outlined_security
+import com.music.vivi.desktop.generated.resources.ic_rounded_abc
 import com.music.vivi.desktop.generated.resources.ic_rounded_account_circle
 import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
+import com.music.vivi.desktop.generated.resources.ic_rounded_auto_fix_high
+import com.music.vivi.desktop.generated.resources.ic_rounded_cloud_download
+import com.music.vivi.desktop.generated.resources.ic_rounded_code
+import com.music.vivi.desktop.generated.resources.ic_rounded_computer
+import com.music.vivi.desktop.generated.resources.ic_rounded_dataset
+import com.music.vivi.desktop.generated.resources.ic_rounded_dark_mode
+import com.music.vivi.desktop.generated.resources.ic_rounded_delete
+import com.music.vivi.desktop.generated.resources.ic_rounded_font_download
+import com.music.vivi.desktop.generated.resources.ic_rounded_image
+import com.music.vivi.desktop.generated.resources.ic_rounded_layers
+import com.music.vivi.desktop.generated.resources.ic_rounded_public
+import com.music.vivi.desktop.generated.resources.ic_rounded_refresh
+import com.music.vivi.desktop.generated.resources.ic_rounded_schedule
+import com.music.vivi.desktop.generated.resources.ic_rounded_sync
 import com.music.vivi.desktop.generated.resources.ic_rounded_graphic_eq
 import com.music.vivi.desktop.generated.resources.ic_rounded_info
 import com.music.vivi.desktop.generated.resources.ic_rounded_keyboard
@@ -80,6 +99,176 @@ enum class SettingsSection(
         subtitle = "Animated splash at startup",
         icon = Res.drawable.ic_rounded_auto_awesome
     ),
+    // The imported 1.55 tree. Every one of these entries opens a 1.55 page; the
+    // 1.56 sections above stay reachable only inside PixelPlayer.
+    V155_UPDATES(
+        id = "v155_updates",
+        title = "Updates",
+        subtitle = "Channel, interval and update source",
+        icon = Res.drawable.ic_rounded_refresh
+    ),
+    V155_ACCOUNT(
+        id = "v155_account",
+        title = "Account",
+        subtitle = "YouTube Music account",
+        icon = Res.drawable.ic_rounded_account_circle
+    ),
+    V155_NOTIFICATIONS(
+        id = "v155_notifications",
+        title = "Notifications",
+        subtitle = "Mode, history and widgets",
+        icon = Res.drawable.ic_rounded_schedule
+    ),
+    V155_APPEARANCE(
+        id = "v155_appearance",
+        title = "Appearance",
+        subtitle = "Theme, font, canvas and player design",
+        icon = Res.drawable.ic_rounded_palette
+    ),
+    V155_LYRICS(
+        id = "v155_lyrics",
+        title = "Lyrics",
+        subtitle = "Style, position and romanization",
+        icon = Res.drawable.ic_lyrics
+    ),
+    V155_PLAYER(
+        id = "v155_player",
+        title = "Player & audio",
+        subtitle = "Queue, crossfade, quality and equalizer",
+        icon = Res.drawable.ic_rounded_music_note
+    ),
+    V155_DEVICES(
+        id = "v155_devices",
+        title = "Devices",
+        subtitle = "Pairing and volume sync",
+        icon = Res.drawable.ic_rounded_sync
+    ),
+    V155_CONTENT(
+        id = "v155_content",
+        title = "Content",
+        subtitle = "Language, country and filters",
+        icon = Res.drawable.ic_rounded_public
+    ),
+    V155_LANGUAGE(
+        id = "v155_language",
+        title = "Language",
+        subtitle = "The language of the app",
+        icon = Res.drawable.ic_rounded_abc
+    ),
+    V155_AI(
+        id = "v155_ai",
+        title = "AI lyrics & translation",
+        subtitle = "Provider, key and translation",
+        icon = Res.drawable.ic_rounded_auto_fix_high
+    ),
+    V155_PRIVACY(
+        id = "v155_privacy",
+        title = "Privacy",
+        subtitle = "History, search and sign-out",
+        icon = Res.drawable.ic_outlined_security
+    ),
+    V155_STORAGE(
+        id = "v155_storage",
+        title = "Storage",
+        subtitle = "Caches and library folders",
+        icon = Res.drawable.ic_rounded_dataset
+    ),
+    V155_DATA_SAVER(
+        id = "v155_data_saver",
+        title = "Data saver",
+        subtitle = "Less data and canvas backups",
+        icon = Res.drawable.ic_outlined_bolt
+    ),
+    V155_BACKUP(
+        id = "v155_backup",
+        title = "Backup & restore",
+        subtitle = "Automatic backups and restore",
+        icon = Res.drawable.ic_rounded_settings_backup_restore
+    ),
+    V155_WRAPPED(
+        id = "v155_wrapped",
+        title = "Wrapped",
+        subtitle = "Your listening year",
+        icon = Res.drawable.ic_outlined_auto_graph
+    ),
+    V155_INTEGRATIONS(
+        id = "v155_integrations",
+        title = "Integrations",
+        subtitle = "Discord, Last.fm and Listen Together",
+        icon = Res.drawable.ic_rounded_tune
+    ),
+    V155_SPOTIFY(
+        id = "v155_spotify",
+        title = "Spotify import",
+        subtitle = "Import playlists from Spotify",
+        icon = Res.drawable.ic_rounded_cloud_download
+    ),
+    V155_DESKTOP(
+        id = "v155_desktop",
+        title = "Desktop features",
+        subtitle = "Tray, media keys and widget",
+        icon = Res.drawable.ic_rounded_computer
+    ),
+    V155_SYSTEM(
+        id = "v155_system",
+        title = "System",
+        subtitle = "Performance, developer tools and intro",
+        icon = Res.drawable.ic_rounded_settings
+    ),
+    V155_ABOUT(
+        id = "v155_about",
+        title = "About",
+        subtitle = "Version, contributors and licenses",
+        icon = Res.drawable.ic_rounded_info
+    ),
+    V155_THEME(
+        id = "v155_theme",
+        title = "Theme",
+        subtitle = "Mode, accent and palette",
+        icon = Res.drawable.ic_rounded_dark_mode
+    ),
+    V155_FONT(
+        id = "v155_font",
+        title = "Font",
+        subtitle = "App font and lyrics",
+        icon = Res.drawable.ic_rounded_font_download
+    ),
+    V155_CANVAS(
+        id = "v155_canvas",
+        title = "Canvas",
+        subtitle = "Animated artwork",
+        icon = Res.drawable.ic_rounded_image
+    ),
+    V155_PLAYER_DESIGN(
+        id = "v155_player_design",
+        title = "Player design",
+        subtitle = "Player, mini player and slider",
+        icon = Res.drawable.ic_rounded_layers
+    ),
+    V155_ROMANIZE(
+        id = "v155_romanize",
+        title = "Romanization",
+        subtitle = "Per-language lyrics",
+        icon = Res.drawable.ic_rounded_abc
+    ),
+    V155_DEVELOPER(
+        id = "v155_developer",
+        title = "Developer options",
+        subtitle = "Heap, overlays and logs",
+        icon = Res.drawable.ic_rounded_code
+    ),
+    V155_EQUALIZER(
+        id = "v155_equalizer",
+        title = "Equalizer",
+        subtitle = "10 bands and presets",
+        icon = Res.drawable.ic_rounded_graphic_eq
+    ),
+    V155_REMOVED(
+        id = "v155_removed",
+        title = "Removed features",
+        subtitle = "1.55 features no longer in 1.56",
+        icon = Res.drawable.ic_rounded_delete
+    ),
     // The 1.56 settings hub, moved into a submenu of the imported 1.55 home.
     PIXELPLAYER(
         id = "pixelplayer",
@@ -102,6 +291,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
             SettingsSection.INTRO -> Color(0xFF4A3B63) to Color(0xFFE7D8FF)
             SettingsSection.PIXELPLAYER -> Color(0xFF243B53) to Color(0xFFD4E4F7)
+            else -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
         }
     } else {
         when (category) {
@@ -115,9 +305,13 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
             SettingsSection.INTRO -> Color(0xFFE9DDFF) to Color(0xFF4B2D7A)
             SettingsSection.PIXELPLAYER -> Color(0xFFDCE8F5) to Color(0xFF26476B)
+            else -> Color(0xFFEFF1F7) to Color(0xFF44474F)
         }
     }
 }
+
+val SettingsSection.isLegacy155: Boolean
+    get() = name.startsWith("V155_")
 
 fun getGroupShape(index: Int, totalItems: Int): Shape = when {
     totalItems <= 1 -> RoundedCornerShape(24.dp)

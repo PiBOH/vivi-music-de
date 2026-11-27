@@ -367,6 +367,7 @@ class PlayerViewModel(
         onResult: ((Boolean) -> Unit)? = null
     ) = libraryStateHolder.togglePin(id, title, type, targetKey, isPinned, onResult)
 
+    val userSettings = themeStateHolder.userSettings
     val isDarkMode = themeStateHolder.isDarkMode
     val uiScale = themeStateHolder.uiScale
     val isDynamicColorEnabled = themeStateHolder.isDynamicColorEnabled
@@ -378,6 +379,9 @@ class PlayerViewModel(
     val introStyle = themeStateHolder.introStyle
     val introBackground = themeStateHolder.introBackground
     val defaultTab = themeStateHolder.defaultTab
+    fun setLegacySetting(key: String, value: String) = themeStateHolder.setLegacySetting(key, value)
+    fun setDarkMode(dark: Boolean) = themeStateHolder.setDarkMode(dark)
+    fun setDynamicColorEnabled(enabled: Boolean) = themeStateHolder.setDynamicColorEnabled(enabled)
     fun toggleDarkMode() = themeStateHolder.toggleDarkMode()
     fun setUiScale(scale: Float) = themeStateHolder.setUiScale(scale)
     fun adjustUiScale(delta: Float) = themeStateHolder.adjustUiScale(delta)

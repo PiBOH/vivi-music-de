@@ -1525,6 +1525,8 @@ fun SettingsCategoryDetail(
                     BackupRestoreContent()
                 }
             }
+
+            else -> Unit
         }
     }
 }

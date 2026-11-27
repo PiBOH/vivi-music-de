@@ -20,6 +20,8 @@ import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailSc
 import com.music.vivi.desktop.data.library.LibraryHealthGroup
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.IntroSettingsDetailScreen
+import com.music.vivi.desktop.presentation.screens.settings.Legacy155SettingsScreen
+import com.music.vivi.desktop.presentation.screens.settings.isLegacy155
 import com.music.vivi.desktop.presentation.screens.settings.LibraryHealthDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.LicensesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.MusicFoldersDetailScreen
@@ -67,7 +69,12 @@ fun SettingsScreen(
         if (activeSubDetail != LibrarySubDetail.HEALTH) healthFocus = null
     }
 
-    if (searchQuery.isNotBlank()) {
+    // The 1.56 catalogue is only reachable from inside PixelPlayer; a query on
+    // the 1.55 home or on one of its pages never jumps over to a 1.56 screen.
+    val isPixelPlayerSurface = activeSection != null &&
+        !activeSection.isLegacy155 &&
+        activeSection != SettingsSection.INTRO
+    if (searchQuery.isNotBlank() && isPixelPlayerSurface) {
         val searchResults = remember(searchQuery) {
             SettingsSearchCatalog.search(searchQuery)
         }
@@ -128,6 +135,14 @@ fun SettingsScreen(
                     onSelectSection = {
                         onNavigate(it, LibrarySubDetail.NONE)
                     }
+                )
+            }
+            section.isLegacy155 -> {
+                Legacy155SettingsScreen(
+                    section = section,
+                    viewModel = viewModel,
+                    onBack = onBack,
+                    onNavigate = { target -> onNavigate(target, LibrarySubDetail.NONE) }
                 )
             }
             section == SettingsSection.INTRO -> {

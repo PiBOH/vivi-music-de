@@ -20,32 +20,13 @@ import org.jetbrains.compose.resources.painterResource
 
 /**
  * The 1.55 settings home: grouped sections instead of the PixelPlayerDesktop
- * tile grid. The entries that still exist in this shell open the shared screens
- * (so a change made here and the same change made from PixelPlayer touch the
- * same UserSettings); the 1.55-only sections are restored batch by batch.
- *
- * The current 1.56 surface is untouched behind the PixelPlayer entry.
+ * tile grid. Every entry opens its restored 1.55 page; the options shared with
+ * PixelPlayer read and write the same UserSettings, and the current 1.56
+ * surface is untouched behind the PixelPlayer entry.
  */
 // Allocated once: the hub re-composes on every navigation, the groups do not
 // change between them.
-private val settingsGroups = listOf(
-    "PIXELPLAYER" to listOf(SettingsSection.PIXELPLAYER),
-    "GENERAL" to listOf(
-        SettingsSection.APPEARANCE,
-        SettingsSection.PLAYBACK,
-        SettingsSection.LIBRARY,
-        SettingsSection.EQUALIZER,
-    ),
-    "ACCOUNT" to listOf(
-        SettingsSection.ACCOUNTS,
-        SettingsSection.SHORTCUTS,
-    ),
-    "SYSTEM" to listOf(
-        SettingsSection.INTRO,
-        SettingsSection.BACKUP,
-        SettingsSection.ABOUT,
-    ),
-)
+private val settingsGroups = Legacy155HomeGroups
 
 @Composable
 fun ViviSettingsOverview(

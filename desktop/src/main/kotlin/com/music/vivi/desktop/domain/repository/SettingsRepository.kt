@@ -91,6 +91,9 @@ interface SettingsRepository {
     suspend fun setCheckUpdatesOnStartup(enabled: Boolean)
     suspend fun setLastDismissedUpdateVersion(version: String?)
     suspend fun setQuickAccessItems(items: List<QuickAccessItem>)
+
+    /** Persists an option that exists only on the imported 1.55 pages. */
+    suspend fun setLegacySetting(key: String, value: String)
     suspend fun pinToQuickAccess(item: QuickAccessItem): Boolean
     suspend fun unpinFromQuickAccess(id: String)
     suspend fun syncQuickAccessItemTitle(type: QuickAccessType, targetKey: String, newTitle: String)
