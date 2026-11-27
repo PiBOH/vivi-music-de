@@ -93,6 +93,18 @@ class ThemeStateHolder(
         .map { it.navBarCompactMode }
         .stateIn(coroutineScope, SharingStarted.Eagerly, false)
 
+    val showIntroSplash: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.showIntroSplash }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val introStyle: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.introStyle }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "logo_name")
+
+    val introBackground: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.introBackground }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "gradient")
+
     val defaultTab: StateFlow<String> = settingsRepository.settingsFlow
         .map { it.defaultTab }
         .stateIn(coroutineScope, SharingStarted.Eagerly, "HOME")
@@ -164,6 +176,24 @@ class ThemeStateHolder(
     fun setNavBarCompactMode(enabled: Boolean) {
         coroutineScope.launch {
             settingsRepository.setNavBarCompactMode(enabled)
+        }
+    }
+
+    fun setShowIntroSplash(show: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setShowIntroSplash(show)
+        }
+    }
+
+    fun setIntroStyle(style: String) {
+        coroutineScope.launch {
+            settingsRepository.setIntroStyle(style)
+        }
+    }
+
+    fun setIntroBackground(background: String) {
+        coroutineScope.launch {
+            settingsRepository.setIntroBackground(background)
         }
     }
 

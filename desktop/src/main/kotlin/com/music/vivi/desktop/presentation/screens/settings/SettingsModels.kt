@@ -2,6 +2,7 @@ package com.music.vivi.desktop.presentation.screens.settings
 
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_rounded_account_circle
+import com.music.vivi.desktop.generated.resources.ic_rounded_auto_awesome
 import com.music.vivi.desktop.generated.resources.ic_rounded_graphic_eq
 import com.music.vivi.desktop.generated.resources.ic_rounded_info
 import com.music.vivi.desktop.generated.resources.ic_rounded_keyboard
@@ -10,6 +11,7 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_music_note
 import com.music.vivi.desktop.generated.resources.ic_rounded_palette
 import com.music.vivi.desktop.generated.resources.ic_rounded_settings
 import com.music.vivi.desktop.generated.resources.ic_rounded_settings_backup_restore
+import com.music.vivi.desktop.generated.resources.ic_rounded_tune
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
@@ -69,6 +71,21 @@ enum class SettingsSection(
         title = "About",
         subtitle = "App info, version, and credits",
         icon = Res.drawable.ic_rounded_info
+    ),
+    // 1.55-only pages. They are filtered out of the 1.56 hub, which keeps the
+    // PixelPlayerDesktop surface exactly as it was.
+    INTRO(
+        id = "intro",
+        title = "Intro",
+        subtitle = "Animated splash at startup",
+        icon = Res.drawable.ic_rounded_auto_awesome
+    ),
+    // The 1.56 settings hub, moved into a submenu of the imported 1.55 home.
+    PIXELPLAYER(
+        id = "pixelplayer",
+        title = "PixelPlayer",
+        subtitle = "The 1.56 PixelPlayerDesktop settings, unchanged",
+        icon = Res.drawable.ic_rounded_tune
     )
 }
 
@@ -83,6 +100,8 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.SHORTCUTS -> Color(0xFF2E4369) to Color(0xFFBFD2F8)
             SettingsSection.BACKUP -> Color(0xFF3B4869) to Color(0xFFD9E2FF)
             SettingsSection.ABOUT -> Color(0xFF3F474D) to Color(0xFFDEE3EB)
+            SettingsSection.INTRO -> Color(0xFF4A3B63) to Color(0xFFE7D8FF)
+            SettingsSection.PIXELPLAYER -> Color(0xFF243B53) to Color(0xFFD4E4F7)
         }
     } else {
         when (category) {
@@ -94,6 +113,8 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.SHORTCUTS -> Color(0xFFD6E3FF) to Color(0xFF285EA7)
             SettingsSection.BACKUP -> Color(0xFFD9E2FF) to Color(0xFF27304E)
             SettingsSection.ABOUT -> Color(0xFFEFF1F7) to Color(0xFF44474F)
+            SettingsSection.INTRO -> Color(0xFFE9DDFF) to Color(0xFF4B2D7A)
+            SettingsSection.PIXELPLAYER -> Color(0xFFDCE8F5) to Color(0xFF26476B)
         }
     }
 }

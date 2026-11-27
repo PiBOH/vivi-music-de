@@ -112,5 +112,11 @@ data class UserSettings(
     val lastAutoBackupAt: Long = 0L,
     val checkUpdatesOnStartup: Boolean = true,
     val lastDismissedUpdateVersion: String? = null,
+    // 1.55 startup intro: a native animated splash drawn before the app shell.
+    // The style picks what is shown (logo / logo + name / logo + name + version)
+    // and the background picks the backdrop (gradient / glow / dark).
+    val showIntroSplash: Boolean = true,
+    val introStyle: String = "logo_name",
+    val introBackground: String = "gradient",
     val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS
 )

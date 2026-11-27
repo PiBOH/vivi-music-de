@@ -24,7 +24,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * The YouTube Music sign-in window and cookie capture used by VIVI Music DE
+ * The YouTube Music sign-in window and cookie capture used by Axolotl Music
  * 1.55.0.
  *
  * The flow is deliberately the one that worked there: open Google's own sign-in

@@ -6,17 +6,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        ### 🛠️ Bug Report — Vivi Music (Android)
+        ### 🛠️ Bug Report — Axolotl Music (Android)
         Thank you for reporting! Please fill out the form below.
         > This template is for the **mobile / Android** app.
-        > For the desktop app (Windows / Linux / macOS), use the **🐛 Bug Report (Vivi Music DE)** template.
+        > For the desktop app (Windows / Linux / macOS), use the **🐛 Bug Report (Axolotl Music)** template.
 
   - type: checkboxes
     id: checklist
     attributes:
       label: Pre-flight Checklist
       options:
-        - label: I am running the [latest debug version](https://github.com/PiBOH/vivi-music-de/actions).
+        - label: I am running the [latest debug version](https://github.com/PiBOH/axolotl-music/actions).
           required: true
         - label: I checked for duplicate issues.
           required: true

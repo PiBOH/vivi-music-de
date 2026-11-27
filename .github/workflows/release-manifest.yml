@@ -20,7 +20,7 @@ name: Release Manifest
 # (and needed a manual page refresh) until the next release bumped version.txt.
 #
 # `schedule` and `workflow_dispatch` always run the version of this file that
-# lives on the DEFAULT branch (`vivi-music-de`), which is this one.
+# lives on the DEFAULT branch (`axolotl-music-de`), which is this one.
 
 on:
   schedule:
@@ -51,7 +51,7 @@ jobs:
       - name: Checkout the DE branch (generator script)
         uses: actions/checkout@v4
         with:
-          ref: vivi-music-de
+          ref: axolotl-music-de
           path: build
 
       - name: Checkout the site branch
@@ -104,4 +104,4 @@ jobs:
         # ever borrowed here because of that 401-looking silence.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run pages-deploy.yml --repo "$GITHUB_REPOSITORY" --ref vivi-music-de || echo "deploy dispatch skipped"
+        run: gh workflow run pages-deploy.yml --repo "$GITHUB_REPOSITORY" --ref axolotl-music-de || echo "deploy dispatch skipped"

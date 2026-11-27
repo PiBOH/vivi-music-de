@@ -367,7 +367,7 @@ tasks.register("windowsInstaller") {
     val installerOutputDir = File(rootDir, "build/installer")
     val appImageDir = layout.buildDirectory.dir("compose/binaries/main/app/AxolotlMusic").get().asFile
     val iconsDir = File(projectDir, "icons")
-    val issScript = File(rootDir, "installer/windows/VIVIMusic.iss")
+    val issScript = File(rootDir, "installer/windows/AxolotlMusic.iss")
     // The release numbers are script properties; read them into locals so the task
     // action captures strings instead of the build script itself.
     val appVersion = fullVersion

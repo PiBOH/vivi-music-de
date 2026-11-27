@@ -1,4 +1,4 @@
-name: 🚀 Feature Request (Vivi Music DE)
+name: 🚀 Feature Request (Axolotl Music)
 description: Have an idea for the Desktop Edition? Pitch it!
 title: "[Feat][DE]: "
 labels: ["enhancement", "triage", "desktop"]
@@ -6,8 +6,8 @@ body:
   - type: markdown
     attributes:
       value: |
-        ### 💡 Feature Proposal — Vivi Music DE (Desktop Edition)
-        Help us make Vivi Music DE even more awesome.
+        ### 💡 Feature Proposal — Axolotl Music (Desktop Edition)
+        Help us make Axolotl Music even more awesome.
         > This template is for the **desktop** app (Windows / Linux / macOS).
         > For the Android app, use the **🚀 Feature Request (Mobile)** template.
 

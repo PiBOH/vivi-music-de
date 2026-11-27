@@ -130,7 +130,7 @@ fun AboutScreen(
                     else -> if (BuildConfig.IS_NIGHTLY) R.string.build_nightly else R.string.build_stable
                 }
             )}",
-            onGithubClick = { uriHandler.safeOpenUri(context, "https://github.com/vivizzz007/vivi-music") }
+            onGithubClick = { uriHandler.safeOpenUri(context, "https://github.com/PiBOH/axolotl-music") }
         )
         
         Spacer(modifier = Modifier.height(10.dp))
@@ -181,7 +181,7 @@ fun AboutScreen(
                             Text("...")
                         }
                     },
-                    onClick = { uriHandler.safeOpenUri(context, "https://github.com/vivizzz007/vivi-music") },
+                    onClick = { uriHandler.safeOpenUri(context, "https://github.com/PiBOH/axolotl-music") },
                     isExternalLink = true
                 ),
                 Material3SettingsItem(
@@ -193,7 +193,7 @@ fun AboutScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.telegram),
                     title = { Text(stringResource(R.string.telegram_channel)) },
-                    onClick = { uriHandler.safeOpenUri(context, "https://t.me/vivimusicapp") },
+                    onClick = { uriHandler.safeOpenUri(context, "https://t.me/axolotlmusic") },
                     isExternalLink = true
                 )
             )
@@ -234,7 +234,7 @@ fun AboutScreen(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.license_vivi),
                     title = { Text(stringResource(R.string.license)) },
-                    onClick = { uriHandler.safeOpenUri(context, "https://github.com/vivizzz007/vivi-music/blob/main/LICENSE") },
+                    onClick = { uriHandler.safeOpenUri(context, "https://github.com/PiBOH/axolotl-music/blob/axolotl-music-de/LICENSE") },
                     isExternalLink = true
                 ),
             )

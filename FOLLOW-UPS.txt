@@ -1,6 +1,6 @@
 VIVI MUSIC DE - FOLLOW-UP 1, 2, 3, 4, 5, 6, 11
 Ultimo aggiornamento: 25 novembre 2026
-Branch: vivi-music-de
+Branch: axolotl-music-de
 Versione invariata: 6.0.8.11_DE-1.56.0-beta1
 Stato: implementati, compilati e testati. Nessun push, nessuna release.
 Commit di riferimento al 25 Nov 2026: dd4a9b5

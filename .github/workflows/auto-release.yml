@@ -9,7 +9,7 @@ on:
         type: string
         default: ''
   push:
-    branches: [ vivi-music-de, main, beta ]
+    branches: [ axolotl-music-de, main, beta ]
     tags-ignore: [ '**' ]
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
   # Builds are delegated to the per-OS reusable workflows. This workflow only
   # collects their artifacts and publishes the release. They run on manual
   # dispatch, or on push when the commit message starts with "v" (our release
-  # signal), mirroring the old vivi-music-de release pipeline.
+  # signal), mirroring the old axolotl-music-de release pipeline.
   build-windows:
     name: Windows
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'v'))
@@ -285,6 +285,6 @@ jobs:
   # The Telegram bot is deliberately NOT started from here any more. The owner
   # triggers it by hand when they want a release posted, so a published release
   # must never launch the bot on its own. The bot's own hourly poll in
-  # `call-vmde-bot.yml` (a schedule in THIS repository, no cross-repository
+  # `call-axolotl-bot.yml` (a schedule in THIS repository, no cross-repository
   # token needed for the poll path itself) remains the automatic fallback.
 

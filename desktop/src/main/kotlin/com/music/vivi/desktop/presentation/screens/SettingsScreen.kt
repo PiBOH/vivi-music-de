@@ -19,6 +19,7 @@ import com.music.vivi.desktop.presentation.screens.settings.ArtistSettingsDetail
 import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailScreen
 import com.music.vivi.desktop.data.library.LibraryHealthGroup
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
+import com.music.vivi.desktop.presentation.screens.settings.IntroSettingsDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.LibraryHealthDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.LicensesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.MusicFoldersDetailScreen
@@ -28,6 +29,7 @@ import com.music.vivi.desktop.presentation.screens.settings.SettingsOverviewMenu
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSearchCatalog
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSearchResults
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSection
+import com.music.vivi.desktop.presentation.screens.settings.ViviSettingsOverview
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 
 enum class LibrarySubDetail {
@@ -110,10 +112,28 @@ fun SettingsScreen(
     ) { (section, subDetail) ->
         when {
             section == null -> {
-                SettingsOverviewMenu(
+                ViviSettingsOverview(
                     onSelectSection = {
                         onNavigate(it, LibrarySubDetail.NONE)
                     }
+                )
+            }
+            section == SettingsSection.PIXELPLAYER -> {
+                // The whole 1.56 surface is preserved behind this entry: the
+                // hub, its sections and every detail screen are the originals.
+                SettingsOverviewMenu(
+                    title = "PixelPlayer",
+                    subtitle = "The 1.56 PixelPlayerDesktop settings, unchanged",
+                    onBack = onBack,
+                    onSelectSection = {
+                        onNavigate(it, LibrarySubDetail.NONE)
+                    }
+                )
+            }
+            section == SettingsSection.INTRO -> {
+                IntroSettingsDetailScreen(
+                    viewModel = viewModel,
+                    onBack = onBack
                 )
             }
             section == SettingsSection.LIBRARY && subDetail == LibrarySubDetail.FOLDERS -> {

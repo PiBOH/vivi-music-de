@@ -1,6 +1,6 @@
-# VIVI Music DE — Error Codes
+# Axolotl Music — Error Codes
 
-Every error that can appear in VIVI Music (desktop edition and the paired
+Every error that can appear in Axolotl Music (desktop edition and the paired
 mobile app) carries a code. If you hit an error, look its code up in the
 table below to understand what happened and how to try to fix it.
 
@@ -123,5 +123,5 @@ two ways past it.
 ---
 
 If your error code is not listed here, report it (with the exact code and
-message) in the [GitHub issues](https://github.com/PiBOH/vivi-music-de/issues)
+message) in the [GitHub issues](https://github.com/PiBOH/axolotl-music/issues)
 so it can be added to this table.

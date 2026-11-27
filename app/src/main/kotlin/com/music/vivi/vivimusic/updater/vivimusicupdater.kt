@@ -714,9 +714,9 @@ const val KEY_UPDATE_SOURCE = "update_source"
 const val UPDATE_SOURCE_ORIGINAL = "original"
 const val UPDATE_SOURCE_FORK = "fork"
 const val REPO_ORIGINAL = "vivizzz007/vivi-music"
-const val REPO_FORK = "PiBOH/vivi-music-de"
+const val REPO_FORK = "PiBOH/axolotl-music"
 const val BRANCH_ORIGINAL = "main"
-const val BRANCH_FORK = "vivi-music-de"
+const val BRANCH_FORK = "axolotl-music-de"
 
 /**
  * Where the companion APKs are published.
@@ -724,16 +724,16 @@ const val BRANCH_FORK = "vivi-music-de"
  * They are **not** GitHub release assets any more (the combined releases carry
  * the desktop installers only): the Android workflow uploads the newest GMS and
  * FOSS builds, with fixed file names, to `.releases/apk/latest` on the dedicated
- * `apk-latest` branch of PiBOH/vivi-music-de, next to a `version.json` that
+ * `apk-latest` branch of PiBOH/axolotl-music, next to a `version.json` that
  * describes the build. Those URLs therefore always serve the latest build and
  * need no GitHub API (and no API quota).
  */
-const val APK_LATEST_BASE = "https://raw.githubusercontent.com/PiBOH/vivi-music-de/apk-latest/.releases/apk/latest"
+const val APK_LATEST_BASE = "https://raw.githubusercontent.com/PiBOH/axolotl-music/apk-latest/.releases/apk/latest"
 const val APK_LATEST_VERSION_URL = "$APK_LATEST_BASE/version.json"
 
 fun getUpdateSource(context: Context): String {
     val sharedPrefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    // Default to our own repo (PiBOH/vivi-music-de), whose APK channel is the
+    // Default to our own repo (PiBOH/axolotl-music), whose APK channel is the
     // apk-latest branch; users can still switch back to the upstream repo in
     // Settings (issue #20).
     return sharedPrefs.getString(KEY_UPDATE_SOURCE, UPDATE_SOURCE_FORK) ?: UPDATE_SOURCE_FORK

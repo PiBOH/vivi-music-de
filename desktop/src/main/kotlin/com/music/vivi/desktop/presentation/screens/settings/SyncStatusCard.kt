@@ -28,6 +28,10 @@ import java.util.Locale
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
+// One parser for the card: the store file is read once per card, and creating
+// a Json format per read is pure allocation.
+private val storeJson = Json { ignoreUnknownKeys = true }
+
 /**
  * What the desktop actually knows about sync.
  *
@@ -131,7 +135,7 @@ private fun readStoreState(storeFile: File, backupFile: File): StoreState {
         "No store to read."
     } else {
         runCatching {
-            val root = Json { ignoreUnknownKeys = true }
+            val root = storeJson
                 .parseToJsonElement(storeFile.readText())
                 .jsonObject
             val keys = root.keys.filter { it != "localLibrary" && it != "libraryImport" }.sorted()

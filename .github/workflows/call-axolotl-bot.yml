@@ -1,6 +1,6 @@
-name: Call the VMDE bot
+name: Call the Axolotl bot
 
-# The Telegram bot is a workflow in ANOTHER repository (`PiBOH/vivimusicde_bot`),
+# The Telegram bot is a workflow in ANOTHER repository (`PiBOH/axolotlmusicde_bot`),
 # and the job token of a run here cannot reach another repository, so the call
 # has to go through a cross-repository token: `BOT_DISPATCH_TOKEN`, a classic PAT
 # with the `repo` AND `workflow` scopes (dispatching a workflow is a
@@ -57,7 +57,7 @@ permissions:
 
 jobs:
   dispatch:
-    name: Tell PiBOH/vivimusicde_bot to post
+    name: Tell PiBOH/axolotlmusicde_bot to post
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -72,13 +72,13 @@ jobs:
           # which is what the schedule wants.
           if [[ -n "$RELEASE_TAG" ]]; then
             gh workflow run upload-release.yml \
-              --repo PiBOH/vivimusicde_bot \
+              --repo PiBOH/axolotlmusicde_bot \
               --ref main \
               -f release_tag="$RELEASE_TAG"
             echo "Asked the bot to post $RELEASE_TAG."
           else
             gh workflow run upload-release.yml \
-              --repo PiBOH/vivimusicde_bot \
+              --repo PiBOH/axolotlmusicde_bot \
               --ref main
             echo "Asked the bot to look for a release to post."
           fi

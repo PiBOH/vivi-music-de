@@ -4,9 +4,9 @@ Instructions for AI coding agents working in this repository.
 
 ## 1. Project overview
 
-**VIVI Music** is an open-source (GPL-3.0) Android client for YouTube Music /
+**Axolotl Music** is an open-source (GPL-3.0) Android client for YouTube Music /
 YouTube (ad-free streaming, Apple Music–style UI), plus its companion **desktop
-edition** ("VIVI Music DE", Compose Multiplatform) and a cross-device
+edition** ("Axolotl Music", Compose Multiplatform) and a cross-device
 **sync** layer that keeps the two in sync. It is a fork of the
 ViMusic/InnerTune/SimpMusic family.
 
@@ -55,17 +55,17 @@ dependencies there, or you break the desktop build.
 ## 3. Code conventions and development guidelines
 
 - **Branch policy (mandatory) — three roles, never mix them**:
-  - `vivi-music-de` — home of the desktop edition AND of the mobile code used to
+  - `axolotl-music-de` — home of the desktop edition AND of the mobile code used to
     build the APK for the DE release. **DE-only** changes are committed and
     pushed **only** here.
-  - `vivi-music-de-apk` — mobile/APK counterpart of `vivi-music-de`. **Every
+  - `axolotl-music-apk` — mobile/APK counterpart of `axolotl-music-de`. **Every
     mobile/APK change** must be applied, committed **and pushed** on **both**
-    `vivi-music-de` and `vivi-music-de-apk`; the two branches keep equivalent
+    `axolotl-music-de` and `axolotl-music-apk`; the two branches keep equivalent
     mobile behavior (their commits may have different hashes). **This is an
     obligation, not a best effort: a commit that touches `app/**`, the APK
     version (`version.txt`, `app/build.gradle.kts`), an APK workflow or the APK
     part of a doc is only done when it exists on both branches** — finishing one
-    of the two and leaving the other for later means the change is not done. `vivi-music-de-apk`
+    of the two and leaving the other for later means the change is not done. `axolotl-music-apk`
     also carries the pure-mobile history that used to live on `main` (kept
     reachable via the merge commit `16743769`).
   - `main` — **mirror of the upstream repository
@@ -74,19 +74,19 @@ dependencies there, or you break the desktop build.
     may ever be pushed to it. Keep it synchronized with `upstream/main` (fetch
     and fast-forward / reset when upstream moves); never rewrite it with local
     work.
-  - Mobile changes are therefore committed on **`vivi-music-de` +
-    `vivi-music-de-apk`** (never `main`); DE-only changes only on
-    `vivi-music-de`. For combined DE + mobile changes, commit the DE-specific
-    part only on `vivi-music-de` and apply the mobile part to both
-    `vivi-music-de` and `vivi-music-de-apk`. Never merge the whole DE branch
+  - Mobile changes are therefore committed on **`axolotl-music-de` +
+    `axolotl-music-apk`** (never `main`); DE-only changes only on
+    `axolotl-music-de`. For combined DE + mobile changes, commit the DE-specific
+    part only on `axolotl-music-de` and apply the mobile part to both
+    `axolotl-music-de` and `axolotl-music-apk`. Never merge the whole DE branch
     into `main`.
   - Before committing mobile work, verify the affected mobile files on both
-    `vivi-music-de` and `vivi-music-de-apk`, compile the relevant target, and
+    `axolotl-music-de` and `axolotl-music-apk`, compile the relevant target, and
     push both branch commits.
   - **Docs changes go on BOTH development branches**: any documentation
     change (README.md, AGENTS.md, INSTALL-GUIDE.md, docs/**, ERRORS.md, and
     similar docs material) must be applied and pushed on **both**
-    `vivi-music-de` and `vivi-music-de-apk`, with equivalent content (their
+    `axolotl-music-de` and `axolotl-music-apk`, with equivalent content (their
     hashes may differ). `main` stays excluded (upstream mirror).
   - **`CHANGELOG.md`, `CHANGELOG.dev.md` and `version.txt` are not "equivalent",
     they are the same files on both branches** (same order, same versions, same
@@ -100,22 +100,22 @@ dependencies there, or you break the desktop build.
     desktop's changes go into — and pushed to **both** branches as that same
     entry. So the APK has no changelog of its own that could drift: a mobile
     change whose `[APK]` bullet is missing from the shared file, or that lands
-    on `vivi-music-de-apk` without the file being copied over, is an unfinished
+    on `axolotl-music-apk` without the file being copied over, is an unfinished
     change, not a smaller one.
   - **Official repository**: everything lives in **`PiBOH/axolotl-music`** (the
     branch names above are unchanged). Every link in code, docs, the installer,
-    the website and the CI points there — never at the old `PiBOH/vivi-music`
+    the website and the CI points there — never at the old `PiBOH/axolotl-music`
     fork. Example URLs: `https://github.com/PiBOH/axolotl-music`,
-    `.../blob/vivi-music-de/<file>`, `.../releases`, `.../issues`, and the site
+    `.../blob/axolotl-music-de/<file>`, `.../releases`, `.../issues`, and the site
     at `https://piboh.github.io/axolotl-music/`.
   - **Everything is done on the official repository, on the branch that owns
-    the change** — no more work on the `PiBOH/vivi-music` fork, which stays a
+    the change** — no more work on the `PiBOH/axolotl-music` fork, which stays a
     read-only mirror. Locally `origin` is `PiBOH/axolotl-music` and the fork is
     the `fork` remote: never push to `fork`.
   - **Branch map (mandatory)**:
-    - `vivi-music-de` (default): the desktop edition — program code, docs,
+    - `axolotl-music-de` (default): the desktop edition — program code, docs,
       `version.txt`, the release workflows and `Auto Release`.
-    - `vivi-music-de-apk`: the Android app (moving the mobile sources here is
+    - `axolotl-music-apk`: the Android app (moving the mobile sources here is
       tracked in `TODO.md`).
     - `gh-pages`: the website. Its root **is** the site — pages, styles,
       images, fonts and the generated `releases.json` / `changelog.json` — and a
@@ -125,7 +125,7 @@ dependencies there, or you break the desktop build.
       keep the two copies in sync. `Release Manifest` refreshes the two data
       files in place, on `gh-pages`, every hour. The **`github-pages`
       environment lists both branches** in its deployment branch policy
-      (`vivi-music-de` and `gh-pages`): with only the default branch listed, a
+      (`axolotl-music-de` and `gh-pages`): with only the default branch listed, a
       deploy triggered by a push to `gh-pages` fails with `Branch "gh-pages" is
       not allowed to deploy to github-pages due to environment protection
       rules` even though the workflow itself is fine — add the policy before
@@ -134,7 +134,7 @@ dependencies there, or you break the desktop build.
   - **No scratch/test branches — ever (mandatory)**: never create a branch to
     try a change out. Do the work on the branch that owns it, per the branch map
     above, and verify through the normal pipeline: a `v` commit on
-    `vivi-music-de` exercises `Auto Release` (a job that is still settling stays
+    `axolotl-music-de` exercises `Auto Release` (a job that is still settling stays
     `continue-on-error` until it is green), a push on `gh-pages` deploys the
     site. If a branch was created anyway, it must be deleted (locally and on
     `origin`) with its work integrated into the base branch — the official
@@ -161,9 +161,9 @@ dependencies there, or you break the desktop build.
     read-only mirror, its URLs serving as redirects). Every `#N` in
     `CHANGELOG.md`, in the docs and in the code comments refers to the official
     repository, and new references are written with the official number.
-  - **The Telegram bot is a separate repository**: `PiBOH/vivimusicde_bot`
+  - **The Telegram bot is a separate repository**: `PiBOH/axolotlmusicde_bot`
     (`bot.py`, `.github/workflows/upload-release.yml`). It posts a newly
-    published release to `https://t.me/vivimusicde` within the hour, resolves
+    published release to `https://t.me/axolotlmusic` within the hour, resolves
     "latest" by publish date, ignores `*.log` / `*.install`, and reuses the
     `.releases/apk/latest` links for the optional custom APK (toggle off by
     default). Update it whenever the release or asset layout changes.
@@ -385,7 +385,7 @@ dependencies there, or you break the desktop build.
 The desktop window is PixelPlayerDesktop's surface, carried over file by file:
 the shell and the shortcuts in `Main.kt`, the Material 3 theme in `ui/theme/`,
 the components in `presentation/components/`, the screens in
-`presentation/screens/` and the audio engine in `data/player/mpv/`. VIVI Music
+`presentation/screens/` and the audio engine in `data/player/mpv/`. Axolotl Music
 DE owns the name, the icon, the installer metadata and the backend wiring. It
 does not own a second design language, so a screen changes by changing the
 cloned screen, not by adding a parallel surface next to it.
@@ -415,8 +415,8 @@ cloned screen, not by adding a parallel surface next to it.
 - **Branding is data, not a fork.** The app name and version come from
   `version.txt` through `BuildConfig` (`APP_NAME`, `APP_VERSION_NAME`), the
   window title from `BuildConfig.APP_NAME`, the installer name from
-  `packageName = "VIVIMusic"`, and the icon from `src/main/resources/icons/`
-  (`icon.ico`, `icon.icns`, `icon.png`, taken from `vivi-music-de`). A branded
+  `packageName = "AxolotlMusic"`, and the icon from `src/main/resources/icons/`
+  (`icon.ico`, `icon.icns`, `icon.png`, taken from `axolotl-music-de`). A branded
   string is edited in one of those places, never searched and replaced through
   the sources: every user-visible use of the name (window title, tray, sidebar,
   welcome screens, shortcuts dialog, mini window) reads
@@ -571,7 +571,7 @@ cloned screen, not by adding a parallel surface next to it.
   captures only strings and files. A `rootProject`, `layout` or build-script
   property read inside `doLast` fails the build (after the setup has already
   been written) with "cannot serialize Gradle script object references". The
-  setup lands in `build/installer/VIVIMusic-<version>-setup.exe`. The script has
+  setup lands in `build/installer/AxolotlMusic-<version>-setup.exe`. The script has
   an `[InstallDelete]` rule for the app folder files a previous build shipped
   and the current one does not, which is why the database driver an older
   install left behind is gone after an upgrade: a file that is not in the new
@@ -580,11 +580,11 @@ cloned screen, not by adding a parallel surface next to it.
 - **A release is verified by one script, not by a session.**
   `scripts/verify-release.ps1` reads `version.txt`, then checks the setup's own
   version resource (ProductName, CompanyName, ProductVersion) and its SHA-256.
-  `image-payload` lists the jpackage image: `VIVIMusic.exe`, the jlink runtime,
+  `image-payload` lists the jpackage image: `AxolotlMusic.exe`, the jlink runtime,
   the `innertube` and `lyricsProvider` jars, `javafx-web` with its
   `jfxwebkit.dll`, the loose `icudtl.dat`, `libmpv-2.dll` and `vulkan-1.dll`,
   and fails on any `sqlite` jar. `packaged-webview` runs
-  `VIVIMusic.exe --webview-self-test` from the image: that harness opens the
+  `AxolotlMusic.exe --webview-self-test` from the image: that harness opens the
   sign-in page in the packaged JavaFX engine, waits for `SUCCEEDED`, reads
   `document.readyState`, the title and the body length, writes a PNG and exits
   0 only when the page painted text, so a runtime that lost `java.net.http`
@@ -623,13 +623,13 @@ cloned screen, not by adding a parallel surface next to it.
   tested. The setup's own uninstaller also skips its closing message box under
   `/VERYSILENT` now (`UninstallSilent`), because that box blocked an unattended
   uninstall. **Measured on 20 Nov with
-  `VIVIMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
+  `AxolotlMusic-6.0.8.11_DE-1.56.0-beta1-setup.exe` (210 MB, sha256
   `40422FBFD187F5E06F13FAEC09D22263FBE3E83C0C5E973DBB3543D9B4A7D80A`):**
   `RESULT: PASS`, with `packaged-webview` loading Accedi - Account Google in
   7.3 s (a 22 423-byte frame), `install` 18.8 s and all 289 files identical to
   the image, `startup` `TIME_TO_FIRST_FRAME: 4088ms`, `uninstall` 1.8 s with
   the two kept files, `restore` starting on them in 4.9 s, and
-  `host-registration` restoring the real `C:\Program Files\VIVIMusic` path.
+  `host-registration` restoring the real `C:\Program Files\AxolotlMusic` path.
   The repair was tested by killing a run after `install` and after
   `uninstall`: both times the next run printed `recovery PASS` (4.2 s and
   2.6 s) and left App Paths, the uninstall entry and the Start Menu as they
@@ -637,7 +637,7 @@ cloned screen, not by adding a parallel surface next to it.
 - **Verification.** A desktop change is checked with `./gradlew
   :desktop:compileKotlin` and, when it reaches playback or the shell,
   `./gradlew :desktop:run` or the packaged app in
-  `build/compose/binaries/main/app/VIVIMusic/`. `--benchmark-first-frame` prints
+  `build/compose/binaries/main/app/AxolotlMusic/`. `--benchmark-first-frame` prints
   the time to the first painted frame. `--verify-backend-playback` runs the whole
   backend chain in one process and exits non-zero when a stage fails: the
   catalogue search through `:innertube`, the stream resolution, libmpv playing
@@ -865,12 +865,12 @@ recomputed per frame.
 text is an English literal at the call site, sentence case, no localization
 keys. The brand lives in exactly these places: `version.txt` through
 `BuildConfig.APP_NAME`/`APP_VERSION_NAME`, the `Window`/tray titles and tooltip
-in `Main.kt`, `packageName = "VIVIMusic"` in `desktop/build.gradle.kts`, the
+in `Main.kt`, `packageName = "AxolotlMusic"` in `desktop/build.gradle.kts`, the
 installer metadata in `installer/`, `src/main/resources/icons/`
 (`icon.ico`/`icns`/`png`) and `composeResources/drawable/vivi_app_logo.png`
 through `ViviLogo`. The About screen's maintainers section ends with a
 Contributors card that opens the dedicated Contributors screen: one card per
-person, read live from `contributorsde.json` on the `vivi-music-de` branch
+person, read live from `contributorsde.json` on the `axolotl-music-de` branch
 every time the screen opens, with the copy bundled on the classpath
 (`processResources`) as the offline fallback and a repeated handle drawn once.
 A version number on a screen is read from `BuildConfig.APP_VERSION_NAME`,
@@ -890,7 +890,7 @@ with a minimized window.
 
 **11. How a UI change is checked.** `./gradlew :desktop:compileKotlin` first.
 Then the window itself: `./gradlew :desktop:run`, or the packaged app in
-`desktop/build/compose/binaries/main/app/VIVIMusic/`. When the change reaches
+`desktop/build/compose/binaries/main/app/AxolotlMusic/`. When the change reaches
 the wiring (`Main.kt`, `MainAppScaffold`, a screen's callbacks, the view
 models), `--verify-app-flow` is the evidence: it starts the real Koin graph,
 drives the holder the YouTube Music screen binds, plays, and writes
@@ -1025,7 +1025,7 @@ a window exposes to the OS, and use the render checks for the Compose UI:
 
 - **agent-desktop: launch, window and screenshot.**
   `agent-desktop status` proves the helper is up, `agent-desktop list-apps`
-  finds `VIVIMusic.exe`, and `agent-desktop snapshot --app VIVIMusic.exe -i
+  finds `AxolotlMusic.exe`, and `agent-desktop snapshot --app AxolotlMusic.exe -i
   --compact` gives the window's accessibility tree. Compose Desktop exposes
   only the title bar to Windows UI Automation, so the snapshot normally shows
   the window controls and not the in-app controls; a menu the app draws is not
@@ -1066,16 +1066,16 @@ Consequences to respect when touching icons or the build:
   that screen renders. The six style directories are handled; `Icons.Default`
   maps to `filled`.
 - Verify a packaging change with `./gradlew :desktop:createDistributable` and
-  check `desktop/build/compose/binaries/main/app/VIVIMusic/app/`: the icons jar
+  check `desktop/build/compose/binaries/main/app/AxolotlMusic/app/`: the icons jar
   must be `material-icons-extended-desktop-minimized-*.jar` and no full
   `material-icons-extended-desktop-*.jar` may be present.
-- `installer/windows/VIVIMusic.iss` compresses with `lzma2/max` +
+- `installer/windows/AxolotlMusic.iss` compresses with `lzma2/max` +
   `SolidCompression=yes`. There are no optional `[Components]` (only the two
   shortcut `[Tasks]`), so solid compression cannot make a partial install
   decompress the whole block.
 - Published formats are fixed: Windows ships **both** `setup.exe` and `.msi`,
 macOS **both** `.dmg` and `.pkg`, Linux keeps `.deb` + `.rpm` (Fedora) +
-`.AppImage` + the AUR archive (`VIVIMusic-<version>-AUR.tar.gz`, holding the
+`.AppImage` + the AUR archive (`AxolotlMusic-<version>-AUR.tar.gz`, holding the
 `PKGBUILD`, `SRCINFO` and the `.install` hook — the three files must travel
 together because makepkg requires the hook next to the PKGBUILD, and a loose
 `*.install` in the asset list is noise). Do not drop a format to save size — the payload is trimmed
@@ -1290,7 +1290,7 @@ version of the form `<mobile>_DE-<de>` (e.g. `6.0.5_DE-1.0.0`):
   pre-release. The channel is shown (uppercased) in the About screen. The
   mobile channel (line 3) is informational for the Android side.
 - The GitHub release title and desktop artifact filenames use the full
-  version (`VIVIMusic-6.0.5_DE-1.0.0-setup.exe`, …). Release **tags carry no
+  version (`AxolotlMusic-6.0.5_DE-1.0.0-setup.exe`, …). Release **tags carry no
   `v` prefix**: stable releases use the bare version (`6.0.5_DE-1.0.0`), while
   non-stable releases append the channel (`6.0.5_DE-1.0.0-nightly`). The `v`
   prefix is used **only** in commit messages, as the auto-release trigger.
@@ -1343,8 +1343,8 @@ The project keeps the record twice, and they are not written separately:
 - **The release bodies come from `CHANGELOG.md`**, because that is the file
   `.github/workflows/auto-release.yml` extracts.
 - **Both files are the same file on both development branches**, like
-  `version.txt`: apply a change on `vivi-music-de`, then copy it to
-  `vivi-music-de-apk` wholesale (`git checkout <other-branch> -- CHANGELOG.md
+  `version.txt`: apply a change on `axolotl-music-de`, then copy it to
+  `axolotl-music-apk` wholesale (`git checkout <other-branch> -- CHANGELOG.md
   CHANGELOG.dev.md`), never retype it.
 
 Update `CHANGELOG.dev.md` on **every important change**, following
@@ -1621,7 +1621,7 @@ This includes:
   `style.css`, site JS, screenshots — nothing in the desktop/mobile app code,
   no version bump, no release) are done directly: no GitHub issue, no
   CHANGELOG entry, and a commit message that does NOT start with `v`. They are
-  committed and pushed on `gh-pages` only: `vivi-music-de` no longer holds the
+  committed and pushed on `gh-pages` only: `axolotl-music-de` no longer holds the
   site, and there is nothing to sync to the mobile branch.
 - **Workflow changes**: any edit to `.github/workflows/*` is done directly
   without an issue (and, per the rules above, is always a `patch`).
@@ -1887,7 +1887,7 @@ keep them right.
 
 **The update counter counts installs, not downloads.** Only installers whose file
 name carries the version the app is currently running
-(`VIVIMusic-6.0.8.5_DE-1.54.20-setup.exe`) count, because an installer that has
+(`AxolotlMusic-6.0.8.5_DE-1.54.20-setup.exe`) count, because an installer that has
 been downloaded but not run is the installer for the NEXT version. Both the
 counter and the "delete installers" button (on the Updates screen and on
 Storage) work on that set, so the number and the button can never disagree, and
@@ -1918,7 +1918,7 @@ the middle of its own welcome.
 be kept exactly as the mobile welcome screen has them: `UPI`
 (`upi://pay?pa=vividhpashokan@axl&pn=Vividh P Ashokan`) and Buy Me a Coffee
 (`https://ko-fi.com/vividhpashokan`). The repository and channel links are the DE
-ones (`github.com/PiBOH/axolotl-music`, `t.me/vivimusicde`). The labels
+ones (`github.com/PiBOH/axolotl-music`, `t.me/axolotlmusic`). The labels
 `support_upi` and `support_buy_me_a_coffee` are BRAND names, identical in every
 language on purpose, authored in `scripts/desktop_extra_translations_94.py` and
 listed in the audit's `BRAND_KEYS` beside `telegram_channel`.

@@ -59,7 +59,7 @@ object RealAppFlowCheck {
     }
 
     private suspend fun run(query: String): Int {
-        println("[app] VIVI Music DE real app flow")
+        println("[app] Axolotl Music real app flow")
         val failures = mutableListOf<String>()
 
         // The window's own graph, exactly as Main.kt builds it.

@@ -77,7 +77,7 @@ object BackendPlaybackVerifier {
     }
 
     private suspend fun run(query: String): Int {
-        println("[verify] VIVI Music DE backend playback verification")
+        println("[verify] Axolotl Music backend playback verification")
         println("[verify] query: \"$query\"")
         val failures = mutableListOf<String>()
         val repository = YouTubeMusicRepository()

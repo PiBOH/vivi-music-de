@@ -125,7 +125,7 @@ jobs:
             "/DWizardSmallImageFile=$icons\logo_axolotl_small.bmp" `
             "/DWizardImageFileDark=$icons\logo_axolotl_wizard_dark.bmp" `
             "/DWizardSmallImageFileDark=$icons\logo_axolotl_small_dark.bmp" `
-            "$env:GITHUB_WORKSPACE\installer\windows\VIVIMusic.iss" 2>&1 |
+            "$env:GITHUB_WORKSPACE\installer\windows\AxolotlMusic.iss" 2>&1 |
             Tee-Object -FilePath $compileLog
           if ($LASTEXITCODE -ne 0) {
             Write-Host 'Inno Setup compiler log:'

@@ -136,14 +136,14 @@ jobs:
           mkdir -p "$TOPDIR/BUILD" "$TOPDIR/RPMS" "$TOPDIR/SOURCES" "$TOPDIR/SPECS" "$TOPDIR/SRPMS"
 
           # The app image IS the payload: its contents sit at the tarball root,
-          # and the generated spec copies them to /opt/vivi-music-de (the same
+          # and the generated spec copies them to /opt/axolotl-music (the same
           # location the AUR package uses).
-          tar -czf "$TOPDIR/SOURCES/vivi-music-app-${DE}.tar.gz" -C "$APPDIR" .
+          tar -czf "$TOPDIR/SOURCES/axolotl-music-app-${DE}.tar.gz" -C "$APPDIR" .
           python3 scripts/generate_rpm_spec.py --out "$TOPDIR/SPECS" --version "$DE"
-          cp "$TOPDIR/SPECS/vivi-music-de.desktop" "$TOPDIR/SOURCES/vivi-music-de.desktop"
-          cp desktop/src/main/resources/icons/icon.png "$TOPDIR/SOURCES/vivi-music-de.png"
+          cp "$TOPDIR/SPECS/axolotl-music.desktop" "$TOPDIR/SOURCES/axolotl-music.desktop"
+          cp desktop/src/main/resources/icons/icon.png "$TOPDIR/SOURCES/axolotl-music.png"
 
-          rpmbuild --define "_topdir $TOPDIR" -bb "$TOPDIR/SPECS/vivi-music-de.spec"
+          rpmbuild --define "_topdir $TOPDIR" -bb "$TOPDIR/SPECS/axolotl-music.spec"
 
           mkdir -p dist
           RPM="$(find "$TOPDIR/RPMS" -name '*.rpm' -print -quit)"

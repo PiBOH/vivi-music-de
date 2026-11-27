@@ -1,6 +1,7 @@
 package com.music.vivi.desktop.presentation.screens.settings
 
 import com.music.vivi.desktop.generated.resources.Res
+import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_back
 import com.music.vivi.desktop.generated.resources.ic_rounded_chevron_right
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,24 +38,53 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsOverviewMenu(
     onSelectSection: (SettingsSection) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    title: String = "Settings",
+    subtitle: String? = null,
+    onBack: (() -> Unit)? = null,
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = colors.surface.luminance() < 0.5f
-    val totalItems = SettingsSection.entries.size
+    // The 1.55-only pages stay out of the PixelPlayerDesktop hub.
+    val sections = SettingsSection.entries.filterNot {
+        it == SettingsSection.INTRO || it == SettingsSection.PIXELPLAYER
+    }
+    val totalItems = sections.size
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 28.dp, vertical = 24.dp)
     ) {
         item {
-            Text(
-                text = "Settings",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = colors.onSurface,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
-            )
+            ) {
+                if (onBack != null) {
+                    IconButton(onClick = onBack, modifier = Modifier.padding(end = 8.dp)) {
+                        Icon(
+                            painter = painterResource(Res.drawable.ic_automirrored_rounded_arrow_back),
+                            contentDescription = "Back",
+                            tint = colors.onSurface,
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = colors.onSurface
+                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
 
         item {
@@ -64,7 +95,7 @@ fun SettingsOverviewMenu(
                     .background(Color.Transparent),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                SettingsSection.entries.forEachIndexed { index, section ->
+                sections.forEachIndexed { index, section ->
                     val customColors = getCategoryColors(section, isDark)
 
                     Surface(

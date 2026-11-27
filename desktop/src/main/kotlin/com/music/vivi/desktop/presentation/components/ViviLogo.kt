@@ -11,7 +11,7 @@ import com.music.vivi.desktop.generated.resources.vivi_app_logo
 import org.jetbrains.compose.resources.painterResource
 
 /**
- * The official VIVI Music DE mark.
+ * The official Axolotl Music mark.
  *
  * The raster source is the repository's official 1024 px icon, which already
  * carries a transparent circle around the mark, so it sits on any surface

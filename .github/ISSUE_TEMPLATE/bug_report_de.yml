@@ -1,4 +1,4 @@
-name: 🐛 Bug Report (Vivi Music DE)
+name: 🐛 Bug Report (Axolotl Music)
 description: Something is broken in the Desktop Edition? Help us fix it!
 title: "[Bug][DE]: "
 labels: ["bug", "triage", "desktop"]
@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        ### 🛠️ Bug Report — Vivi Music DE (Desktop Edition)
+        ### 🛠️ Bug Report — Axolotl Music (Desktop Edition)
         Thank you for reporting! Please fill out the form below.
         > This template is for the **desktop** app (Windows / Linux / macOS).
         > For the Android app, use the **🐛 Bug Report (Mobile)** template.
@@ -16,7 +16,7 @@ body:
     attributes:
       label: Pre-flight Checklist
       options:
-        - label: I am running the [latest Vivi Music DE release](https://github.com/PiBOH/vivi-music-de/releases).
+        - label: I am running the [latest Axolotl Music release](https://github.com/PiBOH/axolotl-music/releases).
           required: true
         - label: I checked for duplicate issues.
           required: true
@@ -132,7 +132,7 @@ body:
   - type: input
     id: app-version
     attributes:
-      label: 📦 Vivi Music DE Version
+      label: 📦 Axolotl Music Version
       description: "e.g. 6.4.10_DE-1.33.43 (channel: stable / nightly / beta / rc / alpha). Check Settings -> About."
       placeholder: e.g. 6.4.10_DE-1.33.43 (nightly)
     validations:

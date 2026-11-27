@@ -25,7 +25,7 @@ on:
     # instead, and the manifest asks for a deploy explicitly as well.
     - cron: '5 * * * *'
   push:
-    branches: [ vivi-music-de ]
+    branches: [ axolotl-music-de ]
     paths:
       - '.github/workflows/pages-deploy.yml'
 

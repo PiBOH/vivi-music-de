@@ -245,6 +245,18 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(navBarCompactMode = enabled) }
     }
 
+    override suspend fun setShowIntroSplash(show: Boolean) {
+        updateSettings { it.copy(showIntroSplash = show) }
+    }
+
+    override suspend fun setIntroStyle(style: String) {
+        updateSettings { it.copy(introStyle = style) }
+    }
+
+    override suspend fun setIntroBackground(background: String) {
+        updateSettings { it.copy(introBackground = background) }
+    }
+
     override suspend fun setDefaultTab(tab: String) {
         updateSettings { it.copy(defaultTab = tab) }
     }

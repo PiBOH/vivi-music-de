@@ -1,5 +1,5 @@
 #!/bin/sh
-# VIVI Music DE — uninstall cleanup for Linux/macOS.
+# Axolotl Music — uninstall cleanup for Linux/macOS.
 #
 # On uninstall, the app's user data directory (~/.vivimusic) is a mix of real
 # user data (settings, playlists, imported fonts), the backup history
@@ -24,14 +24,14 @@ set -u
 
 cleanup_dir() {
   HOME_DIR="$1"
-  VIVI_DIR="$HOME_DIR/.vivimusic"
+  AXOLOTL_DIR="$HOME_DIR/.vivimusic"
 
-  if [ ! -d "$VIVI_DIR" ]; then
-    echo "VIVI Music DE: no user data at $VIVI_DIR — nothing to clean."
+  if [ ! -d "$AXOLOTL_DIR" ]; then
+    echo "Axolotl Music: no user data at $AXOLOTL_DIR — nothing to clean."
     return 0
   fi
 
-  BACKUPS_DIR="$VIVI_DIR/backups"
+  BACKUPS_DIR="$AXOLOTL_DIR/backups"
 
   # The newest full backup wins across the extensions: `ls -1t` sorts by
   # modification time, so no filename parsing is needed (auto_backup_* and
@@ -41,18 +41,18 @@ cleanup_dir() {
   if [ -d "$BACKUPS_DIR" ]; then
     KEEP_BACKUP="$(ls -1t "$BACKUPS_DIR"/*.vivide.lbkp "$BACKUPS_DIR"/*.vivide.bkp "$BACKUPS_DIR"/*.vivide.backup 2>/dev/null | head -n 1)"
     if [ -n "$KEEP_BACKUP" ]; then
-      echo "VIVI Music DE: keeping the newest backup: $(basename "$KEEP_BACKUP")"
+      echo "Axolotl Music: keeping the newest backup: $(basename "$KEEP_BACKUP")"
     fi
   fi
 
   # Delete everything under ~/.vivimusic except device-sync.json and backups/.
-  for entry in "$VIVI_DIR"/* "$VIVI_DIR"/.[!.]*; do
+  for entry in "$AXOLOTL_DIR"/* "$AXOLOTL_DIR"/.[!.]*; do
     [ -e "$entry" ] || continue
     case "$(basename "$entry")" in
       backups|device-sync.json) continue ;;
     esac
     rm -rf "$entry"
-    echo "VIVI Music DE: removed $entry"
+    echo "Axolotl Music: removed $entry"
   done
 
   # Inside backups/, keep only the newest backup.
@@ -64,7 +64,7 @@ cleanup_dir() {
     done
   fi
 
-  echo "VIVI Music DE: uninstall cleanup complete. Only the newest backup and device-sync.json remain."
+  echo "Axolotl Music: uninstall cleanup complete. Only the newest backup and device-sync.json remain."
 }
 
 # Clean the invoking user, plus every other home directory when running as

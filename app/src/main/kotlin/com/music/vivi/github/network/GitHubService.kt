@@ -62,7 +62,7 @@ class GitHubService @Inject constructor() {
         }
     }
 
-    suspend fun isRepoStarred(token: String, owner: String = "vivizzz007", repo: String = "vivi-music"): Boolean {
+    suspend fun isRepoStarred(token: String, owner: String = "PiBOH", repo: String = "axolotl-music"): Boolean {
         return try {
             val response: HttpResponse = client.get("https://api.github.com/user/starred/$owner/$repo") {
                 header("Authorization", "Bearer $token")
@@ -76,7 +76,7 @@ class GitHubService @Inject constructor() {
         }
     }
 
-    suspend fun starRepo(token: String, owner: String = "vivizzz007", repo: String = "vivi-music"): Boolean {
+    suspend fun starRepo(token: String, owner: String = "PiBOH", repo: String = "axolotl-music"): Boolean {
         return try {
             val response = client.put("https://api.github.com/user/starred/$owner/$repo") {
                 header("Authorization", "Bearer $token")
@@ -90,7 +90,7 @@ class GitHubService @Inject constructor() {
         }
     }
     
-    suspend fun unstarRepo(token: String, owner: String = "vivizzz007", repo: String = "vivi-music"): Boolean {
+    suspend fun unstarRepo(token: String, owner: String = "PiBOH", repo: String = "axolotl-music"): Boolean {
         return try {
             val response = client.delete("https://api.github.com/user/starred/$owner/$repo") {
                 header("Authorization", "Bearer $token")
@@ -106,7 +106,7 @@ class GitHubService @Inject constructor() {
 
     suspend fun getRepoDetails(): GitHubRepoDto? {
         return try {
-            val response = client.get("https://api.github.com/repos/vivizzz007/vivi-music") {
+            val response = client.get("https://api.github.com/repos/PiBOH/axolotl-music") {
                 header("Accept", "application/vnd.github+json")
                 header("X-GitHub-Api-Version", "2022-11-28")
             }

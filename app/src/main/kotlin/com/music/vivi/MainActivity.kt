@@ -595,7 +595,7 @@ class MainActivity : ComponentActivity() {
                     onDismiss = { setLastSeenStarPromptVersion(currentVersion) },
                     onConfirm = {
                         setLastSeenStarPromptVersion(currentVersion)
-                        uriHandler.openUri("https://github.com/vivizzz007/vivi-music")
+                        uriHandler.openUri("https://github.com/PiBOH/axolotl-music")
                     },
                     onCancel = { setLastSeenStarPromptVersion(currentVersion) },
                     content = {

@@ -374,6 +374,9 @@ class PlayerViewModel(
     val albumArtColorAccuracy = themeStateHolder.albumArtColorAccuracy
     val showPlayerFileInfo = themeStateHolder.showPlayerFileInfo
     val navBarCompactMode = themeStateHolder.navBarCompactMode
+    val showIntroSplash = themeStateHolder.showIntroSplash
+    val introStyle = themeStateHolder.introStyle
+    val introBackground = themeStateHolder.introBackground
     val defaultTab = themeStateHolder.defaultTab
     fun toggleDarkMode() = themeStateHolder.toggleDarkMode()
     fun setUiScale(scale: Float) = themeStateHolder.setUiScale(scale)
@@ -383,6 +386,9 @@ class PlayerViewModel(
     fun setAlbumArtPaletteStyle(style: AlbumArtPaletteStyle) = themeStateHolder.setAlbumArtPaletteStyle(style)
     fun setAlbumArtColorAccuracy(accuracy: Int) = themeStateHolder.setAlbumArtColorAccuracy(accuracy)
     fun setShowPlayerFileInfo(show: Boolean) = themeStateHolder.setShowPlayerFileInfo(show)
+    fun setShowIntroSplash(show: Boolean) = themeStateHolder.setShowIntroSplash(show)
+    fun setIntroStyle(style: String) = themeStateHolder.setIntroStyle(style)
+    fun setIntroBackground(background: String) = themeStateHolder.setIntroBackground(background)
     fun toggleShowPlayerFileInfo() = themeStateHolder.toggleShowPlayerFileInfo()
     fun setNavBarCompactMode(enabled: Boolean) = themeStateHolder.setNavBarCompactMode(enabled)
     fun toggleNavBarCompactMode() = themeStateHolder.toggleNavBarCompactMode()

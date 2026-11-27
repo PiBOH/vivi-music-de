@@ -56,6 +56,7 @@ import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_tray
 import com.music.vivi.desktop.presentation.components.InputFocusTracker
+import com.music.vivi.desktop.presentation.components.IntroSplash
 import com.music.vivi.desktop.presentation.components.LocalInputFocusTracker
 import com.music.vivi.desktop.presentation.components.LocalWindowMinimized
 import com.music.vivi.desktop.presentation.components.MiniPlayerWindowView
@@ -758,6 +759,20 @@ fun main(args: Array<String> = emptyArray()) {
                             navigator = navigator,
                             backDispatcher = backDispatcher
                         )
+
+                        // 1.55's startup intro, drawn over the shell until it
+                        // finishes (or the user clicks it away).
+                        val introEnabled by playerViewModel.showIntroSplash.collectAsState()
+                        val introStyle by playerViewModel.introStyle.collectAsState()
+                        val introBackground by playerViewModel.introBackground.collectAsState()
+                        var introFinished by remember { mutableStateOf(false) }
+                        if (introEnabled && !introFinished) {
+                            IntroSplash(
+                                style = introStyle,
+                                background = introBackground,
+                                onFinished = { introFinished = true }
+                            )
+                        }
                     }
                 }
             }

@@ -140,6 +140,9 @@ fun SettingsCategoryDetail(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 when (section) {
+            // The 1.55-only pages have their own screens; they never reach the
+            // PixelPlayerDesktop category detail.
+            SettingsSection.INTRO, SettingsSection.PIXELPLAYER -> Unit
             SettingsSection.LIBRARY -> {
                 item {
                     val musicDirectories by viewModel.musicDirectories.collectAsState()

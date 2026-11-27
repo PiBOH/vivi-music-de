@@ -1,4 +1,4 @@
-# Fonts bundled with VIVI Music DE (desktop)
+# Fonts bundled with Axolotl Music (desktop)
 
 Every file here is loaded from the classpath, never from the internet. This note
 exists so the origin and the licence of each one is written down next to it.

@@ -1,7 +1,7 @@
 {
   "name": "vivi-music-sync-server",
   "version": "1.0.0",
-  "description": "Device pairing + snapshot sync relay for VIVI Music (Android <-> Desktop)",
+  "description": "Device pairing + snapshot sync relay for Axolotl Music (Android <-> Desktop)",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {

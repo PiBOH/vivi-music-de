@@ -2,7 +2,7 @@
   "_guide": [
     "HOW TO ADD / EDIT A CONTRIBUTOR",
     "",
-    "This file is read LIVE from the repository (branch vivi-music-de) every time",
+    "This file is read LIVE from the repository (branch axolotl-music-de) every time",
     "the Contributors screen opens in the app. There is NO local copy anymore:",
     "edit THIS file, commit and push it, and the app picks the change up on the",
     "next launch of the Contributors screen — no rebuild of the app needed.",
@@ -40,13 +40,13 @@
     {
       "username": "PiBOH",
       "name": "Pietro Bonaldo",
-      "description": "Created the desktop version of Vivi Music, despite having a 16 years old potato PC.",
+      "description": "Created the desktop version of Axolotl Music, despite having a 16 years old potato PC.",
       "group": "developer"
     },
     {
       "username": "vivizzz007",
       "name": "VIVIDH P ASHOKAN",
-      "description": "Created the Android app that VIVI Music DE is based on, and keeps the project — and its developer — in line.",
+      "description": "Created the Android app that Axolotl Music is based on, and keeps the project — and its developer — in line.",
       "group": "developer"
     },
     {
@@ -56,13 +56,13 @@
     },
     {
       "username": "bogdan-developer",
-      "description": "Contributes massively by testing VIVI Music DE on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)",
+      "description": "Contributes massively by testing Axolotl Music on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)",
       "group": "supporter"
     },
     {
       "username": "Adithyan007hack",
       "name": "AdithyanSM",
-      "description": "Contributes massively by testing VIVI Music DE on Fedora linux.",
+      "description": "Contributes massively by testing Axolotl Music on Fedora linux.",
       "group": "supporter"
     },
     {
