@@ -201,8 +201,8 @@ dependencies there, or you break the desktop build.
     a single `SHA256SUMS` at the root of the release assets, one
     `<sha256>  <file>` line for every installer and archive it uploaded (the
     `INSTALL-GUIDE.md` and the checksum file itself are excluded). It writes no
-    per-file `.sha256` any more; the updater reads GitHub's asset digest first
-    and falls back to the matching line in `SHA256SUMS`.
+    per-file `.sha256` any more; the updater reads the matching line in
+    `SHA256SUMS` first and falls back to GitHub's asset digest.
   - `.releases/apk/latest` is the **only** APK download path: the website
     (the `gh-pages` branch, `APK_BASE`), the desktop Devices screen
     (`ApkDownloads`) and the mobile updater (`APK_LATEST_VERSION_URL`) all read
@@ -501,9 +501,10 @@ cloned screen, not by adding a parallel surface next to it.
   every change has an Undo bar that restores the previous path or playlist
   order. A scan and a repair never delete a song file on their own, and a
   reference that became valid again is kept. The updater downloads the
-  asset that matches the OS, checks its SHA-256 against GitHub's asset digest
-  or against its line in the release's single `SHA256SUMS` file, and only then
-  offers the install; the automatic release workflow writes that one file. It reads
+  asset that matches the OS, checks its SHA-256 against its line in the
+  release's single `SHA256SUMS` file (falling back to GitHub's asset digest),
+  and only then offers the install; the automatic release workflow writes that
+  one file. It reads
   the official `PiBOH/axolotl-music` release list (`/releases?per_page=20`,
   prereleases included), not `/releases/latest`, because every desktop build
   is a prerelease and the latest endpoint has no stable release to return.
@@ -684,7 +685,11 @@ cloned screen, not by adding a parallel surface next to it.
   same graph, calls `PlayerViewModel.toggleFavorite`, the call the heart makes,
   and prints the favorite flag and the liked count read back from the file
   before and after; `--store-state` prints the same values without writing, so a
-  second process proves the value survived the restart. `--youtube-webview-check`
+  second process proves the value survived the restart.
+  `--verify-update-checksum` proves the update checksum path against the
+  published release: it downloads `SHA256SUMS`, resolves the line for the
+  smallest asset the file lists, downloads that asset and compares its hash,
+  then proves a corrupted hash and a corrupted file are refused. `--youtube-webview-check`
   opens the JavaFX sign-in window on Google's sign-in page and waits for it to
   close; `--webview-self-test` is its unattended form (same page, same engine,
   exits 0 only when the page painted text, optional `--webview-timeout=` and

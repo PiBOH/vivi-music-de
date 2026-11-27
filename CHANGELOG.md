@@ -61,6 +61,7 @@
 
 ### 🔧 Changed
 
+- [DE] **The updater's checksum check is proven on the published beta5 release, positive and negative.**
 - [DE] **The release publishes one `SHA256SUMS` file, and the updater reads the matching line.**
 - [DE] **A library scan only prunes folders it actually walked, and one full scan runs at a time.**
 - [DE] **The library health card counts the hidden playlist rows correctly.**
