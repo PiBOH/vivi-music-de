@@ -99,7 +99,9 @@
 #define AppExe "AxolotlMusic.exe"
 #define AppPublisher "PiBOH"
 #define AppId "com.piboh.axolotlmusic.desktop"
-#define AppURL "https://github.com/PiBOH/axolotl-music"
+#define AppURL "https://piboh.github.io/axolotl-music/"
+#define AppSupportURL "https://t.me/axolotlmusic"
+#define AppUpdatesURL "https://github.com/PiBOH/axolotl-music/releases"
 
 [Setup]
 AppId={#AppId}
@@ -111,8 +113,8 @@ AppVersion={#InstallerVersion}
 AppVerName={#AppName} {#AppVersion}
 AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
-AppSupportURL={#AppURL}
-AppUpdatesURL={#AppURL}/releases
+AppSupportURL={#AppSupportURL}
+AppUpdatesURL={#AppUpdatesURL}
 AppComments={#AppName} — YouTube Music for the desktop.
 DefaultDirName={autopf}\AxolotlMusic
 DefaultGroupName={#AppName}
