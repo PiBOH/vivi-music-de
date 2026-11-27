@@ -47,7 +47,7 @@ fun SettingsOverviewMenu(
     val isDark = colors.surface.luminance() < 0.5f
     // The 1.55-only pages stay out of the PixelPlayerDesktop hub.
     val sections = SettingsSection.entries.filterNot {
-        it.isLegacy155 || it == SettingsSection.INTRO || it == SettingsSection.PIXELPLAYER
+        it.isLegacy155 || it == SettingsSection.PIXELPLAYER
     }
     val totalItems = sections.size
 

@@ -139,7 +139,7 @@ enum class SettingsSection(
     ),
     V155_DEVICES(
         id = "v155_devices",
-        title = "Devices",
+        title = "Device sync",
         subtitle = "Pairing and volume sync",
         icon = Res.drawable.ic_rounded_sync
     ),
@@ -245,6 +245,18 @@ enum class SettingsSection(
         subtitle = "Player, mini player and slider",
         icon = Res.drawable.ic_rounded_layers
     ),
+    V155_DENSITY(
+        id = "v155_density",
+        title = "Density & grid",
+        subtitle = "Interface scale and grid size",
+        icon = Res.drawable.ic_rounded_tune
+    ),
+    V155_TRANSITIONS(
+        id = "v155_transitions",
+        title = "Screen transitions",
+        subtitle = "Fade, slide or off",
+        icon = Res.drawable.ic_rounded_schedule
+    ),
     V155_ROMANIZE(
         id = "v155_romanize",
         title = "Romanization",
@@ -262,12 +274,6 @@ enum class SettingsSection(
         title = "Equalizer",
         subtitle = "10 bands and presets",
         icon = Res.drawable.ic_rounded_graphic_eq
-    ),
-    V155_REMOVED(
-        id = "v155_removed",
-        title = "Removed features",
-        subtitle = "1.55 features no longer in 1.56",
-        icon = Res.drawable.ic_rounded_delete
     ),
     // The 1.56 settings hub, moved into a submenu of the imported 1.55 home.
     PIXELPLAYER(

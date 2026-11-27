@@ -131,7 +131,7 @@ fun SettingsScreen(
                 SettingsOverviewMenu(
                     title = "PixelPlayer",
                     subtitle = "The 1.56 PixelPlayerDesktop settings, unchanged",
-                    onBack = onBack,
+                    onBack = { onNavigate(null, LibrarySubDetail.NONE) },
                     onSelectSection = {
                         onNavigate(it, LibrarySubDetail.NONE)
                     }
@@ -141,7 +141,7 @@ fun SettingsScreen(
                 Legacy155SettingsScreen(
                     section = section,
                     viewModel = viewModel,
-                    onBack = onBack,
+                    onBack = { onNavigate(null, LibrarySubDetail.NONE) },
                     onNavigate = { target -> onNavigate(target, LibrarySubDetail.NONE) }
                 )
             }

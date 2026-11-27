@@ -79,7 +79,6 @@ val Legacy155HomeGroups: List<Pair<String, List<SettingsSection>>> = listOf(
         SettingsSection.V155_DESKTOP,
         SettingsSection.V155_SYSTEM,
         SettingsSection.V155_ABOUT,
-        SettingsSection.V155_REMOVED,
     ),
 )
 
@@ -377,6 +376,58 @@ private val countryCodeToName: Map<String, String> = mapOf(
 )
 
 private val languageChoices: List<Pair<String, String>> = languageCodeToName.map { it.key to it.value }
+/** The 1.55 app-language picker: Languages.all, native names, 48 entries. */
+private val appLanguageChoices: List<Pair<String, String>> = listOf(
+    "en" to "English",
+    "az" to "Azərbaycan dili",
+    "bs" to "Bosanski",
+    "ca" to "Català",
+    "cs" to "Čeština",
+    "de" to "Deutsch",
+    "et" to "Eesti",
+    "es" to "Español",
+    "eu" to "Euskara",
+    "fil" to "Filipino",
+    "fr" to "Français",
+    "hr" to "Hrvatski",
+    "id" to "Bahasa Indonesia",
+    "it" to "Italiano",
+    "lt" to "Lietuvių",
+    "hu" to "Magyar",
+    "ms" to "Bahasa Melayu",
+    "nl" to "Nederlands",
+    "nb" to "Norsk bokmål",
+    "pl" to "Polski",
+    "pt" to "Português",
+    "ro" to "Română",
+    "sk" to "Slovenčina",
+    "sl" to "Slovenščina",
+    "sr" to "Српски",
+    "fi" to "Suomi",
+    "sv" to "Svenska",
+    "vi" to "Tiếng Việt",
+    "tr" to "Türkçe",
+    "el" to "Ελληνικά",
+    "be" to "Беларуская",
+    "bg" to "Български",
+    "ru" to "Русский",
+    "uk" to "Українська",
+    "ar" to "العربية",
+    "hi" to "हिन्दी",
+    "as" to "অসমীয়া",
+    "bn" to "বাংলা",
+    "pa" to "ਪੰਜਾਬੀ",
+    "ta" to "தமிழ்",
+    "te" to "తెలుగు",
+    "ml" to "മലയാളം",
+    "th" to "ไทย",
+    "km" to "ខ្មែរ",
+    "ko" to "한국어",
+    "zh-rCN" to "简体中文",
+    "zh-rTW" to "繁體中文",
+    "ja" to "日本語",
+)
+
 
 private val countryChoices: List<Pair<String, String>> = countryCodeToName.map { it.key to it.value }
 
@@ -405,95 +456,89 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         "Updates", "Channel, interval and update source",
         group(
             "UPDATE CHANNEL",
-            sw("updatePreReleases", "Include pre-releases", "Offer beta builds as well as stable builds."),
-            dd(
-                "updateIntervalHours", "Check interval",
-                listOf("1" to "Every hour", "6" to "Every 6 hours", "24" to "Every day", "168" to "Every week"),
-                "24",
-                "How often the app asks the release feed.",
-            ),
+            sw("includePreReleases", "Include pre-releases", "Offer beta builds as well as stable builds."),
             dd(
                 "updateSource", "Update source",
-                listOf("fork" to "Axolotl Music (official)", "upstream" to "Vivi Music upstream"),
+                listOf("fork" to "Axolotl Music (official)", "original" to "Vivi Music upstream"),
                 "fork",
                 "The repository the updater reads.",
             ),
+            dd(
+                "updateCheckIntervalHours", "Check interval",
+                listOf(
+                    "0" to "Manual only",
+                    "6" to "Every 6 hours",
+                    "12" to "Every 12 hours",
+                    "24" to "Every day",
+                    "72" to "Every 3 days",
+                    "168" to "Every week",
+                ),
+                "24",
+                "How often the app asks the release feed.",
+            ),
         ),
         group(
-            "MAINTENANCE",
+            "STATUS",
+            txt("currentVersion", "Current version", "1.56.0-beta5", "Read-only status."),
             txt("updateLastCheck", "Last check", "At the next start", "Read-only status."),
-            txt("updateInstalledVersion", "Installed version", "1.56.0-beta5", "Read-only status."),
         ),
     )
-
     SettingsSection.V155_ACCOUNT -> page(
         "Account", "YouTube Music account",
         group(
             "YOUTUBE MUSIC",
             txt("accountName", "Account", "Not signed in", "The active YouTube Music identity."),
             txt("accountEmail", "Email", "", "Shown only when the account exposes it."),
-            sw("accountSignedIn", "Signed in", "The session is sealed in the local vault.", false),
         ),
         group(
-            "SESSION",
+            "SYNC",
             sw("syncPlaylistsWithYoutube", "Sync playlists with YouTube", "Keep account playlists and the local library together.", true),
-            sw("pauseListenHistory", "Pause listen history", "Do not write new listens to History.", false),
         ),
     )
-
     SettingsSection.V155_NOTIFICATIONS -> page(
-        "Notifications", "Mode, history and widgets",
+        "Notifications", "Mode, duration and history",
         group(
             "NOTIFICATION MODE",
             dd(
                 "notificationMode", "Mode",
-                listOf("in_app" to "In-app banner", "native" to "Native notification"),
+                listOf("in_app" to "Main window", "native" to "Native notification"),
                 "in_app",
                 "Where a track change is announced.",
             ),
+            sw("allowNotifications", "Allow notifications", "Let the app post system notifications.", true),
+            dd(
+                "inAppNotificationDurationSeconds", "Duration",
+                listOf("3" to "3s", "5" to "5s", "10" to "10s", "15" to "15s", "30" to "30s"),
+                "5",
+                "How long the banner stays on screen.",
+            ),
             sw("saveNotificationHistory", "Save notification history", "Keep the records in Settings.", true),
-            sl("inAppNotificationDurationSeconds", "Banner duration", 2f..15f, 12, 5f, "Seconds."),
-        ),
-        group(
-            "WIDGETS",
-            sw("showNowPlayingWidget", "Now-playing widget", "A small always-on-top card on the desktop."),
-            sw("mediaKeysEnabled", "Media keys", "Let the keyboard's media keys control playback.", true),
-            sw("trayMenuEnabled", "Tray menu", "Keep playback controls in the system tray.", true),
         ),
     )
-
     SettingsSection.V155_APPEARANCE -> page(
-        "Appearance", "Theme, font, canvas and player design",
+        "Appearance", "Theme, player, canvas, font and layout",
         group(
-            "THEME & TYPE",
-            go("theme", "Theme", "Mode, accent, palette and density", SettingsSection.V155_THEME),
-            go("font", "Font", "The app font and the lyrics font", SettingsSection.V155_FONT),
-            go("canvas", "Canvas", "Animated artwork behind the player", SettingsSection.V155_CANVAS),
-            go("playerDesign", "Player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
+            "APPEARANCE",
+            go("theme", "Theme", "Mode, accent and palette", SettingsSection.V155_THEME),
+            go("playerDesign", "Player & mini-player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
+            go("canvas", "ViviMusic Canvas", "Animated artwork behind the player", SettingsSection.V155_CANVAS),
+            go("font", "App font", "App font and lyrics", SettingsSection.V155_FONT),
+            go("density", "Density & grid", "Interface scale and grid size", SettingsSection.V155_DENSITY),
+            go("transitions", "Screen transitions", "Fade, slide or off", SettingsSection.V155_TRANSITIONS),
+            go("intro", "Intro", "The splash shown before the shell", SettingsSection.INTRO),
         ),
         group(
-            "LAYOUT",
-            sl("densityScale", "Density scale", 0.8f..1.4f, 5, 1f, "Shrink or grow the whole interface.", LegacyCommon.UI_SCALE),
-            dd(
-                "screenTransition", "Screen transitions",
-                listOf("fade" to "Fade", "slide" to "Slide", "none" to "None"),
-                "fade",
-            ),
+            "UI",
             sw("animationsEnabled", "Animations", "Play the interface animations.", true),
             dd(
                 "animationSpeed", "Animation speed",
-                listOf("slow" to "Slow", "normal" to "Normal", "fast" to "Fast"),
+                listOf("fast" to "Fast", "normal" to "Normal", "slow" to "Slow"),
                 "normal",
             ),
             sw("nativeTitleBar", "Native title bar", "Use the window's own title bar."),
-            sw("showRightSidebar", "Right sidebar", "Show the Now Playing column when the window is wide enough.", true),
-        ),
-        group(
-            "STARTUP",
-            go("intro", "Intro", "The splash shown before the shell", SettingsSection.INTRO),
+            sw("showRightSidebar", "Right panel", "Show the Now Playing column when the window is wide enough.", true),
         ),
     )
-
     SettingsSection.V155_LYRICS -> page(
         "Lyrics", "Style, position and romanization",
         group(
@@ -502,25 +547,29 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             dd(
                 "lyricsAnimationStyle", "Animation style",
                 listOf(
-                    "VIVIMUSIC_1" to "Vivi Music 1.55",
-                    "APPLE_MUSIC" to "Apple Music",
+                    "NONE" to "None",
                     "FADE" to "Fade",
+                    "GLOW" to "Glow",
+                    "SLIDE" to "Slide",
                     "KARAOKE" to "Karaoke",
+                    "APPLE" to "Apple Music",
+                    "APPLE_V2" to "Apple Music v2",
+                    "VIVIMUSIC_1" to "Vivi Music 1.55",
+                    "LYRICS_V2" to "Lyrics v2",
+                    "METRO_LYRICS" to "Metro",
+                    "ALPHA" to "Alpha",
                 ),
                 "VIVIMUSIC_1",
             ),
             sw("lyricsGlowEffect", "Glow", "Glow the active line.", true),
-            sw("lyricsAppleMusicBlur", "Apple Music blur", "Blur the inactive lines."),
+            sw("lyricsAppleMusicBlur", "Apple Music blur", "Blur the inactive lines in the Vivi Music style."),
             sw("lyricsStandardBlur", "Standard blur", "Blur the inactive lines in the standard style."),
-            sw("lyricsClickToSeek", "Click to seek", "A lyric line seeks the player.", true),
-            sw("lyricsAutoScroll", "Auto-scroll", "Follow the active line.", true),
-            sw("lyricsThumbnailPlayPause", "Thumbnail play/pause", "Tap the artwork to play or pause."),
         ),
         group(
             "POSITION & TYPE",
             dd(
                 "lyricsTextPosition", "Text position",
-                listOf("CENTER" to "Center", "TOP" to "Top", "BOTTOM" to "Bottom"),
+                listOf("LEFT" to "Left", "CENTER" to "Center", "RIGHT" to "Right"),
                 "CENTER",
             ),
             dd(
@@ -537,57 +586,66 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             ),
             sl("lyricsLineSpacing", "Line spacing", 1f..2f, 10, 1.35f),
             sw("lyricsUseAppFont", "Use the app font", "Draw lyrics with the selected app font.", true),
+        ),
+        group(
+            "INTERACTION",
+            sw("lyricsClickToSeek", "Click to seek", "A lyric line seeks the player.", true),
+            sw("lyricsAutoScroll", "Auto-scroll", "Follow the active line.", true),
+            sw("lyricsThumbnailPlayPause", "Thumbnail play/pause", "Tap the artwork to play or pause."),
             sw("showLyricsRomanization", "Romanization", "Show the romanized line under the original.", true, LegacyCommon.SHOW_ROMANIZATION),
             go("romanize", "Romanization languages", "Choose the scripts that are romanized", SettingsSection.V155_ROMANIZE),
+            sw("translateLyrics", "Translate lyrics", "Use the AI translation on the lyrics screen."),
         ),
     )
-
     SettingsSection.V155_PLAYER -> page(
         "Player & audio", "Queue, crossfade, quality and equalizer",
         group(
-            "QUEUE",
-            sw("autoPlayNext", "Autoplay next", "Continue with a related track when the queue ends.", true),
-            sw("autoLoadMore", "Load more", "Ask the catalogue for more when the queue runs low.", true),
-            sw("preventDuplicateTracksInQueue", "Prevent duplicates", "Do not add a track the queue already holds."),
-            sw("autoSkipNextOnError", "Skip on error", "Move to the next track when the stream fails."),
-            sw("persistentShuffle", "Persistent shuffle", "Keep shuffle on across restarts."),
-            sw("progressiveSeek", "Progressive seek", "Seek while the bar is still being dragged."),
-            sw("persistentQueue", "Persistent queue", "Restore the queue on the next start.", true),
-            sw("rememberShuffleRepeat", "Remember shuffle and repeat", "Restore both modes on the next start."),
-        ),
-        group(
-            "AUDIO",
+            "PLAYER",
+            go("playerDesign", "Player & mini-player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
+            go("equalizerScreen", "Vivi Equalizer", "Profiles, bands and preamp", SettingsSection.V155_EQUALIZER),
             dd(
                 "audioQuality", "Audio quality",
                 listOf("auto" to "Auto", "high" to "High (256 kbps)", "low" to "Low (128 kbps)"),
                 "auto",
                 common = LegacyCommon.AUDIO_QUALITY,
             ),
-            sw("audioCacheEnabled", "Audio cache", "Keep played catalogue tracks on disk.", true, LegacyCommon.AUDIO_CACHE),
-            sw("replayGainEnabled", "ReplayGain", "Normalize the volume from file metadata."),
-            sw("skipSilence", "Skip silence", "Jump over silent passages."),
-            sw("skipSilenceInstant", "Instant skip", "Skip silence without the short analysis."),
-            sw("autoDownloadOnLike", "Download on like", "Cache a track when it is liked."),
-            sl("historyDurationSeconds", "History threshold", 5f..120f, 22, 30f, "Seconds before a play is recorded."),
-            sl("streamCacheMinutes", "Stream cache", 1f..60f, 58, 10f, "Minutes a resolved stream URL is reused."),
         ),
         group(
-            "TRANSITIONS",
+            "CROSSFADE",
             sw("crossfade", "Crossfade", "Blend the end of one track into the next.", false, LegacyCommon.CROSSFADE),
-            sl("crossfadeDurationSeconds", "Crossfade duration", 1f..12f, 10, 3f, "Seconds.", LegacyCommon.CROSSFADE_DURATION),
             sw("disableCrossfadeGapless", "Disable gapless", "Do not join tracks that are meant to be gapless."),
-            sw("audioFadeOnPlayPause", "Fade on play/pause", "Smooth the start and stop of playback.", true),
+            sl("crossfadeDurationSeconds", "Crossfade duration", 1f..12f, 10, 3f, "Seconds.", LegacyCommon.CROSSFADE_DURATION),
         ),
         group(
-            "TOOLS",
-            go("playerDesign", "Player design", "Player, mini player and slider", SettingsSection.V155_PLAYER_DESIGN),
-            go("equalizerScreen", "Equalizer", "10 bands, presets and preamp", SettingsSection.V155_EQUALIZER),
-            sw("equalizerEnabled", "Equalizer", "Apply the equalizer chain.", false, LegacyCommon.EQUALIZER_ENABLED),
+            "HISTORY",
+            sl("historyDurationSeconds", "History duration", 1f..100f, 98, 30f, "Seconds before a play is recorded."),
+        ),
+        group(
+            "PLAYBACK",
+            sw("autoPlayNext", "Autoplay next", "Continue with a related track when the queue ends.", true),
+            sw("rememberShuffleRepeat", "Remember shuffle and repeat", "Restore both modes on the next start."),
+            sw("persistentQueue", "Persistent queue", "Restore the queue on the next start.", true),
+            sw("autoLoadMore", "Load more", "Ask the catalogue for more when the queue runs low.", true),
+            sw("preventDuplicateTracksInQueue", "Prevent duplicates", "Do not add a track the queue already holds."),
+            sw("autoSkipNextOnError", "Skip on error", "Move to the next track when the stream fails."),
+            sw("persistentShuffle", "Persistent shuffle", "Keep shuffle on across restarts."),
+            sw("progressiveSeek", "Progressive seek", "Seek while the bar is still being dragged."),
+            sw("autoDownloadOnLike", "Download on like", "Cache a track when it is liked."),
+            sw("skipSilence", "Skip silence", "Jump over silent passages."),
+            sw("skipSilenceInstant", "Instantly skip silence", "Skip silence without the short analysis."),
+        ),
+        group(
+            "MISC",
+            sw("pauseWhenMediaMuted", "Pause when media is muted", "Pause when the system volume is muted."),
+            sw("keepScreenOnWhenPlayerExpanded", "Keep the screen on", "While the player is expanded."),
+        ),
+        group(
+            "CACHE",
+            sl("streamCacheMinutes", "Stream cache", 10f..61f, 50, 10f, "Minutes; 61 keeps the resolved URL forever."),
         ),
     )
-
     SettingsSection.V155_DEVICES -> page(
-        "Devices", "Pairing and volume sync",
+        "Device sync", "Pairing and volume sync",
         group(
             "THIS DEVICE",
             txt("deviceName", "Device name", "Desktop", "The name the other device sees."),
@@ -603,36 +661,55 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         "Content", "Language, country and filters",
         group(
             "REGION",
-            dd("contentLanguage", "Content language", languageChoices, "en", "The language of the catalogue's own labels."),
-            dd("contentCountry", "Content country", countryChoices, "US", "The catalogue's own country."),
+            dd("contentLanguage", "Content language", listOf("" to "System default") + languageChoices, "", "The language of the catalogue's own labels."),
+            dd("contentCountry", "Content country", listOf("" to "System default") + countryChoices, "", "The catalogue's own country."),
         ),
         group(
             "FILTERS",
             sw("hideExplicit", "Hide explicit songs", "Remove explicit results from the catalogue."),
             sw("hideVideoSongs", "Hide video songs", "Keep video results out of the song lists."),
             sw("hideYoutubeShorts", "Hide Shorts", "Remove Shorts shelves from Home."),
+        ),
+        group(
+            "ARTIST PAGE",
             sw("showArtistDescription", "Artist description", "Show the biography on an artist page.", true),
             sw("showArtistSubscriberCount", "Subscriber count", "Show the follower count on an artist page.", true),
-            sw("syncPlaylistsWithYoutube", "Sync playlists with YouTube", "Keep account playlists and the local library together.", true),
+        ),
+        group(
+            "LYRICS PROVIDERS",
+            sw("lyricsProviderLrcLib", "LrcLib", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderBetterLyrics", "BetterLyrics", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderYouLyPlus", "YouLyPlus", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderKuGou", "KuGou", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderMusixmatch", "Musixmatch", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderPaxsenix", "Paxsenix", "Use this provider in the lyrics search.", true),
+            sw("lyricsProviderUnison", "Unison", "Use this provider in the lyrics search.", true),
         ),
     )
-
     SettingsSection.V155_LANGUAGE -> page(
         "Language", "The language of the app",
         group(
             "APP LANGUAGE",
-            dd("language", "Language", languageChoices, "en", "The interface language. Restart to apply."),
-            sw("nativeTitleBar", "Native title bar", "Use the operating system's title bar."),
+            dd("language", "Language", appLanguageChoices, "en", "The interface language. Restart to apply."),
         ),
     )
-
     SettingsSection.V155_AI -> page(
         "AI lyrics & translation", "Provider, key and translation",
         group(
             "PROVIDER",
             dd(
                 "aiProvider", "Provider",
-                listOf("OpenRouter" to "OpenRouter", "OpenAI" to "OpenAI", "Gemini" to "Google Gemini", "DeepL" to "DeepL"),
+                listOf(
+                    "OpenRouter" to "OpenRouter",
+                    "OpenAI" to "OpenAI",
+                    "Perplexity" to "Perplexity",
+                    "Claude" to "Claude",
+                    "Gemini" to "Google Gemini",
+                    "XAi" to "xAI",
+                    "Mistral" to "Mistral",
+                    "DeepL" to "DeepL",
+                    "Custom" to "Custom",
+                ),
                 "OpenRouter",
             ),
             txt("aiApiKey", "API key", "", "Stored in settings.json."),
@@ -641,10 +718,10 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         ),
         group(
             "TRANSLATION",
-            dd("translateLanguage", "Translate to", languageChoices.take(12), "en"),
+            dd("translateLanguage", "Target language", languageChoices, "en"),
             dd(
                 "translateMode", "Translation mode",
-                listOf("Literal" to "Literal", "Natural" to "Natural", "Poetic" to "Poetic"),
+                listOf("Literal" to "Literal", "Transcribed" to "Transcribed"),
                 "Literal",
             ),
             txt("deeplApiKey", "DeepL key", "", "Used only by the DeepL provider."),
@@ -655,23 +732,18 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             ),
         ),
     )
-
     SettingsSection.V155_PRIVACY -> page(
-        "Privacy", "History, search and sign-out",
+        "Privacy", "History and search",
         group(
             "HISTORY",
-            sw("pauseSearchHistory", "Pause search history", "Do not record new searches."),
             sw("pauseListenHistory", "Pause listen history", "Do not record new listens."),
-            sw("saveNotificationHistory", "Notification history", "Keep the records in Settings.", true),
+            sw("pauseSearchHistory", "Pause search history", "Do not record new searches."),
         ),
         group(
-            "ACCOUNT",
-            txt("accountName", "Signed in as", "Not signed in"),
-            sw("accountSignedIn", "Keep the session", "The session is sealed at rest.", false),
-            sw("hideCustomApkDownloadButton", "Hide APK download", "Hide the Android download on Devices.", true),
+            "SEARCH",
+            txt("clearSearchHistory", "Search history", "Managed from the search bar", "The 1.55 clear action removes the saved searches."),
         ),
     )
-
     SettingsSection.V155_STORAGE -> page(
         "Storage", "Caches and library folders",
         group(
@@ -693,17 +765,16 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         group(
             "DATA SAVER",
             sw("dataSaver", "Data saver", "Prefer lower-resolution artwork and streams."),
-            sw("dataSaverBackupCanvas", "Keep canvas locally", "Download the animated canvas once.", true),
-            sw("dataSaverBackupRotating", "Keep rotating artwork", "Download artist images once."),
-            sw("canvasEnabled", "Canvas", "Play animated artwork.", true),
-            dd(
-                "canvasSource", "Canvas source",
-                listOf("AUTO" to "Automatic", "LOCAL" to "Local file", "YOUTUBE" to "YouTube"),
-                "AUTO",
-            ),
+        ),
+        group(
+            "TURNS OFF",
+            txt("dataSaverPlayerCanvas", "Player canvas", "Off while data saver is on"),
+            txt("dataSaverArtistVideo", "Artist video", "Off while data saver is on"),
+            txt("dataSaverArtistBgVideo", "Artist background video", "Off while data saver is on"),
+            txt("dataSaverAlbumCanvas", "Album canvas", "Off while data saver is on"),
+            txt("dataSaverHighQualityImages", "High-quality images", "Off while data saver is on"),
         ),
     )
-
     SettingsSection.V155_BACKUP -> page(
         "Backup & restore", "Automatic backups and restore",
         group(
@@ -731,7 +802,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
     )
 
     SettingsSection.V155_INTEGRATIONS -> page(
-        "Integrations", "Discord, Last.fm and Listen Together",
+        "Integrations", "Discord and Last.fm",
         group(
             "DISCORD",
             sw("discordRpcEnabled", "Discord Rich Presence", "Show the current track in Discord."),
@@ -743,14 +814,7 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             txt("lastfmSession", "Session", "Not connected", "The scrobbling session."),
             sw("lastfmNowPlaying", "Now playing", "Send the now-playing update as well.", true),
         ),
-        group(
-            "LISTEN TOGETHER",
-            txt("listenTogetherServerUrl", "Relay", "wss://devilmi-vivi-music-listen-together.hf.space"),
-            txt("listenTogetherUsername", "Nickname", ""),
-            sl("listenTogetherPartySize", "Party size", 2f..10f, 8, 5f, "People the host allows."),
-        ),
     )
-
     SettingsSection.V155_SPOTIFY -> page(
         "Spotify import", "Import playlists from Spotify",
         group(
@@ -762,30 +826,20 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
     )
 
     SettingsSection.V155_DESKTOP -> page(
-        "Desktop features", "Tray, media keys and widget",
-        group(
-            "WINDOW",
-            sw("closeToTray", "Close to tray", "Keep playing when the window closes.", false, LegacyCommon.CLOSE_TO_TRAY),
-            sw("nativeTitleBar", "Native title bar", "Use the operating system's title bar."),
-            sw("isFullscreen", "Fullscreen", "Open the window fullscreen."),
-            sw("windowMaximized", "Maximized", "Open the window maximized.", true),
-        ),
+        "Desktop features", "Widget, media keys and tray",
         group(
             "SYSTEM INTEGRATION",
-            sw("trayMenuEnabled", "Tray menu", "The tray keeps the playback controls.", true),
-            sw("mediaKeysEnabled", "Media keys", "The keyboard controls playback.", true),
-            sw("showNowPlayingWidget", "Now-playing widget", "A small always-on-top card."),
-            sw("keepScreenOnWhenPlayerExpanded", "Keep the screen on", "While the player is expanded."),
+            sw("showNowPlayingWidget", "Now-playing widget", "A small always-on-top card on the desktop."),
+            sw("mediaKeysEnabled", "Media keys", "Let the keyboard's media keys control playback.", true),
+            sw("trayMenuEnabled", "Tray menu", "Keep playback controls in the system tray.", true),
         ),
     )
-
     SettingsSection.V155_SYSTEM -> page(
         "System", "Performance, developer tools and intro",
         group(
             "SYSTEM",
             go("developer", "Developer options", "Heap, overlays, profiles and logs", SettingsSection.V155_DEVELOPER),
             go("intro", "Intro", "The splash shown before the shell", SettingsSection.INTRO),
-            go("removed", "Removed features", "The 1.55 features no longer in 1.56", SettingsSection.V155_REMOVED),
             txt("appVersion", "Version", "1.56.0-beta5", "Read-only status."),
             txt("javaVersion", "Runtime", "Java 21", "Read-only status."),
         ),
@@ -814,88 +868,147 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         "Theme", "Mode, accent and palette",
         group(
             "MODE",
-            dd("themeMode", "Theme mode", themeChoices, "dark", common = null),
+            dd("themeMode", "Theme mode", themeChoices, "dark"),
             sw("darkMode", "Dark theme", "Use the dark Material 3 scheme.", true, LegacyCommon.DARK_MODE),
-            sw("dynamicColor", "Dynamic color", "Tint the interface from the artwork.", true, LegacyCommon.DYNAMIC_COLOR),
             sw("pureBlack", "Pure black", "Use black surfaces in the dark theme."),
         ),
         group(
             "COLOUR",
+            sw("dynamicColor", "Dynamic color", "Tint the interface from the artwork.", true, LegacyCommon.DYNAMIC_COLOR),
             dd("albumArtPaletteStyle", "Album art palette", paletteChoices, "tonal_spot", common = LegacyCommon.PALETTE_STYLE),
             sl("accentIntensity", "Accent intensity", 0f..1f, 10, 1f),
-            sl("uiScale", "Interface scale", 0.8f..1.4f, 5, 1f, common = LegacyCommon.UI_SCALE),
             txt("accentColor", "Accent", "From the artwork", "Read-only preview."),
         ),
     )
-
     SettingsSection.V155_FONT -> page(
-        "Font", "App font and lyrics",
+        "App font", "App font and lyrics",
         group(
             "APP FONT",
             dd(
                 "selectedFont", "App font",
-                listOf("system" to "System", "google_sans" to "Google Sans Flex", "inter" to "Inter", "roboto" to "Roboto", "custom" to "Custom font"),
-                "google_sans",
+                listOf(
+                    "system" to "System",
+                    "google_sans" to "Google Sans",
+                    "sans_flex" to "Sans Flex",
+                    "outfit" to "Outfit",
+                    "plus_jakarta_sans" to "Plus Jakarta Sans",
+                    "custom" to "Custom font",
+                ),
+                "system",
             ),
             txt("customFontPath", "Custom font", "", "Path to a .ttf or .otf file."),
             sw("lyricsUseAppFont", "Use the app font in lyrics", "Draw lyrics with the same face.", true),
         ),
     )
-
     SettingsSection.V155_CANVAS -> page(
-        "Canvas", "Animated artwork",
+        "ViviMusic Canvas", "Animated artwork",
         group(
             "CANVAS",
-            sw("canvasEnabled", "Enable canvas", "Play the animated artwork.", true),
+            sw("canvasEnabled", "ViviMusic Canvas", "Play the animated artwork.", true),
             dd(
-                "canvasSource", "Source",
-                listOf("AUTO" to "Automatic", "LOCAL" to "Local file", "YOUTUBE" to "YouTube"),
+                "canvasSource", "Canvas source",
+                listOf(
+                    "AUTO" to "Automatic",
+                    "APPLE_MUSIC" to "Apple Music",
+                    "VIVIMUSIC" to "ViviMusic",
+                    "TIDAL" to "Tidal",
+                ),
                 "AUTO",
             ),
-            sw("canvasCache", "Cache canvas", "Keep the downloaded animation.", true),
-            sw("rotatingThumbnail", "Rotating artwork", "Spin the artwork while a track plays."),
         ),
     )
-
     SettingsSection.V155_PLAYER_DESIGN -> page(
-        "Player design", "Player, mini player and slider",
+        "Player & mini-player design", "Player, mini player and slider",
         group(
             "PLAYER",
             dd(
-                "playerDesign", "Design",
-                listOf("classic" to "Classic", "apple" to "Apple", "new" to "New", "apple_music_v17" to "Apple Music v17"),
+                "playerDesign", "Player design",
+                listOf(
+                    "classic" to "Classic",
+                    "new" to "New",
+                    "expressive" to "Expressive",
+                    "expressive_translucent" to "Expressive (translucent tab)",
+                ),
                 "classic",
             ),
             dd(
-                "playerBackground", "Background",
-                listOf("canvas" to "Canvas", "gradient" to "Gradient", "solid" to "Solid"),
+                "playerBackground", "Player background",
+                listOf(
+                    "canvas" to "Canvas",
+                    "gradient" to "Gradient",
+                    "blur" to "Blur",
+                    "glow" to "Glow",
+                    "apple_music" to "Apple Music",
+                    "live_mesh" to "Live mesh",
+                    "visualizer" to "Visualizer",
+                ),
                 "canvas",
             ),
             sw("rotatingThumbnail", "Rotating artwork", "Spin the artwork while a track plays."),
-            dd(
-                "sliderStyle", "Slider",
-                listOf("slim" to "Slim", "expressive" to "Expressive"),
-                "slim",
-            ),
         ),
         group(
             "MINI PLAYER",
             dd(
-                "miniPlayerDesign", "Mini player",
-                listOf("classic" to "Classic", "apple" to "Apple", "new" to "New", "apple_music_v17" to "Apple Music v17"),
+                "miniPlayerDesign", "Mini player design",
+                listOf("classic" to "Classic", "new" to "New", "apple" to "Apple"),
                 "classic",
             ),
             dd(
-                "miniPlayerBackgroundStyle", "Mini background",
-                listOf("follow_theme" to "Follow theme", "artwork" to "Artwork", "solid" to "Solid"),
+                "miniPlayerBackgroundStyle", "Mini player background",
+                listOf(
+                    "follow_theme" to "Follow theme",
+                    "gradient" to "Gradient",
+                    "blur" to "Blur",
+                    "glow_motion" to "Glow motion",
+                    "live_mesh" to "Live mesh",
+                ),
                 "follow_theme",
             ),
             sw("pureBlackMiniPlayer", "Pure black mini player", "Use a black bar in the dark theme."),
-        ),
-        group(
-            "GESTURES",
             sw("swipeThumbnail", "Swipe to change song", "Swipe the artwork.", true),
             sl("swipeSensitivity", "Swipe sensitivity", 0.1f..1f, 9, 0.73f),
+        ),
+        group(
+            "SLIDER",
+            dd(
+                "sliderStyle", "Slider style",
+                listOf("slim" to "Slim", "squiggly" to "Squiggly", "wavy" to "Wavy"),
+                "slim",
+            ),
+        ),
+    )
+    SettingsSection.V155_DENSITY -> page(
+        "Density & grid", "Interface scale and grid size",
+        group(
+            "DENSITY",
+            dd(
+                "densityScale", "Density & grid",
+                listOf(
+                    "2.0" to "200%", "1.8" to "180%", "1.5" to "150%", "1.4" to "140%",
+                    "1.3" to "130%", "1.25" to "125%", "1.2" to "120%", "1.1" to "110%",
+                    "1" to "100%", "0.85" to "85%", "0.75" to "75%", "0.65" to "65%",
+                    "0.55" to "55%",
+                ),
+                "1",
+                common = LegacyCommon.UI_SCALE,
+            ),
+            dd(
+                "gridItemSize", "Grid item size",
+                listOf("140" to "Small", "160" to "Medium", "200" to "Large", "240" to "Extra large"),
+                "160",
+            ),
+        ),
+    )
+
+    SettingsSection.V155_TRANSITIONS -> page(
+        "Screen transitions", "Fade, slide or off",
+        group(
+            "TRANSITION",
+            dd(
+                "screenTransition", "Screen transitions",
+                listOf("off" to "Off", "fade" to "Fade", "slide" to "Slide"),
+                "fade",
+            ),
         ),
     )
 
@@ -910,7 +1023,6 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
         group(
             "BEHAVIOUR",
             sw("lyricsRomanizeAsMain", "Romanized as main", "Show the romanized line in place of the original."),
-            sw("lyricsRomanizeCyrillicByLine", "Cyrillic by line", "Romanize each line as it becomes active."),
             sw("showLyricsRomanization", "Romanization", "Master switch for the romanized line.", true, LegacyCommon.SHOW_ROMANIZATION),
         ),
     )
@@ -938,7 +1050,6 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             sw("detailedStartupLogs", "Detailed startup logs", "Time every startup stage."),
             sw("detailedPlaybackLogging", "Detailed playback logs", "Time every writer pass."),
             sw("superLogsWriter", "Writer logs", "Log every audio writer pass."),
-            go("removed", "Removed features", "The 1.55 features no longer in 1.56", SettingsSection.V155_REMOVED),
         ),
     )
 
@@ -966,19 +1077,6 @@ fun legacyPageFor(section: SettingsSection): LegacyPageSpec = when (section) {
             sl("eq_4k", "4 kHz", -12f..12f, 24, 0f),
             sl("eq_8k", "8 kHz", -12f..12f, 24, 0f),
             sl("eq_16k", "16 kHz", -12f..12f, 24, 0f),
-        ),
-    )
-
-    SettingsSection.V155_REMOVED -> page(
-        "Removed features", "The 1.55 features no longer in 1.56",
-        group(
-            "RESTORE",
-            sw("legacyApplePlayer", "Legacy Apple player", "Bring back the 1.55 Apple player."),
-            sw("bitUiShell", "Bit UI shell", "Bring back the old Bit shell."),
-            sw("oldHome", "Old Home", "Use the 1.55 Home instead of the 1.56 one."),
-            sw("wrappedOnHome", "Wrapped card", "Put Wrapped back on Home."),
-            sw("spotifyImport", "Spotify import", "Show the Spotify import entry."),
-            sw("listenTogetherChat", "Listen Together chat", "Show the party chat window."),
         ),
     )
 
