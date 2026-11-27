@@ -139,6 +139,7 @@
 
 ### 🐛 Fixed
 
+- [DE] **The full player can hand over to the mini player.**
 - [DE] **History records a track when playback is paused, not only when the song changes.**
 - [DE] **The page no longer shows a duplicate search field.**
 - [DE] **The content pane has no top corner radius.**
