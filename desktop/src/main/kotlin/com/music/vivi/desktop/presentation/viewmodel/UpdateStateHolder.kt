@@ -17,8 +17,8 @@ import com.music.vivi.desktop.BuildConfig
 import com.music.vivi.desktop.data.backup.AutoBackupScheduler
 import com.music.vivi.desktop.data.network.github.GitHubReleaseClient
 import com.music.vivi.desktop.data.network.github.ReleaseChecksums
+import com.music.vivi.desktop.data.network.github.UpdateAssets
 import com.music.vivi.desktop.domain.model.AppReleaseInfo
-import com.music.vivi.desktop.domain.model.ReleaseAsset
 import com.music.vivi.desktop.domain.model.SemanticVersion
 import com.music.vivi.desktop.domain.model.UpdateCheckResult
 import com.music.vivi.desktop.domain.model.UpdateDownloadState
@@ -131,7 +131,7 @@ class UpdateStateHolder(
     fun downloadUpdate() {
         if (_downloadState.value is UpdateDownloadState.Downloading) return
         val release = _availableRelease.value ?: return
-        val asset = release.assetForCurrentPlatform()
+        val asset = UpdateAssets.forCurrentPlatform(release)
         if (asset == null) {
             _downloadState.value = UpdateDownloadState.Failed(
                 "The ${release.versionName} release has no installer for this system."
@@ -187,17 +187,6 @@ class UpdateStateHolder(
 
     fun resetDownloadState() {
         _downloadState.value = UpdateDownloadState.Idle
-    }
-
-    private fun AppReleaseInfo.assetForCurrentPlatform(): ReleaseAsset? {
-        val os = System.getProperty("os.name").lowercase()
-        val suffix = when {
-            os.contains("win") -> "-setup.exe"
-            os.contains("mac") -> ".dmg"
-            else -> ".AppImage"
-        }
-        return assets.firstOrNull { it.name.endsWith(suffix, ignoreCase = true) }
-            ?: assets.firstOrNull { it.name.endsWith("-setup.exe", ignoreCase = true) }
     }
 
     fun setCheckUpdatesOnStartup(enabled: Boolean) {

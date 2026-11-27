@@ -687,9 +687,10 @@ cloned screen, not by adding a parallel surface next to it.
   before and after; `--store-state` prints the same values without writing, so a
   second process proves the value survived the restart.
   `--verify-update-checksum` proves the update checksum path against the
-  published release: it downloads `SHA256SUMS`, resolves the line for the
-  smallest asset the file lists, downloads that asset and compares its hash,
-  then proves a corrupted hash and a corrupted file are refused. `--youtube-webview-check`
+  published release: it uses `UpdateAssets.forCurrentPlatform`, the same
+  selector the updater uses, then downloads `SHA256SUMS`, resolves that
+  installer's line, downloads the installer and compares its hash, and proves
+  a corrupted hash and a corrupted file are refused. `--youtube-webview-check`
   opens the JavaFX sign-in window on Google's sign-in page and waits for it to
   close; `--webview-self-test` is its unattended form (same page, same engine,
   exits 0 only when the page painted text, optional `--webview-timeout=` and

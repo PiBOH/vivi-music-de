@@ -1,6 +1,7 @@
 package com.music.vivi.desktop.dev
 
 import java.io.File
+import java.io.RandomAccessFile
 import java.nio.file.Files
 
 import kotlin.system.exitProcess
@@ -10,13 +11,15 @@ import okhttp3.OkHttpClient
 
 import com.music.vivi.desktop.data.network.github.GitHubReleaseClient
 import com.music.vivi.desktop.data.network.github.ReleaseChecksums
+import com.music.vivi.desktop.data.network.github.UpdateAssets
 
 /**
  * Proves the update verification against the release GitHub is serving now.
  *
- * It does not reuse a fixture: it reads the newest published release, downloads
- * its real `SHA256SUMS`, resolves the line for the smallest asset the file
- * lists (the AUR archive today), downloads that asset and compares the hash.
+ * It does not reuse a fixture: it reads the newest published release, selects
+ * the installer `UpdateAssets.forCurrentPlatform` picks for this system (the
+ * Windows setup here), downloads the real `SHA256SUMS`, resolves that
+ * installer's line, downloads the installer and compares the hash.
  * It then proves a corrupted published hash and a corrupted file are refused,
  * and that a name missing from the file resolves to nothing.
  *
@@ -50,11 +53,14 @@ object UpdateChecksumCheck {
         println("[update-checksum] SHA256SUMS: ${checksumText.length} bytes, ${entries.size} entries")
         if (entries.isEmpty()) return fail("SHA256SUMS has no parsable entry")
 
-        val asset = release.assets
-            .filter { candidate -> entries.any { it.name == candidate.name } }
-            .minByOrNull { it.size }
-            ?: return fail("no release asset is listed in SHA256SUMS")
-        println("[update-checksum] asset: ${asset.name} (${asset.size} bytes)")
+        val platform = System.getProperty("os.name").orEmpty()
+        val asset = UpdateAssets.forCurrentPlatform(release)
+            ?: return fail("the release has no installer for $platform")
+        println("[update-checksum] platform: $platform")
+        println("[update-checksum] installer: ${asset.name} (${asset.size} bytes)")
+        if (entries.none { it.name == asset.name }) {
+            return fail("${asset.name} is missing from SHA256SUMS")
+        }
 
         val expected = ReleaseChecksums.resolve(release, asset, client)
             ?: return fail("the release publishes no checksum for ${asset.name}")
@@ -84,12 +90,14 @@ object UpdateChecksumCheck {
             println("[update-checksum] negative (corrupted hash): REJECTED")
 
             if (file.length() == 0L) return fail("the downloaded asset is empty")
-            val corrupted = File(directory, "corrupted-${asset.name}")
-            file.copyTo(corrupted, overwrite = true)
-            val bytes = corrupted.readBytes()
-            bytes[0] = (bytes[0].toInt() xor 0xFF).toByte()
-            corrupted.writeBytes(bytes)
-            val corruptedActual = client.sha256(corrupted)
+            // Flip the first byte of the downloaded installer in place: the
+            // same bytes the updater has just hashed, now one bit different.
+            RandomAccessFile(file, "rw").use { handle ->
+                val first = handle.read()
+                handle.seek(0)
+                handle.write(first xor 0xFF)
+            }
+            val corruptedActual = client.sha256(file)
             if (ReleaseChecksums.matches(expected.sha256, corruptedActual)) {
                 return fail("a corrupted file was accepted")
             }
