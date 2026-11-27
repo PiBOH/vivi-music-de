@@ -5,6 +5,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
+import com.music.vivi.desktop.domain.model.AppReleaseInfo
+import com.music.vivi.desktop.domain.model.ReleaseAsset
 
 class ReleaseChecksumsTest {
 
@@ -60,6 +65,27 @@ class ReleaseChecksumsTest {
     @Test
     fun keepsTheFirstLineForADuplicateName() {
         assertEquals(hash, ReleaseChecksums.expectedFor("installer.exe", "$hash  installer.exe\n$other  installer.exe"))
+    }
+
+    @Test
+    fun fallsBackToTheAssetDigestWhenTheReleaseHasNoChecksumFile() = runBlocking {
+        val asset = ReleaseAsset(
+            name = "installer.exe",
+            downloadUrl = "https://example.invalid/installer.exe",
+            size = 1L,
+            sha256 = hash
+        )
+        val release = AppReleaseInfo(
+            versionTag = "test",
+            versionName = "test",
+            releaseNotes = "",
+            htmlUrl = "",
+            assets = listOf(asset)
+        )
+        val client = GitHubReleaseClient(OkHttpClient(), Json { ignoreUnknownKeys = true })
+        val resolved = ReleaseChecksums.resolve(release, asset, client)
+        assertEquals(hash, resolved?.sha256)
+        assertEquals(ReleaseChecksums.Source.ASSET_DIGEST, resolved?.source)
     }
 
     @Test
