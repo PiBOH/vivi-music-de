@@ -20,6 +20,7 @@ import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailSc
 import com.music.vivi.desktop.data.library.LibraryHealthGroup
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.IntroSettingsDetailScreen
+import com.music.vivi.desktop.presentation.screens.settings.Legacy155Actions
 import com.music.vivi.desktop.presentation.screens.settings.Legacy155SettingsScreen
 import com.music.vivi.desktop.presentation.screens.settings.isLegacy155
 import com.music.vivi.desktop.presentation.screens.settings.LibraryHealthDetailScreen
@@ -59,6 +60,7 @@ fun SettingsScreen(
     onClearSearch: () -> Unit = {},
     onNavigate: (SettingsSection?, LibrarySubDetail) -> Unit = { _, _ -> },
     onBack: () -> Unit = {},
+    legacyActions: Legacy155Actions? = null,
     modifier: Modifier = Modifier
 ) {
     var healthFocus by remember { mutableStateOf<LibraryHealthGroup?>(null) }
@@ -142,7 +144,8 @@ fun SettingsScreen(
                     section = section,
                     viewModel = viewModel,
                     onBack = { onNavigate(null, LibrarySubDetail.NONE) },
-                    onNavigate = { target -> onNavigate(target, LibrarySubDetail.NONE) }
+                    onNavigate = { target -> onNavigate(target, LibrarySubDetail.NONE) },
+                    actions = legacyActions
                 )
             }
             section == SettingsSection.INTRO -> {

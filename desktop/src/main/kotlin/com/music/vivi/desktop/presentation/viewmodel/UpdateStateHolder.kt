@@ -189,6 +189,15 @@ class UpdateStateHolder(
         _downloadState.value = UpdateDownloadState.Idle
     }
 
+    /** Deletes the installers [downloadUpdate] kept under the cache directory. */
+    fun deleteDownloadedInstallers() {
+        runCatching {
+            File(DesktopPathProvider.cacheDir, "updates").listFiles()?.forEach { file ->
+                if (file.isFile) file.delete()
+            }
+        }
+    }
+
     fun setCheckUpdatesOnStartup(enabled: Boolean) {
         coroutineScope.launch {
             settingsRepository.setCheckUpdatesOnStartup(enabled)

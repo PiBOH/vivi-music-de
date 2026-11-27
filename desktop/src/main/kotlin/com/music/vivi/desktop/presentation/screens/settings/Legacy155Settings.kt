@@ -26,10 +26,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.music.vivi.desktop.data.preferences.AlbumArtPaletteStyle
 import com.music.vivi.desktop.data.preferences.UserSettings
+import com.music.vivi.desktop.data.store.LocalLibraryStore
 import com.music.vivi.desktop.generated.resources.Res
 import com.music.vivi.desktop.generated.resources.ic_automirrored_rounded_arrow_back
 import com.music.vivi.desktop.generated.resources.ic_rounded_chevron_right
@@ -48,6 +51,7 @@ import com.music.vivi.desktop.generated.resources.ic_rounded_expand_more
 import com.music.vivi.desktop.presentation.components.subcomps.AppTooltip
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 import org.jetbrains.compose.resources.painterResource
+import org.koin.core.context.GlobalContext
 
 /** The 1.55 home, in its original four groups and order. */
 val Legacy155HomeGroups: List<Pair<String, List<SettingsSection>>> = listOf(
@@ -1089,10 +1093,19 @@ fun Legacy155SettingsScreen(
     viewModel: PlayerViewModel,
     onBack: () -> Unit,
     onNavigate: (SettingsSection) -> Unit,
+    actions: Legacy155Actions? = null,
     modifier: Modifier = Modifier,
 ) {
     val spec = legacyPageFor(section)
     val settings by viewModel.userSettings.collectAsState()
+    val scope = rememberCoroutineScope()
+    val store = remember { GlobalContext.getOrNull()?.getOrNull<LocalLibraryStore>() }
+    val pageActions = actions ?: remember(viewModel, store) {
+        DefaultLegacy155Actions(viewModel, scope, store)
+    }
+    LaunchedEffect(section) {
+        if (section == SettingsSection.V155_SPOTIFY) Spotify155.restore()
+    }
 
     Column(modifier = modifier.fillMaxSize().testTag("legacy155-page")) {
         Row(
@@ -1117,22 +1130,38 @@ fun Legacy155SettingsScreen(
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().weight(1f),
+            modifier = Modifier.fillMaxWidth().weight(1f).testTag("legacy155-content"),
             contentPadding = PaddingValues(horizontal = 28.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            if (section in Legacy155RealPages) {
+                item(key = "real-${section.name}") {
+                    when (section) {
+                        SettingsSection.V155_ACCOUNT -> Legacy155AccountPage(viewModel, pageActions)
+                        SettingsSection.V155_BACKUP -> Legacy155BackupPage(viewModel, pageActions)
+                        SettingsSection.V155_STORAGE -> Legacy155StoragePage(viewModel, pageActions)
+                        SettingsSection.V155_WRAPPED -> Legacy155WrappedPage(viewModel)
+                        SettingsSection.V155_SPOTIFY -> Legacy155SpotifyPage(pageActions)
+                        else -> Unit
+                    }
+                }
+            }
+            val owned = Legacy155RealPageKeys[section].orEmpty()
             spec.sections.forEach { sectionSpec ->
-                item(key = sectionSpec.title) {
-                    SettingsSubsection(title = sectionSpec.title) {
-                        sectionSpec.options.forEachIndexed { index, option ->
-                            Legacy155Row(
-                                option = option,
-                                index = index,
-                                count = sectionSpec.options.size,
-                                settings = settings,
-                                viewModel = viewModel,
-                                onNavigate = onNavigate,
-                            )
+                val options = sectionSpec.options.filterNot { it.key in owned }
+                if (options.isNotEmpty()) {
+                    item(key = sectionSpec.title) {
+                        SettingsSubsection(title = sectionSpec.title) {
+                            options.forEachIndexed { index, option ->
+                                Legacy155Row(
+                                    option = option,
+                                    index = index,
+                                    count = options.size,
+                                    settings = settings,
+                                    viewModel = viewModel,
+                                    onNavigate = onNavigate,
+                                )
+                            }
                         }
                     }
                 }

@@ -11,17 +11,29 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import com.music.vivi.desktop.presentation.screens.LibrarySubDetail
 import com.music.vivi.desktop.presentation.screens.SettingsScreen
+import com.music.vivi.desktop.presentation.screens.settings.Legacy155Actions
 import com.music.vivi.desktop.presentation.screens.settings.Legacy155HomeEntries
 import com.music.vivi.desktop.presentation.screens.settings.LegacyKind
 import com.music.vivi.desktop.presentation.screens.settings.isLegacy155
 import com.music.vivi.desktop.presentation.screens.settings.legacyPageFor
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSection
+import com.music.vivi.desktop.data.youtube.BrowserCookies
+import com.music.vivi.desktop.data.youtube.YouTubeAccount
+import com.music.vivi.desktop.presentation.screens.settings.Legacy155AccountPage
+import com.music.vivi.desktop.presentation.screens.settings.Legacy155SpotifyPage
+import com.music.vivi.desktop.presentation.screens.settings.Spotify155
+import com.music.vivi.desktop.presentation.viewmodel.YouTubeAccountUiState
+import com.music.vivi.desktop.presentation.viewmodel.YouTubeSessionStatus
+import com.music.vivi.desktop.data.model.StatsTimeRange
+import com.music.vivi.desktop.data.backup.FullBackup
+import com.music.vivi.desktop.presentation.screens.settings.DefaultLegacy155Actions
 import com.music.vivi.desktop.ui.theme.PixelPlayerTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -37,6 +49,7 @@ class SettingsSurfacesTest {
     private fun androidx.compose.ui.test.ComposeUiTest.openSettings(
         harness: DesktopUiHarness,
         sectionState: MutableState<SettingsSection?>,
+        actions: Legacy155Actions? = null,
     ) {
         setContent {
             PixelPlayerTheme {
@@ -51,6 +64,7 @@ class SettingsSurfacesTest {
                     activeSubDetail = LibrarySubDetail.NONE,
                     onNavigate = { next, _ -> sectionState.value = next },
                     onBack = { sectionState.value = null },
+                    legacyActions = actions,
                 )
             }
         }
@@ -228,6 +242,259 @@ class SettingsSurfacesTest {
         assertEquals(78, choices(SettingsSection.V155_CONTENT, "contentLanguage").size, "77 languages plus system default")
         assertEquals(110, choices(SettingsSection.V155_CONTENT, "contentCountry").size, "109 countries plus system default")
         assertEquals(77, choices(SettingsSection.V155_AI, "translateLanguage").size, "the AI target language uses the full 1.55 language list")
+    }
+
+    private class RecordingActions : Legacy155Actions {
+        val calls = mutableListOf<String>()
+        var lastSpotify: Pair<String, String>? = null
+        var imported: List<String>? = null
+
+        override fun signInYouTube() { calls += "signInYouTube" }
+        override fun signOutYouTube() { calls += "signOutYouTube" }
+        override fun refreshYouTube() { calls += "refreshYouTube" }
+        override fun detectProfiles() { calls += "detectProfiles" }
+        override fun useProfile(profile: BrowserCookies.Profile) { calls += "useProfile" }
+        override fun switchAccount(id: String) { calls += "switchAccount" }
+        override fun removeAccount(id: String) { calls += "removeAccount" }
+        override fun exportFullBackup() { calls += "exportFullBackup" }
+        override fun restoreFullBackup() { calls += "restoreFullBackup" }
+        override fun clearAudioCache() { calls += "clearAudioCache" }
+        override fun clearLyricsCache() { calls += "clearLyricsCache" }
+        override fun deleteInstallers() { calls += "deleteInstallers" }
+        override fun connectSpotify(spDc: String, spKey: String) {
+            calls += "connectSpotify"
+            lastSpotify = spDc to spKey
+        }
+        override fun disconnectSpotify() { calls += "disconnectSpotify" }
+        override fun refreshSpotify() { calls += "refreshSpotify" }
+        override fun importSpotify(selected: List<String>) {
+            calls += "importSpotify"
+            imported = selected
+        }
+    }
+
+    @Test
+    fun importedPagesInvokeTheRealActionsInsteadOfOnlyShowingText() {
+        val harness = DesktopUiHarness()
+        try {
+            runBlocking {
+                harness.musicDao.recordSongPlayed(
+                    DesktopUiHarness.song(
+                        id = "wrapped-real",
+                        title = "Wrapped Real Track",
+                        lastPlayedTimestamp = System.currentTimeMillis(),
+                        path = "C:/fixture/wrapped-real.mp3"
+                    ),
+                    durationMs = 120_000L
+                )
+                harness.statsStateHolder.refreshStats()
+            }
+            runComposeUiTest {
+                val sectionState = mutableStateOf<SettingsSection?>(SettingsSection.V155_ACCOUNT)
+                val actions = RecordingActions()
+                openSettings(harness, sectionState, actions)
+
+                waitForText("YouTube Music")
+                onNodeWithText("Sign in").performScrollTo().performClick()
+                onNodeWithText("Find a signed-in browser").performScrollTo().performClick()
+                assertTrue(actions.calls.contains("signInYouTube"))
+                assertTrue(actions.calls.contains("detectProfiles"))
+
+                sectionState.value = SettingsSection.V155_BACKUP
+                waitForText("FULL DEVICE BACKUP")
+                onNodeWithTag("legacy-backup-export").performScrollTo().performClick()
+                onNodeWithTag("legacy-backup-restore").performScrollTo().performClick()
+                assertTrue(actions.calls.containsAll(listOf("exportFullBackup", "restoreFullBackup")))
+
+                sectionState.value = SettingsSection.V155_STORAGE
+                waitForText("CACHES")
+                onNodeWithTag("legacy-clear-audio").performScrollTo().performClick()
+                onNodeWithTag("legacy-clear-lyrics").performScrollTo().performClick()
+                onNodeWithTag("legacy-delete-installers").performScrollTo().performClick()
+                assertTrue(actions.calls.containsAll(listOf("clearAudioCache", "clearLyricsCache", "deleteInstallers")))
+
+                sectionState.value = SettingsSection.V155_SPOTIFY
+                waitForText("SPOTIFY ACCOUNT")
+                onNodeWithTag("legacy-spotify-spdc").performScrollTo().performTextInput("cookie")
+                onNodeWithTag("legacy-spotify-connect").performScrollTo().performClick()
+                assertEquals("connectSpotify", actions.calls.last())
+                assertEquals("cookie" to "", actions.lastSpotify)
+
+                sectionState.value = SettingsSection.V155_WRAPPED
+                onNodeWithTag("legacy-wrapped-card").assertExists()
+                waitForText("Total Plays")
+                onNodeWithText("Wrapped Real Track").assertExists()
+                onNodeWithText("No listening activity in this range yet.").assertDoesNotExist()
+                onNodeWithTag("legacy-wrapped-range-MONTH").performScrollTo().performClick()
+                waitUntil(timeoutMillis = 5_000) {
+                    harness.viewModel.selectedStatsRange.value == StatsTimeRange.MONTH
+                }
+
+                println("[UI] Settings surfaces: ${actions.calls} real actions invoked")
+            }
+        } finally {
+            harness.close()
+        }
+    }
+
+    @Test
+    fun accountPageRoutesSignInRefreshSwitchRemoveAndSignOut() {
+        val actions = RecordingActions()
+        val state = YouTubeAccountUiState(
+            isSignedIn = true,
+            status = YouTubeSessionStatus.EXPIRED,
+            activeAccountId = "active",
+            accounts = listOf(
+                YouTubeAccount.Summary("active", "Active account", "active@example.com", null, null, true),
+                YouTubeAccount.Summary("other", "Other account", "other@example.com", null, null, false),
+            ),
+            profiles = listOf(
+                BrowserCookies.Profile(
+                    browser = "Firefox",
+                    profile = "default",
+                    family = BrowserCookies.Family.FIREFOX,
+                    database = java.nio.file.Path.of("C:/fixture/cookies.sqlite"),
+                )
+            ),
+        )
+        runComposeUiTest {
+            setContent {
+                PixelPlayerTheme {
+                    Legacy155AccountPage(state = state, actions = actions)
+                }
+            }
+            onNodeWithText("Sign out").performClick()
+            onNodeWithText("Check the session again").performClick()
+            onNodeWithText("Switch").performClick()
+            onNodeWithContentDescription("Remove account").performClick()
+            onNodeWithText("Add account").performClick()
+            onNodeWithText("Find a signed-in browser").performClick()
+            onNodeWithText("Firefox · default").performClick()
+
+            assertTrue(actions.calls.contains("signOutYouTube"))
+            assertTrue(actions.calls.contains("refreshYouTube"))
+            assertTrue(actions.calls.contains("switchAccount"))
+            assertTrue(actions.calls.contains("removeAccount"))
+            assertTrue(actions.calls.contains("signInYouTube"))
+            assertTrue(actions.calls.contains("detectProfiles"))
+            assertTrue(actions.calls.contains("useProfile"))
+        }
+    }
+
+    @Test
+    fun spotifyPageRoutesConnectRefreshImportAndDisconnect() {
+        val actions = RecordingActions()
+        val state = Spotify155.State(
+            connected = true,
+            accountName = "Spotify test",
+            playlists = listOf(Spotify155.Playlist("playlist-1", "Imported mix")),
+            likedSongsCount = 2,
+        )
+        runComposeUiTest {
+            setContent {
+                PixelPlayerTheme {
+                    Legacy155SpotifyPage(state = state, actions = actions)
+                }
+            }
+            onNodeWithText("Refresh").performClick()
+            onNodeWithText("Select all").performClick()
+            onNodeWithTag("legacy-spotify-import").performClick()
+            onNodeWithText("Disconnect").performClick()
+
+            assertTrue(actions.calls.contains("refreshSpotify"))
+            assertTrue(actions.calls.contains("importSpotify"))
+            assertTrue(actions.calls.contains("disconnectSpotify"))
+            assertTrue(actions.imported.orEmpty().isNotEmpty())
+            assertTrue(actions.imported.orEmpty().contains(Spotify155.LIKED_SOURCE))
+            assertTrue(actions.imported.orEmpty().contains("playlist-1"))
+        }
+    }
+
+    @Test
+    fun storageAndBackupControlsWriteTheRealManagers() {
+        val harness = DesktopUiHarness()
+        val cacheFile = java.io.File(harness.tempDir, "audio-cache/preload.audio").apply {
+            parentFile?.mkdirs()
+            writeText("cached audio")
+        }
+        try {
+            runComposeUiTest {
+                val sectionState = mutableStateOf<SettingsSection?>(SettingsSection.V155_STORAGE)
+                openSettings(harness, sectionState)
+
+                waitForText("CACHES")
+                onNodeWithTag("legacy-audio-cache-enabled").performClick()
+                waitUntil(timeoutMillis = 5_000) {
+                    !harness.viewModel.audioCacheEnabled.value &&
+                        !harness.viewModel.userSettings.value.audioCacheEnabled
+                }
+                onNodeWithTag("legacy-clear-audio").performScrollTo().performClick()
+                waitUntil(timeoutMillis = 5_000) { !cacheFile.exists() }
+
+                sectionState.value = SettingsSection.V155_BACKUP
+                waitForText("AUTOMATIC BACKUP")
+                onNodeWithTag("legacy-auto-backup").performClick()
+                waitUntil(timeoutMillis = 5_000) {
+                    !harness.viewModel.userSettings.value.autoBackupEnabled
+                }
+                onNodeWithTag("legacy-backup-before-update").performClick()
+                waitUntil(timeoutMillis = 5_000) {
+                    !harness.viewModel.userSettings.value.backupBeforeUpdate
+                }
+            }
+        } finally {
+            harness.close()
+        }
+    }
+
+    @Test
+    fun backupActionExportsAndRestoresTheRealFullBackup() {
+        val harness = DesktopUiHarness()
+        try {
+            val storeFile = java.io.File(harness.tempDir, "device-sync.json")
+            val target = java.io.File(harness.tempDir, "roundtrip.${FullBackup.EXTENSION}")
+            val actions = DefaultLegacy155Actions(
+                viewModel = harness.viewModel,
+                scope = harness.scope,
+                store = harness.store,
+                storeFile = storeFile,
+                exportPicker = { _, onPicked -> onPicked(target) },
+                restorePicker = { onPicked -> onPicked(target) },
+            )
+            runBlocking {
+                harness.store.update("settings-test") { state ->
+                    state.copy(
+                        songs = state.songs + DesktopUiHarness.song(
+                            id = "backup-real",
+                            title = "Backup Real Track",
+                            lastPlayedTimestamp = System.currentTimeMillis(),
+                            path = "C:/fixture/backup-real.mp3"
+                        )
+                    )
+                }
+                val before = harness.store.load().songs.size
+                actions.exportFullBackup()
+                withTimeout(10_000) {
+                    while (!target.isFile) kotlinx.coroutines.delay(20)
+                }
+                assertTrue(target.isFile)
+
+                harness.store.update("settings-test") { state ->
+                    state.copy(songs = emptyList())
+                }
+                assertEquals(0, harness.store.load().songs.size)
+
+                actions.restoreFullBackup()
+                withTimeout(10_000) {
+                    while (harness.store.load().songs.size != before) {
+                        kotlinx.coroutines.delay(20)
+                    }
+                }
+                assertEquals(before, harness.store.load().songs.size)
+            }
+        } finally {
+            harness.close()
+        }
     }
 
     @Test

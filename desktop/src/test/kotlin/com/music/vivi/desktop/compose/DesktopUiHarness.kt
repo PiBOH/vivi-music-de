@@ -23,6 +23,7 @@ import com.music.vivi.desktop.data.listentogether.ListenTogetherManager
 import com.music.vivi.desktop.data.model.Lyrics
 import com.music.vivi.desktop.data.model.Song
 import com.music.vivi.desktop.data.network.lyrics.LyricsSearchResultItem
+import com.music.vivi.desktop.data.player.PlaybackAudioCache
 import com.music.vivi.desktop.data.player.QueueManager
 import com.music.vivi.desktop.data.repository.MusicRepositoryImpl
 import com.music.vivi.desktop.data.repository.SettingsRepositoryImpl
@@ -94,6 +95,11 @@ class DesktopUiHarness : AutoCloseable {
         musicRepository = musicRepository,
         lyricsRepository = lyricsRepository,
         settingsRepository = settingsRepository,
+        audioCache = PlaybackAudioCache(
+            okHttpClient = okhttp3.OkHttpClient(),
+            coroutineScope = scope,
+            directory = File(tempDir, "audio-cache")
+        ),
         coroutineScope = scope
     )
     val libraryStateHolder = LibraryStateHolder(

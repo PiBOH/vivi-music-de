@@ -229,4 +229,16 @@ class ThemeStateHolder(
             settingsRepository.setLyricsTextSize(size)
         }
     }
+
+    fun setAutoBackupEnabled(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setAutoBackupEnabled(enabled)
+        }
+    }
+
+    fun setBackupBeforeUpdate(enabled: Boolean) {
+        coroutineScope.launch {
+            settingsRepository.setBackupBeforeUpdate(enabled)
+        }
+    }
 }

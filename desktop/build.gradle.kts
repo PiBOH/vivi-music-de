@@ -62,6 +62,7 @@ dependencies {
     // Pure-JVM VIVI backends: YouTube Music (innertube) and the lyrics providers.
     implementation(project(":innertube"))
     implementation(project(":lyricsProvider"))
+    implementation(project(":spotify"))
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
