@@ -1,0 +1,107 @@
+name: Release Manifest
+
+# Keeps the two data files the website reads — `releases.json` and
+# `changelog.json` — in sync with the published releases. They live on the
+# `gh-pages` branch (the site source), so this job checks that branch out a
+# second time and commits them there instead of committing into the DE branch.
+#
+# The website reads those files instead of calling the public GitHub API, which
+# allows only 60 unauthenticated requests per hour per IP: once that quota is
+# spent every visitor behind that IP saw an empty download dialog / downloads
+# page (the assets only came back with a manual refresh, and often not even
+# then). An authenticated request has a 5000/hour quota, so the site never
+# depends on the anonymous one again.
+#
+# Triggered by a push that changes version.txt (every release bumps it), once an
+# hour, and manually. The hourly run exists because the push above fires the
+# moment version.txt changes — i.e. minutes BEFORE the release workflow has
+# uploaded its assets — so the manifest it built described a release whose files
+# did not exist yet, and the download dialog/downloads page stayed incomplete
+# (and needed a manual page refresh) until the next release bumped version.txt.
+#
+# `schedule` and `workflow_dispatch` always run the version of this file that
+# lives on the DEFAULT branch (`axolotl-music-de`), which is this one.
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  push:
+    paths:
+      - version.txt
+      - .github/workflows/release-manifest.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-manifest
+  cancel-in-progress: true
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    permissions:
+      # contents: write for the push to the site branch, actions: write for the
+      # `gh workflow run` below: dispatching a workflow is an Actions-scoped
+      # call, and the job token is enough for one inside this repository.
+      contents: write
+      actions: write
+    steps:
+      - name: Checkout the DE branch (generator script)
+        uses: actions/checkout@v4
+        with:
+          ref: axolotl-music-de
+          path: build
+
+      - name: Checkout the site branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: site
+
+      - name: Fetch every release (authenticated)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh api --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            "repos/PiBOH/axolotl-music/releases?per_page=100" > "$RUNNER_TEMP/releases.json"
+          gh api -H "Accept: application/vnd.github+json" \
+            "repos/PiBOH/axolotl-music" > "$RUNNER_TEMP/repo.json"
+          node -e 'const a=require(process.env.RUNNER_TEMP+"/releases.json");console.log("pages:",Array.isArray(a[0])?a.length:1)' || true
+
+      - name: Build the manifest
+        run: |
+          node build/scripts/build_release_manifest.js \
+            "$RUNNER_TEMP/releases.json" "$RUNNER_TEMP/repo.json" \
+            site/releases.json site/changelog.json
+
+      - name: Commit when it changed
+        working-directory: site
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- releases.json changelog.json; then
+            echo "manifest already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add releases.json changelog.json
+          git commit -m "chore(website): refresh the static release manifest"
+          git push
+
+      - name: Publish the refreshed data
+        # A push made with the job token does not start other workflows, so ask
+        # for a deployment explicitly. The repository has to be named: this job
+        # checks out into `build/` and `site/`, so its working directory holds no
+        # `.git` for `gh` to infer one from - which is what this step was really
+        # failing on (`failed to run git: fatal: not a git repository`), and the
+        # `||` below swallowed it from the day the step was added. The job token
+        # is the right one for a dispatch in this same repository (`actions:
+        # write` above); `BOT_DISPATCH_TOKEN`, a cross-repository PAT, was only
+        # ever borrowed here because of that 401-looking silence.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run pages-deploy.yml --repo "$GITHUB_REPOSITORY" --ref axolotl-music-de || echo "deploy dispatch skipped"

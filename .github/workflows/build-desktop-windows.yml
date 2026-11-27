@@ -39,9 +39,44 @@ jobs:
         shell: bash
         run: ./gradlew :desktop:createDistributable --no-daemon
 
-      - name: Install Inno Setup
+      - name: Install Inno Setup 7
         shell: pwsh
-        run: choco install innosetup --no-progress -y
+        run: |
+          $ErrorActionPreference = 'Stop'
+          # `choco install innosetup` is not enough: the Chocolatey community
+          # package is still on Inno Setup 6 (6.7.1 at the time of writing — its
+          # own page is already asking for 7), and that is exactly why the
+          # setups this workflow produced were compiled by Inno Setup 6 while
+          # the project is developed with Inno Setup 7. The official 7.1.0
+          # 64-bit installer is therefore downloaded from the pinned upstream
+          # release and installed silently: the compiler matches the one on the
+          # developer's machine, and nothing depends on a community package
+          # being refreshed.
+          $installerVersion = '7.1.0'
+          $installDir = Join-Path $env:ProgramFiles 'Inno Setup 7'
+          $installer = Join-Path $env:RUNNER_TEMP "innosetup-$installerVersion-x64.exe"
+          Invoke-WebRequest -UseBasicParsing `
+            -Uri "https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-$installerVersion-x64.exe" `
+            -OutFile $installer
+          $installerLog = Join-Path $env:RUNNER_TEMP 'innosetup-install.log'
+          # /DIR pins the location instead of leaving it to this installer's own
+          # install-mode dialog: unattended it would take that dialog's default,
+          # and a per-user answer would put the compiler in %LOCALAPPDATA%\Programs.
+          $proc = Start-Process -FilePath $installer `
+            -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-', "/DIR=`"$installDir`"", "/LOG=`"$installerLog`"" `
+            -Wait -PassThru
+          if ($proc.ExitCode -ne 0) {
+            if (Test-Path $installerLog) { Get-Content $installerLog }
+            throw "Inno Setup $installerVersion installer failed (exit $($proc.ExitCode))"
+          }
+          if (-not (Test-Path (Join-Path $installDir 'ISCC.exe'))) {
+            throw "Inno Setup $installerVersion was installed but $(Join-Path $installDir 'ISCC.exe') is missing"
+          }
+          # `${installerVersion}` and not `$installerVersion:` — PowerShell reads a
+          # `:` right after a variable name as a scope qualifier and refuses to
+          # parse the script at all ("Variable reference is not valid"). That one
+          # colon is what failed this step in every release since it was added.
+          Write-Host "Installed Inno Setup ${installerVersion}: $installDir"
 
       - name: Compile branded installer
         id: custom_setup
@@ -53,27 +88,58 @@ jobs:
           $deVersion = (Get-Content version.txt)[3].Trim()
           $fullVersion = "${mobileVersion}_DE-$deVersion"
           $installerVersion = $deVersion
-          $source = Join-Path $env:GITHUB_WORKSPACE 'desktop\build\compose\binaries\main\app\VIVIMusic'
+          $source = Join-Path $env:GITHUB_WORKSPACE 'desktop\build\compose\binaries\main\app\AxolotlMusic'
           $output = Join-Path $env:GITHUB_WORKSPACE 'dist'
           New-Item -ItemType Directory -Force -Path $output | Out-Null
-          $mainExecutable = Join-Path $source 'VIVIMusic.exe'
+          $mainExecutable = Join-Path $source 'AxolotlMusic.exe'
           if (-not (Test-Path $mainExecutable)) { throw "jpackage app image is incomplete: $mainExecutable was not found" }
-          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
-          if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found at $iscc" }
+          # Every installation of the compiler is read out of its folder name
+          # ("Inno Setup 7"), the newest one wins, and a build that can only see
+          # an older major fails here instead of shipping: the point of the step
+          # above is that the setups come from the same compiler the project is
+          # developed with (Inno Setup 7), not from whichever one happens to be
+          # found first. Note that the engine version is checked against the
+          # compiler's own log further down as well.
+          $iscc = @(Get-ChildItem "$env:ProgramFiles\Inno Setup *\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup *\ISCC.exe", "$env:LOCALAPPDATA\Programs\Inno Setup *\ISCC.exe" -ErrorAction SilentlyContinue) |
+            ForEach-Object {
+              # The version is the folder name ("Inno Setup 7"), and a bare major
+              # is not a version string .NET parses on its own - hence the minor.
+              if ($_.Directory.Name -match '^Inno Setup (?<major>\d+)(\.(?<minor>\d+))?$') {
+                $minor = 0
+                if ($Matches.minor) { $minor = [int]$Matches.minor }
+                [pscustomobject]@{ Path = $_.FullName; Version = [version]"$([int]$Matches.major).$minor" }
+              }
+            } |
+            Sort-Object Version -Descending | Select-Object -First 1 -ExpandProperty Path
+          if (-not $iscc) { throw "Inno Setup compiler (ISCC.exe) not found under Program Files" }
+          Write-Host "Using Inno Setup compiler: $iscc"
           $compileLog = Join-Path $output 'innosetup.log'
+          $icons = Join-Path $env:GITHUB_WORKSPACE 'desktop\icons'
           & $iscc `
             "/DAppVersion=$fullVersion" `
             "/DInstallerVersion=$installerVersion" `
             "/DSourceDir=$source" `
             "/DOutputDir=$output" `
-            "/DIconFile=$env:GITHUB_WORKSPACE\desktop\icons\logo_vmde.ico" `
-            "$env:GITHUB_WORKSPACE\installer\windows\VIVIMusic.iss" 2>&1 |
+            "/DIconFile=$icons\logo_vmde.ico" `
+            "/DWizardImageFile=$icons\logo_axolotl_wizard.bmp" `
+            "/DWizardSmallImageFile=$icons\logo_axolotl_small.bmp" `
+            "/DWizardImageFileDark=$icons\logo_axolotl_wizard_dark.bmp" `
+            "/DWizardSmallImageFileDark=$icons\logo_axolotl_small_dark.bmp" `
+            "$env:GITHUB_WORKSPACE\installer\windows\AxolotlMusic.iss" 2>&1 |
             Tee-Object -FilePath $compileLog
           if ($LASTEXITCODE -ne 0) {
             Write-Host 'Inno Setup compiler log:'
             Get-Content $compileLog
             throw "Inno Setup compilation failed (exit $LASTEXITCODE)"
           }
+          # The compiler names itself in the log it just wrote: the build refuses
+          # to publish a setup that an older Inno Setup compiled, so a runner
+          # image or a package that smuggles one back in cannot go unnoticed.
+          $engineMatch = Select-String -Path $compileLog -Pattern 'Compiler engine version: (.+)' | Select-Object -First 1
+          if (-not $engineMatch) { throw "The Inno Setup log does not name a compiler engine version" }
+          $engine = $engineMatch.Matches[0].Groups[1].Value.Trim()
+          Write-Host "Compiler engine version: $engine"
+          if ($engine -notlike 'Inno Setup 7*') { throw "Expected the Inno Setup 7 compiler, but the log says: $engine" }
 
       - name: Install WiX Toolset
         shell: pwsh
@@ -91,7 +157,7 @@ jobs:
           VERSION="$(sed -n '1p' version.txt | tr -d '\r\n' | xargs)_DE-$(sed -n '4p' version.txt | tr -d '\r\n' | xargs)"
           # The MSI is best-effort; copy it only if jpackage produced one.
           if ls desktop/build/compose/binaries/main/msi/*.msi >/dev/null 2>&1; then
-            cp desktop/build/compose/binaries/main/msi/*.msi "dist/VIVIMusic-${VERSION}.msi"
+            cp desktop/build/compose/binaries/main/msi/*.msi "dist/AxolotlMusic-${VERSION}.msi"
           fi
           ls -la dist
 

@@ -4,6 +4,7 @@
 
 ### ✨ Added
 
+- [DE] **The settings home is the 1.55 one, and the 1.56 surface is a PixelPlayer submenu.**
 - [DE] **A duplicate group can be ignored without deleting its files, and restored later.**
 - [DE] **The account playlist order is kept per account, not once for the device.**
 - [DE] **The account playlist Undo survives the screen and a restart, and a partial restore can be retried.**
@@ -61,6 +62,9 @@
 
 ### 🔧 Changed
 
+- [DE] **The project is Axolotl Music end to end.**
+- [APK] The updater reads `PiBOH/axolotl-music` on `axolotl-music-de`.
+- [BOT] `PiBOH/axolotlmusicde_bot` reads releases from `PiBOH/axolotl-music`, posts to `@axolotlmusic` and carries the axolotl artwork; the release layout and per-tag cache are unchanged.
 - [DE] **The updater's checksum check is proven on the published beta5 release, positive and negative.**
 - [DE] **The release publishes one `SHA256SUMS` file, and the updater reads the matching line.**
 - [DE] **A library scan only prunes folders it actually walked, and one full scan runs at a time.**
@@ -148,7 +152,6 @@
 
 ### 🛑 Removed
 
-- [DE] **The Bit UI and its machinery.**
 - [DE] **The old VIVI album and artist screens are gone.**
 
 ## [6.0.8.11_DE-1.55.0-beta] - 2026-10-23

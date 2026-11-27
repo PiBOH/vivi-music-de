@@ -1,42 +1,86 @@
 name: Deploy Website (GitHub Pages)
 
+# The website lives on the `gh-pages` branch, at its root: that branch IS the
+# site source (pages, styles, images, fonts, plus the two data files
+# releases.json / changelog.json that `Release Manifest` refreshes every hour).
+# This workflow only publishes it with `actions/deploy-pages`; it no longer
+# reads `.websitede` from the DE branch, which no longer exists.
+#
+# A second copy of this file lives on `gh-pages`, and the two are NOT byte
+# identical — only their trigger differs on purpose:
+#   * this copy (default branch) feeds `schedule` and `workflow_dispatch`,
+#     because GitHub always runs those from the default branch;
+#   * the gh-pages copy feeds `push`, because a push can only run the workflows
+#     that exist at the pushed ref (and a push made by the `Release Manifest`
+#     job with the default token never starts a workflow at all, hence the
+#     schedule below).
+# Keep the two copies in sync whenever the steps change.
+
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'  # daily at midnight UTC
+    # Five minutes after the hourly manifest refresh, so a data update that
+    # could not trigger a run by itself (the job token starts no workflow)
+    # still reaches the site. An edit pushed to `gh-pages` deploys at once
+    # instead, and the manifest asks for a deploy explicitly as well.
+    - cron: '5 * * * *'
   push:
-    branches: [ vivi-music-de ]
+    branches: [ axolotl-music-de ]
     paths:
-      - '.websitede/**'
+      - '.github/workflows/pages-deploy.yml'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Only one Pages deployment at a time; a newer push cancels an older one.
+# Only one Pages deployment at a time; a newer run cancels an older one.
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Build & deploy site
+    name: Publish the gh-pages branch
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout
+      - name: Checkout the site branch
         uses: actions/checkout@v4
+        with:
+          ref: gh-pages
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      - name: Refresh the screenshot manifest
+        # The gallery lays out whatever images/screenshots.json lists. Pages
+        # serves no directory listing, and the GitHub contents API is the same
+        # 60-per-hour budget releases.json exists to avoid, so the list is built
+        # here from the files actually in images/screenshots/ — dropping a shot
+        # in that folder is still the only step needed to publish it. Written
+        # into the artifact, not the branch: the committed copy stays the
+        # fallback for a deploy that does not run (a hand copy of the site).
+        run: |
+          python3 - <<'PY'
+          import datetime, json, os
+
+          root = 'images/screenshots'
+          exts = ('.webp', '.png', '.jpg', '.jpeg', '.gif')
+          images = sorted(n for n in os.listdir(root) if n.lower().endswith(exts))
+          stamp = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.000Z')
+          with open('images/screenshots.json', 'w', encoding='utf-8') as fh:
+              json.dump({'generatedAt': stamp, 'images': images}, fh)
+              fh.write('\n')
+          print('screenshots.json:', len(images), 'image(s)')
+          PY
+
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .websitede
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment

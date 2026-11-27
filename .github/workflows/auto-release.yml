@@ -9,7 +9,7 @@ on:
         type: string
         default: ''
   push:
-    branches: [ vivi-music-de, main, beta ]
+    branches: [ axolotl-music-de, main, beta ]
     tags-ignore: [ '**' ]
 
 permissions:
@@ -20,7 +20,7 @@ jobs:
   # Builds are delegated to the per-OS reusable workflows. This workflow only
   # collects their artifacts and publishes the release. They run on manual
   # dispatch, or on push when the commit message starts with "v" (our release
-  # signal), mirroring the old vivi-music-de release pipeline.
+  # signal), mirroring the old axolotl-music-de release pipeline.
   build-windows:
     name: Windows
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'v'))
@@ -111,17 +111,25 @@ jobs:
           else
             TAG="$FULL_VERSION-$CHANNEL"
           fi
-          # Release display name: "Vivi Music <mobile>_DE <de_version>"
-          # (e.g. "Vivi Music 6.4.3_DE 1.33.6" — no "v" prefix, no hyphen after DE).
+          # Release display name: "Axolotl Music <mobile>_DE <de_version>"
+          # (e.g. "Axolotl Music 6.4.3_DE 1.33.6" — no "v" prefix, no hyphen after DE).
           TITLE_VERSION="${FULL_VERSION//_DE-/_DE }"
+          # The title carries the channel for a non-stable release, so a beta
+          # reads "Axolotl Music 6.0.8.11_DE 1.56.0-beta5" and never loses the
+          # only part of the version that moved.
+          if [[ "$CHANNEL" == "stable" ]]; then
+            TITLE_CHANNEL=""
+          else
+            TITLE_CHANNEL="-$CHANNEL"
+          fi
           echo "version=$FULL_VERSION" >> "$GITHUB_OUTPUT"
           echo "de_version=$DE_VERSION" >> "$GITHUB_OUTPUT"
           echo "title_version=$TITLE_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "name=Vivi Music $TITLE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=Axolotl Music $TITLE_VERSION$TITLE_CHANNEL" >> "$GITHUB_OUTPUT"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $FULL_VERSION (title: Vivi Music $TITLE_VERSION, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
+          echo "Resolved version: $FULL_VERSION (title: Axolotl Music $TITLE_VERSION$TITLE_CHANNEL, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
 
       - name: Extract changelog section
         id: changelog
@@ -134,15 +142,31 @@ jobs:
           if [[ -f CHANGELOG.md ]]; then
             for v in "$VERSION" "$DE_VERSION"; do
               [[ -z "$v" ]] && continue
+              # The version heading itself is NOT copied into the section: the
+              # release already carries the version in its title, and printing
+              # the `## [x.y.z_DE-n]` line again put a second version heading at
+              # the top of every release body. The section starts right after it.
               SECTION="$(awk -v v="$v" '
                 # Match the exact version, with an optional channel suffix
                 # (e.g. -nightly), before the closing bracket.
-                index($0, "## [" v "]") == 1 || index($0, "## [" v "-") == 1 { found = 1; print; next }
+                index($0, "## [" v "]") == 1 || index($0, "## [" v "-") == 1 { found = 1; next }
                 found && /^## / { exit }
                 found { print }
-              ' CHANGELOG.md)"
+              ' CHANGELOG.md | sed '/./,$!d')"
               [[ -n "$SECTION" ]] && break
             done
+            # A heading that names the same version under another channel
+            # suffix still is this release's section (1.56.0 was written as
+            # -beta and -beta2 while version.txt moved on), so when
+            # the tag and the heading disagree the search takes the newest
+            # versioned section instead of publishing an empty body.
+            if [[ -z "$SECTION" ]]; then
+              SECTION="$(awk '
+                /^## \[Unreleased\]/ { next }
+                /^## \[/ { if (found) exit; found = 1; next }
+                found { print }
+              ' CHANGELOG.md | sed '/./,$!d')"
+            fi
           fi
           if [[ -z "$SECTION" ]]; then
             SECTION="*No changelog entry found for version $VERSION.*"
@@ -150,6 +174,13 @@ jobs:
           # Never surface the website bookkeeping commits (an older entry may
           # still carry them in its `### Commits` list).
           SECTION="$(printf '%s\n' "$SECTION" | grep -v -F -- '- chore(website): refresh the static release manifest' || true)"
+          # ...nor the reporter's own words. A changelog entry that quotes the
+          # owner used to be published verbatim in the release body, and six
+          # releases (6.0.6.8, 6.0.8.6, 6.0.8.7, 6.0.8.8, 6.0.8.9 twice) had to be
+          # rewritten by hand because of it. The quoted Italian spans are dropped
+          # here, before the body is built, so it cannot happen again; the rule
+          # (and its trade-offs) is documented in the script itself.
+          SECTION="$(printf '%s\n' "$SECTION" | python3 scripts/clean_release_notes.py)"
           {
             echo "section<<CHANGELOG_EOF"
             echo "$SECTION"
@@ -207,10 +238,25 @@ jobs:
           # travel together.
           AUR_DIR="$(mktemp -d)"
           python3 scripts/generate_aur_pkgbuild.py --out "$AUR_DIR" --sha "${{ github.sha }}"
-          tar -czf "artifacts/VIVIMusic-${{ steps.version.outputs.version }}-AUR.tar.gz" -C "$AUR_DIR" .
+          tar -czf "artifacts/AxolotlMusic-${{ steps.version.outputs.version }}-AUR.tar.gz" -C "$AUR_DIR" .
           rm -rf "$AUR_DIR"
           # The install guide ships with every release.
           cp INSTALL-GUIDE.md artifacts/
+          # One checksum file for the whole release: the desktop updater falls
+          # back to the line that names its asset when GitHub's asset digest is
+          # absent. No per-installer `.sha256` files are written any more.
+          (
+            cd artifacts
+            : > SHA256SUMS
+            for file in *; do
+              case "$file" in
+                *.md|SHA256SUMS) continue ;;
+              esac
+              [ -f "$file" ] || continue
+              sha256sum "$file" >> SHA256SUMS
+            done
+          )
+          cat artifacts/SHA256SUMS
           ls -la artifacts
 
       - name: Create GitHub release
@@ -223,15 +269,22 @@ jobs:
           files: artifacts/*
           fail_on_unmatched_files: true
           body: |
-            ## Vivi Music ${{ steps.version.outputs.title_version }}
+            ## Axolotl Music ${{ steps.version.outputs.title_version }}
             **Release channel:** `${{ steps.version.outputs.channel }}`
 
             ${{ steps.changelog.outputs.section }}
 
-            ### Commits
+            ### 📝 Commits
             ${{ steps.commits.outputs.commits }}
+
             ---
             This release was built automatically from commit `${{ github.sha }}`.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # The Telegram bot is deliberately NOT started from here any more. The owner
+  # triggers it by hand when they want a release posted, so a published release
+  # must never launch the bot on its own. The bot's own hourly poll in
+  # `call-axolotl-bot.yml` (a schedule in THIS repository, no cross-repository
+  # token needed for the poll path itself) remains the automatic fallback.
 

@@ -1,6 +1,6 @@
-# VIVI Music — sync relay (`sync-server/`)
+# Axolotl Music — sync relay (`sync-server/`)
 
-Server WebSocket minimale che permette all'app Android e a **VIVI Music DE (desktop)**
+Server WebSocket minimale che permette all'app Android e a **Axolotl Music (desktop)**
 di accoppiarsi **senza account** e di scambiarsi le impostazioni condivise (tema,
 lingua, contenuti, qualità audio, testi, integrazioni) e — nelle fasi successive —
 coda/posizione di ascolto e libreria.
@@ -65,7 +65,7 @@ Per testare il pairing usa due client (o un tool come `wscat`) collegati a
 
 **Opzione rapida (Blueprint):** il repo include un `render.yaml` nella root. Su
 [render.com](https://render.com) vai in **New → Blueprint**, seleziona il repo
-(branch `vivi-music-de`): Render crea da solo il servizio
+(branch `axolotl-music-de`): Render crea da solo il servizio
 `vivimusic-device-sync` (root `sync-server`, build `npm install`, start
 `npm start`, health check su `/health`). Dopo il primo deploy usa
 `wss://vivimusic-device-sync.onrender.com`.
@@ -73,7 +73,7 @@ Per testare il pairing usa due client (o un tool come `wscat`) collegati a
 **Deploy manuale:**
 
 1. Crea un nuovo **Web Service** su [render.com](https://render.com).
-2. **Repository**: punta al tuo fork di `vivi-music`, branch `vivi-music-de`.
+2. **Repository**: punta al tuo fork di `vivi-music`, branch `axolotl-music-de`.
 3. **Root Directory**: `sync-server`.
 4. **Build Command**: `npm install`.
 5. **Start Command**: `npm start`.

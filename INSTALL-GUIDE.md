@@ -1,7 +1,7 @@
 # Axolotl Music — Installation Guide
 
-Axolotl Music is the native desktop edition of
-[VIVI Music](https://github.com/vivizzz007/vivi-music) (YouTube Music client),
+Axolotl Music is the native desktop edition of the
+[Vivi Music Android app](https://github.com/vivizzz007/vivi-music) (YouTube Music client),
 built with Kotlin and Compose Multiplatform. It runs on **Windows 10+**,
 **Linux (x86_64)** and **macOS 10.15+**.
 
@@ -114,7 +114,7 @@ sudo dnf install ./AxolotlMusic-….rpm
 ```
 
 On openSUSE use `sudo zypper install ./AxolotlMusic-….rpm` instead. Everything is
-installed under `/opt/vivi-music-de`, with a `vivi-music-de` launcher, a desktop
+installed under `/opt/axolotl-music`, with a `axolotl-music` launcher, a desktop
 entry in the applications menu and an icon in the hicolor theme.
 
 ### Option C — AppImage (any distro, portable)
@@ -146,32 +146,32 @@ If your system blocks AppImages (no FUSE), extract and run it instead:
 - **AppImage**: delete the file. To clean your user data the same way, run:
   `sh scripts/uninstall-cleanup.sh` from this repo (or the script shipped in
   the release).
-- **.rpm**: uninstall with `sudo dnf remove vivi-music-de` (`sudo zypper remove
-  vivi-music-de` on openSUSE). The package's `%postun` scriptlet runs the same
+- **.rpm**: uninstall with `sudo dnf remove axolotl-music` (`sudo zypper remove
+  axolotl-music` on openSUSE). The package's `%postun` scriptlet runs the same
   cleanup as the `.deb` one — newest backup plus `device-sync.json` kept, every
   cache removed.
-- **AUR**: `pacman -R vivi-music-de` runs the same cleanup automatically via
+- **AUR**: `pacman -R axolotl-music` runs the same cleanup automatically via
   the package's `post_remove` hook.
 
 ### Option D — Arch Linux (AUR-style PKGBUILD)
 
 Every release also ships a **`AxolotlMusic-….AUR.tar.gz`** archive holding the
-**`PKGBUILD`**, its `SRCINFO` and the uninstall hook (`vivi-music-de.install`).
+**`PKGBUILD`**, its `SRCINFO` and the uninstall hook (`axolotl-music.install`).
 They travel together because `makepkg` needs the hook file next to the
 `PKGBUILD` (that is what `install=` points at).
 To build and install a proper system package:
 
 ```bash
 # 1. Download the .AUR.tar.gz from the release assets and extract it
-mkdir vivi-music-de && tar -xzf AxolotlMusic-….AUR.tar.gz -C vivi-music-de
-cd vivi-music-de
+mkdir axolotl-music && tar -xzf AxolotlMusic-….AUR.tar.gz -C axolotl-music
+cd axolotl-music
 # 2. The three files are side by side now
 makepkg -si
 ```
 
 The PKGBUILD pins the exact release commit with a real checksum, builds the
-app from source with `./gradlew`, and installs it into `/opt/vivi-music-de`
-with a desktop entry, icon and `vivi-music-de` launcher. Requires
+app from source with `./gradlew`, and installs it into `/opt/axolotl-music`
+with a desktop entry, icon and `axolotl-music` launcher. Requires
 `jdk21-openjdk` and `unzip` (installed automatically as build dependencies).
 
 > **Graphics note:** if OpenGL isn't available on your system, the app
@@ -273,10 +273,10 @@ On Windows `~` is `C:\Users\<you>`, on Linux/macOS it's `/home/<you>` /
 | **The embedded sign-in window stays blank** | Make sure you're on the latest version. As a fallback, use **Sign in with cookies** (see above). |
 | **Volume doesn't reach the speakers while paired** | Set the Windows mixer volume to 0 % (not muted) so the mobile app can drive it. |
 | **Playback stops / seekbar jumps while paired** | Update both apps to the latest version — older builds had sync races that were fixed. |
-| **Still stuck?** | Check `~/.vivimusic/` log files, or ask in the [Telegram channel](https://t.me/vivimusicde). |
+| **Still stuck?** | Check `~/.vivimusic/` log files, or ask in the [Telegram channel](https://t.me/axolotlmusic). |
 
 ---
 
 *Axolotl Music — free software under a
-[modified GPL-3.0](https://github.com/PiBOH/axolotl-music/blob/vivi-music-de/LICENSE) license. The original
+[modified GPL-3.0](https://github.com/PiBOH/axolotl-music/blob/axolotl-music/LICENSE) license. The original
 mobile app is created by [VIVIDH P ASHOKAN](https://github.com/vivizzz007).*

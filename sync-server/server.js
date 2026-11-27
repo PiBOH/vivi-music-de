@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * VIVI Music — device sync relay
+ * Axolotl Music — device sync relay
  *
  * A minimal WebSocket server that lets two devices (the Android app and the
  * desktop edition) pair without an account and exchange sync snapshots.
@@ -252,5 +252,5 @@ wss.on('connection', (ws) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`VIVI Music sync relay listening on :${PORT} (http + ws)`);
+  console.log(`Axolotl Music sync relay listening on :${PORT} (http + ws)`);
 });

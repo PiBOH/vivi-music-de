@@ -2,7 +2,7 @@
   "_guide": [
     "HOW TO ADD / EDIT A CONTRIBUTOR",
     "",
-    "This file is read LIVE from the repository (branch vivi-music-de) every time",
+    "This file is read LIVE from the repository (branch axolotl-music-de) every time",
     "the Contributors screen opens in the app. There is NO local copy anymore:",
     "edit THIS file, commit and push it, and the app picks the change up on the",
     "next launch of the Contributors screen — no rebuild of the app needed.",
@@ -26,6 +26,10 @@
     "- \"description\": short neutral-English text (not translated by the app).",
     "  Keep it on a single line inside the quotes.",
     "- \"url\": optional; defaults to https://github.com/<username> when missing.",
+    "- \"group\": which heading the person is shown under in the Contributors",
+    "  screen: \"developer\", \"supporter\" (help and testing that arrive almost",
+    "  immediately) or \"contributor\" (everyone else). Missing means",
+    "  \"contributor\", so an entry added without it still appears.",
     "",
     "Notes:",
     "- The order in the file is the order shown in the Contributors screen.",
@@ -34,22 +38,38 @@
   ],
   "contributors": [
     {
-      "username": "vivizzz007",
-      "name": "VIVIDH P ASHOKAN"
-      "description": "Created the Android app that VIVI Music DE is based on, and keeps the project — and its developer — in line."
+      "username": "PiBOH",
+      "name": "Pietro Bonaldo",
+      "description": "Created the desktop version of Axolotl Music, despite having a 16 years old potato PC.",
+      "group": "developer"
     },
     {
-      "username": "bogdan-developer",
-      "description": "Contributes massively by testing VIVI Music DE on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)"
+      "username": "vivizzz007",
+      "name": "VIVIDH P ASHOKAN",
+      "description": "Created the Android app that Axolotl Music is based on, and keeps the project — and its developer — in line.",
+      "group": "developer"
     },
     {
       "username": "Ansu216",
-      "description": "Always available to help those in need in the Telegram channel, even without a PC."
+      "description": "Always available to help those in need in the Telegram channel, even without a PC.",
+      "group": "supporter"
+    },
+    {
+      "username": "bogdan-developer",
+      "description": "Contributes massively by testing Axolotl Music on macOS (Apple Silicon) and providing feedback — including several technical feedback — across every area of ​​the app. (Without him, the WebView login probably wouldn't work today.)",
+      "group": "supporter"
+    },
+    {
+      "username": "Adithyan007hack",
+      "name": "AdithyanSM",
+      "description": "Contributes massively by testing Axolotl Music on Fedora linux.",
+      "group": "supporter"
     },
     {
       "username": "dumbshrn",
       "name": "Sharon Thomas",
-      "description": "Created the foundation of the new UX — without him, this would not exist."
+      "description": "Created the foundation of the new UX — without him, this would not exist.",
+      "group": "contributor"
     }
   ]
 }

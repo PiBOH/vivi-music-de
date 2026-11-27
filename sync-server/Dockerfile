@@ -1,4 +1,4 @@
-# VIVI Music — sync relay (Hugging Face Spaces fallback)
+# Axolotl Music — sync relay (Hugging Face Spaces fallback)
 # SDK: Docker. HF exposes HTTPS in front of this process, so clients connect
 # with wss://<username>-<space>.hf.space
 FROM node:18-slim
