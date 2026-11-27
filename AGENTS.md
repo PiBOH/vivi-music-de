@@ -197,6 +197,12 @@ dependencies there, or you break the desktop build.
     the only place an APK ever lives. That branch is recreated from scratch and
     force-pushed on every run: it must always be **one commit**, so the APK
     binaries never accumulate in the repository history.
+  - **Checksums are one file per release (mandatory)**: `Auto Release` publishes
+    a single `SHA256SUMS` at the root of the release assets, one
+    `<sha256>  <file>` line for every installer and archive it uploaded (the
+    `INSTALL-GUIDE.md` and the checksum file itself are excluded). It writes no
+    per-file `.sha256` any more; the updater reads GitHub's asset digest first
+    and falls back to the matching line in `SHA256SUMS`.
   - `.releases/apk/latest` is the **only** APK download path: the website
     (the `gh-pages` branch, `APK_BASE`), the desktop Devices screen
     (`ApkDownloads`) and the mobile updater (`APK_LATEST_VERSION_URL`) all read
@@ -496,8 +502,8 @@ cloned screen, not by adding a parallel surface next to it.
   order. A scan and a repair never delete a song file on their own, and a
   reference that became valid again is kept. The updater downloads the
   asset that matches the OS, checks its SHA-256 against GitHub's asset digest
-  or the `.sha256` published beside the installer, and only then offers the
-  install; the automatic release workflow writes those checksums. It reads
+  or against its line in the release's single `SHA256SUMS` file, and only then
+  offers the install; the automatic release workflow writes that one file. It reads
   the official `PiBOH/axolotl-music` release list (`/releases?per_page=20`,
   prereleases included), not `/releases/latest`, because every desktop build
   is a prerelease and the latest endpoint has no stable release to return.
@@ -1290,6 +1296,25 @@ version of the form `<mobile>_DE-<de>` (e.g. `6.0.5_DE-1.0.0`):
   generates `AppInfo` so the About screen can show `fullVersion` + channel.
   Keep that derivation in place — do not put the full `_DE-` version into
   `packageVersion`.
+
+#### The 1.56.0 beta line — MANDATORY until the owner says otherwise
+
+The owner set this rule on 2026-11-27: every change published from 2026-11-05
+onward stays on the single desktop line `6.0.8.11_DE-1.56.0-betaN`, and only
+the beta number moves. That means:
+
+- `version.txt` keeps line 1 `6.0.8.11` and line 4 `1.56.0`; line 6 is `betaN`
+  (currently `beta5`). A new DE release bumps only N (`beta5`, `beta6`, ...) and
+  line 5 (the DE version code) by one. Never move the base to `1.56.1`, `1.57`
+  or `1.58` while this rule is in force.
+- The changelog heading is
+  `## [6.0.8.11_DE-1.56.0-betaN] - YYYY-MM-DD`. The 2026-11-05 to 2026-11-27
+  window is consolidated once into `6.0.8.11_DE-1.56.0-beta5`, and those
+  entries are never split across versions again.
+- The GitHub release tag and title follow `version.txt`:
+  `6.0.8.11_DE-1.56.0-betaN` and
+  `Axolotl Music 6.0.8.11_DE 1.56.0-betaN`.
+- The rule stays until the owner explicitly replaces it.
 
 ### Two changelogs — `CHANGELOG.md` (short) and `CHANGELOG.dev.md` (full)
 

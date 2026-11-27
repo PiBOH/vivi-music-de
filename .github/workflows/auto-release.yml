@@ -114,14 +114,22 @@ jobs:
           # Release display name: "Axolotl Music <mobile>_DE <de_version>"
           # (e.g. "Axolotl Music 6.4.3_DE 1.33.6" — no "v" prefix, no hyphen after DE).
           TITLE_VERSION="${FULL_VERSION//_DE-/_DE }"
+          # The title carries the channel for a non-stable release, so a beta
+          # reads "Axolotl Music 6.0.8.11_DE 1.56.0-beta5" and never loses the
+          # only part of the version that moved.
+          if [[ "$CHANNEL" == "stable" ]]; then
+            TITLE_CHANNEL=""
+          else
+            TITLE_CHANNEL="-$CHANNEL"
+          fi
           echo "version=$FULL_VERSION" >> "$GITHUB_OUTPUT"
           echo "de_version=$DE_VERSION" >> "$GITHUB_OUTPUT"
           echo "title_version=$TITLE_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "name=Axolotl Music $TITLE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=Axolotl Music $TITLE_VERSION$TITLE_CHANNEL" >> "$GITHUB_OUTPUT"
           echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
           echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $FULL_VERSION (title: Axolotl Music $TITLE_VERSION, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
+          echo "Resolved version: $FULL_VERSION (title: Axolotl Music $TITLE_VERSION$TITLE_CHANNEL, tag: $TAG, channel: $CHANNEL, prerelease: $PRERELEASE)"
 
       - name: Extract changelog section
         id: changelog
@@ -234,15 +242,21 @@ jobs:
           rm -rf "$AUR_DIR"
           # The install guide ships with every release.
           cp INSTALL-GUIDE.md artifacts/
-          # A checksum next to every installer: the desktop updater verifies the
-          # download against this file when GitHub's asset digest is absent.
-          for file in artifacts/AxolotlMusic-*; do
-            case "$file" in
-              *.sha256|*.md|*.tar.gz) continue ;;
-            esac
-            [ -f "$file" ] || continue
-            (cd artifacts && sha256sum "$(basename "$file")" > "$(basename "$file").sha256")
-          done
+          # One checksum file for the whole release: the desktop updater falls
+          # back to the line that names its asset when GitHub's asset digest is
+          # absent. No per-installer `.sha256` files are written any more.
+          (
+            cd artifacts
+            : > SHA256SUMS
+            for file in *; do
+              case "$file" in
+                *.md|SHA256SUMS) continue ;;
+              esac
+              [ -f "$file" ] || continue
+              sha256sum "$file" >> SHA256SUMS
+            done
+          )
+          cat artifacts/SHA256SUMS
           ls -la artifacts
 
       - name: Create GitHub release

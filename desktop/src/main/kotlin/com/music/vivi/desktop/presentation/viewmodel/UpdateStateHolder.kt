@@ -138,14 +138,18 @@ class UpdateStateHolder(
             return
         }
         val checksumAsset = release.assets.firstOrNull {
+            it.name.equals("SHA256SUMS", ignoreCase = true)
+        } ?: release.assets.firstOrNull {
             it.name.equals("${asset.name}.sha256", ignoreCase = true)
         }
         coroutineScope.launch {
             val expected = asset.sha256 ?: checksumAsset
                 ?.let { releaseClient.fetchText(it.downloadUrl).getOrNull() }
                 ?.lineSequence()
-                ?.firstOrNull()
-                ?.trim()
+                ?.map { it.trim() }
+                ?.firstOrNull { line ->
+                    line.substringAfter(' ', "").trim().removePrefix("*").equals(asset.name, ignoreCase = true)
+                }
                 ?.substringBefore(' ')
                 ?.lowercase()
                 ?.takeIf { it.length == 64 }
