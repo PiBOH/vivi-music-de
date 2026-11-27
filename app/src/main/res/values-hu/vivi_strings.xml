@@ -240,7 +240,7 @@
     <string name="enable_scrobbling">Scrobbling engedélyezése</string>
     <string name="lastfm_now_playing">\"Épp hallgatott\" állapot küldése</string>
     <string name="last_fm_send_likes">Kedvelések küldése</string>
-    <string name="last_fm_send_likes_description">Dalok kedvencnek jelölése/törlése a Last.fm-en, ha a vivimusic-ben kedveled/nem kedveled őket</string>
+    <string name="last_fm_send_likes_description">Dalok kedvencnek jelölése/törlése a Last.fm-en, ha a Axolotl Music-ben kedveled/nem kedveled őket</string>
     <string name="logging_in">Bejelentkezés…</string>
     <string name="scrobbling_configuration">Scrobbling beállítása</string>
     <string name="scrobble_min_track_duration">Ennél hosszabb számok scrobble-olása</string>
@@ -277,7 +277,7 @@
     <string name="advanced_desc">Tempó és hangmagasság módosítása</string>
     <string name="devices">Eszközök</string>
     <string name="device_sync">Eszközszinkronizálás</string>
-    <string name="device_sync_desc">Párosítsd ezt a telefont a számítógépeden futó VIVI Music DE-vel a beállítások, a sor és a könyvtár szinkronizálásához.</string>
+    <string name="device_sync_desc">Párosítsd ezt a telefont a számítógépeden futó Axolotl Music-vel a beállítások, a sor és a könyvtár szinkronizálásához.</string>
     <string name="device_sync_server">Relay szerver</string>
     <string name="device_sync_discover">Asztali gép keresése</string>
     <string name="device_sync_scan_qr">QR-kód beolvasása</string>
@@ -288,6 +288,6 @@
     <string name="device_sync_paired">Párosítva</string>
     <string name="device_sync_not_paired">Nincs párosítva</string>
     <string name="device_sync_paired_device">Párosított eszköz</string>
-    <string name="sync_vivi_volume">VIVI hangerő szinkronizálása</string>
-    <string name="sync_vivi_volume_desc">Tükrözd az alkalmazáson belüli hangerő-csúszkát e telefon és a VIVI Music DE között. Kapcsold ki, ha azt szeretnéd, hogy az egyes eszközök lejátszó-hangereje független maradjon.</string>
+    <string name="sync_vivi_volume">Axolotl Music hangerő szinkronizálása</string>
+    <string name="sync_vivi_volume_desc">Tükrözd az alkalmazáson belüli hangerő-csúszkát e telefon és a Axolotl Music között. Kapcsold ki, ha azt szeretnéd, hogy az egyes eszközök lejátszó-hangereje független maradjon.</string>
 </resources>

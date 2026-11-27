@@ -48,7 +48,10 @@
     <string name="search">Rechercher</string>
     <string name="search_yt_music">Rechercher sur YouTube Music…</string>
     <string name="search_library">Rechercher dans votre bibliothèque…</string>
+    <string name="search_albums">Rechercher des albums…</string>
+    <string name="search_playlists">Rechercher des playlists…</string>
     <string name="filter_library">Bibliothèque</string>
+    <string name="all">Tout</string>
     <string name="filter_liked">Favoris</string>
     <string name="filter_downloaded">Téléchargés</string>
     <string name="filter_all">Tout</string>
@@ -317,6 +320,7 @@
     <string name="audio_quality_high">Élevée</string>
     <string name="audio_quality_low">Faible</string>
     <string name="queue">File d\'attente</string>
+    <string name="playing_from">Diffusion à partir de</string>
     <string name="persistent_queue">File d\'attente persistante</string>
     <string name="persistent_queue_desc">Restaurer votre dernière file d\'attente au démarrage de l\'application</string>
     <string name="auto_load_more">Charger automatiquement plus de titres</string>
@@ -370,7 +374,7 @@
     <string name="restore_failed">Échec de la restauration de la sauvegarde</string>
 
     <string name="discord_integration">Intégration Discord</string>
-    <string name="discord_information">Vivi Music utilise la bibliothèque KizzyRPC pour définir le statut de votre compte Discord. Cela implique l\'utilisation de la passerelle Discord, ce qui peut être considéré comme une violation des conditions d\'utilisation de Discord. Cependant, aucun cas de suspension de compte utilisateur pour cette raison n\'a été recensé. Utilisez ce service à vos risques et périls. \n\nVivi Music extraira uniquement votre jeton ; toutes les autres données sont stockées localement.</string>
+    <string name="discord_information">Axolotl Music utilise la bibliothèque KizzyRPC pour définir le statut de votre compte Discord. Cela implique l\'utilisation de la passerelle Discord, ce qui peut être considéré comme une violation des conditions d\'utilisation de Discord. Cependant, aucun cas de suspension de compte utilisateur pour cette raison n\'a été recensé. Utilisez ce service à vos risques et périls. \n\nAxolotl Music extraira uniquement votre jeton ; toutes les autres données sont stockées localement.</string>
     <string name="dismiss">Rejeter</string>
     <string name="options">Options</string>
     <string name="preview">Aperçu</string>
@@ -441,13 +445,25 @@
     <string name="new_release_notifications_subtitle">Recevoir une notification lorsque les artistes que vous avez ajoutés à vos favoris sortent de nouveaux titres ou de nouveaux albums (version bêta)</string>
     <string name="new_release_channel_name">Nouveautés</string>
     <string name="new_release_channel_desc">Notifications concernant les nouvelles sorties de vos artistes favoris</string>
-    <string name="new_release_notifications_info">Sur certains appareils (Samsung, Xiaomi, etc.), l\'optimisation de la batterie peut retarder ou bloquer les notifications en arrière-plan. Pour vous assurer de recevoir vos alertes en temps voulu, configurez Vivi Music sur « Utilisation de la batterie sans restriction » dans les paramètres de votre appareil.</string>
+    <string name="new_release_notifications_info">Sur certains appareils (Samsung, Xiaomi, etc.), l\'optimisation de la batterie peut retarder ou bloquer les notifications en arrière-plan. Pour vous assurer de recevoir vos alertes en temps voulu, configurez Axolotl Music sur « Utilisation de la batterie sans restriction » dans les paramètres de votre appareil.</string>
     <string name="taste_based_release_notifications">Alertes de sortie basées sur les goûts</string>
     <string name="taste_based_release_notifications_subtitle">Recevoir une notification lorsque les artistes que vous écoutez régulièrement sortent de nouveaux titres ou de nouveaux albums</string>
+
+    <!-- Library Toggle -->
+    <string name="switch_to_grid_view">Passer à l\'affichage en grille</string>
+    <string name="switch_to_list_view">Passer à l\'affichage sous forme de liste</string>
+
+    <!-- Force Library Sync -->
+    <string name="library_force_sync">Synchroniser la bibliothèque maintenant</string>
+    <string name="library_syncing">Synchronisation de la bibliothèque…</string>
+    <string name="library_sync_done">La bibliothèque a été synchronisée avec succès</string>
+    <string name="library_sync_error">Échec de la synchronisation — appuyez ici pour réessayer</string>
+    <string name="listening_summary">Résumé de l\'écoute</string>
+    <string name="setting_listening_summary_desc">Consultez vos tendances d\'écoute quotidiennes et vos statistiques historiques de lecture.</string>
     <string name="restore_failed_corrupt">La sauvegarde est corrompue et ne peut pas être restaurée</string>
     <string name="restore_backup_date">Date de la sauvegarde : %s</string>
     <string name="restore_backup_version">Version de l\'application : %s</string>
     <string name="restore_unknown">Inconnu</string>
     <string name="sync_native_volume">Synchroniser le volume du système</string>
-    <string name="sync_native_volume_desc">Reproduire le volume système de ce téléphone et de VIVI Music DE, pour que les touches de volume média agissent sur les deux. Désactivez-le pour garder les deux appareils indépendants.</string>
+    <string name="sync_native_volume_desc">Reproduire le volume système de ce téléphone et de Axolotl Music, pour que les touches de volume média agissent sur les deux. Désactivez-le pour garder les deux appareils indépendants.</string>
 </resources>

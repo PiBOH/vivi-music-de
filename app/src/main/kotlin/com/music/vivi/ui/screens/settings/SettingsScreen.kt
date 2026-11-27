@@ -23,8 +23,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -93,27 +91,19 @@ fun SettingsScreen(
 
     Column(
         Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
+            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
-            )
-        )
         Text(
             text = stringResource(R.string.settings),
             style = MaterialTheme.typography.displaySmall.copy(
                 fontWeight = FontWeight.SemiBold
             ),
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(start = 8.dp, top = 24.dp, bottom = 4.dp)
+            modifier = Modifier.padding(start = 8.dp, top = 16.dp, bottom = 8.dp)
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
         // Group 1: Important / Account
         ExpressiveSettingGroup(
@@ -121,7 +111,7 @@ fun SettingsScreen(
             items = buildList {
                 add(
                     Material3SettingsItem(
-                        icon = painterResource(if (isUpdateAvailable) R.drawable.vivimusicnotification else R.drawable.network_update),
+                        icon = painterResource(if (isUpdateAvailable) R.drawable.update_alert else R.drawable.system_update_uptodate),
                         title = { Text(stringResource(R.string.system_update)) },
                         description = {
                             if (isUpdateAvailable) {
@@ -216,18 +206,18 @@ fun SettingsScreen(
                 )
                 add(
                     Material3SettingsItem(
-                        icon = painterResource(R.drawable.storage),
-                        title = { Text(stringResource(R.string.storage)) },
-                        description = { Text(stringResource(R.string.setting_storage_desc)) },
-                        onClick = { navController.navigate("settings/storage") }
+                        icon = painterResource(R.drawable.history),
+                        title = { Text(stringResource(R.string.listening_summary)) },
+                        description = { Text(stringResource(R.string.setting_listening_summary_desc)) },
+                        onClick = { navController.navigate("settings/listening_summary") }
                     )
                 )
                 add(
                     Material3SettingsItem(
-                        icon = painterResource(R.drawable.energy_savings_leaf),
-                        title = { Text(stringResource(R.string.data_saver)) },
-                        description = { Text(stringResource(R.string.setting_data_saver_desc)) },
-                        onClick = { navController.navigate("settings/datasaver") }
+                        icon = painterResource(R.drawable.storage),
+                        title = { Text(stringResource(R.string.storage)) },
+                        description = { Text(stringResource(R.string.setting_storage_desc)) },
+                        onClick = { navController.navigate("settings/storage") }
                     )
                 )
             }

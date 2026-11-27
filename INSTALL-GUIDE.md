@@ -1,7 +1,7 @@
 # Axolotl Music — Installation Guide
 
 Axolotl Music is the native desktop edition of the
-[Vivi Music Android app](https://github.com/vivizzz007/vivi-music) (YouTube Music client),
+[Axolotl Music Android app](https://github.com/PiBOH/axolotl-music/releases/latest) (YouTube Music client),
 built with Kotlin and Compose Multiplatform. It runs on **Windows 10+**,
 **Linux (x86_64)** and **macOS 10.15+**.
 
@@ -278,5 +278,5 @@ On Windows `~` is `C:\Users\<you>`, on Linux/macOS it's `/home/<you>` /
 ---
 
 *Axolotl Music — free software under a
-[modified GPL-3.0](https://github.com/PiBOH/axolotl-music/blob/axolotl-music/LICENSE) license. The original
+[modified GPL-3.0](https://github.com/PiBOH/axolotl-music/blob/axolotl-music-de/LICENSE) license. The original
 mobile app is created by [VIVIDH P ASHOKAN](https://github.com/vivizzz007).*

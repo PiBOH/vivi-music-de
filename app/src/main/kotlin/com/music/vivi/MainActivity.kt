@@ -591,7 +591,7 @@ class MainActivity : ComponentActivity() {
         ) {
             if (lastSeenStarPromptVersion != currentVersion && !hasStarredRepo && !isStarred) {
                 ActionPromptDialog(
-                    title = "Support ViviMusic \u2B50",
+                    title = "Support Axolotl Music \u2B50",
                     onDismiss = { setLastSeenStarPromptVersion(currentVersion) },
                     onConfirm = {
                         setLastSeenStarPromptVersion(currentVersion)
@@ -606,7 +606,7 @@ class MainActivity : ComponentActivity() {
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             Text(
-                                text = "If you enjoy using ViviMusic, would you consider starring our repository on GitHub?",
+                                text = "If you enjoy using Axolotl Music, would you consider starring our repository on GitHub?",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface
                             )

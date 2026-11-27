@@ -216,15 +216,7 @@ class ListenTogetherClient @Inject constructor(
     private val _events = MutableSharedFlow<ListenTogetherEvent>()
     val events: SharedFlow<ListenTogetherEvent> = _events.asSharedFlow()
     
-    init {
-        setInstance(this)
-        ensureNotificationChannel()
-        // Load persisted session info asynchronously after construction to avoid calling log() before flows are initialized
-        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
-            loadPersistedSession()
-            observeNetworkChanges()
-        }
-    }
+
 
     /**
      * Observe network changes to trigger reconnections
@@ -417,6 +409,16 @@ class ListenTogetherClient @Inject constructor(
         .pingInterval(30, TimeUnit.SECONDS)
         .build()
 
+    init {
+        setInstance(this)
+        ensureNotificationChannel()
+        // Load persisted session info asynchronously after construction to avoid calling log() before flows are initialized
+        CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {
+            loadPersistedSession()
+            observeNetworkChanges()
+        }
+    }
+
     private fun getServerUrl(): String {
         val savedUrl = context.dataStore.get(ListenTogetherServerUrlKey, DEFAULT_SERVER_URL)
         // If the saved URL is no longer in our list (e.g. Meowery was removed), revert to ViviMusic default
@@ -464,6 +466,14 @@ class ListenTogetherClient @Inject constructor(
             _connectionState.value == ConnectionState.CONNECTING) {
             log(LogLevel.WARNING, "Already connected or connecting")
             return
+        }
+
+        // Clean up previous websocket to prevent memory leaks and duplicate events
+        try {
+            webSocket?.cancel()
+            webSocket = null
+        } catch (e: Exception) {
+            log(LogLevel.ERROR, "Error cancelling previous websocket", e.message)
         }
 
         _connectionState.value = ConnectionState.CONNECTING

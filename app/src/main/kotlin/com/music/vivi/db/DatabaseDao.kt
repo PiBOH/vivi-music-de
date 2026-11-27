@@ -606,6 +606,22 @@ interface DatabaseDao {
     @Query("SELECT * FROM song")
     fun allSongs(): Flow<List<Song>>
 
+    /**
+     * Rows whose stored title is empty, or is their own video id.
+     *
+     * A song can arrive with no title through the device sync (the peer's row
+     * had none), and a row written that way keeps its video id as the name - the
+     * `x8-Wpxu7hag` the app then shows instead of the song - forever: nothing
+     * re-reads the name of a song that is already in the library. [limit] keeps
+     * the repair bounded, so one run cannot become hundreds of requests.
+     */
+    @Query("SELECT * FROM song WHERE title = '' OR title = id LIMIT :limit")
+    suspend fun songsNamedAfterTheirId(limit: Int): List<SongEntity>
+
+    /** Renames the row [id], used by the one-shot repair above. */
+    @Query("UPDATE song SET title = :title WHERE id = :id")
+    suspend fun updateSongTitle(id: String, title: String)
+
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
     @Query(

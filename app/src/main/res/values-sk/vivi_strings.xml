@@ -229,7 +229,7 @@
     <string name="scrobble_delay_percent">Percentuálne oneskorenie Scrobble</string>
     <string name="scrobble_delay_minutes">Minúty oneskorenia Scrobble</string>
     <string name="last_fm_send_likes">Odoslať označenia Páči sa mi to/Nepáči sa mi to</string>
-    <string name="last_fm_send_likes_description">Piesne, ktoré sa mi páčia/nepáčia, sa mi páčia na Last.fm, keď sa mi páčia/nepáčia na vivimusice</string>
+    <string name="last_fm_send_likes_description">Piesne, ktoré sa mi páčia/nepáčia, sa mi páčia na Last.fm, keď sa mi páčia/nepáčia na Axolotl Musice</string>
     <string name="top_result">Top výsledok</string>
     <string name="other_results">Ďalšie</string>
     <string name="download_playlist_desc">Stiahnuť všetky skladby na počúvanie offline</string>
@@ -304,14 +304,14 @@
     <string name="wrapped_total_artists_subtitle">Jedineční interpreti</string>
     <string name="wrapped_total_songs_title">Vypočuli ste si</string>
     <string name="wrapped_total_songs_subtitle">Jedinečné skladby</string>
-    <string name="wrapped_intro_title">vivimusic</string>
+    <string name="wrapped_intro_title">Axolotl Music</string>
     <string name="wrapped_intro_subtitle">Je čas zistiť, čo ste počúvali</string>
     <string name="wrapped_intro_button">poďme!</string>
-    <string name="wrapped_end_thanks">Ďakujeme za počúvanie s vivimusicom!</string>
+    <string name="wrapped_end_thanks">Ďakujeme za počúvanie s Axolotl Musicom!</string>
     <string name="wrapped_end_create_playlist">Vytvorte si svoj Wrapped zoznam skladieb</string>
     <string name="wrapped_end_creating_playlist">Vytvára sa...</string>
     <string name="wrapped_end_playlist_saved">Zoznam skladieb bol uložený</string>
-    <string name="wrapped_logo_content_description">vivimusic Logo</string>
+    <string name="wrapped_logo_content_description">Axolotl Music Logo</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">VAŠE WRAPPED JE HOTOVÉ!</string>
     <string name="wrapped_ready_subtitle">Je čas pozrieť sa, čo sa vám tento rok páčilo.</string>
@@ -330,7 +330,7 @@
     <string name="enable">Povoliť</string>
     <string name="devices">Zariadenia</string>
     <string name="device_sync">Synchronizácia zariadení</string>
-    <string name="device_sync_desc">Spárujte tento telefón s VIVI Music DE v počítači a synchronizujte nastavenia, front a knižnicu.</string>
+    <string name="device_sync_desc">Spárujte tento telefón s Axolotl Music v počítači a synchronizujte nastavenia, front a knižnicu.</string>
     <string name="device_sync_server">Prenosový server</string>
     <string name="device_sync_discover">Nájsť počítač</string>
     <string name="device_sync_scan_qr">Naskenovať QR kód</string>
@@ -341,6 +341,6 @@
     <string name="device_sync_paired">Spárované</string>
     <string name="device_sync_not_paired">Nespárované</string>
     <string name="device_sync_paired_device">Spárované zariadenie</string>
-    <string name="sync_vivi_volume">Synchronizovať hlasitosť VIVI</string>
-    <string name="sync_vivi_volume_desc">Zrkadlite posuvník hlasitosti v aplikácii medzi týmto telefónom a VIVI Music DE. Vypnite ho, aby hlasitosť prehrávača každého zariadenia zostala nezávislá.</string>
+    <string name="sync_vivi_volume">Synchronizovať hlasitosť Axolotl Music</string>
+    <string name="sync_vivi_volume_desc">Zrkadlite posuvník hlasitosti v aplikácii medzi týmto telefónom a Axolotl Music. Vypnite ho, aby hlasitosť prehrávača každého zariadenia zostala nezávislá.</string>
 </resources>

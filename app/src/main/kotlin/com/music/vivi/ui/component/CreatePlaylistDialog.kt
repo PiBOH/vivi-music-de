@@ -37,8 +37,8 @@ import com.music.vivi.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.LocalDateTime
-import java.util.logging.Logger
 
 @Composable
 fun CreatePlaylistDialog(
@@ -62,12 +62,23 @@ fun CreatePlaylistDialog(
         onDismiss = onDismiss,
         onDone = { playlistName ->
             coroutineScope.launch(Dispatchers.IO) {
+                // The account copy is best effort, the local playlist is not.
+                // This used to call YouTube.createPlaylist() unguarded: when it
+                // threw (network, expired session, a failed response) the
+                // coroutine died and NOTHING was created - not even the local
+                // playlist - without a message, and when it answered null the
+                // playlist stayed local silently, so the songs added to it never
+                // reached YouTube Music and the user had no way to know. The
+                // local playlist is always created now, and a missing account
+                // copy is reported instead of being swallowed.
                 val browseId = if (syncedPlaylist && isSignedIn) {
-                    YouTube.createPlaylist(playlistName)
-                } else if (syncedPlaylist) {
-                    Logger.getLogger("CreatePlaylistDialog").warning("Not signed in")
-                    return@launch
-                } else null
+                    runCatching { YouTube.createPlaylist(playlistName) }
+                        .onFailure { Timber.e(it, "createPlaylist('$playlistName') failed — the playlist stays local") }
+                        .getOrNull()
+                } else {
+                    if (syncedPlaylist) Timber.w("not signed in — '%s' stays local", playlistName)
+                    null
+                }
 
                 val playlistEntity = PlaylistEntity(
                     name = playlistName,
@@ -80,8 +91,14 @@ fun CreatePlaylistDialog(
                     insert(playlistEntity)
                 }
 
-//                onPlaylistCreated?.invoke(playlistEntity.id)
                 withContext(Dispatchers.Main) {
+                    if (syncedPlaylist && browseId == null) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.error_unknown),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                     onPlaylistCreated?.invoke(playlistEntity.id)
                 }
             }

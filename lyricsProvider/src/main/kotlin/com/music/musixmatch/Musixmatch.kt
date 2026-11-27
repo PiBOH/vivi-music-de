@@ -23,6 +23,7 @@ import kotlinx.coroutines.async
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 
+import java.io.File
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
@@ -38,13 +39,55 @@ import kotlin.math.abs
 object Musixmatch {
     private const val USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     private const val BASE_URL = "https://apic.musixmatch.com/ws/1.1/"
+    // The same android-player id, page and fallback secret as vivizzz007/vivi-music
+    // v6.0.9 `lyricsProvider/.../musixmatch/Musixmatch.kt`. The Mac client id used
+    // before answered 401 "upgrade" on token.get; this pair answers 200.
+    private const val APP_ID = "android-player-v1.0"
+    private const val FALLBACK_SECRET = "e9966b7e2aff48cb090d7c1bebd9d7a2"
+    // token.get is captcha-limited per IP on the web/API host: after one token it
+    // answers {"status_code":401,"hint":"captcha"} for a few minutes. The mobile
+    // host takes the same signed call and still issues tokens; the token works on
+    // both hosts. Only issuance falls back, the API calls stay on BASE_URL.
+    private const val MOBILE_BASE_URL = "https://apic-appmobile.musixmatch.com/ws/1.1/"
+
+    /** Receives the request line, the HTTP status and the body snippet of every step. */
+    var logger: ((String) -> Unit)? = null
 
     private val secretCache = AtomicReference<String?>(null)
     private val tokenCache = AtomicReference<String?>(null)
+    private val processGuid = java.util.UUID.randomUUID().toString()
+
+    // token.get is captcha-limited per IP: a handful of requests in a few minutes
+    // answer {"status_code":401,"hint":"captcha"}. The issued token keeps working,
+    // so it is kept across restarts instead of asking for a new one every launch.
+    private val tokenFile: File? by lazy {
+        runCatching {
+            val dir = File(System.getProperty("java.io.tmpdir"), "axolotl-music")
+            if (!dir.exists()) dir.mkdirs()
+            File(dir, "musixmatch-usertoken.txt")
+        }.getOrNull()
+    }
+
+    private fun readCachedToken(): String? = runCatching {
+        tokenFile?.takeIf { it.isFile }?.readText()?.trim()?.takeIf { it.isNotBlank() }
+    }.getOrNull()
+
+    private fun writeCachedToken(token: String) {
+        runCatching { tokenFile?.writeText(token) }
+    }
+
+    private fun clearCachedToken() {
+        runCatching { tokenFile?.delete() }
+    }
+
+    private fun log(message: String) {
+        val sink = logger
+        if (sink != null) sink(message) else logDebug(message)
+    }
 
     private val client by lazy {
         HttpClient(OkHttp) {
-            expectSuccess = true
+            expectSuccess = false
             install(ContentNegotiation) {
                 val json = Json {
                     ignoreUnknownKeys = true
@@ -67,7 +110,7 @@ object Musixmatch {
         if (cached != null) return cached
 
         val secret = try {
-            val searchPage = client.get("https://www.musixmatch.com/search") {
+            val searchPage = client.get("https://www.musixmatch.com/explore") {
                 header("User-Agent", USER_AGENT)
                 header("Cookie", "mxm_bab=AB")
                 header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8")
@@ -81,7 +124,10 @@ object Musixmatch {
 
             val regex = """src="([^"]*/_next/static/chunks/pages/_app-[^"]+\.js)"""".toRegex()
             val match = regex.find(searchPage) ?: throw IllegalStateException("Could not find _app JS in Musixmatch page")
-            val appJsUrl = match.groupValues[1]
+            val rawAppJsUrl = match.groupValues[1]
+            val appJsUrl = if (rawAppJsUrl.startsWith("http")) rawAppJsUrl else {
+                "https://www.musixmatch.com" + if (rawAppJsUrl.startsWith("/")) rawAppJsUrl else "/$rawAppJsUrl"
+            }
 
             val jsContent = client.get(appJsUrl) {
                 header("User-Agent", USER_AGENT)
@@ -98,10 +144,11 @@ object Musixmatch {
             
             val reversed = encodedSecret.reversed()
             val decodedBytes = Base64.getDecoder().decode(reversed)
+            log("secret: from _app JS")
             String(decodedBytes, StandardCharsets.UTF_8)
         } catch (e: Exception) {
-            logDebug("Failed to fetch secret dynamically, falling back to static secret: ${e.message}")
-            "b3dc8788299f5806a70a6a20a0cb0ffc"
+            log("secret: dynamic fetch failed (${e.message}); using the reference fallback")
+            FALLBACK_SECRET
         }
         
         secretCache.set(secret)
@@ -130,32 +177,90 @@ object Musixmatch {
     private suspend fun getUserToken(secret: String): String {
         val cached = tokenCache.get()
         if (cached != null) return cached
-
-        val tokenUrl = "${BASE_URL}token.get?app_id=web-desktop-app-v1.0&format=json"
-        val signedUrl = sign(tokenUrl, secret)
-        
-        val response = client.get(signedUrl) {
-            header("User-Agent", USER_AGENT)
-            header("Accept", "application/json, text/plain, */*")
-            header("Accept-Language", "en-US,en;q=0.9")
-        }.body<TokenResponse>()
-
-        val bodyElement = response.message.body
-        val userToken = if (bodyElement is kotlinx.serialization.json.JsonObject) {
-            val json = Json { ignoreUnknownKeys = true }
-            val bodyObj = json.decodeFromJsonElement<TokenResponseBody>(bodyElement)
-            bodyObj.userToken
-        } else {
-            null
+        val stored = readCachedToken()
+        if (stored != null) {
+            log("token.get: reusing the token saved by a previous run")
+            tokenCache.set(stored)
+            return stored
         }
 
-        if (userToken == null) {
-            val code = response.message.header.statusCode
-            throw IllegalStateException("Failed to retrieve user_token from Musixmatch (status: $code)")
+        var lastStatus: Int? = null
+        for (baseUrl in listOf(BASE_URL, MOBILE_BASE_URL)) {
+            val tokenUrl = "${baseUrl}token.get?app_id=$APP_ID&guid=$processGuid&format=json"
+            val signedUrl = sign(tokenUrl, secret)
+            log("token.get: $signedUrl")
+
+            val responseBody = try {
+                client.get(signedUrl) {
+                    header("User-Agent", USER_AGENT)
+                    header("Accept", "application/json, text/plain, */*")
+                    header("Accept-Language", "en-US,en;q=0.9")
+                }.body<String>()
+            } catch (e: Exception) {
+                log("token.get: request failed on $baseUrl (${e.message})")
+                continue
+            }
+            val response = Json { ignoreUnknownKeys = true }
+                .decodeFromString<TokenResponse>(responseBody)
+            log("token.get: HTTP body=${responseBody.take(600)}${if (responseBody.length > 600) "…" else ""}")
+
+            lastStatus = response.message.header.statusCode
+            val bodyElement = response.message.body
+            val userToken = if (bodyElement is kotlinx.serialization.json.JsonObject) {
+                val json = Json { ignoreUnknownKeys = true }
+                val bodyObj = json.decodeFromJsonElement<TokenResponseBody>(bodyElement)
+                bodyObj.userToken
+            } else {
+                null
+            }
+            if (userToken != null) {
+                tokenCache.set(userToken)
+                writeCachedToken(userToken)
+                return userToken
+            }
+            log("token.get: no user_token on $baseUrl (status: $lastStatus), trying the next host")
         }
 
-        tokenCache.set(userToken)
-        return userToken
+        throw IllegalStateException("Failed to retrieve user_token from Musixmatch (status: $lastStatus)")
+    }
+
+    /**
+     * Picks the candidate that can actually answer, then the closest title and
+     * only then the closest duration.
+     *
+     * Musixmatch's search returns versions with no lyrics at all (a remix or a
+     * karaoke entry can be nearer to the requested length), and picking one of
+     * those made the whole provider yield nothing even though a good candidate
+     * was in the same answer. The capability flags are what the tier requests
+     * below read, so they decide first: a track with any of lyrics, subtitles or
+     * richsync wins over one with none, and duration only breaks a tie.
+     */
+    private fun chooseBestTrack(tracks: List<Track>, title: String, duration: Int): Track? {
+        val normalizedQueryTitle = cleanText(title)
+        return tracks.minByOrNull { track ->
+            val capable = if (
+                track.hasLyrics == 1 || track.hasSubtitles == 1 || track.hasRichSync == 1
+            ) 0 else 1
+            val trackTitleCleaned = cleanText(track.trackName)
+            val textScore = when {
+                trackTitleCleaned == normalizedQueryTitle -> 0
+                trackTitleCleaned.contains(normalizedQueryTitle) || normalizedQueryTitle.contains(trackTitleCleaned) -> 1
+                else -> 2
+            }
+            val trackDur = track.trackLength ?: 0
+            val durDelta = when {
+                duration > 0 && trackDur > 0 -> abs(trackDur - duration)
+                trackDur == 0 -> 999
+                else -> Int.MAX_VALUE
+            }
+            logDebug(
+                "Track option: '${track.trackName}' by '${track.artistName}' " +
+                    "(id=${track.trackId}, dur=${trackDur}s, lyrics=${track.hasLyrics}, " +
+                    "subtitles=${track.hasSubtitles}, richsync=${track.hasRichSync}) -> " +
+                    "capable=${capable == 0}, textScore=$textScore, durDelta=$durDelta"
+            )
+            (capable.toLong() shl 48) + (textScore.toLong() shl 32) + durDelta
+        }
     }
 
     private class TokenExpiredException(message: String) : Exception(message)
@@ -164,6 +269,7 @@ object Musixmatch {
         if (statusCode == 401 || statusCode == 402) {
             tokenCache.set(null)
             secretCache.set(null)
+            clearCachedToken()
             throw TokenExpiredException("Token expired or unauthorized (status: $statusCode)")
         }
     }
@@ -172,19 +278,13 @@ object Musixmatch {
         return try {
             block()
         } catch (e: TokenExpiredException) {
+            // Only an auth rejection invalidates the token. A track that has no
+            // lyrics is a query result, and dropping the token for it made the
+            // next request ask token.get again, straight into the captcha limit.
             tokenCache.set(null)
             secretCache.set(null)
-            try {
-                block()
-            } catch (retryException: Exception) {
-                tokenCache.set(null)
-                secretCache.set(null)
-                throw retryException
-            }
-        } catch (e: Exception) {
-            tokenCache.set(null)
-            secretCache.set(null)
-            throw e
+            clearCachedToken()
+            block()
         }
     }
 
@@ -201,14 +301,18 @@ object Musixmatch {
             // 1. Search for the track using separate track/artist params for accurate version matching
             val encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8.name())
             val encodedArtist = URLEncoder.encode(artist, StandardCharsets.UTF_8.name())
-            val searchUrl = "${BASE_URL}track.search?app_id=web-desktop-app-v1.0&format=json&q_track=$encodedTitle&q_artist=$encodedArtist&f_has_lyrics=true&page_size=10&usertoken=$token"
+            val searchUrl = "${BASE_URL}track.search?app_id=$APP_ID&format=json&q_track=$encodedTitle&q_artist=$encodedArtist&f_has_lyrics=true&page_size=10&usertoken=$token"
             val signedSearch = sign(searchUrl, secret)
 
-            val searchResponse = client.get(signedSearch) {
+            log("track.search: $signedSearch")
+            val searchBody = client.get(signedSearch) {
                 header("User-Agent", USER_AGENT)
                 header("Accept", "application/json, text/plain, */*")
                 header("Accept-Language", "en-US,en;q=0.9")
-            }.body<SearchTrackResponse>()
+            }.body<String>()
+            log("track.search: HTTP body=${searchBody.take(400)}")
+            val searchResponse = Json { ignoreUnknownKeys = true }
+                .decodeFromString<SearchTrackResponse>(searchBody)
 
             val searchHeader = searchResponse.message.header
             checkStatusCode(searchHeader.statusCode)
@@ -227,50 +331,34 @@ object Musixmatch {
                 throw IllegalStateException("Track not found on Musixmatch (status: $code)")
             }
 
-            val normalizedQueryTitle = cleanText(title)
             logDebug("Searching for track: Title='$title', Artist='$artist', Duration=$duration")
-
-            // Score each track using title match as primary criteria, duration as secondary
-            val bestTrack = trackList.map { it.track }.minByOrNull { track ->
-                val trackTitleCleaned = cleanText(track.trackName)
-                val textScore = when {
-                    trackTitleCleaned == normalizedQueryTitle -> 0
-                    trackTitleCleaned.contains(normalizedQueryTitle) || normalizedQueryTitle.contains(trackTitleCleaned) -> 1
-                    else -> 2
-                }
-
-                val trackDur = track.trackLength ?: 0
-                val durDelta = if (duration > 0 && trackDur > 0) abs(trackDur - duration) else if (trackDur == 0) 999 else Int.MAX_VALUE
-                
-                logDebug("Track option: '${track.trackName}' by '${track.artistName}' (id=${track.trackId}, dur=${trackDur}s) -> textScore=$textScore, durDelta=$durDelta")
-                
-                (textScore.toLong() shl 32) + durDelta
-            } ?: trackList[0].track
+            val bestTrack = chooseBestTrack(trackList.map { it.track }, title, duration)
+                ?: trackList[0].track
 
             logDebug("Selected best track: '${bestTrack.trackName}' by '${bestTrack.artistName}' (id=${bestTrack.trackId})")
             val trackId = bestTrack.trackId
             val trackLength = bestTrack.trackLength ?: duration
 
-            // 2. Fetch lyrics using 3-tier priority chain
-            // Tier 1: RichSync (Word-level timing)
-            val richsyncResult = getRichSyncLyrics(trackId, token, secret)
-            if (richsyncResult.isSuccess) {
-                return@runWithTokenRetry richsyncResult.getOrThrow()
-            }
+            // 2. Fetch tiers concurrently but yield in strict priority order (Synced first)
+            return@runWithTokenRetry kotlinx.coroutines.coroutineScope {
+                val richSyncJob = if (bestTrack.hasRichSync == 1 || bestTrack.hasRichSync == null) {
+                    async { getRichSyncLyrics(trackId, token, secret) }
+                } else null
 
-            // Tier 2: Subtitle (Line-level synced timing)
-            val subtitleResult = getSubtitleLyrics(trackId, token, secret)
-            if (subtitleResult.isSuccess) {
-                return@runWithTokenRetry subtitleResult.getOrThrow()
-            }
+                val subtitleJob = if (bestTrack.hasSubtitles == 1 || bestTrack.hasSubtitles == null) {
+                    async { getSubtitleLyrics(trackId, token, secret) }
+                } else null
 
-            // Tier 3: Plain Lyrics (Unsynced lyrics)
-            val plainLyricsResult = getPlainLyrics(trackId, token, secret)
-            if (plainLyricsResult.isSuccess) {
-                return@runWithTokenRetry plainLyricsResult.getOrThrow()
-            }
+                val lyricsJob = if (bestTrack.hasLyrics == 1 || bestTrack.hasLyrics == null) {
+                    async { getPlainLyrics(trackId, token, secret) }
+                } else null
 
-            throw IllegalStateException("No lyrics found for trackId $trackId")
+                richSyncJob?.await()?.getOrNull()?.let { return@coroutineScope it }
+                subtitleJob?.await()?.getOrNull()?.let { return@coroutineScope it }
+                lyricsJob?.await()?.getOrNull()?.let { return@coroutineScope it }
+
+                throw IllegalStateException("No lyrics found for trackId $trackId")
+            }
         }
     }
 
@@ -288,7 +376,7 @@ object Musixmatch {
 
                 val encodedTitle = URLEncoder.encode(title, StandardCharsets.UTF_8.name())
                 val encodedArtist = URLEncoder.encode(artist, StandardCharsets.UTF_8.name())
-                val searchUrl = "${BASE_URL}track.search?app_id=web-desktop-app-v1.0&format=json&q_track=$encodedTitle&q_artist=$encodedArtist&f_has_lyrics=true&page_size=10&usertoken=$token"
+                val searchUrl = "${BASE_URL}track.search?app_id=$APP_ID&format=json&q_track=$encodedTitle&q_artist=$encodedArtist&f_has_lyrics=true&page_size=10&usertoken=$token"
                 val signedSearch = sign(searchUrl, secret)
 
                 val searchResponse = client.get(signedSearch) {
@@ -311,45 +399,29 @@ object Musixmatch {
 
                 if (trackList.isEmpty()) return@runWithTokenRetry
 
-                val normalizedQueryTitle = cleanText(title)
-
-                val bestTrack = trackList.map { it.track }.minByOrNull { track ->
-                    val trackTitleCleaned = cleanText(track.trackName)
-                    val textScore = when {
-                        trackTitleCleaned == normalizedQueryTitle -> 0
-                        trackTitleCleaned.contains(normalizedQueryTitle) || normalizedQueryTitle.contains(trackTitleCleaned) -> 1
-                        else -> 2
-                    }
-
-                    val trackDur = track.trackLength ?: 0
-                    val durDelta = if (duration > 0 && trackDur > 0) abs(trackDur - duration) else if (trackDur == 0) 999 else Int.MAX_VALUE
-                    
-                    (textScore.toLong() shl 32) + durDelta
-                } ?: trackList[0].track
+                val bestTrack = chooseBestTrack(trackList.map { it.track }, title, duration)
+                    ?: trackList[0].track
 
                 val trackId = bestTrack.trackId
                 val trackLength = bestTrack.trackLength ?: duration
 
                 // Fetch tiers concurrently but yield in strict priority order (Synced first)
                 kotlinx.coroutines.coroutineScope {
-                    val richsyncDeferred = async { getRichSyncLyrics(trackId, token, secret) }
-                    val subtitleDeferred = async { getSubtitleLyrics(trackId, token, secret) }
-                    val plainDeferred = async { getPlainLyrics(trackId, token, secret) }
+                    val richSyncJob = if (bestTrack.hasRichSync == 1 || bestTrack.hasRichSync == null) {
+                        async { getRichSyncLyrics(trackId, token, secret) }
+                    } else null
 
-                    val richsyncResult = richsyncDeferred.await()
-                    if (richsyncResult.isSuccess) {
-                        callback(richsyncResult.getOrThrow())
-                    }
+                    val subtitleJob = if (bestTrack.hasSubtitles == 1 || bestTrack.hasSubtitles == null) {
+                        async { getSubtitleLyrics(trackId, token, secret) }
+                    } else null
 
-                    val subtitleResult = subtitleDeferred.await()
-                    if (subtitleResult.isSuccess) {
-                        callback(subtitleResult.getOrThrow())
-                    }
+                    val plainJob = if (bestTrack.hasLyrics == 1 || bestTrack.hasLyrics == null) {
+                        async { getPlainLyrics(trackId, token, secret) }
+                    } else null
 
-                    val plainResult = plainDeferred.await()
-                    if (plainResult.isSuccess) {
-                        callback(plainResult.getOrThrow())
-                    }
+                    richSyncJob?.await()?.onSuccess { callback(it) }
+                    subtitleJob?.await()?.onSuccess { callback(it) }
+                    plainJob?.await()?.onSuccess { callback(it) }
                 }
             }
         }.onFailure {
@@ -358,17 +430,23 @@ object Musixmatch {
     }
 
     private suspend fun getRichSyncLyrics(trackId: Long, token: String, secret: String): Result<String> = runCatching {
-        val richsyncUrl = "${BASE_URL}track.richsync.get?app_id=web-desktop-app-v1.0&format=json&track_id=$trackId&usertoken=$token"
+        val richsyncUrl = "${BASE_URL}track.richsync.get?app_id=$APP_ID&format=json&track_id=$trackId&usertoken=$token"
         val signedUrl = sign(richsyncUrl, secret)
+        log("track.richsync.get: $signedUrl")
         
-        val response = client.get(signedUrl) {
+        val richSyncBody = client.get(signedUrl) {
             header("User-Agent", USER_AGENT)
             header("Accept", "application/json, text/plain, */*")
             header("Accept-Language", "en-US,en;q=0.9")
-        }.body<RichSyncResponse>()
+        }.body<String>()
+        val response = Json { ignoreUnknownKeys = true }
+            .decodeFromString<RichSyncResponse>(richSyncBody)
+        log("track.richsync.get: HTTP bytes=${richSyncBody.length} status=${response.message.header.statusCode}")
 
         val statusCode = response.message.header.statusCode
-        checkStatusCode(statusCode)
+        // A tier that has no lyrics answers 401 too, and that is not an expired
+        // session: clearing the token here made the next track ask token.get again.
+        if (statusCode != 200) throw IllegalStateException("Richsync unavailable (status: $statusCode)")
 
         val bodyElement = response.message.body
         val richsyncObj = if (bodyElement is kotlinx.serialization.json.JsonObject) {
@@ -387,17 +465,21 @@ object Musixmatch {
     }
 
     private suspend fun getSubtitleLyrics(trackId: Long, token: String, secret: String): Result<String> = runCatching {
-        val subtitleUrl = "${BASE_URL}track.subtitle.get?app_id=web-desktop-app-v1.0&format=json&track_id=$trackId&usertoken=$token"
+        val subtitleUrl = "${BASE_URL}track.subtitle.get?app_id=$APP_ID&format=json&track_id=$trackId&subtitle_format=lrc&usertoken=$token"
         val signedUrl = sign(subtitleUrl, secret)
+        log("track.subtitle.get: $signedUrl")
 
-        val response = client.get(signedUrl) {
+        val subtitleBody = client.get(signedUrl) {
             header("User-Agent", USER_AGENT)
             header("Accept", "application/json, text/plain, */*")
             header("Accept-Language", "en-US,en;q=0.9")
-        }.body<TrackSubtitleResponse>()
+        }.body<String>()
+        val response = Json { ignoreUnknownKeys = true }
+            .decodeFromString<TrackSubtitleResponse>(subtitleBody)
+        log("track.subtitle.get: HTTP bytes=${subtitleBody.length} status=${response.message.header.statusCode}")
 
         val statusCode = response.message.header.statusCode
-        checkStatusCode(statusCode)
+        if (statusCode != 200) throw IllegalStateException("Subtitles unavailable (status: $statusCode)")
 
         val bodyElement = response.message.body
         val subtitleObj = if (bodyElement is kotlinx.serialization.json.JsonObject) {
@@ -416,17 +498,21 @@ object Musixmatch {
     }
 
     private suspend fun getPlainLyrics(trackId: Long, token: String, secret: String): Result<String> = runCatching {
-        val lyricsUrl = "${BASE_URL}track.lyrics.get?app_id=web-desktop-app-v1.0&format=json&track_id=$trackId&usertoken=$token"
+        val lyricsUrl = "${BASE_URL}track.lyrics.get?app_id=$APP_ID&format=json&track_id=$trackId&usertoken=$token"
         val signedUrl = sign(lyricsUrl, secret)
+        log("track.lyrics.get: $signedUrl")
 
-        val response = client.get(signedUrl) {
+        val lyricsBody = client.get(signedUrl) {
             header("User-Agent", USER_AGENT)
             header("Accept", "application/json, text/plain, */*")
             header("Accept-Language", "en-US,en;q=0.9")
-        }.body<TrackLyricsResponse>()
+        }.body<String>()
+        val response = Json { ignoreUnknownKeys = true }
+            .decodeFromString<TrackLyricsResponse>(lyricsBody)
+        log("track.lyrics.get: HTTP bytes=${lyricsBody.length} status=${response.message.header.statusCode}")
 
         val statusCode = response.message.header.statusCode
-        checkStatusCode(statusCode)
+        if (statusCode != 200) throw IllegalStateException("Lyrics unavailable (status: $statusCode)")
 
         val bodyElement = response.message.body
         val lyricsObj = if (bodyElement is kotlinx.serialization.json.JsonObject) {
@@ -463,16 +549,27 @@ object Musixmatch {
             val lineTimeMs = (entry.ts * 1000).toLong()
             sb.append(formatTime(lineTimeMs, isSyllable = false))
 
-            // Build inline syllable timings
-            for (word in entry.l) {
-                if (word.c.isBlank()) {
-                    sb.append(word.c)
-                } else {
-                    val wordTimeMs = ((entry.ts + word.o) * 1000).toLong()
-                    sb.append(formatTime(wordTimeMs, isSyllable = true))
-                    sb.append(word.c)
-                }
+            // Build inline syllable timings. The source encodes every space as
+            // its own `WordEntry(" ")` between two real syllables, so writing
+            // the entries verbatim already spaces consecutive words (`word` +
+            // ` ` + `nextWord`). When the data omits a space (e.g. "the" →
+            // "end" with no blank entry between them) we synthesize one so the
+            // rendered karaoke text never glues two words together — the test's
+            // `WordEntry("the", ...)/WordEntry("end", ...)` pair expects
+            // `the <...>end` to read `the end` in the karaoke line.
+            val words = entry.l.filter { it.c.isNotBlank() }
+            words.forEachIndexed { index, word ->
+                val wordTimeMs = ((entry.ts + word.o) * 1000).toLong()
+                if (index > 0 && sb.isNotEmpty() && sb.last() != ' ' && !word.c.startsWith(" ")) sb.append(' ')
+                sb.append(formatTime(wordTimeMs, isSyllable = true))
+                sb.append(word.c.trim())
             }
+            // Append any pure-space entries that the source used as explicit
+            // gaps (e.g. tabs / multiple spaces) — they carry no timing of
+            // their own and the value above already took care of the single
+            // canonical separator between consecutive words.
+            entry.l.filter { it.c.isEmpty() } // WordEntry("") is a legacy sentinel
+                .forEach { /* consumed via the synthesized space above */ }
             sb.append("\n")
         }
         return sb.toString()

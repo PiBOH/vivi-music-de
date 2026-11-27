@@ -49,6 +49,7 @@ import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.ui.Alignment
 import com.music.vivi.constants.InnerTubeCookieKey
+import com.music.vivi.constants.PinnedLibraryItemsKey
 import com.music.vivi.utils.rememberPreference
 import com.music.innertube.utils.parseCookieString
 import androidx.core.net.toUri
@@ -80,6 +81,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -104,6 +106,7 @@ fun PlaylistMenu(
     }
 
     val (innerTubeCookie) = rememberPreference(InnerTubeCookieKey, "")
+
     val isSignedIn = remember(innerTubeCookie) {
         "SAPISID" in parseCookieString(innerTubeCookie)
     }
@@ -515,6 +518,7 @@ fun PlaylistMenu(
                             }
                         )
                     )
+
                     if (downloadPlaylist != true) {
                         add(
                             when (downloadState) {
@@ -639,7 +643,11 @@ fun PlaylistMenu(
                                                     if (result.isSuccess) {
                                                         successCount++
                                                     } else {
-                                                        result.exceptionOrNull()?.printStackTrace()
+                                                        Timber.e(
+                                                            result.exceptionOrNull(),
+                                                            "addToPlaylist($browseId) failed for '%s'",
+                                                            song.id,
+                                                        )
                                                     }
                                                     withContext(Dispatchers.Main) {
                                                         syncedCount = index + 1
@@ -661,9 +669,27 @@ fun PlaylistMenu(
                                                         ).show()
                                                     }
                                                     isSyncComplete = true
+                                                    // The run is over, so the progress UI must stop: it
+                                                    // used to stay on screen forever when the account
+                                                    // copy could not be created.
+                                                    isSyncing = false
+                                                }
+                                            } else {
+                                                // No account copy: the playlist stays local. The
+                                                // failure is logged with the reason and the spinner
+                                                // is cleared instead of running forever.
+                                                Timber.e("createPlaylist('%s') returned null — the playlist stays local", playlist.playlist.name)
+                                                kotlinx.coroutines.withContext(Dispatchers.Main) {
+                                                    Toast.makeText(
+                                                        context,
+                                                        context.getString(R.string.error_unknown),
+                                                        Toast.LENGTH_LONG
+                                                    ).show()
+                                                    isSyncing = false
                                                 }
                                             }
                                         } catch (e: Exception) {
+                                            Timber.e(e, "sync playlist '%s' failed", playlist.playlist.name)
                                             kotlinx.coroutines.withContext(Dispatchers.Main) {
                                                 Toast.makeText(context, e.message ?: "Failed to sync", Toast.LENGTH_SHORT).show()
                                                 isSyncing = false

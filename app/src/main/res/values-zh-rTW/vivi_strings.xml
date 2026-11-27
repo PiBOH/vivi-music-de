@@ -216,7 +216,7 @@
     <string name="enable_scrobbling">開啟紀錄播放歌曲</string>
     <string name="lastfm_now_playing">傳送正在播放歌曲</string>
     <string name="last_fm_send_likes">傳送喜歡/不喜歡歌曲</string>
-    <string name="last_fm_send_likes_description">同步 vivimusic 喜歡/不喜歡歌曲到 Last.fm</string>
+    <string name="last_fm_send_likes_description">同步 Axolotl Music 喜歡/不喜歡歌曲到 Last.fm</string>
     <string name="scrobbling_configuration">歌曲紀錄設定</string>
     <string name="scrobble_min_track_duration">紀錄播放長度超過以下時間的歌曲</string>
     <string name="scrobble_delay_percent">紀錄延遲比例</string>
@@ -279,7 +279,7 @@
     <string name="delete_profile_confirmation">確定要刪除 %1$s 嗎？刪除後將無法恢復</string>
     <string name="enable_wavy_slider">啟用 Wavy slider</string>
     <string name="wavy">Wavy</string>
-    <string name="visit_vivimusic">訪問 vivimusic</string>
+    <string name="visit_vivimusic">訪問 Axolotl Music</string>
     <string name="enable_dynamic_icon">啟用動態 icon</string>
     <string name="skip_silence_instant">跳過靜音片段</string>
     <string name="skip_silence_desc">快轉歌曲中的靜音片段</string>
@@ -295,12 +295,12 @@
     <string name="pause_music_when_media_is_muted">靜音時暫停音樂播放</string>
     <string name="listen_on_youtube_music">在 YouTube Music 上聆聽</string>
     <string name="turntable_widget_description">快速存取最近播放的曲目</string>
-    <string name="tap_to_open">點擊開啟 vivimusic</string>
+    <string name="tap_to_open">點擊開啟 Axolotl Music</string>
     <string name="persistent_shuffle_desc">在開始播放新歌曲或播放清單時，仍維持隨機播放狀態</string>
     <string name="persistent_shuffle_title">固定隨機播放</string>
     <string name="devices">裝置</string>
     <string name="device_sync">裝置同步</string>
-    <string name="device_sync_desc">將此手機與電腦上的 VIVI Music DE 配對，以同步設定、佇列和媒體庫。</string>
+    <string name="device_sync_desc">將此手機與電腦上的 Axolotl Music 配對，以同步設定、佇列和媒體庫。</string>
     <string name="device_sync_server">中繼伺服器</string>
     <string name="device_sync_discover">尋找桌面端</string>
     <string name="device_sync_scan_qr">掃描 QR 碼</string>
@@ -311,6 +311,6 @@
     <string name="device_sync_paired">已配對</string>
     <string name="device_sync_not_paired">未配對</string>
     <string name="device_sync_paired_device">已配對裝置</string>
-    <string name="sync_vivi_volume">同步 VIVI 音量</string>
-    <string name="sync_vivi_volume_desc">在此手機與 VIVI Music DE 之間鏡像應用內音量滑桿。停用它可讓每台裝置的播放器音量保持獨立。</string>
+    <string name="sync_vivi_volume">同步 Axolotl Music 音量</string>
+    <string name="sync_vivi_volume_desc">在此手機與 Axolotl Music 之間鏡像應用內音量滑桿。停用它可讓每台裝置的播放器音量保持獨立。</string>
 </resources>

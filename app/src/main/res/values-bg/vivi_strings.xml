@@ -229,14 +229,14 @@
     <string name="google_cast">Google Cast</string>
     <string name="google_cast_description">Активиране на предаване на звук към Chromecast и други устройства поддържащи Cast</string>
     <string name="last_fm_send_likes">Изпращане на харесвания/нехаресвания</string>
-    <string name="last_fm_send_likes_description">Добавяне/премахване на любимо в Last.fm, когато харесате/премахнете песен в vivimusic</string>
+    <string name="last_fm_send_likes_description">Добавяне/премахване на любимо в Last.fm, когато харесате/премахнете песен в Axolotl Music</string>
     <string name="logging_in">Влизане…</string>
     <string name="hide_video_songs">Скриване на видео</string>
     <string name="details_desc">Преглед на информацията за песента</string>
     <string name="edit_desc">Промяна на заглавието или изпълнителя</string>
     <string name="devices">Устройства</string>
     <string name="device_sync">Синхронизиране на устройства</string>
-    <string name="device_sync_desc">Сдвоете този телефон с VIVI Music DE на компютъра си, за да синхронизирате настройките, опашката и библиотеката.</string>
+    <string name="device_sync_desc">Сдвоете този телефон с Axolotl Music на компютъра си, за да синхронизирате настройките, опашката и библиотеката.</string>
     <string name="device_sync_server">Релеен сървър</string>
     <string name="device_sync_discover">Откриване на компютъра</string>
     <string name="device_sync_scan_qr">Сканиране на QR код</string>
@@ -247,6 +247,6 @@
     <string name="device_sync_paired">Сдвоено</string>
     <string name="device_sync_not_paired">Не е сдвоено</string>
     <string name="device_sync_paired_device">Сдвоено устройство</string>
-    <string name="sync_vivi_volume">Синхронизиране на силата на звука на VIVI</string>
-    <string name="sync_vivi_volume_desc">Огледално синхронизирайте плъзгача за сила на звука в приложението между този телефон и VIVI Music DE. Изключете го, за да запазите независима силата на звука на всяко устройство.</string>
+    <string name="sync_vivi_volume">Синхронизиране на силата на звука на Axolotl Music</string>
+    <string name="sync_vivi_volume_desc">Огледално синхронизирайте плъзгача за сила на звука в приложението между този телефон и Axolotl Music. Изключете го, за да запазите независима силата на звука на всяко устройство.</string>
 </resources>

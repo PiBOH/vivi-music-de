@@ -171,7 +171,7 @@
     <string name="preview">പ്രിവ്യൂ</string>
     <string name="login_failed">Login പരാജയപ്പെട്ടു</string>
     <string name="action_logout">Logout</string>
-    <string name="discord_information">നിങ്ങളുടെ Discord അക്കൗണ്ടിന്റെ സ്റ്റാറ്റസ് സജ്ജീകരിക്കാൻ vivimusic KizzyRPC ലൈബ്രറി ഉപയോഗിക്കുന്നു. ഇതിൽ Discord ഗേറ്റ്‌വേ കണക്ഷൻ ഉപയോഗിക്കുന്നത് ഉൾപ്പെടുന്നു, ഇത് Discord-ന്റെ TOS-ന്റെ ലംഘനമായി കണക്കാക്കാം. എന്നിരുന്നാലും, ഈ കാരണത്താൽ ഉപയോക്തൃ അക്കൗണ്ടുകൾ താൽക്കാലികമായി നിർത്തിവച്ചതായി അറിയപ്പെടുന്ന കേസുകളൊന്നുമില്ല. നിങ്ങളുടെ സ്വന്തം ഉത്തരവാദിത്തത്തിൽ ഉപയോഗിക്കുക.\n\nvivimusic നിങ്ങളുടെ ടോക്കൺ മാത്രമേ എക്‌സ്‌ട്രാക്‌റ്റ് ചെയ്യുകയുള്ളൂ, മറ്റെല്ലാം പ്രാദേശികമായി സംഭരിക്കപ്പെടും.</string>
+    <string name="discord_information">നിങ്ങളുടെ Discord അക്കൗണ്ടിന്റെ സ്റ്റാറ്റസ് സജ്ജീകരിക്കാൻ Axolotl Music KizzyRPC ലൈബ്രറി ഉപയോഗിക്കുന്നു. ഇതിൽ Discord ഗേറ്റ്‌വേ കണക്ഷൻ ഉപയോഗിക്കുന്നത് ഉൾപ്പെടുന്നു, ഇത് Discord-ന്റെ TOS-ന്റെ ലംഘനമായി കണക്കാക്കാം. എന്നിരുന്നാലും, ഈ കാരണത്താൽ ഉപയോക്തൃ അക്കൗണ്ടുകൾ താൽക്കാലികമായി നിർത്തിവച്ചതായി അറിയപ്പെടുന്ന കേസുകളൊന്നുമില്ല. നിങ്ങളുടെ സ്വന്തം ഉത്തരവാദിത്തത്തിൽ ഉപയോഗിക്കുക.\n\nAxolotl Music നിങ്ങളുടെ ടോക്കൺ മാത്രമേ എക്‌സ്‌ട്രാക്‌റ്റ് ചെയ്യുകയുള്ളൂ, മറ്റെല്ലാം പ്രാദേശികമായി സംഭരിക്കപ്പെടും.</string>
     <string name="history">ചരിത്രം</string>
     <string name="stats">സ്റ്റാറ്റസ്</string>
     <string name="mood_and_genres">സംഗീത വിഭാഗങ്ങൾ</string>
@@ -281,7 +281,7 @@
     <string name="clear_translation_models">വിവർത്തന പദ്ധതികൾ കളയുക</string>
     <string name="devices">ഉപകരണങ്ങൾ</string>
     <string name="device_sync">ഉപകരണ സമന്വയം</string>
-    <string name="device_sync_desc">ക്രമീകരണങ്ങളും ക്യൂവും ലൈബ്രറിയും സമന്വയിപ്പിക്കാൻ ഈ ഫോൺ കമ്പ്യൂട്ടറിലെ VIVI Music DE-യുമായി ജോടിയാക്കുക.</string>
+    <string name="device_sync_desc">ക്രമീകരണങ്ങളും ക്യൂവും ലൈബ്രറിയും സമന്വയിപ്പിക്കാൻ ഈ ഫോൺ കമ്പ്യൂട്ടറിലെ Axolotl Music-യുമായി ജോടിയാക്കുക.</string>
     <string name="device_sync_server">റിലേ സെർവർ</string>
     <string name="device_sync_discover">ഡെസ്ക്ടോപ്പ് കണ്ടെത്തുക</string>
     <string name="device_sync_scan_qr">QR കോഡ് സ്കാൻ ചെയ്യുക</string>
@@ -292,8 +292,8 @@
     <string name="device_sync_paired">ജോടിയാക്കി</string>
     <string name="device_sync_not_paired">ജോടിയാക്കിയിട്ടില്ല</string>
     <string name="device_sync_paired_device">ജോടിയാക്കിയ ഉപകരണം</string>
-    <string name="sync_vivi_volume">VIVI വോളിയം സമന്വയിപ്പിക്കുക</string>
-    <string name="sync_vivi_volume_desc">ഈ ഫോണും VIVI Music DE-യും തമ്മിൽ ആപ്പിനുള്ളിലെ വോളിയം സ്ലൈഡർ പ്രതിഫലിപ്പിക്കുക. ഓരോ ഉപകരണത്തിന്റെയും പ്ലെയർ വോളിയം സ്വതന്ത്രമായി നിലനിർത്താൻ ഇത് അപ്രാപ്തമാക്കുക.</string>
+    <string name="sync_vivi_volume">Axolotl Music വോളിയം സമന്വയിപ്പിക്കുക</string>
+    <string name="sync_vivi_volume_desc">ഈ ഫോണും Axolotl Music-യും തമ്മിൽ ആപ്പിനുള്ളിലെ വോളിയം സ്ലൈഡർ പ്രതിഫലിപ്പിക്കുക. ഓരോ ഉപകരണത്തിന്റെയും പ്ലെയർ വോളിയം സ്വതന്ത്രമായി നിലനിർത്താൻ ഇത് അപ്രാപ്തമാക്കുക.</string>
     <string name="sync_native_volume">OS വോള്യം സിംക് ചെയ്യുക</string>
-    <string name="sync_native_volume_desc">ഈ ഫോണിന്‍റെയും VIVI Music DEയുടെയും സിസ്റ്റം വോള്യം ഒരുപോലെ നിർത്തുക, മീഡിയ വോള്യം കീകൾ രണ്ടിലും പ്രവർത്തിക്കാൻ. ഓഫ് ചെയ്താൽ രണ്ടു ഉപകരണവും സ്വതന്ത്രമായിരിക്കും.</string>
+    <string name="sync_native_volume_desc">ഈ ഫോണിന്‍റെയും Axolotl Musicയുടെയും സിസ്റ്റം വോള്യം ഒരുപോലെ നിർത്തുക, മീഡിയ വോള്യം കീകൾ രണ്ടിലും പ്രവർത്തിക്കാൻ. ഓഫ് ചെയ്താൽ രണ്ടു ഉപകരണവും സ്വതന്ത്രമായിരിക്കും.</string>
 </resources>

@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
@@ -77,6 +78,7 @@ import com.music.vivi.constants.EnableLrcLibKey
 import com.music.vivi.constants.EnableYouLyPlusKey
 import com.music.vivi.constants.EnablePaxsenixKey
 import com.music.vivi.constants.EnableUnisonKey
+import com.music.vivi.constants.EnableBiniLyricsKey
 import com.music.vivi.constants.HideExplicitKey
 import com.music.vivi.constants.HideVideoSongsKey
 import com.music.vivi.constants.HideYoutubeShortsKey
@@ -111,6 +113,7 @@ import racra.compose.smooth_corner_rect_library.AbsoluteSmoothCornerShape
 import com.music.innertube.models.IpVersion
 import com.music.vivi.constants.IpVersionKey
 
+import com.music.vivi.constants.LyricsPrioritizeSyncAccuracyKey
 import com.music.vivi.lyrics.LyricsProviderRegistry
 import com.music.vivi.ui.component.DraggableLyricsProviderItem
 import com.music.vivi.ui.component.DraggableLyricsProviderList
@@ -119,6 +122,15 @@ import com.music.vivi.utils.PlaybackLogManager
 import com.music.vivi.ui.component.PlaybackLogsDialog
 import androidx.compose.runtime.collectAsState
 import java.net.Proxy
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.launch
+import com.music.vivi.utils.dataStore
+import com.music.vivi.constants.DataSaverKey
+import com.music.vivi.constants.DataSaverBackupCanvasKey
+import com.music.vivi.constants.DataSaverBackupArtistVideoKey
+import com.music.vivi.constants.DataSaverBackupArtistBgVideoKey
+import com.music.vivi.constants.DataSaverBackupAlbumCanvasKey
+import com.music.vivi.constants.CanvasThumbnailAnimationKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,6 +140,32 @@ fun ContentSettings(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val (dataSaver, _) = rememberPreference(DataSaverKey, defaultValue = false)
+    fun toggleDataSaver(enable: Boolean) {
+        scope.launch {
+            context.dataStore.edit { prefs ->
+                if (enable) {
+                    prefs[DataSaverBackupCanvasKey]        = prefs[CanvasThumbnailAnimationKey] ?: true
+                    prefs[DataSaverBackupArtistVideoKey]   = prefs[ShowArtistVideoKey] ?: true
+                    prefs[DataSaverBackupArtistBgVideoKey] = prefs[ShowArtistBackgroundVideoKey] ?: true
+                    prefs[DataSaverBackupAlbumCanvasKey]   = prefs[AlbumCanvasEnabledKey] ?: false
+                    
+                    prefs[CanvasThumbnailAnimationKey]  = false
+                    prefs[ShowArtistVideoKey]           = false
+                    prefs[ShowArtistBackgroundVideoKey] = false
+                    prefs[AlbumCanvasEnabledKey]        = false
+                    prefs[DataSaverKey]                 = true
+                } else {
+                    prefs[CanvasThumbnailAnimationKey]  = prefs[DataSaverBackupCanvasKey] ?: true
+                    prefs[ShowArtistVideoKey]           = prefs[DataSaverBackupArtistVideoKey] ?: true
+                    prefs[ShowArtistBackgroundVideoKey] = prefs[DataSaverBackupArtistBgVideoKey] ?: true
+                    prefs[AlbumCanvasEnabledKey]        = prefs[DataSaverBackupAlbumCanvasKey] ?: false
+                    prefs[DataSaverKey]                 = false
+                }
+            }
+        }
+    }
 
     // Used only before Android 13
     val (appLanguage, onAppLanguageChange) = rememberPreference(key = AppLanguageKey, defaultValue = SYSTEM_DEFAULT)
@@ -156,10 +194,12 @@ fun ContentSettings(
     val (enableYouLyPlus, onEnableYouLyPlusChange) = rememberPreference(key = EnableYouLyPlusKey, defaultValue = true)
     val (enablePaxsenix, onEnablePaxsenixChange) = rememberPreference(key = EnablePaxsenixKey, defaultValue = true)
     val (enableUnison, onEnableUnisonChange) = rememberPreference(key = EnableUnisonKey, defaultValue = true)
+    val (enableBiniLyrics, onEnableBiniLyricsChange) = rememberPreference(key = EnableBiniLyricsKey, defaultValue = true)
     val (lyricsProviderOrder, onLyricsProviderOrderChange) = rememberPreference(
         key = LyricsProviderOrderKey,
         defaultValue = "",
     )
+    val (lyricsPrioritizeSyncAccuracy, onLyricsPrioritizeSyncAccuracyChange) = rememberPreference(key = LyricsPrioritizeSyncAccuracyKey, defaultValue = true)
     val (lengthTop, onLengthTopChange) = rememberPreference(key = TopSize, defaultValue = "50")
     val (quickPicks, onQuickPicksChange) = rememberEnumPreference(key = QuickPicksKey, defaultValue = QuickPicks.QUICK_PICKS)
     val (showWrappedCard, onShowWrappedCardChange) = rememberPreference(key = ShowWrappedCardKey, defaultValue = false)
@@ -372,7 +412,7 @@ fun ContentSettings(
     if (showProviderPriorityDialog) {
         val defaultOrder = LyricsProviderRegistry.getDefaultProviderOrder()
         // User-toggleable provider names (excludes always-on YouTube providers)
-        val userToggleable = setOf("YouLyPlus", "Paxsenix", "BetterLyrics", "Musixmatch", "LrcLib", "Kugou", "Unison")
+        val userToggleable = setOf("YouLyPlus", "Paxsenix", "BetterLyrics", "Musixmatch", "LrcLib", "Kugou", "Unison", "BiniLyrics")
         val enabledProviders = setOfNotNull(
             "LrcLib".takeIf { enableLrclib },
             "Kugou".takeIf { enableKugou },
@@ -381,6 +421,7 @@ fun ContentSettings(
             "YouLyPlus".takeIf { enableYouLyPlus },
             "Paxsenix".takeIf { enablePaxsenix },
             "Unison".takeIf { enableUnison },
+            "BiniLyrics".takeIf { enableBiniLyrics },
         )
 
         // Build a normalized order: saved order first (only known providers), then any missing ones
@@ -711,6 +752,27 @@ fun ContentSettings(
                         )
                     },
                     onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.energy_savings_leaf),
+                    title = { Text(stringResource(R.string.data_saver)) },
+                    description = { Text(stringResource(R.string.setting_data_saver_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = dataSaver,
+                            onCheckedChange = { toggleDataSaver(it) },
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (dataSaver) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { toggleDataSaver(!dataSaver) }
                 )
             )
         )
@@ -1090,10 +1152,53 @@ fun ContentSettings(
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.lyrics),
+                    title = { Text("Bini Lyrics") },
+                    description = { Text("Binimum/KPoe LyricsPlus (Apple Music, Musixmatch, Spotify & more — word-synced)") },
+                    trailingContent = {
+                        Switch(
+                            checked = enableBiniLyrics,
+                            onCheckedChange = onEnableBiniLyricsChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (enableBiniLyrics) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onEnableBiniLyricsChange(!enableBiniLyrics) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.lyrics),
                     title = { Text(stringResource(R.string.lyrics_provider_priority)) },
                     description = { Text(stringResource(R.string.lyrics_provider_priority_desc)) },
                     onClick = { showProviderPriorityDialog = true }
                 ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.lyrics),
+                    title = { Text(stringResource(R.string.lyrics_prioritize_sync_accuracy)) },
+                    description = { Text(stringResource(R.string.lyrics_prioritize_sync_accuracy_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = lyricsPrioritizeSyncAccuracy,
+                            onCheckedChange = onLyricsPrioritizeSyncAccuracyChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (lyricsPrioritizeSyncAccuracy) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onLyricsPrioritizeSyncAccuracyChange(!lyricsPrioritizeSyncAccuracy) }
+                ),
+
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language_korean_latin),
                     title = { Text(stringResource(R.string.lyrics_romanization)) },

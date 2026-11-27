@@ -161,6 +161,7 @@ import com.music.vivi.LocalPlayerConnection
 import com.music.vivi.R
 import com.music.vivi.constants.AudioQuality
 import com.music.vivi.constants.AudioQualityKey
+import com.music.vivi.devicesync.ScreenAwake
 import com.music.vivi.constants.CropAlbumArtKey
 import com.music.vivi.constants.DarkModeKey
 import com.music.vivi.constants.HidePlayerThumbnailKey
@@ -216,6 +217,7 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import com.ermohdamaan.justforpixel.justforpixelexpressivelab.core.components.sliders.ExpressiveWavySlider
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.max
@@ -241,8 +243,10 @@ import com.music.vivi.canvas.TidalCanvasProvider
 import com.music.vivi.constants.CanvasSource
 import com.music.vivi.constants.CanvasSourceKey
 import com.music.vivi.constants.CanvasThumbnailAnimationKey
+import com.music.vivi.constants.CanvasLoadOnlyWifiKey
 import com.music.vivi.extensions.metadata
 import com.music.vivi.ui.player.CanvasArtworkPlaybackCache
+import com.music.vivi.utils.isWifiConnected
 import com.music.vivi.vivimusiccanvas.ViviMusicCanvasProvider
 import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -288,6 +292,7 @@ fun BottomSheetPlayer(
 
     val enableCanvas by rememberPreference(CanvasThumbnailAnimationKey, true)
     val (canvasSource) = rememberEnumPreference(CanvasSourceKey, defaultValue = CanvasSource.AUTO)
+    val canvasLoadOnlyWifi by rememberPreference(CanvasLoadOnlyWifiKey, defaultValue = false)
 
     val shouldUseDarkButtonColors = remember(playerBackground, useDarkTheme) {
         when (playerBackground) {
@@ -300,7 +305,12 @@ fun BottomSheetPlayer(
     val swipeLyrics by rememberPreference(SwipeLyricsKey, false)
     val enableLyricsThumbnailPlayPause by rememberPreference(EnableLyricsThumbnailPlayPauseKey, false)
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
-    val keepScreenOn = isPlaying && isKeepScreenOn
+    // Paired with the desktop: the screen must stay on no matter what the
+    // player is doing, so the sync socket is not torn down by the display
+    // sleeping. Without this the flag was cleared here as soon as the player
+    // collapsed, immediately undoing MainActivity's paired keep-on.
+    val paired by ScreenAwake.paired.collectAsState()
+    val keepScreenOn = (isPlaying && isKeepScreenOn) || paired
 
     DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn) {
         val window = (context as? android.app.Activity)?.window
@@ -326,7 +336,8 @@ fun BottomSheetPlayer(
             if (window != null) {
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.isAppearanceLightStatusBars = !useDarkTheme
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                // Never clear it while paired: the desktop needs this screen on.
+                if (!keepScreenOn) window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
     }
@@ -558,6 +569,10 @@ fun BottomSheetPlayer(
 
     LaunchedEffect(mediaMetadata?.id, albumTitle, playerBackground, canvasSource) {
         if (playerBackground != PlayerBackgroundStyle.APPLE_MUSIC || !enableCanvas) {
+            canvasArtwork = null
+            return@LaunchedEffect
+        }
+        if (canvasLoadOnlyWifi && !isWifiConnected(context)) {
             canvasArtwork = null
             return@LaunchedEffect
         }
@@ -856,32 +871,23 @@ fun BottomSheetPlayer(
                                         .fillMaxSize()
                                         .alpha(backgroundAlpha)
                                 ) {
-                                    // 1. The source component displaying the unblurred image
                                     AsyncImage(
                                         model = ImageRequest.Builder(context)
                                             .data(thumbnailUrl)
-                                            .size(256, 256) // high enough resolution for good source detail
+                                            .size(100, 100) // Lower resolution for better performance
                                             .allowHardware(false)
                                             .build(),
                                         contentDescription = null,
-                                        contentScale = ContentScale.Crop,
+                                        contentScale = ContentScale.FillBounds,
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .hazeSource(state = playerHazeState) // Mark as blur source
+                                            .blur(120.dp) // hardware-efficient native Compose blur on small image
                                     )
 
-                                    // 2. The overlay component rendering the Haze blur effect
                                     Box(
                                         modifier = Modifier
                                             .fillMaxSize()
-                                            .hazeEffect(
-                                                state = playerHazeState,
-                                                style = HazeStyle(
-                                                    blurRadius = 80.dp,
-                                                    tint = HazeTint(Color.Black.copy(alpha = 0.30f)),
-                                                    noiseFactor = 0.15f
-                                                )
-                                            )
+                                            .background(Color.Black.copy(alpha = 0.30f))
                                     )
                                 }
                             }
@@ -1970,6 +1976,37 @@ fun BottomSheetPlayer(
                                 )
                             )
                         },
+                        modifier = Modifier.padding(horizontal = PlayerHorizontalPadding)
+                    )
+                }
+
+                SliderStyle.EXPRESSIVE -> {
+                    ExpressiveWavySlider(
+                        value = { (sliderPosition ?: effectivePosition).toFloat() },
+                        onValueChange = {
+                            if (!isListenTogetherGuest) {
+                                sliderPosition = it.toLong()
+                            }
+                        },
+                        onValueChangeFinished = {
+                            if (!isListenTogetherGuest) {
+                                sliderPosition?.let {
+                                    if (isCasting) {
+                                        castHandler?.seekTo(it)
+                                        lastManualSeekTime = System.currentTimeMillis()
+                                    } else {
+                                        playerConnection.player.seekTo(it)
+                                    }
+                                    position = it
+                                }
+                                sliderPosition = null
+                            }
+                        },
+                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        enabled = !isListenTogetherGuest,
+                        isPlaying = effectiveIsPlaying,
+                        activeTrackColor = textButtonColor,
+                        thumbColor = textButtonColor,
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding)
                     )
                 }

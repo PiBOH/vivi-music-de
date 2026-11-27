@@ -198,4 +198,17 @@ data class SyncedPlaylist(
      * song, renaming) must accept both.
      */
     val remoteId: String? = null,
+    /**
+     * True when this playlist still has to be created (or brought up to date)
+     * on the signed-in account.
+     *
+     * The desktop knows it: it is the device that holds the account session and
+     * pushes the missing playlists, so it is also the device that can say whether
+     * a playlist exists over there yet. The phone reads it to know which of its
+     * playlists YouTube Music does not have, instead of guessing from [remoteId]
+     * (which is also empty for a playlist the desktop created locally and has not
+     * uploaded yet). An older peer leaves it at `false`, which reads as "unknown"
+     * rather than as "already there".
+     */
+    val needsYoutubeSync: Boolean = false,
 )

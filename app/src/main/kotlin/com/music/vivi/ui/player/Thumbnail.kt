@@ -106,6 +106,7 @@ import com.music.vivi.constants.ThumbnailCornerRadius
 import com.music.vivi.listentogether.RoomRole
 import com.music.vivi.ui.component.CastButton
 import com.music.vivi.utils.rememberEnumPreference
+import com.music.vivi.constants.CanvasLoadOnlyWifiKey
 import com.music.vivi.constants.CanvasSource
 import com.music.vivi.constants.CanvasSourceKey
 import com.music.vivi.constants.CanvasThumbnailAnimationKey
@@ -115,11 +116,13 @@ import com.music.vivi.canvas.normalizeForComparison
 import com.music.vivi.extensions.metadata
 import com.music.vivi.ui.utils.resize
 import com.music.vivi.utils.rememberPreference
+import com.music.vivi.utils.isWifiConnected
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import com.music.vivi.applecanvas.AppleMusicCanvasProvider
 import com.music.vivi.vivimusiccanvas.ViviMusicCanvasProvider
+import timber.log.Timber
 import java.util.Locale
 
 /**
@@ -352,9 +355,13 @@ fun Thumbnail(
         if (!thumbnailLazyGridState.isScrollInProgress || !swipeThumbnail || itemScrollOffset != 0 || currentMediaIndex < 0) return@LaunchedEffect
 
         if (currentItem > currentMediaIndex && canSkipNext) {
-            playerConnection.player.seekToNext()
+            if (!playerConnection.service.manualSkipToNextWithCrossfade()) {
+                playerConnection.player.seekToNext()
+            }
         } else if (currentItem < currentMediaIndex && canSkipPrevious) {
-            playerConnection.player.seekToPreviousMediaItem()
+            if (!playerConnection.service.manualSkipToPreviousWithCrossfade()) {
+                playerConnection.player.seekToPreviousMediaItem()
+            }
         }
     }
 
@@ -641,6 +648,7 @@ private fun ThumbnailItem(
     var lastTapTime by remember { mutableLongStateOf(0L) }
 
     val canvasThumbnailAnimation by rememberPreference(CanvasThumbnailAnimationKey, defaultValue = true)
+    val canvasLoadOnlyWifi by rememberPreference(CanvasLoadOnlyWifiKey, defaultValue = false)
 
     Box(
         modifier = modifier
@@ -749,7 +757,7 @@ private fun ThumbnailItem(
                     )
                 }
 
-                if (canvasThumbnailAnimation && item.mediaId == currentMediaId && !rotatingThumbnail && playerBackground != PlayerBackgroundStyle.APPLE_MUSIC) {
+                if (canvasThumbnailAnimation && item.mediaId == currentMediaId && !rotatingThumbnail && playerBackground != PlayerBackgroundStyle.APPLE_MUSIC && (!canvasLoadOnlyWifi || isWifiConnected(context))) {
                 val (canvasSource) = rememberEnumPreference(CanvasSourceKey, defaultValue = CanvasSource.AUTO)
                 val albumTitle = item.mediaMetadata.albumTitle?.toString()
                 var canvasArtwork by remember(item.mediaId, albumTitle) { mutableStateOf<CanvasArtwork?>(null) }
@@ -932,6 +940,7 @@ private fun ThumbnailImage(
                 .build(),
             onError = {
                 val url = currentUrl
+                Timber.e("[Thumbnail] ThumbnailImage load FAILED: url=$url | error=${it.result.throwable}")
                 if (url != null && url.contains("maxresdefault.jpg")) {
                     currentUrl = url.replace("maxresdefault.jpg", "hqdefault.jpg")
                 }

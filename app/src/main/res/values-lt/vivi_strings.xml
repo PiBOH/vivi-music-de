@@ -243,14 +243,14 @@
     <string name="wrapped_total_artists_subtitle">unikalių kūrėjų</string>
     <string name="wrapped_total_songs_title">Jūs klausėtės</string>
     <string name="wrapped_total_songs_subtitle">unikalių dainų</string>
-    <string name="wrapped_intro_title">vivimusic</string>
+    <string name="wrapped_intro_title">Axolotl Music</string>
     <string name="wrapped_intro_subtitle">laikas pamatyti, ką jūs klausėtės</string>
     <string name="wrapped_intro_button">pirmyn!</string>
-    <string name="wrapped_end_thanks">Ačiū, kad klausotės muzikos su „vivimusic”!</string>
+    <string name="wrapped_end_thanks">Ačiū, kad klausotės muzikos su „Axolotl Music”!</string>
     <string name="wrapped_end_create_playlist">Sukurti savo Wrapped grojaraštį</string>
     <string name="wrapped_end_creating_playlist">Kuriama...</string>
     <string name="wrapped_end_playlist_saved">Grojaraštis išsaugotas</string>
-    <string name="wrapped_logo_content_description">„vivimusic” logotipas</string>
+    <string name="wrapped_logo_content_description">„Axolotl Music” logotipas</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">JŪSŲ WRAPPED YRA PARUOŠTAS!</string>
     <string name="wrapped_ready_subtitle">Metas pamatyti, kas jums patiko šiais metais.</string>
@@ -284,9 +284,9 @@
     <string name="error_title">Klaida</string>
     <string name="error_eq_apply_failed">Klaida, įkeliant ekvalaizerio profilį %1$s</string>
     <string name="progress_percent">Progresas %s%%</string>
-    <string name="listening_to_vivimusic">Klausomasi „vivimusic”</string>
+    <string name="listening_to_vivimusic">Klausomasi „Axolotl Music”</string>
     <string name="listen_on_youtube_music">Klausyti per „YouTube Muzika”</string>
-    <string name="visit_vivimusic">Aplankyti „vivimusic”</string>
+    <string name="visit_vivimusic">Aplankyti „Axolotl Music”</string>
     <string name="open">Atidaryti</string>
     <string name="failed_to_create_image">Klaida, kuriant nuotrauką %s</string>
     <string name="copied_title">Nukopijuotas pavadinimas</string>
@@ -299,7 +299,7 @@
     <string name="error_copy_hint">Nukopijuoti klaidos informacija, kad padėtumėte programėlės kūrėjams ištaisyti problemą</string>
     <string name="album_art">Albumo viršelis</string>
     <string name="no_song_playing">Nėra grojančios dainos</string>
-    <string name="tap_to_open">Spauskite, kad atidarytumėte „vivimusic”</string>
+    <string name="tap_to_open">Spauskite, kad atidarytumėte „Axolotl Music”</string>
     <string name="previous">Ankstesnis</string>
     <string name="play_pause">Leisti / pristabdyti</string>
     <string name="next">Kitas</string>
@@ -344,7 +344,7 @@
     <string name="percentage_format">%d%%</string>
     <string name="devices">Įrenginiai</string>
     <string name="device_sync">Įrenginių sinchronizavimas</string>
-    <string name="device_sync_desc">Susiekite šį telefoną su VIVI Music DE kompiuteryje, kad sinchronizuotumėte nustatymus, eilę ir biblioteką.</string>
+    <string name="device_sync_desc">Susiekite šį telefoną su Axolotl Music kompiuteryje, kad sinchronizuotumėte nustatymus, eilę ir biblioteką.</string>
     <string name="device_sync_server">Relės serveris</string>
     <string name="device_sync_discover">Rasti kompiuterį</string>
     <string name="device_sync_scan_qr">Nuskaityti QR kodą</string>
@@ -355,6 +355,6 @@
     <string name="device_sync_paired">Susieta</string>
     <string name="device_sync_not_paired">Nesusieta</string>
     <string name="device_sync_paired_device">Susietas įrenginys</string>
-    <string name="sync_vivi_volume">Sinchronizuoti VIVI garsumą</string>
-    <string name="sync_vivi_volume_desc">Veidrodinkite programos garsumo slankiklį tarp šio telefono ir VIVI Music DE. Išjunkite, kad kiekvieno įrenginio grotuvo garsumas liktų nepriklausomas.</string>
+    <string name="sync_vivi_volume">Sinchronizuoti Axolotl Music garsumą</string>
+    <string name="sync_vivi_volume_desc">Veidrodinkite programos garsumo slankiklį tarp šio telefono ir Axolotl Music. Išjunkite, kad kiekvieno įrenginio grotuvo garsumas liktų nepriklausomas.</string>
 </resources>

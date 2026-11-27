@@ -1,9 +1,9 @@
 {
   "id": "2",
-  "title": "Vivi Music Design Language",
-  "summary": "An inside look into the design principles behind Vivi Music's smooth glassmorphism and animations.",
+  "title": "Axolotl Music Design Language",
+  "summary": "An inside look into the design principles behind Axolotl Music's smooth glassmorphism and animations.",
   "content": [
-    "Designing a music player is all about creating an immersive atmosphere. In Vivi Music, we prioritize rich visual excellence, smooth gradients, and interactive feedback.",
+    "Designing a music player is all about creating an immersive atmosphere. In Axolotl Music, we prioritize rich visual excellence, smooth gradients, and interactive feedback.",
     "Every element, from the rounded corners (20.dp shapes) to the subtle micro-animations when you tap a card, has been designed to feel premium and state of the art.",
     "We avoid browser-default aesthetics and generic primary colors, relying instead on tailored HSL colors, beautiful blur backgrounds, and responsive typography that feels alive under your fingertips."
   ],

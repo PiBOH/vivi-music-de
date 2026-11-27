@@ -58,8 +58,9 @@ import com.music.vivi.ui.screens.settings.PrivacySettings
 import com.music.vivi.ui.screens.settings.RomanizationSettings
 import com.music.vivi.ui.screens.settings.SettingsScreen
 import com.music.vivi.ui.screens.settings.AccountSettingsScreen
+import com.music.vivi.ui.screens.ListeningSummaryScreen
+import com.music.vivi.ui.screens.DetailedListeningHistoryScreen
 import com.music.vivi.ui.screens.settings.StorageSettings
-import com.music.vivi.ui.screens.settings.DataSaverSetting
 import com.music.vivi.ui.screens.settings.ThemeScreen
 import com.music.vivi.ui.screens.settings.AiSettings
 import com.music.vivi.ui.screens.settings.integrations.DiscordSettings
@@ -77,16 +78,22 @@ import com.music.vivi.utils.rememberPreference
 import com.music.vivi.vivimusic.changelog.ChangelogScreen
 import com.music.vivi.vivimusic.commitscreen.CommitScreen
 import com.music.vivi.ui.screens.equalizer.axion.AxionEqScreen
+import com.music.vivi.viewmodels.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 fun NavGraphBuilder.navigationBuilder(
     navController: NavHostController,
     scrollBehavior: TopAppBarScrollBehavior,
     activity: Activity,
-    snackbarHostState: SnackbarHostState
+    snackbarHostState: SnackbarHostState,
+    homeViewModel: HomeViewModel
 ) {
     composable(Screens.Home.route) {
-        HomeScreen(navController = navController, snackbarHostState = snackbarHostState)
+        HomeScreen(
+            navController = navController,
+            snackbarHostState = snackbarHostState,
+            viewModel = homeViewModel
+        )
     }
 
     composable(Screens.Search.route) {
@@ -108,6 +115,8 @@ fun NavGraphBuilder.navigationBuilder(
     composable(Screens.Library.route) {
         LibraryScreen(navController)
     }
+
+
 
     composable(Screens.ListenTogether.route) {
         ListenTogetherScreen(navController, showTopBar = false)
@@ -340,7 +349,21 @@ fun NavGraphBuilder.navigationBuilder(
     }
 
     composable("settings/account") {
-        AccountSettingsScreen(navController, scrollBehavior)
+        AccountSettingsScreen(navController, scrollBehavior, homeViewModel)
+    }
+    composable("settings/listening_summary") {
+        ListeningSummaryScreen(navController)
+    }
+
+    composable(
+        route = "detailed_listening_history/{startTimestamp}",
+        arguments = listOf(
+            navArgument("startTimestamp") {
+                type = NavType.StringType
+            },
+        ),
+    ) {
+        DetailedListeningHistoryScreen(navController)
     }
 
     composable("settings/devices") {
@@ -355,12 +378,8 @@ fun NavGraphBuilder.navigationBuilder(
         ThemeScreen(navController)
     }
 
-    composable("settings/appearance/canvas") {
+    composable("settings/player/canvas") {
         CanvasSelection(navController, scrollBehavior)
-    }
-
-    composable("settings/datasaver") {
-        DataSaverSetting(navController, scrollBehavior)
     }
 
     composable("settings/appearance/font") {
