@@ -178,7 +178,7 @@ data class LocalLibraryState(
 }
 
 /**
- * The desktop's only local store, on `~/.vivimusic/device-sync.json`.
+ * The desktop's only local store, on `~/.axolotlmusic/device-sync.json`.
  *
  * 1.55.0 kept its library, queue, liked songs and settings in that one pretty
  * JSON file: it was read once through a cached snapshot, every change went

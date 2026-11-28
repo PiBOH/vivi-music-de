@@ -23,7 +23,7 @@ object SingleInstanceGuard {
         if (lock?.isValid == true) return true
         val directory = DesktopPathProvider.syncStateFile.absoluteFile.parentFile ?: return true
         directory.mkdirs()
-        val lockFile = File(directory, ".vivimusic.lock")
+        val lockFile = File(directory, ".axolotlmusic.lock")
         return runCatching {
             val opened = RandomAccessFile(lockFile, "rw")
             val acquired = opened.channel.tryLock()

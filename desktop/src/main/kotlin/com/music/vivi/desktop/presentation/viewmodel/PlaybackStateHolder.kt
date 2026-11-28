@@ -195,6 +195,26 @@ class PlaybackStateHolder(
         .map { it.listenTogetherSmartResync }
         .stateIn(coroutineScope, SharingStarted.Eagerly, true)
 
+    val deviceSyncViviVolume: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.deviceSyncViviVolume }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val deviceSyncNativeVolume: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.deviceSyncNativeVolume }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, false)
+
+    val deviceSyncAutoResync: StateFlow<Boolean> = settingsRepository.settingsFlow
+        .map { it.deviceSyncAutoResync }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, true)
+
+    val deviceSyncMode: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.deviceSyncMode }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "relay")
+
+    val deviceSyncRelayUrl: StateFlow<String> = settingsRepository.settingsFlow
+        .map { it.deviceSyncRelayUrl }
+        .stateIn(coroutineScope, SharingStarted.Eagerly, "")
+
     /**
      * True while the user is a guest in a Listen Together room: the host owns
      * the transport, so local play/pause/seek/skip must not fight it.
@@ -290,6 +310,26 @@ class PlaybackStateHolder(
 
     fun setListenTogetherSyncVolume(enabled: Boolean) {
         coroutineScope.launch { settingsRepository.setListenTogetherSyncVolume(enabled) }
+    }
+
+    fun setDeviceSyncViviVolume(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setDeviceSyncViviVolume(enabled) }
+    }
+
+    fun setDeviceSyncNativeVolume(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setDeviceSyncNativeVolume(enabled) }
+    }
+
+    fun setDeviceSyncAutoResync(enabled: Boolean) {
+        coroutineScope.launch { settingsRepository.setDeviceSyncAutoResync(enabled) }
+    }
+
+    fun setDeviceSyncMode(mode: String) {
+        coroutineScope.launch { settingsRepository.setDeviceSyncMode(mode) }
+    }
+
+    fun setDeviceSyncRelayUrl(url: String) {
+        coroutineScope.launch { settingsRepository.setDeviceSyncRelayUrl(url) }
     }
 
     fun setListenTogetherSmartResync(enabled: Boolean) {
@@ -424,6 +464,7 @@ class PlaybackStateHolder(
     val playerInfo: StateFlow<PlayerInfo> = _playerInfo.asStateFlow()
 
     val currentPositionMs: StateFlow<Long> = audioEngine.currentPositionMs
+    val volume: StateFlow<Float> = audioEngine.volume
     val playbackSpeed: StateFlow<Float> = audioEngine.playbackSpeed
     private var sessionPlaybackSpeed: Float = 1.0f
     private var baseSessionSpeedBeforeSong: Float = 1.0f

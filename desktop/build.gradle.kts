@@ -63,6 +63,8 @@ dependencies {
     implementation(project(":innertube"))
     implementation(project(":lyricsProvider"))
     implementation(project(":spotify"))
+    // The 1.55 device-sync protocol: shared WebSocket client and models.
+    implementation(project(":sync"))
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
@@ -91,6 +93,13 @@ dependencies {
 
     // Reorderable lazy lists
     implementation("sh.calvin.reorderable:reorderable:2.4.3")
+
+    // Device sync: LAN relay (Ktor server), QR pairing (ZXing) and mDNS.
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.server.netty)
+    implementation(libs.ktor.server.websockets)
+    implementation(libs.zxing.core)
+    implementation(libs.jmdns)
 
     // MaterialKolor (M3 dynamic colours and quantizer)
     implementation("com.materialkolor:material-kolor:2.0.2")

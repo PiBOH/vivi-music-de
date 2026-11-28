@@ -91,6 +91,11 @@ interface SettingsRepository {
     suspend fun setCheckUpdatesOnStartup(enabled: Boolean)
     suspend fun setLastDismissedUpdateVersion(version: String?)
     suspend fun setQuickAccessItems(items: List<QuickAccessItem>)
+    suspend fun setDeviceSyncViviVolume(enabled: Boolean)
+    suspend fun setDeviceSyncNativeVolume(enabled: Boolean)
+    suspend fun setDeviceSyncAutoResync(enabled: Boolean)
+    suspend fun setDeviceSyncMode(mode: String)
+    suspend fun setDeviceSyncRelayUrl(url: String)
 
     /** Persists an option that exists only on the imported 1.55 pages. */
     suspend fun setLegacySetting(key: String, value: String)

@@ -118,6 +118,7 @@ fun SettingsCategoryDetail(
     onOpenPaletteStyleDetail: () -> Unit,
     onOpenLicensesDetail: () -> Unit = {},
     onOpenContributorsDetail: () -> Unit = {},
+    onOpenLegacyPage: (SettingsSection) -> Unit = {},
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -1528,9 +1529,80 @@ fun SettingsCategoryDetail(
 
             else -> Unit
         }
+
+                // The 1.55 pages that have no native 1.56 equivalent are still
+                // reachable, but only from the category they belong to. Pages
+                // whose options already exist here (crossfade and the player
+                // page, theme, equalizer, backup, account, about, density,
+                // storage) are deliberately not listed: one option, one place.
+                val extraPages = legacyPagesFor(section)
+                if (extraPages.isNotEmpty()) {
+                    item(key = "legacy-extra-${section.name}") {
+                        SettingsSubsection(title = "MORE SETTINGS") {
+                            extraPages.forEachIndexed { index, page ->
+                                ExpressiveSettingsRow(
+                                    title = page.title,
+                                    subtitle = page.subtitle,
+                                    leadingIcon = {
+                                        Icon(
+                                            painter = painterResource(page.icon),
+                                            contentDescription = null,
+                                            tint = colors.secondary,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        Icon(
+                                            painter = painterResource(Res.drawable.ic_rounded_chevron_right),
+                                            contentDescription = null,
+                                            tint = colors.onSurfaceVariant.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                    },
+                                    shape = getGroupShape(index, extraPages.size),
+                                    onClick = { onOpenLegacyPage(page) }
+                                )
+                            }
+                        }
+                    }
+                }
     }
 }
 }
+}
+
+/** 1.55 pages whose options are not already part of the native category. */
+private fun legacyPagesFor(section: SettingsSection): List<SettingsSection> = when (section) {
+    SettingsSection.LIBRARY -> listOf(
+        SettingsSection.V155_CONTENT,
+        SettingsSection.V155_LANGUAGE,
+        SettingsSection.V155_DATA_SAVER,
+        SettingsSection.V155_PRIVACY,
+    )
+    SettingsSection.APPEARANCE -> listOf(
+        SettingsSection.V155_FONT,
+        SettingsSection.V155_CANVAS,
+        SettingsSection.V155_PLAYER_DESIGN,
+        SettingsSection.V155_TRANSITIONS,
+        SettingsSection.INTRO,
+    )
+    SettingsSection.PLAYBACK -> listOf(
+        SettingsSection.V155_LYRICS,
+        SettingsSection.V155_ROMANIZE,
+        SettingsSection.V155_NOTIFICATIONS,
+    )
+    SettingsSection.ACCOUNTS -> listOf(
+        SettingsSection.V155_AI,
+        SettingsSection.V155_INTEGRATIONS,
+        SettingsSection.V155_SPOTIFY,
+    )
+    SettingsSection.SHORTCUTS -> listOf(SettingsSection.V155_DESKTOP)
+    SettingsSection.BACKUP -> listOf(SettingsSection.V155_UPDATES)
+    SettingsSection.ABOUT -> listOf(
+        SettingsSection.V155_WRAPPED,
+        SettingsSection.V155_SYSTEM,
+    )
+    else -> emptyList()
 }
 
 

@@ -5,12 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import kotlinx.coroutines.flow.first
@@ -40,8 +43,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The 1.55 home is the root, every one of its rows opens its own 1.55 page, and
- * the fields it shares with PixelPlayer are the same UserSettings values.
+ * The settings root is the 1.56-beta4 native hub plus Device Sync. The 1.55
+ * pages that have no native equivalent are reached from their category, and the
+ * options that do have one exist only there.
  */
 @OptIn(ExperimentalTestApi::class)
 class SettingsSurfacesTest {
@@ -77,34 +81,47 @@ class SettingsSurfacesTest {
     }
 
     @Test
-    fun everyImportedHomeEntryOpensItsOwnPageAndReturns() {
+    fun rootIsTheNativeHubAndTheCustomPagesLiveInsideTheirCategory() {
         val harness = DesktopUiHarness()
         try {
             runComposeUiTest {
                 val sectionState = mutableStateOf<SettingsSection?>(null)
                 openSettings(harness, sectionState)
 
-                onNodeWithText("PixelPlayer").assertExists()
+                // The whole beta4 root is visible in one list, with Device Sync
+                // added. PixelPlayer is not a row any more.
+                listOf(
+                    "Music Management",
+                    "Appearance",
+                    "Playback",
+                    "Device Sync",
+                    "Equalizer",
+                    "Accounts",
+                    "Keyboard Shortcuts",
+                    "Backup & Restore",
+                    "About",
+                ).forEach { title -> onNodeWithText(title).performScrollTo().assertExists() }
+                onNodeWithText("PixelPlayer").assertDoesNotExist()
 
-                Legacy155HomeEntries.forEach { entry ->
-                    onNodeWithText(entry.title).performScrollTo().performClick()
-                    onNodeWithTag("legacy155-page").assertExists()
-                    waitForText(entry.title)
-                    onNodeWithContentDescription("Back").performClick()
-                    waitForText("PixelPlayer")
-                }
-
-                // The 1.56 hub is reachable only through PixelPlayer, and its
-                // own back action returns to the 1.55 home.
-                onNodeWithText("PixelPlayer").performClick()
-                waitForText("Music Management")
-                SettingsSection.entries
-                    .filterNot { it.isLegacy155 || it == SettingsSection.PIXELPLAYER }
-                    .forEach { section -> onNodeWithText(section.title).assertExists() }
+                // A custom page is opened from its native category, not from
+                // the root, and its back action returns to that category.
+                onNodeWithText("Appearance").performScrollTo().performClick()
+                onNode(hasScrollAction()).performScrollToNode(hasText("MORE SETTINGS"))
+                onNode(hasScrollAction()).performScrollToNode(hasText("Font"))
+                onNodeWithText("Font").performClick()
+                onNodeWithTag("legacy155-page").assertExists()
+                waitForText("App font")
                 onNodeWithContentDescription("Back").performClick()
-                waitForText("PixelPlayer")
+                waitForText("Appearance")
 
-                println("[UI] Settings surfaces: ${Legacy155HomeEntries.size} 1.55 entries open their own page")
+                // Back on the root, the duplicate pages are deliberately
+                // absent: the native category already carries their options.
+                sectionState.value = null
+                waitForText("Device Sync")
+                onNodeWithText("Theme").assertDoesNotExist()
+                onNodeWithText("Equalizer").performScrollTo().assertExists()
+
+                println("[UI] Settings surfaces: native root with Device Sync; custom pages inside categories")
             }
         } finally {
             harness.close()
@@ -112,80 +129,28 @@ class SettingsSurfacesTest {
     }
 
     @Test
-    fun sharedOptionsChangeBothSurfaces() {
+    fun nativeAppearanceOptionsAreTheOnlyOnesAndStillWriteTheStore() {
         val harness = DesktopUiHarness()
         try {
             runComposeUiTest {
                 val sectionState = mutableStateOf<SettingsSection?>(null)
                 openSettings(harness, sectionState)
 
-                // Appearance -> Theme on the 1.55 surface.
+                // Appearance is the native beta4 page now, not a submenu.
                 onNodeWithText("Appearance").performScrollTo().performClick()
-                waitForText("Theme")
-                onNodeWithText("Theme").performClick()
-                waitForText("Dark theme")
-                onNodeWithText("Dark theme").performClick()
-                waitUntil(timeoutMillis = 5_000) {
-                    !harness.viewModel.isDarkMode.value &&
-                        !harness.viewModel.userSettings.value.isDarkMode
-                }
-
-                // The 1.56 surface reads and writes the same value.
-                onNodeWithContentDescription("Back").performClick()
-                waitForText("PixelPlayer")
-                onNodeWithText("PixelPlayer").performClick()
-                waitForText("Music Management")
-                onNodeWithText("Appearance").performClick()
                 waitForText("Dark Theme")
+                val before = harness.viewModel.isDarkMode.value
                 onNodeWithText("Dark Theme").performClick()
                 waitUntil(timeoutMillis = 5_000) {
-                    harness.viewModel.isDarkMode.value &&
-                        harness.viewModel.userSettings.value.isDarkMode
+                    harness.viewModel.isDarkMode.value != before &&
+                        harness.viewModel.userSettings.value.isDarkMode == harness.viewModel.isDarkMode.value
                 }
 
-                // Back on the 1.55 page, the switch is already on.
+                // Back on the root, the 1.55 Theme duplicate is not offered.
                 sectionState.value = null
-                waitForText("PixelPlayer")
-                onNodeWithText("Appearance").performScrollTo().performClick()
-                waitForText("Theme")
-                onNodeWithText("Theme").performClick()
-                waitForText("Dark theme")
-                onNodeWithTag("legacy-darkMode").assertIsOn()
-                onNodeWithContentDescription("Back").performClick()
-                waitForText("PixelPlayer")
-
-                // Dynamic color, the second shared option: 1.55 off, 1.56 on.
-                onNodeWithText("Appearance").performScrollTo().performClick()
-                waitForText("Theme")
-                onNodeWithText("Theme").performClick()
-                waitForText("Dynamic color")
-                onNodeWithText("Dynamic color").performClick()
-                waitUntil(timeoutMillis = 5_000) {
-                    !harness.viewModel.isDynamicColorEnabled.value &&
-                        !harness.viewModel.userSettings.value.isDynamicColorEnabled
-                }
-                sectionState.value = null
-                waitForText("PixelPlayer")
-                onNodeWithText("PixelPlayer").performClick()
-                waitForText("Music Management")
-                onNodeWithText("Appearance").performClick()
-                waitForText("Dynamic Color Theme")
-                onNodeWithText("Dynamic Color Theme").performClick()
-                waitUntil(timeoutMillis = 5_000) {
-                    harness.viewModel.isDynamicColorEnabled.value &&
-                        harness.viewModel.userSettings.value.isDynamicColorEnabled
-                }
-                sectionState.value = null
-                waitForText("PixelPlayer")
-                onNodeWithText("Appearance").performScrollTo().performClick()
-                waitForText("Theme")
-                onNodeWithText("Theme").performClick()
-                waitForText("Dynamic color")
-                onNodeWithTag("legacy-dynamicColor").assertIsOn()
-
-                assertTrue(harness.viewModel.isDarkMode.value)
-                assertTrue(harness.viewModel.isDynamicColorEnabled.value)
-                println("[UI] Settings surfaces: dark theme and dynamic color stay in sync in both directions")
+                waitForText("Appearance")
+                assertTrue(harness.viewModel.isDarkMode.value != before)
+                println("[UI] Settings surfaces: the native dark theme is the only one")
             }
         } finally {
             harness.close()

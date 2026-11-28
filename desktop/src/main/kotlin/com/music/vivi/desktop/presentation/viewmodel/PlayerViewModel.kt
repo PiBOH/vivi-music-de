@@ -60,7 +60,9 @@ class PlayerViewModel(
         )
     ),
     /** Listen Together: the party screen and the player sync share this manager. */
-    val listenTogetherManager: ListenTogetherManager? = null
+    val listenTogetherManager: ListenTogetherManager? = null,
+    /** The 1.55 device-sync service: one instance for the whole window. */
+    val desktopSyncManager: com.music.vivi.desktop.data.sync.DesktopSyncManager? = null
 ) {
     val isEndOfTrackTimerActive = sleepTimerStateHolder?.isEndOfTrackTimerActive ?: MutableStateFlow(false)
     val activeTimerDurationMinutes = sleepTimerStateHolder?.activeTimerDurationMinutes ?: MutableStateFlow(null)
@@ -73,6 +75,7 @@ class PlayerViewModel(
     val selectedStatsRange = statsStateHolder.selectedRange
 
     val playerInfo = playbackStateHolder.playerInfo
+    val volume = playbackStateHolder.volume
     val currentPositionMs = playbackStateHolder.currentPositionMs
     val currentSong = playbackStateHolder.currentSong
     val currentQueueIndex = playbackStateHolder.currentQueueIndex
@@ -182,6 +185,11 @@ class PlayerViewModel(
     val listenTogetherPartySize = playbackStateHolder.listenTogetherPartySize
     val listenTogetherSyncVolume = playbackStateHolder.listenTogetherSyncVolume
     val listenTogetherSmartResync = playbackStateHolder.listenTogetherSmartResync
+    val deviceSyncViviVolume = playbackStateHolder.deviceSyncViviVolume
+    val deviceSyncNativeVolume = playbackStateHolder.deviceSyncNativeVolume
+    val deviceSyncAutoResync = playbackStateHolder.deviceSyncAutoResync
+    val deviceSyncMode = playbackStateHolder.deviceSyncMode
+    val deviceSyncRelayUrl = playbackStateHolder.deviceSyncRelayUrl
     val closeToTray = playbackStateHolder.closeToTray
     val selectedAudioDevice = playbackStateHolder.selectedAudioDevice
     val availableAudioDevices = playbackStateHolder.availableAudioDevices
@@ -209,6 +217,11 @@ class PlayerViewModel(
     fun setListenTogetherPartySize(size: Int) = playbackStateHolder.setListenTogetherPartySize(size)
     fun setListenTogetherSyncVolume(enabled: Boolean) = playbackStateHolder.setListenTogetherSyncVolume(enabled)
     fun setListenTogetherSmartResync(enabled: Boolean) = playbackStateHolder.setListenTogetherSmartResync(enabled)
+    fun setDeviceSyncViviVolume(enabled: Boolean) = playbackStateHolder.setDeviceSyncViviVolume(enabled)
+    fun setDeviceSyncNativeVolume(enabled: Boolean) = playbackStateHolder.setDeviceSyncNativeVolume(enabled)
+    fun setDeviceSyncAutoResync(enabled: Boolean) = playbackStateHolder.setDeviceSyncAutoResync(enabled)
+    fun setDeviceSyncMode(mode: String) = playbackStateHolder.setDeviceSyncMode(mode)
+    fun setDeviceSyncRelayUrl(url: String) = playbackStateHolder.setDeviceSyncRelayUrl(url)
     fun setCloseToTray(enabled: Boolean) = playbackStateHolder.setCloseToTray(enabled)
     fun setSelectedAudioDevice(device: String) = playbackStateHolder.setSelectedAudioDevice(device)
     fun refreshAudioDevices() = playbackStateHolder.refreshAudioDevices()

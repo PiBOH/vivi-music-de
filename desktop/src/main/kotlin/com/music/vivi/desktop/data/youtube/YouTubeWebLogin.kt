@@ -48,7 +48,7 @@ object YouTubeWebLogin {
     private const val LOGIN_INFO_VISITS = 2
     private const val LOGIN_INFO_POLL_MS = 15_000L
 
-    private val debugLog = File(System.getProperty("user.home"), ".vivimusic/login-debug.log")
+    private val debugLog = com.music.vivi.desktop.utils.DesktopPathProvider.loginDebugLog
 
     @Volatile
     private var windowOpen = false

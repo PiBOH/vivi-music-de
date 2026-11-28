@@ -1,5 +1,16 @@
 ## [Unreleased]
 
+## [6.0.8.11_DE-1.56.0-beta6] - 2026-11-28
+
+### ✨ Added
+
+- [DE] **The settings root is the 1.56-beta4 hub again, with Device Sync as a native row.** `SettingsOverviewMenu` lists the eight beta4 categories in their original order (Music Management, Appearance, Playback, Equalizer, Accounts, Keyboard Shortcuts, Backup & Restore, About) and adds **Device Sync**; the PixelPlayer submenu is gone. The 1.55 pages that have no native equivalent (font, canvas, player design, transitions, intro, lyrics, romanization, notifications, content, language, data saver, privacy, AI, integrations, Spotify, updates, desktop features, Wrapped, System) are reachable from the category they belong to, while the duplicate pages (theme, player/crossfade, equalizer, backup, account, about, density, storage, devices) are deliberately absent. **Measured on 28 Nov:** `SettingsSurfacesTest` opens the native root, finds every category and Device Sync, opens App font from Appearance and returns; `:desktop:test` passes with 83 tests.
+- [DE] **Device Sync is a two-card Material 3 screen with the 1.55 pairing backend.** The left card carries the `Axolotl Music DE` identity (the same persisted v1.55 UUID), Sync volume, Automatic resync and the Relay/LAN selector; the right card is the three-state machine: only **Genera QR Code**, then the QR code with its six-digit code, then a live terminal with Desktop and APK Android above the network/packet log. `DesktopSyncManager`, `LanSyncRelay`, `SyncClient` and the `SyncSnapshot` protocol are the 1.55 ones; only persistence moved to `SyncIdentityStore`, which keeps the flat `deviceId`/`pairId`/`serverUrl` keys inside `device-sync.json`. **Measured on 28 Nov:** `:desktop:compileKotlin` passes and `DeviceSyncRuntime` maps the current song, queue, position, play state, repeat/shuffle and volume both ways; the QR flow was not exercised against a phone in this run.
+
+### 🔧 Changed
+
+- [DE] **Desktop data lives in `~/.axolotlmusic`, migrated once from `.vivimusic`.** `DesktopPathProvider` now uses `~/.axolotlmusic` for settings, the JSON store, caches, artist images, playlist covers, logs and the single-instance lock; on first start it copies the old `~/.vivimusic` and the former OS application-data trees into the new folder without overwriting files and without deleting the originals. The legacy `vivimusicde.db` keeps its name so `LegacyLibraryImport` still finds a migrated database. **Measured on 28 Nov:** `:desktop:compileKotlin` and `:desktop:test` pass; the migration path was not run against a real old profile in this pass.
+
 ## [6.0.8.11_DE-1.56.0-beta5] - 2026-11-27
 
 ### ✨ Added

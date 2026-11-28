@@ -61,6 +61,12 @@ enum class SettingsSection(
         subtitle = "Audio behavior, crossfade, and background play",
         icon = Res.drawable.ic_rounded_music_note
     ),
+    DEVICE_SYNC(
+        id = "device_sync",
+        title = "Device Sync",
+        subtitle = "Pair with the Android app over relay or LAN",
+        icon = Res.drawable.ic_rounded_sync
+    ),
     EQUALIZER(
         id = "equalizer",
         title = "Equalizer",
@@ -290,6 +296,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.LIBRARY -> Color(0xFF004A77) to Color(0xFFC2E7FF)
             SettingsSection.APPEARANCE -> Color(0xFF7D5260) to Color(0xFFFFD8E4)
             SettingsSection.PLAYBACK -> Color(0xFF633B48) to Color(0xFFFFD8EC)
+            SettingsSection.DEVICE_SYNC -> Color(0xFF004A3C) to Color(0xFFB8F2DD)
             SettingsSection.EQUALIZER -> Color(0xFF6E4E13) to Color(0xFFFFDEAC)
             SettingsSection.ACCOUNTS -> Color(0xFF37474F) to Color(0xFFBBD9E8)
             SettingsSection.SHORTCUTS -> Color(0xFF2E4369) to Color(0xFFBFD2F8)
@@ -304,6 +311,7 @@ fun getCategoryColors(category: SettingsSection, isDark: Boolean): Pair<Color, C
             SettingsSection.LIBRARY -> Color(0xFFD7E3FF) to Color(0xFF005AC1)
             SettingsSection.APPEARANCE -> Color(0xFFFFD8E4) to Color(0xFF631835)
             SettingsSection.PLAYBACK -> Color(0xFFFFD8EC) to Color(0xFF631B4B)
+            SettingsSection.DEVICE_SYNC -> Color(0xFFC8F5E5) to Color(0xFF00513F)
             SettingsSection.EQUALIZER -> Color(0xFFFFDEAC) to Color(0xFF281900)
             SettingsSection.ACCOUNTS -> Color(0xFFD6EAF5) to Color(0xFF103548)
             SettingsSection.SHORTCUTS -> Color(0xFFD6E3FF) to Color(0xFF285EA7)

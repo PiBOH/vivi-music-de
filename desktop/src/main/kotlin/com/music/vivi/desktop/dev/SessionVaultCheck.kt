@@ -198,7 +198,7 @@ object SessionVaultCheck {
             // 7. Scan the logs this machine already has.
             val logs = listOf(
                 File(DesktopPathProvider.configDir, "youtube.log"),
-                File(System.getProperty("user.home"), ".vivimusic/login-debug.log"),
+                com.music.vivi.desktop.utils.DesktopPathProvider.loginDebugLog,
             ).filter { it.isFile }
             if (logs.isEmpty()) {
                 println("[session] log audit: no log file exists yet")

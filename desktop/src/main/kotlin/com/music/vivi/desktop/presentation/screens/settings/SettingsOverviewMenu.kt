@@ -45,10 +45,21 @@ fun SettingsOverviewMenu(
 ) {
     val colors = MaterialTheme.colorScheme
     val isDark = colors.surface.luminance() < 0.5f
-    // The 1.55-only pages stay out of the PixelPlayerDesktop hub.
-    val sections = SettingsSection.entries.filterNot {
-        it.isLegacy155 || it == SettingsSection.PIXELPLAYER
-    }
+    // The 1.56-beta4 root, in its original order, plus Device Sync. The
+    // 1.55-only pages are not rows here: each one is reached from the native
+    // category it belongs to, so the two settings trees never duplicate a
+    // reported option.
+    val sections = listOf(
+        SettingsSection.LIBRARY,
+        SettingsSection.APPEARANCE,
+        SettingsSection.PLAYBACK,
+        SettingsSection.DEVICE_SYNC,
+        SettingsSection.EQUALIZER,
+        SettingsSection.ACCOUNTS,
+        SettingsSection.SHORTCUTS,
+        SettingsSection.BACKUP,
+        SettingsSection.ABOUT,
+    )
     val totalItems = sections.size
 
     LazyColumn(

@@ -119,6 +119,13 @@ data class UserSettings(
     val introStyle: String = "logo_name",
     val introBackground: String = "gradient",
     val quickAccessItems: List<QuickAccessItem> = QuickAccessItem.DEFAULT_ITEMS,
+    // Device sync (the 1.55 pairing screen). The pairing identity itself stays in
+    // device-sync.json; these are only the options the two cards expose.
+    val deviceSyncViviVolume: Boolean = true,
+    val deviceSyncNativeVolume: Boolean = false,
+    val deviceSyncAutoResync: Boolean = true,
+    val deviceSyncMode: String = "relay",
+    val deviceSyncRelayUrl: String = "",
     // 1.55-only options that have no typed field here yet. Keys are the ones
     // used by the imported 1.55 screens; common options keep their typed field
     // so both surfaces read and write the same value.

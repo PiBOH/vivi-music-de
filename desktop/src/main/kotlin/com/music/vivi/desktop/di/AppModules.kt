@@ -7,6 +7,7 @@ import com.music.vivi.desktop.data.database.LyricsDao
 import com.music.vivi.desktop.data.database.MusicDao
 import com.music.vivi.desktop.data.library.LibraryHealthChecker
 import com.music.vivi.desktop.data.store.LocalLibraryStore
+import com.music.vivi.desktop.data.sync.DesktopSyncManager
 import com.music.vivi.desktop.data.backup.AutoBackupScheduler
 import com.music.vivi.desktop.data.backup.BackupManager
 import com.music.vivi.desktop.data.backup.format.BackupFormatDetector
@@ -108,8 +109,9 @@ val settingsModule: Module = module {
 }
 
 val databaseModule: Module = module {
-    // One JSON store, the 1.55.0 `~/.vivimusic/device-sync.json`. The old
-    // `vivimusicde.db`, when it exists, is read once by the store itself.
+    // One JSON store, `~/.axolotlmusic/device-sync.json` (the 1.55.0 shape,
+    // migrated from `.vivimusic` on first start). The old `vivimusicde.db`,
+    // when it exists, is read once by the store itself.
     single { LocalLibraryStore(DesktopPathProvider.syncStateFile, DesktopPathProvider.databaseFile) }
     single { MusicDao(store = get(), ioDispatcher = get()) }
     single { LocalPlaylistDao(store = get(), ioDispatcher = get()) }
@@ -266,6 +268,7 @@ val stateModule: Module = module {
     single {
         YouTubeAccountStateHolder(coroutineScope = get())
     }
+    single { DesktopSyncManager() }
     single {
         PlayerViewModel(
             playbackStateHolder = get(),
@@ -277,7 +280,8 @@ val stateModule: Module = module {
             mediaSessionBridge = get(),
             youtubeMusicStateHolder = get(),
             youtubeAccountStateHolder = get(),
-            listenTogetherManager = get()
+            listenTogetherManager = get(),
+            desktopSyncManager = get()
         )
     }
 }

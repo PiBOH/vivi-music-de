@@ -467,6 +467,26 @@ class SettingsRepositoryImpl(
         updateSettings { it.copy(quickAccessItems = items) }
     }
 
+    override suspend fun setDeviceSyncViviVolume(enabled: Boolean) {
+        updateSettings { it.copy(deviceSyncViviVolume = enabled) }
+    }
+
+    override suspend fun setDeviceSyncNativeVolume(enabled: Boolean) {
+        updateSettings { it.copy(deviceSyncNativeVolume = enabled) }
+    }
+
+    override suspend fun setDeviceSyncAutoResync(enabled: Boolean) {
+        updateSettings { it.copy(deviceSyncAutoResync = enabled) }
+    }
+
+    override suspend fun setDeviceSyncMode(mode: String) {
+        updateSettings { it.copy(deviceSyncMode = if (mode == "lan") "lan" else "relay") }
+    }
+
+    override suspend fun setDeviceSyncRelayUrl(url: String) {
+        updateSettings { it.copy(deviceSyncRelayUrl = url.trim()) }
+    }
+
     override suspend fun pinToQuickAccess(item: QuickAccessItem): Boolean {
         var success = false
         updateSettings { current ->

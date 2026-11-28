@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import com.music.vivi.desktop.presentation.screens.settings.ArtistSettingsDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.ContributorsDetailScreen
 import com.music.vivi.desktop.data.library.LibraryHealthGroup
+import com.music.vivi.desktop.presentation.screens.settings.DeviceSyncScreen
 import com.music.vivi.desktop.presentation.screens.settings.DuplicatesDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.IntroSettingsDetailScreen
 import com.music.vivi.desktop.presentation.screens.settings.Legacy155Actions
@@ -32,7 +33,6 @@ import com.music.vivi.desktop.presentation.screens.settings.SettingsOverviewMenu
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSearchCatalog
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSearchResults
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSection
-import com.music.vivi.desktop.presentation.screens.settings.ViviSettingsOverview
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
 
 enum class LibrarySubDetail {
@@ -71,12 +71,12 @@ fun SettingsScreen(
         if (activeSubDetail != LibrarySubDetail.HEALTH) healthFocus = null
     }
 
-    // The 1.56 catalogue is only reachable from inside PixelPlayer; a query on
-    // the 1.55 home or on one of its pages never jumps over to a 1.56 screen.
-    val isPixelPlayerSurface = activeSection != null &&
+    // Search runs over the native categories; a query on a 1.55 page stays on
+    // that page instead of jumping to a different settings surface.
+    val isNativeSettingsSurface = activeSection != null &&
         !activeSection.isLegacy155 &&
         activeSection != SettingsSection.INTRO
-    if (searchQuery.isNotBlank() && isPixelPlayerSurface) {
+    if (searchQuery.isNotBlank() && isNativeSettingsSurface) {
         val searchResults = remember(searchQuery) {
             SettingsSearchCatalog.search(searchQuery)
         }
@@ -121,22 +121,16 @@ fun SettingsScreen(
     ) { (section, subDetail) ->
         when {
             section == null -> {
-                ViviSettingsOverview(
+                SettingsOverviewMenu(
                     onSelectSection = {
                         onNavigate(it, LibrarySubDetail.NONE)
                     }
                 )
             }
-            section == SettingsSection.PIXELPLAYER -> {
-                // The whole 1.56 surface is preserved behind this entry: the
-                // hub, its sections and every detail screen are the originals.
-                SettingsOverviewMenu(
-                    title = "PixelPlayer",
-                    subtitle = "The 1.56 PixelPlayerDesktop settings, unchanged",
-                    onBack = { onNavigate(null, LibrarySubDetail.NONE) },
-                    onSelectSection = {
-                        onNavigate(it, LibrarySubDetail.NONE)
-                    }
+            section == SettingsSection.DEVICE_SYNC -> {
+                DeviceSyncScreen(
+                    viewModel = viewModel,
+                    onBack = { onNavigate(null, LibrarySubDetail.NONE) }
                 )
             }
             section.isLegacy155 -> {
@@ -217,6 +211,7 @@ fun SettingsScreen(
                     onOpenPaletteStyleDetail = { onNavigate(section, LibrarySubDetail.PALETTE_STYLE) },
                     onOpenLicensesDetail = { onNavigate(section, LibrarySubDetail.LICENSES) },
                     onOpenContributorsDetail = { onNavigate(section, LibrarySubDetail.CONTRIBUTORS) },
+                    onOpenLegacyPage = { target -> onNavigate(target, LibrarySubDetail.NONE) },
                     onBack = onBack
                 )
             }

@@ -71,6 +71,7 @@ import com.music.vivi.desktop.presentation.screens.library.PlaylistsTab
 import com.music.vivi.desktop.presentation.screens.library.SongsTab
 import com.music.vivi.desktop.presentation.screens.settings.SettingsSection
 import com.music.vivi.desktop.presentation.viewmodel.PlayerViewModel
+import com.music.vivi.desktop.presentation.screens.settings.DeviceSyncRuntime
 import com.music.vivi.desktop.ui.theme.PixelPlayerTheme
 import com.music.vivi.desktop.ui.theme.dynamic.DynamicColorProcessor
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +91,8 @@ fun MainAppScaffold(
     modifier: Modifier = Modifier
 ) {
     val colors = MaterialTheme.colorScheme
+    // Keeps a paired phone in sync wherever the user is in the window.
+    DeviceSyncRuntime(viewModel)
     var showDismissUndoBar by remember { mutableStateOf(false) }
 
     val songs by viewModel.songs.collectAsState()
