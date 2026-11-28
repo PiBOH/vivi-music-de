@@ -1,0 +1,25 @@
+{
+  "version": "6.0.8.11",
+  "versionCode": 149,
+  "channel": "beta",
+  "title": "v6.0.8.11_DE-1.56.0-beta6: restore native settings and add Device Sync",
+  "builtAt": "2026-11-28T16:04:14Z",
+  "commit": "97d7534b6a2731a99dcc86ddb31db0ab7ae2ae06",
+  "files": [
+    {
+      "name": "vivi-gms.apk",
+      "sizeBytes": 31653590,
+      "url": "https://raw.githubusercontent.com/PiBOH/axolotl-music/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    },
+    {
+      "name": "vivi-foss.apk",
+      "sizeBytes": 30135148,
+      "url": "https://raw.githubusercontent.com/PiBOH/axolotl-music/apk-latest/.releases/apk/latest/vivi-foss.apk"
+    },
+    {
+      "name": "vivi-gsm.apk",
+      "sizeBytes": 31653590,
+      "url": "https://raw.githubusercontent.com/PiBOH/axolotl-music/apk-latest/.releases/apk/latest/vivi-gms.apk"
+    }
+  ]
+}
